@@ -1,26 +1,119 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-era-bg: var(--bg);
+  --color-era-text: var(--text);
+  
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  /* Default 1970s variables */
+  --bg: #1A1512;
+  --primary: #E8412A;
+  --secondary: #E0A526;
+  --text: #E8D29F;
+  
+  /* Map Tailwind's canvas to our era's dynamic colors */
+  --background: var(--bg);
+  --foreground: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background-color 0.1s ease, color 0.1s ease;
+  overflow-x: hidden;
+  image-rendering: auto;
+}
+
+/* Custom Scrollbar matching era-dynamic theme */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 5px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+/* 1970s Warm Film Grain Overlay */
+.film-grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.045;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  z-index: 10;
+}
+
+/* 1980s CRT scanlines & flicker overlay */
+.crt-scanlines {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.15) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.crt-scanlines::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle, 
+    transparent 50%, 
+    rgba(0, 0, 0, 0.25) 100%
+  );
+  pointer-events: none;
+}
+
+/* 1990s Halftone pixel pattern for cards */
+.dither-pattern {
+  background-image: radial-gradient(var(--secondary) 1px, transparent 0);
+  background-size: 4px 4px;
+  opacity: 0.15;
+}
+
+/* Y2K Aqua Glassmorphism effect */
+.aqua-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2),
+              inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.aqua-glow {
+  box-shadow: 0 0 15px var(--secondary),
+              inset 0 0 10px var(--secondary);
+}
+
+/* Smooth scrolling but respect accessibility setting */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
