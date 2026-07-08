@@ -7,7 +7,7 @@ import Navbar from '@/components/ui/Navbar';
 import Hero from '@/components/sections/Hero';
 import About from '@/components/sections/About';
 import WhatWeDo from '@/components/sections/WhatWeDo';
-import Events from '@/components/sections/Events';
+import Eventtimeline from '@/components/sections/Eventtimeline';
 import Council from '@/components/sections/Council';
 import Footer from '@/components/sections/Footer';
 import { EraProvider } from '@/components/ui/EraContext';
@@ -36,7 +36,7 @@ export default function Home() {
                 <Hero />
                 <About />
                 <WhatWeDo />
-                <Events />
+                <Eventtimeline />
                 <Council />
                 <Footer />
               </main>

@@ -7,6 +7,8 @@ import {
   Share_Tech_Mono,
   Orbitron,
   Outfit,
+  Cormorant_Garamond,
+  Inter,
 } from 'next/font/google';
 
 // 1970s Typography: Groovy Serif + Warm Sans
@@ -62,6 +64,22 @@ export const outfit = Outfit({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-00s-body',
+});
+
+// Premium Luxury Portfolio Typography
+export const cormorantGaramond = Cormorant_Garamond({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-editorial-display',
+});
+
+export const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-editorial-body',
 });
 
 // Map of era fonts to make it easy to apply dynamically based on current era
