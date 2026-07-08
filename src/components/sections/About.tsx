@@ -1,256 +1,168 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef } from 'react';
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
-import { useEra } from '../ui/EraContext';
 import { fraunces, jakarta } from '@/lib/fonts';
 
-function StatCounter({ value, duration = 1.2 }: { value: number; duration?: number }) {
-  const [count, setCount] = useState(0);
+interface ValueData {
+  label: string;
+  title: string;
+  description: string;
+  imageSrc: string;
+  imageAlt: string;
+  imagePosition: 'left' | 'right';
+}
+
+const values: ValueData[] = [
+  {
+    label: 'We Ideate',
+    title: 'Sparking Creative Solutions',
+    description:
+      'We brainstorm original ideas, explore emerging technologies, and cultivate creative thinking to solve real-world problems. From weekend hackathons to structured design sprints, every idea gets a chance to breathe.',
+    imageSrc: '/elements/80s-crt-monitor.png',
+    imageAlt: '1980s CRT Monitor',
+    imagePosition: 'left',
+  },
+  {
+    label: 'We Communicate',
+    title: 'Building Bridges Through Dialogue',
+    description:
+      'We foster intelligent discourse and dynamic exchange through tech talks, workshops, and open forums. Knowledge flows freely — from senior mentors to first-year freshers — creating a culture of shared growth.',
+    imageSrc: '/elements/80s-polaroid-camera.png',
+    imageAlt: '1980s Polaroid Camera',
+    imagePosition: 'right',
+  },
+  {
+    label: 'We Collaborate',
+    title: 'Stronger Together, Building Further',
+    description:
+      'We work side by side on projects that matter — open source contributions, campus-wide apps, and community-driven tools. Our teams span every discipline, united by a passion for building what\'s next.',
+    imageSrc: '/elements/90s-gameboy.png',
+    imageAlt: '1990s Game Boy',
+    imagePosition: 'left',
+  },
+];
+
+function ValuePanel({ value, index }: { value: ValueData; index: number }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.5 });
+  const isInView = useInView(ref, { once: true, amount: 0.35 });
 
-  useEffect(() => {
-    if (!isInView) return;
+  const isImageLeft = value.imagePosition === 'left';
 
-    let start = 0;
-    const end = value;
-    const totalFrames = Math.min(Math.floor(duration * 60), end);
-    let frame = 0;
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0 }}
+      animate={isInView ? { opacity: 1 } : {}}
+      transition={{ duration: 0.6, delay: 0.1 }}
+      className={`grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center w-full ${
+        index > 0 ? 'mt-20 lg:mt-28' : ''
+      }`}
+    >
+      {/* Image Side */}
+      <motion.div
+        initial={{ opacity: 0, x: isImageLeft ? -80 : 80, scale: 0.9 }}
+        animate={isInView ? { opacity: 1, x: 0, scale: 1 } : {}}
+        transition={{ duration: 0.8, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className={`flex items-center justify-center relative ${!isImageLeft ? 'lg:order-2' : ''}`}
+      >
+        {/* Floating image with gentle bob */}
+        <motion.div
+          animate={{ y: [-8, 8, -8] }}
+          transition={{ duration: 5 + index, repeat: Infinity, ease: 'easeInOut' }}
+          className="relative"
+        >
+          <img
+            src={value.imageSrc}
+            alt={value.imageAlt}
+            className="w-40 h-40 sm:w-52 sm:h-52 lg:w-64 lg:h-64 object-contain drop-shadow-2xl"
+            style={{ filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.45))' }}
+            draggable={false}
+          />
+          {/* Glow behind image */}
+          <div
+            className="absolute inset-0 rounded-full blur-[70px] -z-10 opacity-20"
+            style={{ background: index % 2 === 0 ? 'var(--primary)' : 'var(--secondary)' }}
+          />
+        </motion.div>
+      </motion.div>
 
-    const counter = setInterval(() => {
-      frame++;
-      const progress = frame / totalFrames;
-      const easeProgress = progress * (2 - progress);
-      const currentCount = Math.floor(easeProgress * end);
-      
-      setCount(currentCount);
-
-      if (frame >= totalFrames) {
-        setCount(end);
-        clearInterval(counter);
-      }
-    }, 1000 / 60);
-
-    return () => clearInterval(counter);
-  }, [isInView, value, duration]);
-
-  return <span ref={ref}>{count}</span>;
+      {/* Text Side */}
+      <motion.div
+        initial={{ opacity: 0, x: isImageLeft ? 50 : -50 }}
+        animate={isInView ? { opacity: 1, x: 0 } : {}}
+        transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
+        className={`flex flex-col gap-4 ${!isImageLeft ? 'lg:order-1 lg:text-right' : 'text-left'}`}
+      >
+        <span
+          className={`text-[10px] sm:text-xs tracking-[0.4em] uppercase font-bold ${jakarta.className}`}
+          style={{ color: 'var(--primary)' }}
+        >
+          {value.label}
+        </span>
+        <h3 className={`text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight ${fraunces.className}`}>
+          {value.title}
+        </h3>
+        <p className={`text-sm md:text-base leading-relaxed opacity-70 max-w-md ${
+          !isImageLeft ? 'lg:ml-auto' : ''
+        } ${jakarta.className}`}>
+          {value.description}
+        </p>
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={isInView ? { scaleX: 1 } : {}}
+          transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
+          className="h-px w-20 mt-1 origin-left"
+          style={{
+            background: 'var(--primary)',
+            alignSelf: !isImageLeft ? 'flex-end' : 'flex-start',
+            transformOrigin: !isImageLeft ? 'right' : 'left',
+          }}
+        />
+      </motion.div>
+    </motion.div>
+  );
 }
 
 export default function About() {
-  const { activeEra } = useEra();
   const sectionRef = useRef<HTMLElement>(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start end', 'end start'],
-  });
-
-  // Calculate 4 scrolling step opacities for the 4 era devices
-  const vinylOpacity = useTransform(scrollYProgress, [0, 0.25, 0.35], [1, 1, 0]);
-  const cassetteOpacity = useTransform(scrollYProgress, [0.25, 0.35, 0.5, 0.6], [0, 1, 1, 0]);
-  const polaroidOpacity = useTransform(scrollYProgress, [0.5, 0.6, 0.75, 0.85], [0, 1, 1, 0]);
-  const cdOpacity = useTransform(scrollYProgress, [0.75, 0.85, 1], [0, 1, 1]);
+  const headerRef = useRef(null);
+  const headerInView = useInView(headerRef, { once: true, amount: 0.5 });
 
   return (
     <section
       ref={sectionRef}
       id="about"
-      className="relative min-h-screen py-24 px-6 md:px-12 flex items-center justify-center overflow-hidden border-t border-white/5 bg-black/5"
+      className="relative py-24 lg:py-32 px-6 sm:px-10 md:px-16 flex flex-col items-center overflow-hidden"
     >
-      <div className="max-w-[1280px] w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center z-10 px-4 md:px-8">
-        
-        {/* Left Column: Mission Description & Core Values (Ideate, Communicate, Collaborate) */}
-        <div className="lg:col-span-7 flex flex-col gap-8 justify-center h-full text-left">
-          <div className="flex flex-col gap-2">
-            <span className={`text-xs md:text-sm tracking-[0.3em] uppercase text-primary font-bold ${jakarta.className}`}>
-              Who We Are
-            </span>
-            <h2 className={`text-3xl md:text-5xl font-bold tracking-tight ${fraunces.className}`}>
-              Bridging Tech Eras, Building Futures
-            </h2>
-          </div>
+      {/* Section Header */}
+      <motion.div
+        ref={headerRef}
+        initial={{ opacity: 0, y: 30 }}
+        animate={headerInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
+        className="flex flex-col items-center text-center gap-3 mb-16 lg:mb-24 max-w-2xl"
+      >
+        <span
+          className={`text-[10px] sm:text-xs tracking-[0.4em] uppercase font-bold ${jakarta.className}`}
+          style={{ color: 'var(--primary)' }}
+        >
+          Who We Are
+        </span>
+        <h2 className={`text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight ${fraunces.className}`}>
+          Bridging Tech Eras, Building Futures
+        </h2>
+        <p className={`text-sm md:text-base opacity-65 mt-1 max-w-lg ${jakarta.className}`}>
+          Google Developer Group CRCE is a student tech community dedicated to
+          fostering innovation, design thinking, and collaborative engineering.
+        </p>
+      </motion.div>
 
-          <p className={`text-sm md:text-base leading-relaxed opacity-85 ${jakarta.className}`}>
-            Google Developer Group CRCE is a student tech community dedicated to fostering innovation, design thinking, and collaborative engineering. Our goal is to connect aspiring builders with tools, mentorship, and peers to build next-generation projects.
-          </p>
-
-          {/* Core Values: Ideate, Communicate & Collaborate */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-2">
-            
-            {/* We Ideate */}
-            <div className="p-5 rounded-2xl bg-white/5 border border-white/10 shadow-lg flex flex-col gap-2 backdrop-blur-sm hover:border-primary/40 transition-colors">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">💡</span>
-                <h3 className={`text-sm font-bold text-primary ${fraunces.className}`}>
-                  We Ideate
-                </h3>
-              </div>
-              <p className="text-[11px] leading-relaxed opacity-75 font-sans">
-                We brainstorm creative tech solutions and cultivate original ideas to solve real problems.
-              </p>
-            </div>
-
-            {/* We Communicate */}
-            <div className="p-5 rounded-2xl bg-white/5 border border-white/10 shadow-lg flex flex-col gap-2 backdrop-blur-sm hover:border-primary/40 transition-colors">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">💬</span>
-                <h3 className={`text-sm font-bold text-primary ${fraunces.className}`}>
-                  We Communicate
-                </h3>
-              </div>
-              <p className="text-[11px] leading-relaxed opacity-75 font-sans">
-                We help to hone intelligent minds and develop a dynamic environment through dialogue.
-              </p>
-            </div>
-
-            {/* We Collaborate */}
-            <div className="p-5 rounded-2xl bg-white/5 border border-white/10 shadow-lg flex flex-col gap-2 backdrop-blur-sm hover:border-primary/40 transition-colors">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🤝</span>
-                <h3 className={`text-sm font-bold text-primary ${fraunces.className}`}>
-                  We Collaborate
-                </h3>
-              </div>
-              <p className="text-[11px] leading-relaxed opacity-75 font-sans">
-                We work together on projects and empower the whole community.
-              </p>
-            </div>
-            
-          </div>
-
-          {/* Scrolling Stats Section */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 mt-4 pt-4 border-t border-white/5">
-            <div className="flex flex-col">
-              <span className={`text-3xl md:text-5xl font-extrabold text-primary ${fraunces.className}`}>
-                <StatCounter value={1200} />+
-              </span>
-              <span className={`text-xs tracking-wider uppercase opacity-60 font-medium mt-1 ${jakarta.className}`}>
-                Active Members
-              </span>
-            </div>
-
-            <div className="flex flex-col">
-              <span className={`text-3xl md:text-5xl font-extrabold text-primary ${fraunces.className}`}>
-                <StatCounter value={60} />+
-              </span>
-              <span className={`text-xs tracking-wider uppercase opacity-60 font-medium mt-1 ${jakarta.className}`}>
-                Events Hosted
-              </span>
-            </div>
-
-            <div className="flex flex-col col-span-2 sm:col-span-1">
-              <span className={`text-3xl md:text-5xl font-extrabold text-primary ${fraunces.className}`}>
-                <StatCounter value={25} />+
-              </span>
-              <span className={`text-xs tracking-wider uppercase opacity-60 font-medium mt-1 ${jakarta.className}`}>
-                Projects Shipped
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Morphing Media Icons */}
-        <div className="lg:col-span-5 flex items-center justify-center relative min-h-[360px] h-full">
-          
-          {/* 70s Vinyl Record Image Slot */}
-          <motion.div 
-            style={{ opacity: vinylOpacity }}
-            className="absolute flex flex-col items-center gap-4 w-72"
-          >
-            <div className="relative w-72 h-72 rounded-full border-2 border-dashed border-primary/40 bg-black/40 flex flex-col items-center justify-center p-4 shadow-xl">
-              <img
-                src="/elements/70s-vinyl-record.png"
-                alt="1970s Vinyl Record"
-                className="w-full h-full object-contain opacity-0 transition-opacity duration-300 absolute inset-0 rounded-full"
-                onLoad={(e) => (e.currentTarget.style.opacity = '1')}
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-              <div className="flex flex-col items-center justify-center p-6 text-center pointer-events-none">
-                <span className="text-4xl mb-2">💿</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-primary">70s Vinyl Record</span>
-                <span className="text-[9px] font-mono opacity-50 mt-1">[Image Placeholder Slot]</span>
-              </div>
-            </div>
-            <span className={`text-[10px] tracking-[0.3em] uppercase opacity-45 font-bold ${jakarta.className}`}>
-              1970s: Vinyl Record
-            </span>
-          </motion.div>
-
-          {/* 80s Cassette Tape Image Slot */}
-          <motion.div 
-            style={{ opacity: cassetteOpacity }}
-            className="absolute flex flex-col items-center gap-4 w-72"
-          >
-            <div className="relative w-72 h-72 rounded-2xl border-2 border-dashed border-primary/40 bg-black/40 flex flex-col items-center justify-center p-4 shadow-xl">
-              <img
-                src="/elements/80s-cassette-tape.png"
-                alt="1980s Cassette Tape"
-                className="w-full h-full object-contain opacity-0 transition-opacity duration-300 absolute inset-0 rounded-2xl"
-                onLoad={(e) => (e.currentTarget.style.opacity = '1')}
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-              <div className="flex flex-col items-center justify-center p-6 text-center pointer-events-none">
-                <span className="text-4xl mb-2">📼</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-primary">80s Cassette Tape</span>
-                <span className="text-[9px] font-mono opacity-50 mt-1">[Image Placeholder Slot]</span>
-              </div>
-            </div>
-            <span className={`text-[10px] tracking-[0.3em] uppercase opacity-45 font-bold ${jakarta.className}`}>
-              1980s: Cassette Tape
-            </span>
-          </motion.div>
-
-          {/* 80s Polaroid Camera Image Slot */}
-          <motion.div 
-            style={{ opacity: polaroidOpacity }}
-            className="absolute flex flex-col items-center gap-4 w-72"
-          >
-            <div className="relative w-72 h-72 rounded-2xl border-2 border-dashed border-primary/40 bg-black/40 flex flex-col items-center justify-center p-4 shadow-xl">
-              <img
-                src="/elements/80s-polaroid-camera.png"
-                alt="1980s Polaroid Camera"
-                className="w-full h-full object-contain opacity-0 transition-opacity duration-300 absolute inset-0 rounded-2xl"
-                onLoad={(e) => (e.currentTarget.style.opacity = '1')}
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-              <div className="flex flex-col items-center justify-center p-6 text-center pointer-events-none">
-                <span className="text-4xl mb-2">📸</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-primary">80s Polaroid Camera</span>
-                <span className="text-[9px] font-mono opacity-50 mt-1">[Image Placeholder Slot]</span>
-              </div>
-            </div>
-            <span className={`text-[10px] tracking-[0.3em] uppercase opacity-45 font-bold ${jakarta.className}`}>
-              1980s: Polaroid Camera
-            </span>
-          </motion.div>
-
-          {/* 1990s CD Jewel Case Image Slot */}
-          <motion.div 
-            style={{ opacity: cdOpacity }}
-            className="absolute flex flex-col items-center gap-4 w-72"
-          >
-            <div className="relative w-72 h-72 rounded-2xl border-2 border-dashed border-secondary/40 bg-black/40 flex flex-col items-center justify-center p-4 shadow-xl">
-              <img
-                src="/elements/90s-cd-jewel-case.png"
-                alt="1990s CD Jewel Case"
-                className="w-full h-full object-contain opacity-0 transition-opacity duration-300 absolute inset-0 rounded-2xl"
-                onLoad={(e) => (e.currentTarget.style.opacity = '1')}
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-              <div className="flex flex-col items-center justify-center p-6 text-center pointer-events-none">
-                <span className="text-4xl mb-2">💿</span>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-secondary">90s CD Jewel Case</span>
-                <span className="text-[9px] font-mono opacity-50 mt-1">[Image Placeholder Slot]</span>
-              </div>
-            </div>
-            <span className={`text-[10px] tracking-[0.3em] uppercase opacity-45 font-bold ${jakarta.className}`}>
-              1990s: CD Jewel Case
-            </span>
-          </motion.div>
-          
-        </div>
+      {/* Value Panels — Alternating image/text layout with scroll-triggered reveals */}
+      <div className="max-w-[1100px] w-full flex flex-col">
+        {values.map((value, idx) => (
+          <ValuePanel key={idx} value={value} index={idx} />
+        ))}
       </div>
     </section>
   );

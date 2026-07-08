@@ -36,13 +36,13 @@ export default function Footer() {
   return (
     <footer
       id="footer"
-      className="relative py-12 px-6 md:px-12 flex flex-col items-center justify-between overflow-hidden border-t border-white/10 bg-[#141C2E]/80 z-10"
+      className="relative py-12 px-6 sm:px-10 md:px-16 flex flex-col items-center justify-between overflow-hidden border-t border-white/10 bg-[#141C2E]/80 z-10"
     >
       {/* R3F Cyber Particles background layer */}
       <CyberParticles3D />
 
       {/* Main Grid: Multi-Column layout with responsive wrapping */}
-      <div className="max-w-[1280px] w-full grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start z-10 px-4 md:px-8">
+      <div className="max-w-[1100px] w-full grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start z-10">
         
         {/* Left Column: Brand & Info */}
         <div className="md:col-span-6 lg:col-span-4 flex flex-col gap-4 text-left">
@@ -159,7 +159,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom Sub-Footer Directory (Tightened margins) */}
-      <div className="w-full max-w-[1280px] border-t border-white/10 pt-6 mt-8 flex flex-col md:flex-row items-center justify-between gap-4 px-4 md:px-8 z-10 text-[9px]">
+      <div className="w-full max-w-[1100px] border-t border-white/10 pt-6 mt-8 flex flex-col md:flex-row items-center justify-between gap-4 z-10 text-[9px]">
         <div className="flex flex-col gap-0.5 md:text-left text-center opacity-65">
           <span className="font-bold tracking-wider font-mono">GDG CRCE // 2026</span>
           <span>Google Developer Group Fr. Conceicao Rodrigues College of Engineering. All rights reserved.</span>

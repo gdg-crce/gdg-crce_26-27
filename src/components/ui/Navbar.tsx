@@ -45,7 +45,7 @@ export default function Navbar() {
       onClick={handleToggle}
       layout
       style={{
-        width: isOpen ? (windowWidth < 768 ? '94vw' : '780px') : '60px',
+        width: isOpen ? (windowWidth < 768 ? '90vw' : '720px') : '60px',
         borderRadius: '9999px',
         boxShadow: isOpen 
           ? '0 25px 50px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.18)' 
@@ -56,7 +56,7 @@ export default function Navbar() {
         stiffness: 300,
         damping: 27,
       }}
-      className={`fixed top-6 left-1/2 -translate-x-1/2 z-[999] bg-black/75 backdrop-blur-md border border-white/10 flex items-center justify-between px-4 h-14 cursor-pointer select-none transition-colors duration-300 ${
+      className={`fixed top-6 left-1/2 -translate-x-1/2 z-[999] bg-black/75 backdrop-blur-md border border-white/10 flex items-center justify-between px-4 h-14 cursor-pointer select-none transition-colors duration-300 overflow-hidden ${
         isOpen ? 'hover:bg-black/85' : 'hover:border-primary/50'
       }`}
     >

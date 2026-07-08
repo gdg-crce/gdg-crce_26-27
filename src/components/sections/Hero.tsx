@@ -1,25 +1,63 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import dynamic from 'next/dynamic';
-import { useEra } from '../ui/EraContext';
+import React, { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import { fraunces, jakarta } from '@/lib/fonts';
-
-const Vinyl3D = dynamic(() => import('../three/Vinyl3D'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-[200px] h-[200px] sm:w-[300px] sm:h-[300px] flex items-center justify-center">
-      <div className="w-28 h-28 rounded-full bg-neutral-900 border-4 border-dashed border-primary/40 animate-spin" />
-    </div>
-  ),
-});
 
 const words = ['build', 'innovate', 'lead'];
 
+// Floating retro objects — positioned to AVOID the center text zone
+const floatingObjects = [
+  {
+    src: '/elements/70s-vinyl-record.png',
+    alt: 'Vinyl Record',
+    className: 'top-[8%] left-[3%] w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40',
+    parallaxSpeed: 0.3,
+    spin: true,
+    spinDuration: 14,
+    delay: 0.2,
+    floatAmp: 12,
+    floatDur: 6,
+  },
+  {
+    src: '/elements/70s-boombox.png',
+    alt: 'Boombox',
+    className: 'top-[6%] right-[3%] w-20 h-20 sm:w-28 sm:h-28 lg:w-36 lg:h-36',
+    parallaxSpeed: 0.5,
+    spin: false,
+    spinDuration: 0,
+    delay: 0.4,
+    floatAmp: 18,
+    floatDur: 7,
+  },
+  {
+    src: '/elements/70s-lava-lamp.png',
+    alt: 'Lava Lamp',
+    className: 'bottom-[18%] left-[4%] w-16 h-16 sm:w-24 sm:h-24 lg:w-28 lg:h-28',
+    parallaxSpeed: 0.7,
+    spin: false,
+    spinDuration: 0,
+    delay: 0.6,
+    floatAmp: 10,
+    floatDur: 5,
+  },
+  {
+    src: '/elements/80s-cassette-tape.png',
+    alt: 'Cassette Tape',
+    className: 'bottom-[18%] right-[4%] w-16 h-16 sm:w-24 sm:h-24 lg:w-28 lg:h-28',
+    parallaxSpeed: 0.45,
+    spin: false,
+    spinDuration: 0,
+    delay: 0.8,
+    floatAmp: 14,
+    floatDur: 8,
+  },
+];
+
 export default function Hero() {
-  const { activeEra } = useEra();
   const [wordIdx, setWordIdx] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -28,162 +66,207 @@ export default function Hero() {
     return () => clearInterval(interval);
   }, []);
 
-  const headlineText = "Where college builders begin their";
+  // Mouse-reactive tilt
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 2;
+      const y = (e.clientY / window.innerHeight - 0.5) * 2;
+      setMousePos({ x, y });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  });
+
+  const tiltX = useSpring(0, { stiffness: 60, damping: 20 });
+  const tiltY = useSpring(0, { stiffness: 60, damping: 20 });
+
+  useEffect(() => {
+    tiltX.set(mousePos.y * -3);
+    tiltY.set(mousePos.x * 3);
+  }, [mousePos, tiltX, tiltY]);
 
   return (
-    <section 
+    <section
+      ref={sectionRef}
       id="home"
-      className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-40 pb-24 overflow-hidden text-left"
+      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6 sm:px-10 md:px-16"
     >
-      {/* Visual Dither Grid Accent */}
-      <div className="absolute inset-0 dither-pattern opacity-[0.04] pointer-events-none" />
-      <div className="film-grain opacity-[0.05]" />
-
-      {/* Iridescent background "Orb" effects */}
+      {/* Atmospheric Background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="film-grain opacity-[0.04]" />
+        <div className="absolute inset-0 dither-pattern opacity-[0.03]" />
+
         <motion.div
           animate={{
-            scale: [1, 1.25, 0.9, 1],
-            x: [0, 80, -60, 0],
-            y: [0, -50, 40, 0],
-            opacity: [0.15, 0.25, 0.15],
+            scale: [1, 1.3, 0.9, 1],
+            x: [0, 100, -80, 0],
+            y: [0, -60, 50, 0],
+            opacity: [0.12, 0.22, 0.12],
           }}
-          transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-20 -left-20 w-[450px] h-[450px] rounded-full blur-[130px]"
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -top-32 -left-32 w-[450px] h-[450px] rounded-full blur-[150px]"
           style={{ background: 'radial-gradient(circle, var(--primary) 0%, transparent 70%)' }}
         />
         <motion.div
           animate={{
-            scale: [1.2, 0.95, 1.15, 1.2],
-            x: [0, -60, 80, 0],
-            y: [0, 70, -40, 0],
-            opacity: [0.12, 0.2, 0.12],
+            scale: [1.2, 0.9, 1.2, 1.2],
+            x: [0, -80, 100, 0],
+            y: [0, 80, -50, 0],
+            opacity: [0.1, 0.18, 0.1],
           }}
-          transition={{ duration: 19, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-1/3 -right-20 w-[500px] h-[500px] rounded-full blur-[150px]"
+          transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-1/3 -right-32 w-[500px] h-[500px] rounded-full blur-[160px]"
           style={{ background: 'radial-gradient(circle, var(--secondary) 0%, transparent 70%)' }}
         />
       </div>
 
-      <div className="max-w-[1280px] w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center z-10 px-4 md:px-8">
-        
-        {/* Kinetic Text Column */}
-        <div className="lg:col-span-7 flex flex-col gap-6 text-left">
+      {/* Floating Objects — Positioned in corners, AWAY from text */}
+      {floatingObjects.map((obj, idx) => {
+        const yOffset = useTransform(scrollYProgress, [0, 1], [0, -180 * obj.parallaxSpeed]);
+        return (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className={`text-xs md:text-sm tracking-[0.35em] uppercase text-primary font-bold ${jakarta.className}`}
+            key={idx}
+            initial={{ opacity: 0, scale: 0.4, y: 60 }}
+            animate={{ opacity: 0.85, scale: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 70, damping: 14, delay: obj.delay }}
+            style={{ y: yOffset }}
+            className={`absolute ${obj.className} z-[1] pointer-events-none`}
           >
-            Google Developer Group — CRCE
+            <motion.div
+              animate={{ y: [-obj.floatAmp, obj.floatAmp, -obj.floatAmp] }}
+              transition={{ duration: obj.floatDur, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <img
+                src={obj.src}
+                alt={obj.alt}
+                className="w-full h-full object-contain drop-shadow-2xl select-none"
+                style={{
+                  animation: obj.spin ? `spin ${obj.spinDuration}s linear infinite` : undefined,
+                  filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.4))',
+                }}
+                draggable={false}
+              />
+            </motion.div>
           </motion.div>
+        );
+      })}
 
-          <h1 className={`text-4xl md:text-6xl lg:text-7.5xl font-black leading-[1.1] tracking-tight ${fraunces.className}`}>
-            {headlineText.split(' ').map((word, idx) => (
+      {/* 3D Perspective Content Wrapper */}
+      <motion.div
+        style={{ perspective: 1200, rotateX: tiltX, rotateY: tiltY }}
+        className="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl py-24"
+      >
+        {/* Subtitle */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className={`text-[10px] sm:text-xs md:text-sm tracking-[0.4em] uppercase font-bold mb-6 ${jakarta.className}`}
+          style={{ color: 'var(--primary)' }}
+        >
+          Google Developer Group — CRCE
+        </motion.div>
+
+        {/* Main Headline — words separated with real spacing */}
+        <h1
+          className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-[1.1] tracking-tight text-center ${fraunces.className}`}
+          style={{ wordSpacing: '0.12em' }}
+        >
+          {['Where', 'college', 'builders', 'begin', 'their'].map((word, idx) => (
+            <motion.span
+              key={idx}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 + 0.06 * idx, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="inline"
+            >
+              {word}{' '}
+            </motion.span>
+          ))}
+
+          {/* Cycling Verb */}
+          <span className="block mt-2 sm:mt-3 h-[1.15em] overflow-hidden relative">
+            <AnimatePresence mode="wait">
               <motion.span
-                key={idx}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.05 * idx, ease: 'easeOut' }}
-                className="inline-block mr-3"
+                key={words[wordIdx]}
+                initial={{ y: '100%', opacity: 0 }}
+                animate={{ y: '0%', opacity: 1 }}
+                exit={{ y: '-100%', opacity: 0 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="absolute inset-0 font-black uppercase text-center"
+                style={{
+                  background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
               >
-                {word}
+                {words[wordIdx]}.
               </motion.span>
-            ))}
-            
-            <span className="block mt-4 h-16 md:h-24 overflow-hidden relative">
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={words[wordIdx]}
-                  initial={{ y: 40, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -40, opacity: 0 }}
-                  transition={{ duration: 0.45, ease: 'easeOut' }}
-                  className="absolute left-0 right-0 text-primary font-black uppercase text-glow"
-                >
-                  {words[wordIdx]}.
-                </motion.span>
-              </AnimatePresence>
-            </span>
-          </h1>
+            </AnimatePresence>
+          </span>
+        </h1>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
-            className={`text-sm md:text-base leading-relaxed opacity-80 max-w-lg font-sans`}
+        {/* Subtext */}
+        <motion.p
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.8 }}
+          className={`text-sm md:text-base lg:text-lg leading-relaxed opacity-70 max-w-xl mt-8 text-center ${jakarta.className}`}
+        >
+          A student tech community bridging analog origins to digital futures.
+          Journey through 1970s warmth, 1980s neon, 1990s grunge, and Y2K gloss.
+        </motion.p>
+
+        {/* CTA Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 1.0 }}
+          className="flex flex-wrap gap-4 mt-8 justify-center"
+        >
+          <a
+            href="#about"
+            className="px-7 py-3 rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            style={{
+              background: 'var(--primary)',
+              color: 'var(--bg)',
+              boxShadow: '0 0 25px color-mix(in srgb, var(--primary) 30%, transparent)',
+            }}
           >
-            Welcome to the command hub of Fr. Conceicao Rodrigues College of Engineering's tech council. Journey through 1970s analog, 1980s synth, 1990s desktop frames, and Y2K cyber gloss.
-          </motion.p>
-        </div>
-
-        {/* 3D Vinyl & 70s Elements Column */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-center gap-8 relative">
-          
-          {/* Main Spin vinyl mesh */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative flex items-center justify-center w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] drop-shadow-2xl"
+            Explore
+          </a>
+          <a
+            href="#what-we-do"
+            className="px-7 py-3 rounded-full text-sm font-bold tracking-wider uppercase border transition-all duration-300 hover:scale-105"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--text) 25%, transparent)',
+              color: 'var(--text)',
+            }}
           >
-            {/* Turntable circle outline backplate */}
-            <div className="absolute w-[260px] h-[260px] sm:w-[320px] sm:h-[320px] rounded-full border border-white/10 bg-black/35 backdrop-blur-[3px] shadow-[inset_0_2px_4px_rgba(255,255,255,0.05)]" />
-            <Vinyl3D />
-          </motion.div>
-
-          {/* 70s Boombox & Lava Lamp side-by-side image slots */}
-          <div className="grid grid-cols-2 gap-4 w-full max-w-[380px] mt-2">
-            
-            {/* Boombox Slot */}
-            <div className="relative h-24 border-2 border-dashed border-primary/30 rounded-2xl bg-black/45 flex flex-col items-center justify-center p-2 hover:border-primary/50 transition-colors">
-              <img
-                src="/elements/70s-boombox.png"
-                alt="1970s Boombox"
-                className="w-full h-full object-contain opacity-0 transition-opacity duration-300 absolute inset-0 p-1"
-                onLoad={(e) => (e.currentTarget.style.opacity = '1')}
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-              <div className="flex flex-col items-center justify-center text-center pointer-events-none p-1 text-primary">
-                <span className="text-xl">📻</span>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider">70s Boombox</span>
-                <span className="text-[7px] font-mono opacity-40 mt-0.5">[Image Slot]</span>
-              </div>
-            </div>
-
-            {/* Lava Lamp Slot */}
-            <div className="relative h-24 border-2 border-dashed border-primary/30 rounded-2xl bg-black/45 flex flex-col items-center justify-center p-2 hover:border-primary/50 transition-colors">
-              <img
-                src="/elements/70s-lava-lamp.png"
-                alt="1970s Lava Lamp"
-                className="w-full h-full object-contain opacity-0 transition-opacity duration-300 absolute inset-0 p-1"
-                onLoad={(e) => (e.currentTarget.style.opacity = '1')}
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-              <div className="flex flex-col items-center justify-center text-center pointer-events-none p-1 text-primary">
-                <span className="text-xl">💡</span>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider">70s Lava Lamp</span>
-                <span className="text-[7px] font-mono opacity-40 mt-0.5">[Image Slot]</span>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-      </div>
+            Our Tracks
+          </a>
+        </motion.div>
+      </motion.div>
 
       {/* Scroll Cue */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -5 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.5, duration: 1, repeat: Infinity, repeatType: 'reverse' }}
-        className="absolute bottom-6 flex flex-col items-center gap-1 cursor-pointer z-10"
+        transition={{ delay: 1.8, duration: 1, repeat: Infinity, repeatType: 'reverse' }}
+        className="absolute bottom-8 flex flex-col items-center gap-1.5 cursor-pointer z-20"
         onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
       >
-        <span className="text-[9px] tracking-[0.25em] uppercase opacity-65 font-sans">
-          Scroll Down
+        <span className={`text-[9px] tracking-[0.3em] uppercase opacity-50 ${jakarta.className}`}>
+          Scroll
         </span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary mt-1">
-          <path d="m6 9 6 6 6-6"/>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-50">
+          <path d="m6 9 6 6 6-6" />
         </svg>
       </motion.div>
     </section>
