@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @theme inline {
   --color-primary: var(--primary);
@@ -1566,4 +1566,366 @@ body {
   background:
     linear-gradient(90deg, transparent 0 62%, rgba(218, 242, 202, 0.056) 71%, rgba(0, 0, 0, 0.24) 82%, transparent 94%),
     radial-gradient(ellipse at 86% 46%, rgba(218, 242, 202, 0.078), transparent 30%);
+}
+
+/* Loader VHS final modeling and staged brand reveal. */
+.loader-film-model {
+  aspect-ratio: 17 / 1;
+  transform: perspective(1800px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+}
+
+.loader-film-body {
+  clip-path: none;
+}
+
+.loader-vhs-model {
+  --gdg-reveal: 0;
+  --logo-reveal: 0;
+  --frc-reveal: 0;
+  --rce-reveal: 0;
+  position: relative;
+  aspect-ratio: 2.08 / 1;
+  width: 100%;
+  transform: perspective(1600px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 34px 64px rgba(0, 0, 0, 0.9));
+}
+
+.loader-vhs-depth,
+.loader-vhs-shell {
+  border-radius: clamp(13px, 1.55vw, 20px);
+}
+
+.loader-vhs-depth {
+  background: linear-gradient(180deg, #050607, #25292d 42%, #030303 100%);
+}
+
+.loader-vhs-depth-back {
+  transform: translate3d(0, 24px, -64px) scale(1.01);
+  filter: blur(1.3px);
+  opacity: 0.92;
+}
+
+.loader-vhs-depth-front {
+  transform: translate3d(0, -5px, 42px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.026),
+    inset 0 22px 34px rgba(255, 255, 255, 0.055),
+    inset 0 -28px 42px rgba(0, 0, 0, 0.55);
+}
+
+.loader-vhs-shell {
+  overflow: hidden;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.14), transparent 14%, rgba(255, 255, 255, 0.035) 43%, transparent 72%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 8px),
+    linear-gradient(180deg, #30343a 0%, #17191c 38%, #0b0c0e 62%, #282c31 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 0 72px rgba(0, 0, 0, 0.76),
+    inset 0 20px 26px rgba(255, 255, 255, 0.055),
+    inset 0 -24px 38px rgba(0, 0, 0, 0.86),
+    0 0 0 1px rgba(0, 0, 0, 0.8);
+}
+
+.loader-vhs-shell::before {
+  inset: 4.2%;
+  border-radius: clamp(9px, 1.1vw, 15px);
+  border: 1px solid rgba(255, 255, 255, 0.095);
+  box-shadow:
+    inset 0 0 42px rgba(0, 0, 0, 0.78),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.loader-vhs-shell::after {
+  content: '';
+  position: absolute;
+  inset: 11% 3.4%;
+  border-radius: 8px;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 0 5%, rgba(0, 0, 0, 0.24) 5.4% 6.4%, transparent 7% 93%, rgba(0, 0, 0, 0.24) 93.6% 94.6%, transparent 95%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 18% 82%, rgba(0, 0, 0, 0.26));
+  mix-blend-mode: overlay;
+}
+
+.loader-vhs-shell-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.18;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.08), transparent 10%),
+    radial-gradient(circle at 78% 63%, rgba(255, 255, 255, 0.055), transparent 9%),
+    repeating-linear-gradient(95deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 14px);
+  mix-blend-mode: screen;
+}
+
+.loader-vhs-bevel {
+  position: absolute;
+  left: 5.5%;
+  right: 5.5%;
+  z-index: 3;
+  height: 3.4%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12) 18%, rgba(0, 0, 0, 0.46) 52%, rgba(255, 255, 255, 0.08) 84%, transparent);
+  pointer-events: none;
+}
+
+.loader-vhs-bevel-top { top: 6.4%; }
+.loader-vhs-bevel-bottom { bottom: 6.4%; transform: rotate(180deg); }
+
+.loader-vhs-top-rail,
+.loader-vhs-bottom-rail {
+  left: 6%;
+  right: 6%;
+  z-index: 4;
+  border-radius: 5px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(0, 0, 0, 0.72)),
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(255, 255, 255, 0.04) 23px, transparent 25px);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.09),
+    inset 0 -7px 12px rgba(0, 0, 0, 0.86);
+}
+
+.loader-vhs-top-rail { top: 8%; height: 10%; }
+.loader-vhs-bottom-rail { bottom: 8%; height: 10%; }
+
+.loader-vhs-mouth {
+  position: absolute;
+  left: 29%;
+  right: 29%;
+  bottom: 20%;
+  z-index: 6;
+  height: 8%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #030303, #1a1a1a 42%, #020202);
+  box-shadow:
+    inset 0 3px 4px rgba(255, 255, 255, 0.05),
+    inset 0 -6px 9px rgba(0, 0, 0, 0.9),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.loader-vhs-window {
+  top: 22.2%;
+  z-index: 5;
+  width: 22%;
+  height: 43.5%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(53, 58, 63, 0.84) 0 42%, #090a0b 43% 100%);
+  border: clamp(9px, 1.2vw, 15px) solid #050505;
+  box-shadow:
+    inset 0 0 28px rgba(0, 0, 0, 0.92),
+    inset 0 3px 4px rgba(255, 255, 255, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 10px 26px rgba(0, 0, 0, 0.34);
+}
+
+.loader-vhs-window-left { left: 8%; }
+.loader-vhs-window-right { right: 8%; }
+
+.loader-vhs-reel {
+  inset: 9%;
+  background:
+    radial-gradient(circle, #040404 0 10%, rgba(255, 255, 255, 0.12) 11% 14%, transparent 15%),
+    conic-gradient(from 0deg, #070707 0 15deg, #d0d0ca 15deg 27deg, #101010 27deg 68deg, #bdbdb8 68deg 83deg, #080808 83deg 152deg, #d8d8d0 152deg 166deg, #080808 166deg 238deg, #c8c8c2 238deg 254deg, #080808 254deg 360deg);
+  box-shadow:
+    inset 0 0 26px rgba(0, 0, 0, 0.92),
+    0 0 0 8px rgba(255, 255, 255, 0.035),
+    0 0 22px rgba(0, 0, 0, 0.5);
+}
+
+.loader-vhs-tape-path {
+  left: 29%;
+  right: 29%;
+  bottom: 22%;
+  z-index: 4;
+  height: 8%;
+  opacity: 0.92;
+}
+
+.loader-vhs-label {
+  left: 50%;
+  top: 28%;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: clamp(14px, 2.1vw, 28px);
+  width: min(74%, 760px);
+  height: 34%;
+  transform: translateX(-50%) translateZ(58px);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1), transparent 34%),
+    linear-gradient(180deg, #2a2d31, #151719 62%, #0c0d0f);
+  border: 1px solid rgba(255, 255, 255, 0.105);
+  box-shadow:
+    inset 0 0 30px rgba(0, 0, 0, 0.82),
+    inset 0 2px 1px rgba(255, 255, 255, 0.08),
+    inset 0 -12px 20px rgba(0, 0, 0, 0.54),
+    0 10px 24px rgba(0, 0, 0, 0.42);
+  padding: clamp(10px, 1.55vw, 20px) clamp(16px, 2.1vw, 28px);
+}
+
+.loader-vhs-label::before {
+  content: '';
+  position: absolute;
+  inset: 9% 2.5%;
+  border-radius: 5px;
+  border: 1px dashed rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.loader-vhs-engraved {
+  color: rgba(0, 0, 0, 0.62);
+  font-size: clamp(1.28rem, 3.2vw, 3.45rem);
+  font-weight: 950;
+  letter-spacing: 0.075em;
+  line-height: 1;
+  text-shadow:
+    0 -1px 1px rgba(255, 255, 255, 0.15),
+    0 2px 2px rgba(0, 0, 0, 0.96),
+    0 0 10px rgba(0, 0, 0, 0.34);
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.035));
+}
+
+.loader-vhs-engraved-left {
+  justify-self: end;
+}
+
+.loader-vhs-right-mark {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: clamp(7px, 1vw, 14px);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.loader-vhs-reveal-gdg {
+  opacity: var(--gdg-reveal);
+  transform: translateY(0);
+}
+
+.loader-vhs-reveal-frc {
+  opacity: var(--frc-reveal);
+  transform: translateY(0);
+}
+
+.loader-vhs-reveal-rce {
+  opacity: var(--rce-reveal);
+  transform: translateY(0);
+}
+
+.loader-vhs-logo-well {
+  position: relative;
+  z-index: 2;
+  width: clamp(64px, 9.2vw, 124px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 45% 35%, rgba(255, 255, 255, 0.09), transparent 34%),
+    radial-gradient(circle, #252a2d 0 43%, #070809 100%);
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.9),
+    inset 0 2px 2px rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.075),
+    0 10px 18px rgba(0, 0, 0, 0.45);
+  opacity: var(--logo-reveal);
+  transform: translateZ(22px) scale(var(--logo-scale));
+}
+
+.loader-vhs-logo-well::before {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.72);
+}
+
+.loader-vhs-logo {
+  position: relative;
+  z-index: 1;
+  width: 66%;
+  height: 66%;
+  object-fit: contain;
+  filter: grayscale(0.18) contrast(1.12) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.76));
+}
+
+.loader-vhs-microcopy {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: clamp(5px, 0.65vw, 9px);
+  color: rgba(221, 238, 210, 0.22);
+  font-size: clamp(0.42rem, 0.75vw, 0.68rem);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: var(--rce-reveal);
+}
+
+.loader-vhs-format {
+  position: absolute;
+  z-index: 9;
+  bottom: 12.8%;
+  color: rgba(215, 226, 205, 0.18);
+  font-size: clamp(0.5rem, 0.9vw, 0.86rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.85);
+}
+
+.loader-vhs-format-left { left: 10%; }
+.loader-vhs-format-right { right: 10%; }
+
+.loader-vhs-screw {
+  z-index: 10;
+  width: clamp(11px, 1.25vw, 16px);
+  background:
+    radial-gradient(circle, #050505 0 21%, #33373c 22% 58%, #060606 59% 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.92),
+    0 1px 1px rgba(255, 255, 255, 0.04);
+}
+
+.loader-vhs-screw-a { left: 4.4%; top: 8.6%; }
+.loader-vhs-screw-b { right: 4.4%; top: 8.6%; }
+.loader-vhs-screw-c { left: 4.4%; bottom: 8.6%; }
+.loader-vhs-screw-d { right: 4.4%; bottom: 8.6%; }
+
+@media (max-width: 720px) {
+  .loader-film-model {
+    aspect-ratio: 11.5 / 1;
+  }
+
+  .loader-vhs-model {
+    aspect-ratio: 1.92 / 1;
+  }
+
+  .loader-vhs-label {
+    width: 76%;
+    height: 36%;
+    column-gap: 9px;
+    padding-inline: 13px;
+  }
+
+  .loader-vhs-engraved {
+    font-size: clamp(0.88rem, 4.6vw, 1.6rem);
+    letter-spacing: 0.045em;
+  }
+
+  .loader-vhs-logo-well {
+    width: clamp(48px, 15vw, 74px);
+  }
+
+  .loader-vhs-microcopy,
+  .loader-vhs-format {
+    display: none;
+  }
 }

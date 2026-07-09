@@ -84,11 +84,12 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     const intro = clamp(p / 0.1);
     const zoomOut = clamp((p - 0.08) / 0.36);
     const rewind = clamp((p - 0.18) / 0.56);
-    const filmExit = clamp((p - 0.68) / 0.16);
+    const filmExit = clamp((p - 0.62) / 0.13);
     const pullForce = clamp((p - 0.61) / 0.11) * (1 - clamp((p - 0.84) / 0.08));
     const pullTexture = clamp((p - 0.62) / 0.08) * (1 - clamp((p - 0.82) / 0.07)) * 0.22;
-    const tapeIn = clamp((p - 0.74) / 0.16);
-    const finalZoom = clamp((p - 0.9) / 0.09);
+    const tapeIn = clamp((p - 0.82) / 0.11);
+    const finalZoom = clamp((p - 0.93) / 0.06);
+    const revealProgress = clamp((p - 0.86) / 0.12);
     const exitLock = 1 - filmExit;
     const jitter = Math.sin(p * 165) * rewind * exitLock * (1 - finalZoom) * 1.15;
 
@@ -96,22 +97,23 @@ export default function Preloader({ onComplete }: PreloaderProps) {
       p,
       activeFrame: frameForProgress(p),
       rewind,
-      filmOpacity: intro * (1 - clamp((p - 0.82) / 0.08)),
-      filmX: 54 - zoomOut * 54 - rewind * 56 + filmExit * 124 + pullForce * 18 + jitter,
+      filmOpacity: intro * (1 - clamp((p - 0.72) / 0.06)),
+      filmX: 54 - zoomOut * 54 - rewind * 56 + filmExit * 154 + pullForce * 18 + jitter,
       filmY: -2.5 + zoomOut * 1.8,
       filmScale: 3.38 - zoomOut * 1.78 - filmExit * 0.18,
       filmScaleX: 1 + pullForce * 0.11,
       filmFilter: 'blur(' + pullForce * 0.7 + 'px) contrast(' + (1 + pullForce * 0.06) + ') brightness(' + (1 + pullForce * 0.02) + ')',
-      filmRotate: -0.35 + rewind * -0.55,
-      filmSkew: rewind * exitLock * -0.75,
+      filmRotate: 0,
+      filmSkew: 0,
       tapeOpacity: tapeIn,
-      tapeX: 116 - tapeIn * 116,
+      tapeX: 118 - tapeIn * 118,
       tapeY: -1,
-      tapeScale: 1.02 + finalZoom * 0.14,
+      tapeScale: 0.9 + tapeIn * 0.1 + finalZoom * 0.08,
       tapeRotate: 0,
       scanOpacity: 0.09 + rewind * 0.16 + pullTexture * 0.12,
       glitchOpacity: rewind * (1 - finalZoom * 0.75) * 0.22 + pullTexture * 0.68,
-      logoScale: 0.94 + finalZoom * 0.1,
+      logoScale: 0.96 + finalZoom * 0.08,
+      revealProgress,
       pullTexture,
     };
   }, [progress]);
@@ -130,7 +132,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
           role="status"
           aria-label="GDG CRCE rewind loader"
         >
-          <div ref={scrollTrackRef} className="relative h-[470vh]">
+          <div ref={scrollTrackRef} className="relative h-[540vh]">
             <div className="sticky top-0 h-screen overflow-hidden">
               <div className="absolute inset-0 bg-black" />
               <div className="loader-black-grain" />
@@ -141,7 +143,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
               <div className="loader-rewind-pull" style={{ opacity: visual.pullTexture }} />
 
               <motion.div
-                className="absolute left-1/2 top-[47%] w-[min(2780px,238vw)] -translate-x-1/2 -translate-y-1/2 will-change-transform"
+                className="absolute left-1/2 top-[47%] w-[min(3340px,282vw)] -translate-x-1/2 -translate-y-1/2 will-change-transform"
                 style={{
                   x: `${visual.filmX}%`,
                   y: `${visual.filmY}vh`,
@@ -158,7 +160,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
               </motion.div>
 
               <motion.div
-                className="absolute left-1/2 top-[52%] w-[min(1180px,96vw)] -translate-x-1/2 -translate-y-1/2 will-change-transform"
+                className="absolute left-1/2 top-[51%] w-[min(1080px,92vw)] -translate-x-1/2 -translate-y-1/2 will-change-transform"
                 style={{
                   x: `${visual.tapeX}%`,
                   y: `${visual.tapeY}vh`,
@@ -167,7 +169,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
                   opacity: visual.tapeOpacity,
                 }}
               >
-                <VHSTape reelRotation={visual.p * 1360} logoScale={visual.logoScale} />
+                <VHSTape reelRotation={visual.p * 1360} logoScale={visual.logoScale} revealProgress={visual.revealProgress} />
               </motion.div>
 
               <div className="absolute bottom-7 left-1/2 h-px w-[min(360px,66vw)] -translate-x-1/2 overflow-hidden rounded-full bg-white/10">
