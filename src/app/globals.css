@@ -123,3 +123,142 @@ body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* Rewind preloader: procedural film/VHS details kept CSS-only for startup speed. */
+.preloader-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, transparent 0 42%, rgba(0, 0, 0, 0.28) 68%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 24%, rgba(0, 0, 0, 0.3));
+  z-index: 2;
+}
+
+.preloader-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.05) 0,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px,
+      transparent 5px
+    );
+  mix-blend-mode: soft-light;
+  animation: analog-roll 0.5s linear infinite;
+}
+
+.film-sprockets {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: clamp(12px, 1.55vw, 20px);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent clamp(15px, 2.35vw, 27px),
+    #f7efe0 clamp(15px, 2.35vw, 27px),
+    #f7efe0 clamp(24px, 3vw, 39px),
+    transparent clamp(24px, 3vw, 39px),
+    transparent clamp(39px, 4.7vw, 62px)
+  );
+  opacity: 0.98;
+}
+
+.film-sprockets-top {
+  top: clamp(6px, 0.7vw, 9px);
+}
+
+.film-sprockets-bottom {
+  bottom: clamp(6px, 0.7vw, 9px);
+}
+
+.vhs-shell {
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.12), transparent 19%, rgba(255, 255, 255, 0.04) 44%, transparent 72%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 10px),
+    linear-gradient(160deg, #22262b 0%, #101113 45%, #25282d 100%);
+}
+
+.vhs-shell::before,
+.vhs-shell::after {
+  content: '';
+  position: absolute;
+  inset: clamp(7px, 1vw, 12px);
+  border-radius: 13px;
+  pointer-events: none;
+}
+
+.vhs-shell::before {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.65);
+}
+
+.vhs-shell::after {
+  background: linear-gradient(90deg, transparent 0 43%, rgba(255, 255, 255, 0.09) 48%, transparent 54%);
+  mix-blend-mode: overlay;
+}
+
+.vhs-reel {
+  position: absolute;
+  inset: 11%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #070707 0 14%, transparent 15%),
+    conic-gradient(
+      from 0deg,
+      #090909 0 12deg,
+      #c9c9c9 12deg 26deg,
+      #111 26deg 54deg,
+      #c9c9c9 54deg 70deg,
+      #080808 70deg 120deg,
+      #d9d9d9 120deg 136deg,
+      #121212 136deg 190deg,
+      #c6c6c6 190deg 208deg,
+      #080808 208deg 290deg,
+      #d7d7d7 290deg 306deg,
+      #111 306deg 360deg
+    );
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.85), 0 0 0 7px rgba(255, 255, 255, 0.04);
+  transition: transform 0.08s linear;
+}
+
+.preloader-tracking {
+  height: 100%;
+  width: 120%;
+  margin-left: -10%;
+  background:
+    linear-gradient(90deg, transparent, rgba(0, 212, 232, 0.45), transparent 38%),
+    repeating-linear-gradient(0deg, transparent 0 9px, rgba(255, 255, 255, 0.32) 10px, transparent 13px),
+    repeating-linear-gradient(90deg, rgba(232, 65, 42, 0.4) 0 8px, rgba(2, 138, 138, 0.33) 8px 16px, transparent 16px 28px);
+  filter: blur(0.4px) contrast(1.25);
+  transform: skewY(-2deg);
+  animation: tracking-jitter 0.18s steps(2, end) infinite;
+}
+
+@keyframes analog-roll {
+  from { transform: translateY(0); }
+  to { transform: translateY(10px); }
+}
+
+@keyframes tracking-jitter {
+  0% { transform: translateX(-3%) skewY(-2deg); opacity: 0.45; }
+  33% { transform: translateX(2%) skewY(1deg); opacity: 0.72; }
+  66% { transform: translateX(-1%) skewY(-4deg); opacity: 0.58; }
+  100% { transform: translateX(3%) skewY(2deg); opacity: 0.68; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader-scanlines,
+  .preloader-tracking {
+    animation: none;
+  }
+
+  .vhs-reel {
+    transition: none;
+  }
+}
