@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Preloader from '@/components/sections/Preloader';
 import Navbar from '@/components/ui/Navbar';
 import Hero from '@/components/sections/Hero';
-import About from '@/components/sections/About';
+import Aboutdisco from '@/components/sections/Aboutdisco';
 import WhatWeDo from '@/components/sections/WhatWeDo';
 import Eventtimeline from '@/components/sections/Eventtimeline';
 import Council from '@/components/sections/Council';
@@ -34,7 +34,7 @@ export default function Home() {
               
               <main className="flex-grow">
                 <Hero />
-                <About />
+                <Aboutdisco />
                 <WhatWeDo />
                 <Eventtimeline />
                 <Council />
