@@ -1,26 +1,26 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import Preloader from '@/components/sections/Preloader';
-import Navbar from '@/components/ui/Navbar';
-import Hero from '@/components/sections/Hero';
-import Aboutdisco from '@/components/sections/Aboutdisco';
-import WhatWeDo from '@/components/sections/WhatWeDo';
-import Eventtimeline from '@/components/sections/Eventtimeline';
-import Council from '@/components/sections/Council';
-import Footer from '@/components/sections/Footer';
 import { EraProvider } from '@/components/ui/EraContext';
+
+const Navbar = dynamic(() => import('@/components/ui/Navbar'), { loading: () => null });
+const Hero = dynamic(() => import('@/components/sections/Hero'), { loading: () => null });
+const Aboutdisco = dynamic(() => import('@/components/sections/Aboutdisco'), { loading: () => null });
+const WhatWeDo = dynamic(() => import('@/components/sections/WhatWeDo'), { loading: () => null });
+const Eventtimeline = dynamic(() => import('@/components/sections/Eventtimeline'), { loading: () => null });
+const Council = dynamic(() => import('@/components/sections/Council'), { loading: () => null });
+const Footer = dynamic(() => import('@/components/sections/Footer'), { loading: () => null });
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
 
   return (
     <>
-      {/* 1. Preloader Overlay */}
       <Preloader onComplete={() => setLoading(false)} />
 
-      {/* 2. Main Page Render */}
       <AnimatePresence>
         {!loading && (
           <motion.div
@@ -31,7 +31,7 @@ export default function Home() {
           >
             <EraProvider>
               <Navbar />
-              
+
               <main className="flex-grow">
                 <Hero />
                 <Aboutdisco />
