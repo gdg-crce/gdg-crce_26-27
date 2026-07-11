@@ -1,10 +1,10 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { motion } from 'framer-motion';
 import { orbitron, shareTechMono, specialElite } from '@/lib/fonts';
 
-export type FilmTapeFrame = '2000x' | '90s' | '80s' | '70s';
+export type FilmTapeFrame = '2020s' | '2000x' | '90s' | '80s' | '70s';
 
 interface FilmTapeProps {
   activeFrame: FilmTapeFrame;
@@ -12,20 +12,20 @@ interface FilmTapeProps {
 }
 
 const frames = [
-  { era: '2000x', label: '2000', suffix: 'x', code: 'F26', stock: 'K-00' },
-  { era: '2000x', label: '00s', code: 'F25', stock: 'Y2K' },
-  { era: '2000x', label: 'OPEN', code: 'F24', stock: 'SRC' },
-  { era: '90s', label: '90s', code: 'F18', stock: 'NET' },
-  { era: '90s', label: 'www', code: 'F16', stock: 'LAB' },
-  { era: '90s', label: 'LINK', code: 'F15', stock: 'COL' },
-  { era: '80s', label: '80s', code: 'F09', stock: 'SYS' },
-  { era: '80s', label: 'CRT', code: 'F08', stock: 'MAG' },
-  { era: '80s', label: 'BOOT', code: 'F07', stock: 'ROM' },
-  { era: '70s', label: '70s', code: 'F03', stock: 'ORG' },
-  { era: '70s', label: 'IDEA', code: 'F02', stock: 'EXP' },
-  { era: '70s', label: 'ROOT', code: 'F01', stock: 'GEN' },
-  { era: '70s', label: 'START', code: 'A00', stock: 'SUN' },
-  { era: '70s', label: '1970', code: 'A01', stock: 'OLD' },
+  { era: '2020s', label: '2026', suffix: 's', code: '▶ 24A', stock: 'KODAK 5219' },
+  { era: '2020s', label: '20s', code: '▶ 23A', stock: 'SAFETY FILM' },
+  { era: '2020s', label: 'NOW', code: '▶ 22A', stock: 'GDG FRCRCE' },
+  { era: '90s', label: '90s', code: '▶ 18A', stock: 'EASTMAN 5247' },
+  { era: '90s', label: 'www', code: '▶ 17A', stock: 'PANAVISION' },
+  { era: '90s', label: 'LINK', code: '▶ 16A', stock: '35MM COLOR' },
+  { era: '80s', label: '80s', code: '▶ 09A', stock: 'EASTMAN 5293' },
+  { era: '80s', label: 'CRT', code: '▶ 08A', stock: 'MAGNETIC' },
+  { era: '80s', label: 'BOOT', code: '▶ 07A', stock: 'ARCHIVE CH-1' },
+  { era: '70s', label: '70s', code: '▶ 03A', stock: 'KODACHROME' },
+  { era: '70s', label: 'IDEA', code: '▶ 02A', stock: 'REEL 01' },
+  { era: '70s', label: 'ROOT', code: '▶ 01A', stock: 'ORIGIN NEG' },
+  { era: '70s', label: 'START', code: '▶ 00A', stock: 'SYNC MASTER' },
+  { era: '70s', label: '1970', code: '■ REC', stock: 'EST. 1970' },
 ] as const;
 
 export default function FilmTape({ activeFrame, rewindIntensity }: FilmTapeProps) {
@@ -39,8 +39,13 @@ export default function FilmTape({ activeFrame, rewindIntensity }: FilmTapeProps
         <div className="loader-film-edge loader-film-edge-bottom" />
         <div className="loader-film-sprockets loader-film-sprockets-top" />
         <div className="loader-film-sprockets loader-film-sprockets-bottom" />
-        <div className={`${shareTechMono.className} loader-film-code loader-film-code-top`}>CONTINUITY MASTER 26/27 / GDG CRCE / REWIND SOURCE STRIP</div>
-        <div className={`${shareTechMono.className} loader-film-code loader-film-code-bottom`}>SUNEKHEIA ARCHIVE / 2000X TO 1970 / ANALOG FAST REWIND</div>
+        <div className="loader-film-soundtrack" />
+        <div className={`${shareTechMono.className} loader-film-code loader-film-code-top`}>
+          KODAK SAFETY FILM 5219 / 35MM CINEMA STRIP / CONTINUITY ARCHIVE 26-27
+        </div>
+        <div className={`${shareTechMono.className} loader-film-code loader-film-code-bottom`}>
+          GDG FRCRCE ARCHIVE / REWINDING 2020s BACK TO 1970s / ANALOG HIGH SPEED
+        </div>
 
         <div className="loader-film-cells">
           {frames.map((frame, index) => {
@@ -56,11 +61,11 @@ export default function FilmTape({ activeFrame, rewindIntensity }: FilmTapeProps
                 <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-right`}>{frame.stock}</div>
                 <motion.div
                   key={`${activeFrame}-${frame.code}`}
-                  initial={{ opacity: 0.42, y: 10, filter: 'blur(5px)' }}
+                  initial={{ opacity: 0.75, y: 6, filter: 'blur(0.8px)' }}
                   animate={{
-                    opacity: isActive ? 0.92 : 0.46,
+                    opacity: isActive ? 1 : 0.72,
                     y: 0,
-                    filter: isActive ? 'blur(1.4px)' : 'blur(3.1px)',
+                    filter: isActive ? 'blur(0px)' : 'blur(0.35px)',
                   }}
                   transition={{ duration: 0.12, ease: 'linear' }}
                   className={`${isOpeningFrame ? orbitron.className : specialElite.className} loader-film-year ${isOpeningFrame ? 'loader-film-year-opening' : ''}`}

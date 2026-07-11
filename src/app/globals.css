@@ -269,7 +269,7 @@ body {
   inset: 0;
   z-index: 6;
   pointer-events: none;
-  opacity: 0.26;
+  opacity: 0.44;
   mix-blend-mode: screen;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='0.8'/%3E%3C/svg%3E");
   animation: loader-grain-shift 0.34s steps(2, end) infinite;
@@ -382,6 +382,28 @@ body {
 .loader-film-sprockets-top { top: 4.3%; }
 .loader-film-sprockets-bottom { bottom: 4.3%; }
 
+.loader-film-soundtrack {
+  position: absolute;
+  top: 18.5%;
+  bottom: 18.5%;
+  left: 0.8%;
+  width: 0.9%;
+  z-index: 3;
+  background: repeating-linear-gradient(
+    180deg,
+    #d4cfc4 0px,
+    #d4cfc4 2px,
+    transparent 2px,
+    transparent 5px,
+    #d4cfc4 5px,
+    #d4cfc4 7px,
+    transparent 7px,
+    transparent 11px
+  );
+  opacity: 0.82;
+  filter: drop-shadow(1px 0 1px rgba(0, 0, 0, 0.85));
+}
+
 .loader-film-cells {
   position: absolute;
   inset: 23% 2.2% 23%;
@@ -414,10 +436,10 @@ body {
 .loader-film-cell-noise {
   position: absolute;
   inset: 0;
-  opacity: 0.3;
+  opacity: 0.48;
   background:
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 18px),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 14px);
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 12px);
 }
 
 .loader-film-year {
@@ -440,7 +462,7 @@ body {
   font-size: clamp(2.1rem, 7.2vw, 8.8rem);
   letter-spacing: 0;
   color: rgba(6, 6, 6, 0.9);
-  filter: blur(1.15px) contrast(0.94);
+  filter: contrast(1.03);
 }
 
 .loader-film-year-x {
@@ -448,8 +470,8 @@ body {
   margin-top: 14%;
   margin-left: 0.04em;
   font-size: 0.22em;
-  opacity: 0.72;
-  filter: blur(0.8px);
+  opacity: 0.8;
+  filter: blur(0.15px);
 }
 
 .loader-film-gate-shadow {
@@ -2027,3 +2049,92 @@ body {
     display: none;
   }
 }
+
+/* ── Atmosphere & Negative Space Enhancements for Reviewer Feedback ── */
+
+/* Subtle analog cinema projector beam to give rich depth to background negative space */
+.loader-projector-beam {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 47%, rgba(245, 230, 210, 0.05) 0%, rgba(230, 205, 175, 0.02) 38%, transparent 68%),
+    linear-gradient(180deg, rgba(16, 13, 10, 0.55) 0%, transparent 28%, transparent 72%, rgba(10, 8, 7, 0.65) 100%);
+}
+
+/* Subtle 24fps projector lamp flicker */
+.loader-projector-flicker {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 248, 235, 0.038), transparent 75%);
+  mix-blend-mode: screen;
+  animation: projector-lamp-flicker 0.16s steps(2, end) infinite;
+}
+
+@keyframes projector-lamp-flicker {
+  0% { opacity: 0.25; }
+  33% { opacity: 0.65; }
+  66% { opacity: 0.42; }
+  100% { opacity: 0.58; }
+}
+
+/* Floating projector dust particles across negative space */
+.loader-dust-mote {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(255, 245, 225, 0.55);
+  box-shadow: 0 0 4px rgba(255, 245, 225, 0.35);
+  pointer-events: none;
+  animation: float-dust-mote linear infinite;
+}
+
+.loader-dust-mote-1  { left: 12%; bottom: -5%;  width: 2.5px; height: 2.5px; animation-duration: 18s; animation-delay: -2s; opacity: 0.45; }
+.loader-dust-mote-2  { left: 24%; bottom: -5%;  width: 1.5px; height: 1.5px; animation-duration: 22s; animation-delay: -7s; opacity: 0.35; }
+.loader-dust-mote-3  { left: 35%; bottom: -5%;  width: 2px;   height: 2px;   animation-duration: 16s; animation-delay: -11s; opacity: 0.5; }
+.loader-dust-mote-4  { left: 44%; bottom: -5%;  width: 3px;   height: 3px;   animation-duration: 25s; animation-delay: -4s; opacity: 0.4; }
+.loader-dust-mote-5  { left: 52%; bottom: -5%;  width: 1.8px; height: 1.8px; animation-duration: 19s; animation-delay: -15s; opacity: 0.48; }
+.loader-dust-mote-6  { left: 63%; bottom: -5%;  width: 2.2px; height: 2.2px; animation-duration: 21s; animation-delay: -9s; opacity: 0.38; }
+.loader-dust-mote-7  { left: 74%; bottom: -5%;  width: 1.5px; height: 1.5px; animation-duration: 17s; animation-delay: -3s; opacity: 0.42; }
+.loader-dust-mote-8  { left: 86%; bottom: -5%;  width: 2.6px; height: 2.6px; animation-duration: 24s; animation-delay: -12s; opacity: 0.36; }
+.loader-dust-mote-9  { left: 18%; bottom: -5%;  width: 2px;   height: 2px;   animation-duration: 20s; animation-delay: -14s; opacity: 0.44; }
+.loader-dust-mote-10 { left: 29%; bottom: -5%;  width: 1.6px; height: 1.6px; animation-duration: 15s; animation-delay: -6s; opacity: 0.52; }
+.loader-dust-mote-11 { left: 49%; bottom: -5%;  width: 2.4px; height: 2.4px; animation-duration: 23s; animation-delay: -17s; opacity: 0.39; }
+.loader-dust-mote-12 { left: 68%; bottom: -5%;  width: 1.9px; height: 1.9px; animation-duration: 18s; animation-delay: -10s; opacity: 0.46; }
+.loader-dust-mote-13 { left: 79%; bottom: -5%;  width: 2.2px; height: 2.2px; animation-duration: 26s; animation-delay: -5s; opacity: 0.33; }
+.loader-dust-mote-14 { left: 91%; bottom: -5%;  width: 1.4px; height: 1.4px; animation-duration: 16s; animation-delay: -13s; opacity: 0.55; }
+.loader-dust-mote-15 { left: 7%;  bottom: -5%;  width: 2.8px; height: 2.8px; animation-duration: 21s; animation-delay: -8s; opacity: 0.41; }
+.loader-dust-mote-16 { left: 58%; bottom: -5%;  width: 1.7px; height: 1.7px; animation-duration: 19s; animation-delay: -1s; opacity: 0.47; }
+
+@keyframes float-dust-mote {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.8);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(24px, -55vh, 0) scale(1.1);
+    opacity: 0.65;
+  }
+  85% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate3d(-18px, -108vh, 0) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-projector-flicker,
+  .loader-dust-mote {
+    animation: none;
+  }
+}
+
