@@ -87,8 +87,8 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     const filmExit = clamp((p - 0.62) / 0.13);
     const pullForce = clamp((p - 0.61) / 0.11) * (1 - clamp((p - 0.84) / 0.08));
     const pullTexture = clamp((p - 0.62) / 0.08) * (1 - clamp((p - 0.82) / 0.07)) * 0.22;
-    const tapeIn = clamp((p - 0.82) / 0.11);
-    const finalZoom = clamp((p - 0.93) / 0.06);
+    const tapeIn = clamp((p - 0.76) / 0.18);
+    const finalZoom = clamp((p - 0.94) / 0.05);
     const revealProgress = clamp((p - 0.86) / 0.12);
     const exitLock = 1 - filmExit;
     const jitter = Math.sin(p * 165) * rewind * exitLock * (1 - finalZoom) * 1.15;
@@ -105,11 +105,9 @@ export default function Preloader({ onComplete }: PreloaderProps) {
       filmFilter: 'blur(' + pullForce * 0.7 + 'px) contrast(' + (1 + pullForce * 0.06) + ') brightness(' + (1 + pullForce * 0.02) + ')',
       filmRotate: 0,
       filmSkew: 0,
-      tapeOpacity: tapeIn,
-      tapeX: 118 - tapeIn * 118,
-      tapeY: -1,
-      tapeScale: 0.9 + tapeIn * 0.1 + finalZoom * 0.08,
-      tapeRotate: 0,
+      tapeOpacity: Math.min(tapeIn * 3, 1),
+      tapeX: 100 * (1 - tapeIn),
+      tapeScale: 1 + finalZoom * 0.06,
       scanOpacity: 0.09 + rewind * 0.16 + pullTexture * 0.12,
       glitchOpacity: rewind * (1 - finalZoom * 0.75) * 0.22 + pullTexture * 0.68,
       logoScale: 0.96 + finalZoom * 0.08,
@@ -159,18 +157,25 @@ export default function Preloader({ onComplete }: PreloaderProps) {
                 <FilmTape activeFrame={visual.activeFrame} rewindIntensity={visual.rewind} />
               </motion.div>
 
-              <motion.div
-                className="absolute left-1/2 top-[51%] w-[min(1080px,92vw)] -translate-x-1/2 -translate-y-1/2 will-change-transform"
-                style={{
-                  x: `${visual.tapeX}%`,
-                  y: `${visual.tapeY}vh`,
-                  scale: visual.tapeScale,
-                  rotate: visual.tapeRotate,
-                  opacity: visual.tapeOpacity,
-                }}
-              >
-                <VHSTape reelRotation={visual.p * 1360} logoScale={visual.logoScale} revealProgress={visual.revealProgress} />
-              </motion.div>
+              {/* ── Bitfalk-style clipped reveal ──
+                   Outer: FULL VIEWPORT clip boundary (inset-0 overflow-hidden).
+                   Inner: centered tape that slides from off-screen right to center.
+                   The tape emerges from the actual right edge of the screen. */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <motion.div
+                  className="absolute left-1/2 top-1/2 -translate-y-1/2 will-change-transform pointer-events-auto"
+                  style={{
+                    width: 'min(1080px, 92vw)',
+                    height: '53vw',
+                    maxHeight: '574px',
+                    x: `calc(-50% + ${visual.tapeX}vw)`,
+                    opacity: visual.tapeOpacity,
+                    scale: visual.tapeScale,
+                  }}
+                >
+                  <VHSTape reelRotation={visual.p * 1360} logoScale={visual.logoScale} revealProgress={visual.revealProgress} />
+                </motion.div>
+              </div>
 
               <div className="absolute bottom-7 left-1/2 h-px w-[min(360px,66vw)] -translate-x-1/2 overflow-hidden rounded-full bg-white/10">
                 <div className="h-full rounded-full bg-neutral-300 shadow-[0_0_18px_rgba(255,255,255,0.45)]" style={{ width: `${visual.p * 100}%` }} />
