@@ -6,6 +6,12 @@ import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import EventPoster3D from './EventPoster3D';
 import { events } from '@/components/sections/events/eventData';
+import {
+  RightSideAlleyDetail,
+  WallDecalsAndGrime,
+  AlleyDepthLayers,
+  UrbanStreetFloor,
+} from './AlleyProps3D';
 
 /* ═══════════════════════════════════════════════════
    Interactive Human Camera Rig — Stride + Mouse Look
@@ -90,13 +96,13 @@ function NeonAlleySign3D() {
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    // Authentic neon tube electrical flicker
+    // Controlled neon electrical flicker (#3 in lighting hierarchy)
     const flicker = Math.random() > 0.94 ? 0.35 : 1.0;
-    const pulse = 0.85 + Math.sin(t * 3.5) * 0.15;
+    const pulse = 0.88 + Math.sin(t * 3.5) * 0.12;
     const intensity = flicker * pulse;
 
-    if (lightRef.current) lightRef.current.intensity = 260 * intensity;
-    if (matRef.current) matRef.current.emissiveIntensity = 2.2 * intensity;
+    if (lightRef.current) lightRef.current.intensity = 110 * intensity;
+    if (matRef.current) matRef.current.emissiveIntensity = 1.2 * intensity;
   });
 
   const signTexture = useMemo(() => {
@@ -116,7 +122,7 @@ function NeonAlleySign3D() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = '#FF0055';
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 10;
     ctx.fillStyle = '#FF2277';
     ctx.fillText('MTV // LIVE 90s', 256, 64);
 
@@ -125,32 +131,32 @@ function NeonAlleySign3D() {
 
   return (
     <group position={[-14, 5.8, 0.15]} rotation={[0, 0, -0.04]}>
-      {/* Sign backing plate */}
+      {/* Scaled down 14% to avoid billboard oversized feel */}
       <mesh>
-        <boxGeometry args={[4.8, 1.2, 0.12]} />
+        <boxGeometry args={[4.15, 1.05, 0.10]} />
         <meshStandardMaterial color="#1A1516" roughness={0.8} />
       </mesh>
 
       {/* Glowing Neon Face */}
-      <mesh position={[0, 0, 0.07]}>
-        <planeGeometry args={[4.6, 1.05]} />
+      <mesh position={[0, 0, 0.06]}>
+        <planeGeometry args={[3.95, 0.92]} />
         <meshStandardMaterial
           ref={matRef}
           map={signTexture}
           emissive="#FF0055"
           emissiveMap={signTexture}
-          emissiveIntensity={2.2}
+          emissiveIntensity={1.2}
           roughness={0.2}
         />
       </mesh>
 
-      {/* Volumetric Neon Glow Light */}
+      {/* Controlled Neon Light (#3 in hierarchy) */}
       <pointLight
         ref={lightRef}
-        position={[0, 0, 1.5]}
+        position={[0, 0, 1.4]}
         color="#FF0055"
-        intensity={260}
-        distance={14}
+        intensity={110}
+        distance={11}
         decay={2}
       />
     </group>
@@ -330,11 +336,9 @@ function GraffitiTag({
     ctx.lineWidth = 12;
     ctx.strokeText(text, 256, 112);
 
-    // 2. Pure vibrant neon spray fill without white wash
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
+    // 2. Pure matte aerosol spray fill without glowing neon drop-shadow (#1 Everything glows fix)
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
     ctx.fillStyle = color;
     ctx.fillText(text, 256, 112);
 
@@ -370,12 +374,20 @@ function GraffitiTag({
     ctx.restore();
 
     if (subtext) {
-      ctx.font = 'bold 28px monospace';
+      ctx.save();
+      // Industrial stencil border stamp (#8 Typography upgrade)
+      ctx.strokeStyle = 'rgba(235, 228, 218, 0.42)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(48, 178, 416, 36);
+
+      // Authentic letterpress / stencil tracking
+      ctx.font = 'bold 18px "Courier New", Impact, monospace';
       ctx.textAlign = 'center';
-      ctx.fillStyle = color;
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 8;
-      ctx.fillText(subtext, 256, 195);
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#E8E2D6';
+      ctx.shadowBlur = 0; // Crisp matte stencil ink
+      ctx.fillText(subtext.toUpperCase(), 256, 196);
+      ctx.restore();
     }
 
     const tex = new THREE.CanvasTexture(canvas);
@@ -464,11 +476,10 @@ function AlleyIndustrialDetails() {
         <meshStandardMaterial color="#38302A" roughness={0.7} metalness={0.6} />
       </mesh>
 
-      {/* Vertical rusty drain pipes */}
+      {/* Vertical rusty drain pipes (Straight & Plumb) */}
       {[-24, -13, -2, 9, 21].map((x, i) => (
-        <mesh key={i} position={[x, 3.8, 0.16]}>
+        <mesh key={i} position={[x, 3.8, 0.16]} rotation={[0, 0, 0]} material={i % 2 === 0 ? pipeMat : rustMat}>
           <cylinderGeometry args={[0.06, 0.06, 8.0, 8]} />
-          <primitive object={i % 2 === 0 ? pipeMat : rustMat} />
         </mesh>
       ))}
 
@@ -656,37 +667,63 @@ function WetSidewalkAndStreet() {
    Scene Assembly
    ═══════════════════════════════════════════════════ */
 
+function HeroCenterSpotlight() {
+  const targetRef = useRef<THREE.Object3D>(null);
+
+  return (
+    <group position={[-1.0, 6.2, 3.2]}>
+      <object3D ref={targetRef} position={[-1.0, 2.45, 0]} />
+      {/* Hero #1 (Brightest Object): Center Poster Theater Halogen Spotlight */}
+      <spotLight
+        target={targetRef.current || undefined}
+        color="#FFF4DE"
+        intensity={360}
+        angle={0.65}
+        penumbra={0.42}
+        distance={14}
+        decay={2}
+      />
+      {/* Center hero pool reinforcement */}
+      <pointLight position={[-1.0, 2.5, 2.1]} color="#FFF2DB" intensity={180} distance={8} decay={2} />
+    </group>
+  );
+}
+
 function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
   return (
     <>
       <fog attach="fog" args={['#141113', 18, 48]} />
 
-      <ambientLight intensity={0.9} color="#FCE8D5" />
-      <directionalLight position={[3, 12, 8]} intensity={3.0} color="#F5E4C3" />
+      {/* Balanced atmospheric fill so masonry & details are beautifully defined and legible */}
+      <ambientLight intensity={0.52} color="#FAF0E6" />
+      <directionalLight position={[3, 12, 8]} intensity={1.35} color="#F5E4C3" />
 
-      {/* Overhead streetlamp pools */}
-      <pointLight position={[-22, 6.5, 3.5]} color="#FFB653" intensity={420} distance={22} decay={2} />
-      <pointLight position={[-11, 6.8, 3.5]} color="#FFB653" intensity={400} distance={22} decay={2} />
-      <pointLight position={[0, 6.5, 3.5]} color="#FFB653" intensity={420} distance={22} decay={2} />
-      <pointLight position={[11, 6.8, 3.5]} color="#FFB653" intensity={400} distance={22} decay={2} />
-      <pointLight position={[22, 6.5, 3.5]} color="#FFB653" intensity={420} distance={22} decay={2} />
+      {/* Hero #1: Center Poster Spotlight */}
+      <HeroCenterSpotlight />
 
-      {/* Colorful 90s neon street glow */}
-      <pointLight position={[-16, 1.5, 3.0]} color="#00E5FF" intensity={180} distance={14} decay={2} />
-      <pointLight position={[-5, 1.5, 3.0]} color="#FF007F" intensity={200} distance={14} decay={2} />
-      <pointLight position={[6, 1.5, 3.0]} color="#7F00FF" intensity={180} distance={14} decay={2} />
-      <pointLight position={[17, 1.5, 3.0]} color="#00FF66" intensity={160} distance={14} decay={2} />
+      {/* Controlled Overhead Streetlamp Pools */}
+      <pointLight position={[-22, 6.5, 3.5]} color="#FFB653" intensity={210} distance={22} decay={2} />
+      <pointLight position={[-11, 6.8, 3.5]} color="#FFB653" intensity={200} distance={22} decay={2} />
+      <pointLight position={[0, 6.5, 3.5]} color="#FFB653" intensity={230} distance={22} decay={2} />
+      <pointLight position={[11, 6.8, 3.5]} color="#FFB653" intensity={200} distance={22} decay={2} />
+      <pointLight position={[22, 6.5, 3.5]} color="#FFB653" intensity={210} distance={22} decay={2} />
 
       {/* Interactive First-Person Human Camera + Handheld Flashlight */}
       <InteractiveCameraRig progressRef={progressRef} />
       <HandheldFlashlight progressRef={progressRef} />
 
-      {/* Architectural Wall & Street */}
+      {/* Architectural Wall, Decals & Street Depth */}
       <OldBrokenBrickWall />
+      <WallDecalsAndGrime />
       <NeonAlleySign3D />
       <AlleyIndustrialDetails />
+      <AlleyDepthLayers />
       <WetSidewalkAndStreet />
+      <UrbanStreetFloor />
       <StreetTrashCans />
+
+      {/* Right-Side Balance: Architectural Utility Platform & Balcony */}
+      <RightSideAlleyDetail />
 
       {/* Large Authentic Wheat-Pasted Posters */}
       {events.map((event) => (
@@ -700,12 +737,12 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
         </Suspense>
       ))}
 
-      {/* Authentic Spray Paint Graffiti Painted Directly on Brick Wall */}
-      <GraffitiTag text="EVENTS" subtext="90s CYBER" color="#00E5FF" accentColor="#00A8CC" position={[-26.2, 2.4, 0.005]} rotation={[0, 0, -0.02]} tagScale={1.15} />
-      <GraffitiTag text="GDG" subtext="CRCE // NYC" color="#FF007F" accentColor="#990044" position={[-14.5, 2.45, 0.005]} rotation={[0, 0, 0.03]} tagScale={1.05} />
-      <GraffitiTag text="MTV" subtext="UNPLUGGED" color="#00E5FF" accentColor="#006688" position={[-3.8, 2.4, 0.005]} rotation={[0, 0, -0.03]} tagScale={1.0} />
-      <GraffitiTag text="90s" subtext="RETRO VIBE" color="#FFBB00" accentColor="#AA5500" position={[7.5, 2.45, 0.005]} rotation={[0, 0, 0.04]} tagScale={1.1} />
-      <GraffitiTag text="HACK" subtext="BYTE CLUB" color="#BF00FF" accentColor="#550088" position={[18.5, 2.4, 0.005]} rotation={[0, 0, -0.03]} tagScale={1.05} />
+      {/* Authentic Spray Paint Graffiti with Archival Stencil Typography — positioned cleanly between posters */}
+      <GraffitiTag text="EVENTS" subtext="UNDERGROUND TECH ARCHIVE // EST. 1994" color="#00E5FF" accentColor="#00A8CC" position={[-26.0, 2.4, 0.045]} rotation={[0, 0, -0.02]} tagScale={0.86} />
+      <GraffitiTag text="GDG" subtext="CRCE // SUNÉKHEIA // ALL ERAS" color="#FF007F" accentColor="#990044" position={[-14.5, 2.45, 0.045]} rotation={[0, 0, 0.03]} tagScale={0.86} />
+      <GraffitiTag text="MTV" subtext="UNPLUGGED // ARCHIVE SER. 04" color="#00E5FF" accentColor="#006688" position={[-3.8, 2.4, 0.045]} rotation={[0, 0, -0.03]} tagScale={0.86} />
+      <GraffitiTag text="90s" subtext="CONTINUITY // EVOLUTION // LEGACY" color="#FFBB00" accentColor="#AA5500" position={[7.35, 2.45, 0.045]} rotation={[0, 0, 0.04]} tagScale={0.84} />
+      <GraffitiTag text="HACK" subtext="BYTE CLUB // OPEN SYNDICATE" color="#BF00FF" accentColor="#550088" position={[18.65, 2.4, 0.045]} rotation={[0, 0, -0.03]} tagScale={0.84} />
 
       {/* Rising Street Steam & Dust Motes */}
       <Sparkles
