@@ -9,6 +9,7 @@ interface VHSTapeProps {
   reelRotation: number;
   logoScale: number;
   revealProgress: number;
+  zoomThrough?: number;
 }
 
 /* ─── Subtle floating dust motes that drift organically ─── */
@@ -175,12 +176,24 @@ function VHSCassette() {
 
 useGLTF.preload('/models/myModel-v1-transformed.glb');
 
+function CameraZoomController({ zoomThrough = 0 }: { zoomThrough?: number }) {
+  useFrame(({ camera }) => {
+    // Normal camera position is [0, 0, 28].
+    // When zooming through, dive straight into the center of the cassette logo at [0, 0.85, 1.4]
+    const z = 28 - Math.pow(zoomThrough, 2.1) * 26.6;
+    const y = Math.pow(zoomThrough, 1.6) * 0.85;
+    camera.position.set(0, y, z);
+    camera.lookAt(0, 0.85, 0);
+  });
+  return null;
+}
 
 /* ─── Scene wrapper ─── */
 export default function VHSTape(props: VHSTapeProps) {
   return (
     <div style={{ width: '100%', height: '53vw', maxHeight: '574px', position: 'relative' }}>
       <Canvas camera={{ position: [0, 0, 28], fov: 38 }}>
+        <CameraZoomController zoomThrough={props.zoomThrough} />
         {/* Warm, moody VHS-era lighting */}
         <ambientLight intensity={0.4} color="#e8dcc8" />
         <directionalLight
