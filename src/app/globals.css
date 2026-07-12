@@ -2138,3 +2138,351 @@ body {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   90s MTV POSTER WALL — Events Section
+   ═══════════════════════════════════════════════════════════════ */
+
+.events-section {
+  position: relative;
+  height: 400vh;
+  background: #1A1618;
+  width: 100%;
+}
+
+.events-canvas-container {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Loading state ── */
+
+.events-loading {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background: #1A1618;
+  color: #D4722A;
+  font-family: var(--font-90s-display);
+  font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.events-loading-dots {
+  animation: events-dots-blink 1.2s step-end infinite;
+}
+
+@keyframes events-dots-blink {
+  0%, 20% { opacity: 0; }
+  40% { opacity: 0.4; }
+  60% { opacity: 0.7; }
+  80%, 100% { opacity: 1; }
+}
+
+/* ── VHS Scanline overlay ── */
+
+.events-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.045) 0,
+    rgba(0, 0, 0, 0.045) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  mix-blend-mode: multiply;
+}
+
+/* ── Film grain ── */
+
+.events-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  animation: events-grain-shift 0.4s steps(2, end) infinite;
+}
+
+@keyframes events-grain-shift {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-1%, 1%, 0); }
+  100% { transform: translate3d(0.5%, -0.5%, 0); }
+}
+
+/* ── HUD Overlay ── */
+
+.events-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.events-hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.events-hud-mid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.events-inspect-pill {
+  font-family: var(--font-90s-body);
+  font-size: clamp(0.5rem, 0.8vw, 0.72rem);
+  letter-spacing: 0.22em;
+  color: rgba(255, 244, 224, 0.55);
+  background: rgba(18, 14, 15, 0.65);
+  border: 1px solid rgba(255, 0, 85, 0.35);
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+}
+
+
+/* ── Era badge ── */
+
+.events-era-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-90s-display);
+  color: #D4722A;
+  font-size: clamp(0.65rem, 1.1vw, 0.9rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid rgba(212, 114, 42, 0.3);
+  padding: 0.45rem 0.9rem;
+  background: rgba(26, 22, 24, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.events-era-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #D4722A;
+  animation: events-dot-pulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes events-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.events-hud-gdg {
+  font-family: var(--font-90s-body);
+  color: rgba(232, 210, 159, 0.4);
+  font-size: clamp(0.55rem, 0.9vw, 0.8rem);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+/* ── Bottom HUD ── */
+
+.events-hud-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.events-event-info {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.events-event-counter {
+  display: flex;
+  align-items: baseline;
+  gap: 0.15rem;
+  font-family: var(--font-90s-body);
+}
+
+.events-event-number {
+  color: #D4722A;
+  font-size: clamp(1.4rem, 2.8vw, 2.4rem);
+  font-weight: bold;
+  line-height: 1;
+}
+
+.events-event-divider {
+  color: rgba(212, 114, 42, 0.35);
+  font-size: clamp(0.9rem, 1.6vw, 1.3rem);
+  margin: 0 0.1rem;
+}
+
+.events-event-total {
+  color: rgba(212, 114, 42, 0.45);
+  font-size: clamp(0.85rem, 1.4vw, 1.15rem);
+}
+
+.events-event-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.events-event-title {
+  color: #e8d29f;
+  font-family: var(--font-90s-display);
+  font-size: clamp(0.85rem, 1.6vw, 1.3rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  transition: color 0.3s ease;
+}
+
+.events-event-subtitle {
+  color: rgba(232, 210, 159, 0.4);
+  font-family: var(--font-90s-body);
+  font-size: clamp(0.5rem, 0.8vw, 0.7rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.events-scroll-hint {
+  font-family: var(--font-90s-body);
+  color: rgba(232, 210, 159, 0.3);
+  font-size: clamp(0.45rem, 0.75vw, 0.65rem);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  animation: events-hint-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes events-hint-breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.65; }
+}
+
+/* ── Progress bar ── */
+
+.events-progress-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(212, 114, 42, 0.12);
+  z-index: 12;
+}
+
+.events-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #D4722A, #7B2FBE);
+  box-shadow: 0 0 10px rgba(212, 114, 42, 0.5), 0 0 3px rgba(123, 47, 190, 0.4);
+  will-change: width;
+}
+
+/* ── Grunge vignette borders ── */
+
+.events-grunge-top,
+.events-grunge-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.events-grunge-top {
+  top: 0;
+  height: clamp(2.5rem, 6vh, 4.5rem);
+  background: linear-gradient(180deg, rgba(26, 22, 24, 0.85) 0%, transparent 100%);
+}
+
+.events-grunge-bottom {
+  bottom: 0;
+  height: clamp(2.5rem, 6vh, 4.5rem);
+  background: linear-gradient(0deg, rgba(26, 22, 24, 0.85) 0%, transparent 100%);
+}
+
+/* ── Placeholder sections (before events wall) ── */
+
+.placeholder-section {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.placeholder-section h2 {
+  font-size: clamp(1.2rem, 2.5vw, 2rem);
+  color: var(--text);
+  opacity: 0.25;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 640px) {
+  .events-hud {
+    padding: 0.75rem;
+  }
+
+  .events-scroll-hint {
+    display: none;
+  }
+
+  .events-event-info {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .events-event-meta {
+    margin-left: 0;
+  }
+
+  .events-era-badge {
+    font-size: 0.6rem;
+    padding: 0.35rem 0.65rem;
+  }
+}
+
+/* ── Reduced motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .events-grain,
+  .events-loading-dots {
+    animation: none;
+  }
+
+  .events-era-dot {
+    animation: none;
+    opacity: 0.7;
+  }
+
+  .events-scroll-hint {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
