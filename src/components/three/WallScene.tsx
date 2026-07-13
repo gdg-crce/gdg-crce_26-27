@@ -164,83 +164,195 @@ function NeonAlleySign3D() {
 }
 
 /* ═══════════════════════════════════════════════════
-   Procedural Old Broken Brick & Crumbling Plaster Wall
+   Authentic Distressed Urban Concrete & Peeling Plaster Wall
+   Directly matching reference images: layered peeling stucco,
+   exposed aged concrete substrate, deep structural cracks & grime
    ═══════════════════════════════════════════════════ */
 
-function OldBrokenBrickWall() {
+function WeatheredUrbanStreetWall() {
   const [colorMap, bumpMap] = useMemo(() => {
-    const W = 1024;
+    const W = 2048;
     const H = 1024;
-    const brickW = 44;
-    const brickH = 20;
-    const mortar = 3;
-    const rows = Math.ceil(H / (brickH + mortar));
-    const cols = Math.ceil(W / (brickW + mortar)) + 2;
 
     const cCanvas = document.createElement('canvas');
     cCanvas.width = W;
     cCanvas.height = H;
     const cCtx = cCanvas.getContext('2d')!;
 
-    cCtx.fillStyle = '#3A322C';
+    /* 1. Base Substrate: 90s Muddy Grunge Concrete & Weathered Mortar Patina */
+    // Earthy muddy taupe / grimy urban asphalt-brown concrete
+    const baseGrad = cCtx.createLinearGradient(0, 0, 0, H);
+    baseGrad.addColorStop(0, '#4E4944');
+    baseGrad.addColorStop(0.6, '#46413C');
+    baseGrad.addColorStop(1, '#34302C'); // Darker muddy accumulation towards curb
+    cCtx.fillStyle = baseGrad;
     cCtx.fillRect(0, 0, W, H);
 
-    for (let r = 0; r < rows; r++) {
+    /* Historical under-layer brickwork where both stucco & institutional paint chipped off */
+    const brickW = 48;
+    const brickH = 22;
+    cCtx.fillStyle = '#42241E';
+    for (let r = 0; r < 14; r++) {
       const offset = (r % 2) * (brickW / 2);
-      for (let c = -1; c < cols; c++) {
-        const x = c * (brickW + mortar) + offset;
-        const y = r * (brickH + mortar);
-
-        let br = 125 + Math.random() * 45 - 20;
-        let bg = 58 + Math.random() * 25 - 12;
-        let bb = 42 + Math.random() * 20 - 10;
-
-        if (Math.random() > 0.85) {
-          br *= 0.7; bg *= 0.7; bb *= 0.7;
-        }
-
-        cCtx.fillStyle = `rgb(${br | 0},${bg | 0},${bb | 0})`;
-        cCtx.fillRect(x, y, brickW, brickH);
-
-        cCtx.fillStyle = 'rgba(0,0,0,0.12)';
-        cCtx.fillRect(x, y + brickH - 4, brickW, 4);
+      for (let c = 0; c < 12; c++) {
+        const bx = 160 + c * (brickW + 4) + offset;
+        const by = 420 + r * (brickH + 4);
+        cCtx.fillRect(bx, by, brickW, brickH);
       }
     }
 
-    /* Crumbling Plaster Patches Over Bricks */
-    for (let i = 0; i < 16; i++) {
+    /* 2. Peeling 90s Muddy Stucco & Bone/Putty Plaster Topcoat Layer */
+    const peelingPatches = [
+      { cx: 300, cy: 350, rx: 280, ry: 240 },
+      { cx: 780, cy: 520, rx: 340, ry: 310 },
+      { cx: 1350, cy: 410, rx: 320, ry: 280 },
+      { cx: 1820, cy: 600, rx: 290, ry: 260 },
+      { cx: 520, cy: 820, rx: 260, ry: 180 },
+      { cx: 1100, cy: 220, rx: 280, ry: 190 },
+      { cx: 1650, cy: 250, rx: 260, ry: 210 },
+    ];
+
+    peelingPatches.forEach((p) => {
+      cCtx.save();
+      cCtx.beginPath();
+      const points = 24;
+      for (let i = 0; i <= points; i++) {
+        const angle = (i / points) * Math.PI * 2;
+        const radiusNoise = 1 + Math.sin(angle * 5) * 0.18 + Math.cos(angle * 9) * 0.12;
+        const x = p.cx + Math.cos(angle) * p.rx * radiusNoise;
+        const y = p.cy + Math.sin(angle) * p.ry * radiusNoise;
+        if (i === 0) cCtx.moveTo(x, y);
+        else cCtx.lineTo(x, y);
+      }
+      cCtx.closePath();
+
+      // Shadow lip along peeling stucco contour
+      cCtx.shadowColor = 'rgba(12, 11, 10, 0.92)';
+      cCtx.shadowBlur = 14;
+      cCtx.shadowOffsetX = 4;
+      cCtx.shadowOffsetY = 6;
+
+      // 90s warm muddy bone / aged putty stucco topcoat
+      const grad = cCtx.createLinearGradient(p.cx - p.rx, p.cy - p.ry, p.cx + p.rx, p.cy + p.ry);
+      grad.addColorStop(0, '#8E867A');
+      grad.addColorStop(0.5, '#7F786D');
+      grad.addColorStop(1, '#6E675D');
+      cCtx.fillStyle = grad;
+      cCtx.fill();
+      cCtx.restore();
+
+      // Highlight rim on peeled stucco edge
+      cCtx.strokeStyle = 'rgba(210, 202, 188, 0.55)';
+      cCtx.lineWidth = 2.5;
+      cCtx.stroke();
+    });
+
+    /* 3. Institutional Under-layer Paint Patches & Flaking Chips */
+    for (let i = 0; i < 65; i++) {
       const px = Math.random() * W;
       const py = Math.random() * H;
-      const pr = 40 + Math.random() * 90;
-
-      const grad = cCtx.createRadialGradient(px, py, pr * 0.2, px, py, pr);
-      grad.addColorStop(0, 'rgba(140, 134, 126, 0.92)');
-      grad.addColorStop(0.7, 'rgba(115, 108, 98, 0.85)');
-      grad.addColorStop(1, 'rgba(115, 108, 98, 0.0)');
-
-      cCtx.fillStyle = grad;
+      const pr = 12 + Math.random() * 45;
+      // Aged 90s industrial teal / moss green undercoat flecks
+      cCtx.fillStyle = Math.random() > 0.5 ? 'rgba(68, 76, 72, 0.85)' : 'rgba(92, 86, 76, 0.88)';
       cCtx.beginPath();
       cCtx.arc(px, py, pr, 0, Math.PI * 2);
       cCtx.fill();
     }
 
-    /* Vertical Grime & Water Streaks */
-    for (let i = 0; i < 30; i++) {
-      const sx = Math.random() * W;
-      const sy = Math.random() * (H * 0.3);
-      const sw = 6 + Math.random() * 18;
-      const sh = 150 + Math.random() * 350;
+    /* 4. Deep Structural Fissures & Branching Cracks */
+    const drawCrack = (startX: number, startY: number, endY: number, branches: number) => {
+      let currX = startX;
+      let currY = startY;
+      const stepY = (endY - startY) / 32;
 
-      const sGrad = cCtx.createLinearGradient(sx, sy, sx, sy + sh);
-      sGrad.addColorStop(0, 'rgba(15, 12, 10, 0.4)');
-      sGrad.addColorStop(1, 'rgba(15, 12, 10, 0.0)');
-      cCtx.fillStyle = sGrad;
-      cCtx.fillRect(sx, sy, sw, sh);
+      cCtx.save();
+      cCtx.lineCap = 'round';
+      cCtx.lineJoin = 'round';
+
+      // First pass: light lower relief edge for physical depth
+      cCtx.beginPath();
+      cCtx.moveTo(currX, currY + 2);
+      for (let i = 0; i < 32; i++) {
+        currX += (Math.random() - 0.5) * 22;
+        currY += stepY;
+        cCtx.lineTo(currX, currY + 2);
+      }
+      cCtx.strokeStyle = 'rgba(195, 188, 175, 0.65)';
+      cCtx.lineWidth = 3.2;
+      cCtx.stroke();
+
+      // Second pass: deep dark crevice inner fissure
+      currX = startX;
+      currY = startY;
+      cCtx.beginPath();
+      cCtx.moveTo(currX, currY);
+      for (let i = 0; i < 32; i++) {
+        currX += (Math.random() - 0.5) * 22;
+        currY += stepY;
+        cCtx.lineTo(currX, currY);
+
+        // Branch crack
+        if (branches > 0 && Math.random() > 0.78) {
+          const bx = currX + (Math.random() - 0.5) * 120;
+          const by = currY + 40 + Math.random() * 80;
+          cCtx.moveTo(currX, currY);
+          cCtx.lineTo(bx, by);
+          cCtx.moveTo(currX, currY);
+        }
+      }
+      cCtx.strokeStyle = '#0E0C0B';
+      cCtx.lineWidth = 2.8;
+      cCtx.stroke();
+      cCtx.restore();
+    };
+
+    for (let i = 0; i < 16; i++) {
+      const sx = 70 + i * 130 + (Math.random() - 0.5) * 50;
+      drawCrack(sx, 10 + Math.random() * 80, H - 20, 2);
     }
 
+    /* 5. Muddy 90s Street Splash Zone along Bottom Wall Curb (Lower 25%) */
+    const splashGrad = cCtx.createLinearGradient(0, H * 0.72, 0, H);
+    splashGrad.addColorStop(0, 'rgba(28, 24, 20, 0.0)');
+    splashGrad.addColorStop(0.5, 'rgba(28, 24, 20, 0.55)');
+    splashGrad.addColorStop(1, 'rgba(22, 18, 15, 0.88)');
+    cCtx.fillStyle = splashGrad;
+    cCtx.fillRect(0, H * 0.72, W, H * 0.28);
+
+    // Muddy splatter droplets splashed up from street rain
+    cCtx.fillStyle = 'rgba(24, 20, 16, 0.82)';
+    for (let i = 0; i < 350; i++) {
+      const sx = Math.random() * W;
+      const sy = H * 0.68 + Math.random() * (H * 0.32);
+      const sr = 1.5 + Math.random() * 5.5;
+      cCtx.beginPath();
+      cCtx.arc(sx, sy, sr, 0, Math.PI * 2);
+      cCtx.fill();
+    }
+
+    /* 6. Rust Bleed Streaks & Efflorescence (Mineral Salt Bleed) */
+    for (let i = 0; i < 28; i++) {
+      const rx = Math.random() * W;
+      const ry = Math.random() * (H * 0.35);
+      const rw = 4 + Math.random() * 12;
+      const rh = 120 + Math.random() * 320;
+      const rGrad = cCtx.createLinearGradient(rx, ry, rx, ry + rh);
+      rGrad.addColorStop(0, 'rgba(118, 48, 28, 0.62)'); // Warm 90s rust iron bleed
+      rGrad.addColorStop(1, 'rgba(118, 48, 28, 0.0)');
+      cCtx.fillStyle = rGrad;
+      cCtx.fillRect(rx, ry, rw, rh);
+    }
+
+    /* 7. Staple Scars, Old Glue Residue & Torn Flyer Scraps */
+    cCtx.fillStyle = 'rgba(195, 178, 135, 0.22)';
+    for (let i = 0; i < 32; i++) {
+      cCtx.fillRect(Math.random() * W, Math.random() * H, 45 + Math.random() * 80, 60 + Math.random() * 100);
+    }
+
+    /* 8. High-Definition Concrete Aggregate Grain & Grunge Noise */
     const imgData = cCtx.getImageData(0, 0, W, H);
     for (let i = 0; i < imgData.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 18;
+      const n = (Math.random() - 0.5) * 26;
       imgData.data[i] = Math.max(0, Math.min(255, imgData.data[i] + n));
       imgData.data[i + 1] = Math.max(0, Math.min(255, imgData.data[i + 1] + n));
       imgData.data[i + 2] = Math.max(0, Math.min(255, imgData.data[i + 2] + n));
@@ -249,30 +361,59 @@ function OldBrokenBrickWall() {
 
     const cTex = new THREE.CanvasTexture(cCanvas);
     cTex.wrapS = cTex.wrapT = THREE.RepeatWrapping;
-    cTex.repeat.set(16, 4);
+    cTex.repeat.set(10, 2);
     cTex.colorSpace = THREE.SRGBColorSpace;
 
+    /* 9. Ultra-Tactile High-Relief Bump / Normal Map */
     const bCanvas = document.createElement('canvas');
     bCanvas.width = W;
     bCanvas.height = H;
     const bCtx = bCanvas.getContext('2d')!;
-    bCtx.fillStyle = '#444';
+    bCtx.fillStyle = '#808080';
     bCtx.fillRect(0, 0, W, H);
 
-    for (let r = 0; r < rows; r++) {
-      const offset = (r % 2) * (brickW / 2);
-      for (let c = -1; c < cols; c++) {
-        const x = c * (brickW + mortar) + offset;
-        const y = r * (brickH + mortar);
-        const v = 150 + Math.random() * 35;
-        bCtx.fillStyle = `rgb(${v | 0},${v | 0},${v | 0})`;
-        bCtx.fillRect(x, y, brickW, brickH);
+    // Elevated peeling stucco topcoat
+    peelingPatches.forEach((p) => {
+      bCtx.beginPath();
+      const points = 24;
+      for (let i = 0; i <= points; i++) {
+        const angle = (i / points) * Math.PI * 2;
+        const radiusNoise = 1 + Math.sin(angle * 5) * 0.18 + Math.cos(angle * 9) * 0.12;
+        const x = p.cx + Math.cos(angle) * p.rx * radiusNoise;
+        const y = p.cy + Math.sin(angle) * p.ry * radiusNoise;
+        if (i === 0) bCtx.moveTo(x, y);
+        else bCtx.lineTo(x, y);
       }
+      bCtx.closePath();
+      bCtx.fillStyle = '#C8C8C8';
+      bCtx.fill();
+    });
+
+    // Deep structural crack grooves
+    const drawBumpCrack = (startX: number, startY: number, endY: number) => {
+      let currX = startX;
+      let currY = startY;
+      const stepY = (endY - startY) / 32;
+      bCtx.beginPath();
+      bCtx.moveTo(currX, currY);
+      for (let i = 0; i < 32; i++) {
+        currX += (Math.random() - 0.5) * 22;
+        currY += stepY;
+        bCtx.lineTo(currX, currY);
+      }
+      bCtx.strokeStyle = '#111111';
+      bCtx.lineWidth = 3.8;
+      bCtx.stroke();
+    };
+
+    for (let i = 0; i < 16; i++) {
+      const sx = 70 + i * 130;
+      drawBumpCrack(sx, 20, H - 20);
     }
 
     const bTex = new THREE.CanvasTexture(bCanvas);
     bTex.wrapS = bTex.wrapT = THREE.RepeatWrapping;
-    bTex.repeat.set(16, 4);
+    bTex.repeat.set(10, 2);
 
     return [cTex, bTex] as const;
   }, []);
@@ -283,9 +424,9 @@ function OldBrokenBrickWall() {
       <meshStandardMaterial
         map={colorMap}
         bumpMap={bumpMap}
-        bumpScale={0.48}
-        roughness={0.85}
-        metalness={0.03}
+        bumpScale={0.85}
+        roughness={0.92}
+        metalness={0.04}
       />
     </mesh>
   );
@@ -644,19 +785,19 @@ function WetSidewalkAndStreet() {
         />
       </mesh>
 
-      {/* Weathered concrete curb edge */}
+      {/* Weathered concrete curb edge with muddy 90s street patina */}
       <mesh position={[0, -0.1, 3.2]}>
         <boxGeometry args={[72, 0.22, 0.15]} />
-        <meshStandardMaterial color="#40454D" roughness={0.8} />
+        <meshStandardMaterial color="#36322E" roughness={0.78} />
       </mesh>
 
-      {/* Weathered charcoal asphalt street road below with skid marks & oil stains */}
+      {/* Weathered charcoal asphalt street road below with damp muddy 90s sheen */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.22, 6]}>
         <planeGeometry args={[72, 10]} />
         <meshStandardMaterial
           map={asphaltTex}
-          roughness={0.58}
-          metalness={0.14}
+          roughness={0.48}
+          metalness={0.18}
         />
       </mesh>
     </group>
@@ -713,7 +854,7 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
       <HandheldFlashlight progressRef={progressRef} />
 
       {/* Architectural Wall, Decals & Street Depth */}
-      <OldBrokenBrickWall />
+      <WeatheredUrbanStreetWall />
       <WallDecalsAndGrime />
       <NeonAlleySign3D />
       <AlleyIndustrialDetails />

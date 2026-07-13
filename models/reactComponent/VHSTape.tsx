@@ -9,6 +9,9 @@ interface VHSTapeProps {
   reelRotation: number;
   logoScale: number;
   revealProgress: number;
+  /** Pass a ref (updated every GSAP tick) for jank-free camera zoom independent of React render rate */
+  zoomThroughRef?: React.RefObject<number>;
+  /** Fallback scalar if ref not provided */
   zoomThrough?: number;
 }
 
@@ -79,10 +82,11 @@ function DustParticles() {
     });
   }, []);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!meshRef.current) return;
     const posAttr = meshRef.current.geometry.getAttribute('position') as THREE.BufferAttribute;
     const arr = posAttr.array as Float32Array;
+    const t = state.clock.elapsedTime;
 
     for (let i = 0; i < DUST_COUNT; i++) {
       arr[i * 3]     += velocities[i * 3];
@@ -93,8 +97,8 @@ function DustParticles() {
       if (Math.abs(arr[i * 3 + 1]) > 11) arr[i * 3 + 1] *= -0.9;
       if (Math.abs(arr[i * 3 + 2]) > 10) arr[i * 3 + 2] *= -0.9;
 
-      arr[i * 3]     += Math.sin(Date.now() * 0.00025 + i * 1.3) * 0.001;
-      arr[i * 3 + 1] += Math.cos(Date.now() * 0.00018 + i * 2.1) * 0.0008;
+      arr[i * 3]     += Math.sin(t * 0.25 + i * 1.3) * 0.001;
+      arr[i * 3 + 1] += Math.cos(t * 0.18 + i * 2.1) * 0.0008;
     }
 
     posAttr.needsUpdate = true;
@@ -176,12 +180,19 @@ function VHSCassette() {
 
 useGLTF.preload('/models/myModel-v1-transformed.glb');
 
-function CameraZoomController({ zoomThrough = 0 }: { zoomThrough?: number }) {
+function CameraZoomController({
+  zoomThroughRef,
+  zoomThrough: zoomThroughProp = 0,
+}: {
+  zoomThroughRef?: React.RefObject<number>;
+  zoomThrough?: number;
+}) {
   useFrame(({ camera }) => {
-    // Normal camera position is [0, 0, 28].
-    // When zooming through, dive straight into the center of the cassette logo at [0, 0.85, 1.4]
-    const z = 28 - Math.pow(zoomThrough, 2.1) * 26.6;
-    const y = Math.pow(zoomThrough, 1.6) * 0.85;
+    // Prefer the ref (updated every GSAP tick) over the prop (React-render rate)
+    const zt = zoomThroughRef ? (zoomThroughRef.current ?? 0) : zoomThroughProp;
+    // Normal camera z is 28. Fly all the way through the cassette to z = -3.5
+    const z = 28 - Math.pow(zt, 1.85) * 31.5;
+    const y = Math.pow(zt, 1.6) * 0.85;
     camera.position.set(0, y, z);
     camera.lookAt(0, 0.85, 0);
   });
@@ -192,8 +203,16 @@ function CameraZoomController({ zoomThrough = 0 }: { zoomThrough?: number }) {
 export default function VHSTape(props: VHSTapeProps) {
   return (
     <div style={{ width: '100%', height: '53vw', maxHeight: '574px', position: 'relative' }}>
-      <Canvas camera={{ position: [0, 0, 28], fov: 38 }}>
-        <CameraZoomController zoomThrough={props.zoomThrough} />
+      <Canvas
+        dpr={[1, 1.5]}
+        gl={{
+          powerPreference: 'high-performance',
+          antialias: true,
+          alpha: true,
+        }}
+        camera={{ position: [0, 0, 28], fov: 38 }}
+      >
+        <CameraZoomController zoomThroughRef={props.zoomThroughRef} zoomThrough={props.zoomThrough} />
         {/* Warm, moody VHS-era lighting */}
         <ambientLight intensity={0.4} color="#e8dcc8" />
         <directionalLight

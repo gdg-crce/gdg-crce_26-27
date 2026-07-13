@@ -28,7 +28,7 @@ const frames = [
   { era: '70s', label: '1970', code: '■ REC', stock: 'EST. 1970' },
 ] as const;
 
-export default function FilmTape({ activeFrame, rewindIntensity }: FilmTapeProps) {
+const FilmTape = React.memo(function FilmTape({ activeFrame, rewindIntensity }: FilmTapeProps) {
   return (
     <div className="loader-film-model" style={{ '--rewind': rewindIntensity } as React.CSSProperties}>
       <div className="loader-film-flex-shadow" />
@@ -60,11 +60,8 @@ export default function FilmTape({ activeFrame, rewindIntensity }: FilmTapeProps
                 <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-left`}>{frame.code}</div>
                 <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-right`}>{frame.stock}</div>
                 <motion.div
-                  key={`${activeFrame}-${frame.code}`}
-                  initial={{ opacity: 0.75, y: 6, filter: 'blur(0.8px)' }}
                   animate={{
                     opacity: isActive ? 1 : 0.72,
-                    y: 0,
                     filter: isActive ? 'blur(0px)' : 'blur(0.35px)',
                   }}
                   transition={{ duration: 0.12, ease: 'linear' }}
@@ -85,4 +82,6 @@ export default function FilmTape({ activeFrame, rewindIntensity }: FilmTapeProps
       <div className="loader-film-scratch loader-film-scratch-c" />
     </div>
   );
-}
+});
+
+export default FilmTape;
