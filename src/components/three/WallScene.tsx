@@ -14,6 +14,55 @@ import {
 } from './AlleyProps3D';
 
 /* ═══════════════════════════════════════════════════
+   Height-map → Tangent-space Normal Map
+   Derives real per-pixel surface direction from the same
+   canvas used for relief, so raking light actually reads
+   mortar joints, cracks & peeling edges instead of a flat print.
+   ═══════════════════════════════════════════════════ */
+
+function heightCanvasToNormalMap(
+  source: HTMLCanvasElement,
+  size: number,
+  strength: number
+): HTMLCanvasElement {
+  const hCanvas = document.createElement('canvas');
+  hCanvas.width = size;
+  hCanvas.height = Math.round((size * source.height) / source.width);
+  const hCtx = hCanvas.getContext('2d')!;
+  hCtx.drawImage(source, 0, 0, hCanvas.width, hCanvas.height);
+
+  const w = hCanvas.width;
+  const h = hCanvas.height;
+  const heightData = hCtx.getImageData(0, 0, w, h).data;
+  const getH = (x: number, y: number) => {
+    const xi = (x + w) % w;
+    const yi = (y + h) % h;
+    return heightData[(yi * w + xi) * 4] / 255;
+  };
+
+  const nCanvas = document.createElement('canvas');
+  nCanvas.width = w;
+  nCanvas.height = h;
+  const nCtx = nCanvas.getContext('2d')!;
+  const out = nCtx.createImageData(w, h);
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const gx = (getH(x + 1, y) - getH(x - 1, y)) * strength;
+      const gy = (getH(x, y + 1) - getH(x, y - 1)) * strength;
+      const len = Math.sqrt(gx * gx + gy * gy + 1);
+      const idx = (y * w + x) * 4;
+      out.data[idx] = (-gx / len) * 0.5 * 255 + 127.5;
+      out.data[idx + 1] = (-gy / len) * 0.5 * 255 + 127.5;
+      out.data[idx + 2] = (1 / len) * 0.5 * 255 + 127.5;
+      out.data[idx + 3] = 255;
+    }
+  }
+  nCtx.putImageData(out, 0, 0);
+  return nCanvas;
+}
+
+/* ═══════════════════════════════════════════════════
    Interactive Human Camera Rig — Stride + Mouse Look
    ═══════════════════════════════════════════════════ */
 
@@ -132,7 +181,7 @@ function NeonAlleySign3D() {
   return (
     <group position={[-14, 5.8, 0.15]} rotation={[0, 0, -0.04]}>
       {/* Scaled down 14% to avoid billboard oversized feel */}
-      <mesh>
+      <mesh castShadow receiveShadow>
         <boxGeometry args={[4.15, 1.05, 0.10]} />
         <meshStandardMaterial color="#1A1516" roughness={0.8} />
       </mesh>
@@ -170,7 +219,7 @@ function NeonAlleySign3D() {
    ═══════════════════════════════════════════════════ */
 
 function WeatheredUrbanStreetWall() {
-  const [colorMap, bumpMap] = useMemo(() => {
+  const [colorMap, normalMap, displacementMap] = useMemo(() => {
     const W = 2048;
     const H = 1024;
 
@@ -433,20 +482,39 @@ function WeatheredUrbanStreetWall() {
       drawBumpCrack(sx, 20, H - 20);
     }
 
-    const bTex = new THREE.CanvasTexture(bCanvas);
-    bTex.wrapS = bTex.wrapT = THREE.RepeatWrapping;
-    bTex.repeat.set(4, 1.2);
+    /* 10. Fine per-pixel Normal Map — derived from the relief canvas above so
+       mortar joints, crack lips & peeling edges catch raking light correctly */
+    const normalCanvas = heightCanvasToNormalMap(bCanvas, 1024, 2.6);
+    const nTex = new THREE.CanvasTexture(normalCanvas);
+    nTex.wrapS = nTex.wrapT = THREE.RepeatWrapping;
+    nTex.repeat.set(4, 1.2);
 
-    return [cTex, bTex] as const;
+    /* 11. Coarse Displacement Map — same relief data downsampled so the
+       peeling patches physically bulge and cracks physically recess,
+       giving real parallax as the camera walks past instead of flat shading */
+    const dCanvas = document.createElement('canvas');
+    dCanvas.width = 512;
+    dCanvas.height = 256;
+    dCanvas.getContext('2d')!.drawImage(bCanvas, 0, 0, 512, 256);
+    const dTex = new THREE.CanvasTexture(dCanvas);
+    dTex.wrapS = dTex.wrapT = THREE.RepeatWrapping;
+    dTex.repeat.set(4, 1.2);
+
+    return [cTex, nTex, dTex] as const;
   }, []);
 
+  const normalScale = useMemo(() => new THREE.Vector2(1.5, 1.5), []);
+
   return (
-    <mesh position={[0, 3.8, 0]}>
-      <planeGeometry args={[68, 9.6]} />
+    <mesh position={[0, 3.8, 0]} receiveShadow>
+      <planeGeometry args={[68, 9.6, 160, 40]} />
       <meshStandardMaterial
         map={colorMap}
-        bumpMap={bumpMap}
-        bumpScale={0.42}
+        normalMap={normalMap}
+        normalScale={normalScale}
+        displacementMap={displacementMap}
+        displacementScale={0.3}
+        displacementBias={-0.113}
         roughness={0.92}
         metalness={0.04}
       />
@@ -559,7 +627,7 @@ function GraffitiTag({
   }, [text, subtext, color, accentColor]);
 
   return (
-    <mesh position={position} rotation={rotation}>
+    <mesh position={position} rotation={rotation} castShadow receiveShadow>
       <planeGeometry args={[4.2 * tagScale, 2.1 * tagScale]} />
       <meshStandardMaterial
         map={texture}
@@ -569,6 +637,7 @@ function GraffitiTag({
         metalness={0.02}
         polygonOffset={true}
         polygonOffsetFactor={-4}
+        polygonOffsetUnits={-4}
       />
     </mesh>
   );
@@ -600,14 +669,14 @@ function StreetTrashCans() {
     <group>
       {canPositions.map((pos, i) => (
         <group key={i} position={pos}>
-          <mesh material={canMat}>
+          <mesh material={canMat} castShadow receiveShadow>
             <cylinderGeometry args={[0.32, 0.28, 0.9, 14]} />
           </mesh>
-          <mesh position={[0, 0.46, 0]} material={canMat}>
+          <mesh position={[0, 0.46, 0]} material={canMat} castShadow receiveShadow>
             <cylinderGeometry args={[0.35, 0.35, 0.06, 14]} />
           </mesh>
           {i % 2 === 0 && (
-            <mesh position={[0.75, 0.05, -0.1]} material={drumMat}>
+            <mesh position={[0.75, 0.05, -0.1]} material={drumMat} castShadow receiveShadow>
               <cylinderGeometry args={[0.36, 0.36, 1.0, 14]} />
             </mesh>
           )}
@@ -634,27 +703,27 @@ function AlleyIndustrialDetails() {
   return (
     <group>
       {/* Overhead pipe */}
-      <mesh position={[0, 7.8, 0.16]} rotation={[0, 0, Math.PI / 2]}>
+      <mesh position={[0, 7.8, 0.16]} rotation={[0, 0, Math.PI / 2]} castShadow receiveShadow>
         <cylinderGeometry args={[0.08, 0.08, 68, 8]} />
         <meshStandardMaterial color="#38302A" roughness={0.7} metalness={0.6} />
       </mesh>
 
       {/* Vertical rusty drain pipes (Straight & Plumb) */}
       {[-24, -13, -2, 9, 21].map((x, i) => (
-        <mesh key={i} position={[x, 3.8, 0.16]} rotation={[0, 0, 0]} material={i % 2 === 0 ? pipeMat : rustMat}>
+        <mesh key={i} position={[x, 3.8, 0.16]} rotation={[0, 0, 0]} material={i % 2 === 0 ? pipeMat : rustMat} castShadow receiveShadow>
           <cylinderGeometry args={[0.06, 0.06, 8.0, 8]} />
         </mesh>
       ))}
 
       {/* Barred vent windows */}
       {[-18, 2, 14].map((x, i) => (
-        <group key={i} position={[x, 6.2, 0.04]}>
-          <mesh>
+        <group key={i} position={[x, 6.2, 0.10]}>
+          <mesh castShadow receiveShadow>
             <boxGeometry args={[2.4, 1.4, 0.1]} />
             <meshStandardMaterial color="#110E0D" roughness={0.9} />
           </mesh>
           {[-0.8, -0.4, 0, 0.4, 0.8].map((bx, idx) => (
-            <mesh key={idx} position={[bx, 0, 0.08]}>
+            <mesh key={idx} position={[bx, 0, 0.08]} castShadow receiveShadow>
               <cylinderGeometry args={[0.025, 0.025, 1.35, 6]} />
               <meshStandardMaterial color="#2E2824" metalness={0.8} />
             </mesh>
@@ -670,56 +739,104 @@ function AlleyIndustrialDetails() {
    ═══════════════════════════════════════════════════ */
 
 function WetSidewalkAndStreet() {
-  const [sidewalkTex, asphaltTex] = useMemo(() => {
-    // 1. Realistic Weathered Urban Sidewalk with Grime & Stains
+  const [
+    sidewalkTex,
+    sidewalkNormalMap,
+    sidewalkRoughnessMap,
+    asphaltTex,
+    asphaltNormalMap,
+    asphaltRoughnessMap,
+    curbTex,
+  ] = useMemo(() => {
+    /* ══════════════════════════════════════════════════════════════════
+       1. Authentic 90s Grey Concrete Footwalk (Sidewalk against wall)
+       Poured urban cement slab with saw-cut expansion joints, fine stone
+       aggregate, chewing gum spots, and natural sidewalk grit.
+       ══════════════════════════════════════════════════════════════════ */
+    const sW = 1024;
+    const sH = 512;
     const sCanvas = document.createElement('canvas');
-    sCanvas.width = 512;
-    sCanvas.height = 256;
+    sCanvas.width = sW;
+    sCanvas.height = sH;
     const sCtx = sCanvas.getContext('2d')!;
-    sCtx.fillStyle = '#6E737C'; // Authentic urban poured cement grey
-    sCtx.fillRect(0, 0, 512, 256);
 
-    const sData = sCtx.getImageData(0, 0, 512, 256);
-    for (let i = 0; i < sData.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 20;
-      sData.data[i] = Math.max(0, Math.min(255, sData.data[i] + n));
-      sData.data[i + 1] = Math.max(0, Math.min(255, sData.data[i + 1] + n));
-      sData.data[i + 2] = Math.max(0, Math.min(255, sData.data[i + 2] + n));
-    }
-    sCtx.putImageData(sData, 0, 0);
+    // Base concrete grey (#6C7178 to #64686F)
+    sCtx.fillStyle = '#6C7178';
+    sCtx.fillRect(0, 0, sW, sH);
 
-    // Sidewalk oil stains, dirt puddles & chewing gum spots
-    for (let i = 0; i < 28; i++) {
-      const px = Math.random() * 512;
-      const py = Math.random() * 256;
-      const pr = 8 + Math.random() * 32;
-      const grad = sCtx.createRadialGradient(px, py, 1, px, py, pr);
-      grad.addColorStop(0, 'rgba(28, 30, 35, 0.45)');
-      grad.addColorStop(0.6, 'rgba(38, 41, 47, 0.25)');
-      grad.addColorStop(1, 'rgba(38, 41, 47, 0.0)');
+    // Subtle cloudiness / moisture variation across sidewalk slabs
+    for (let i = 0; i < 45; i++) {
+      const px = Math.random() * sW;
+      const py = Math.random() * sH;
+      const pr = 40 + Math.random() * 140;
+      const grad = sCtx.createRadialGradient(px, py, 10, px, py, pr);
+      grad.addColorStop(0, Math.random() > 0.5 ? 'rgba(122, 127, 136, 0.18)' : 'rgba(92, 96, 103, 0.22)');
+      grad.addColorStop(1, 'rgba(108, 113, 120, 0.0)');
       sCtx.fillStyle = grad;
       sCtx.beginPath();
       sCtx.arc(px, py, pr, 0, Math.PI * 2);
       sCtx.fill();
     }
 
-    // Small dark street gum & grime speckles
-    sCtx.fillStyle = 'rgba(18, 20, 24, 0.65)';
-    for (let i = 0; i < 120; i++) {
-      sCtx.fillRect(Math.random() * 512, Math.random() * 256, 3, 3);
+    // High-definition concrete aggregate grain
+    const sData = sCtx.getImageData(0, 0, sW, sH);
+    for (let i = 0; i < sData.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * 28;
+      sData.data[i] = Math.max(0, Math.min(255, sData.data[i] + n));
+      sData.data[i + 1] = Math.max(0, Math.min(255, sData.data[i + 1] + n));
+      sData.data[i + 2] = Math.max(0, Math.min(255, sData.data[i + 2] + n));
+    }
+    sCtx.putImageData(sData, 0, 0);
+
+    // Saw-cut concrete expansion joints (vertical joint grooves every 256px)
+    for (let x = 0; x < sW; x += 256) {
+      // Dark groove recess
+      sCtx.fillStyle = '#2A2C30';
+      sCtx.fillRect(x - 3, 0, 6, sH);
+      // Highlight edge along score groove
+      sCtx.fillStyle = 'rgba(142, 148, 158, 0.65)';
+      sCtx.fillRect(x + 3, 0, 2, sH);
+      // Dirt accumulation inside expansion groove
+      sCtx.fillStyle = 'rgba(32, 34, 38, 0.45)';
+      sCtx.fillRect(x - 12, 0, 24, sH);
     }
 
-    // Grimy gutter runoff stain near curb edge
-    const gutterGrad = sCtx.createLinearGradient(0, 210, 0, 256);
-    gutterGrad.addColorStop(0, 'rgba(22, 25, 30, 0.0)');
-    gutterGrad.addColorStop(1, 'rgba(22, 25, 30, 0.5)');
-    sCtx.fillStyle = gutterGrad;
-    sCtx.fillRect(0, 210, 512, 46);
+    // Footwalk chewing gum spots & sidewalk stains
+    for (let i = 0; i < 45; i++) {
+      const gx = Math.random() * sW;
+      const gy = Math.random() * sH;
+      const gr = 3 + Math.random() * 8;
+      sCtx.fillStyle = Math.random() > 0.4 ? '#2E3136' : '#8B8F96';
+      sCtx.beginPath();
+      sCtx.arc(gx, gy, gr, 0, Math.PI * 2);
+      sCtx.fill();
+    }
 
-    // Concrete slab expansion joints with accumulated dirt
-    sCtx.fillStyle = 'rgba(20, 23, 28, 0.75)';
-    for (let x = 0; x <= 512; x += 128) {
-      sCtx.fillRect(x - 2, 0, 5, 256);
+    // Sidewalk Bump/Height canvas -> Normal Map
+    const sBump = document.createElement('canvas');
+    sBump.width = sW;
+    sBump.height = sH;
+    const sBumpCtx = sBump.getContext('2d')!;
+    sBumpCtx.fillStyle = '#808080';
+    sBumpCtx.fillRect(0, 0, sW, sH);
+    sBumpCtx.drawImage(sCanvas, 0, 0);
+    // Deepen grooves in bump map
+    for (let x = 0; x < sW; x += 256) {
+      sBumpCtx.fillStyle = '#101010';
+      sBumpCtx.fillRect(x - 3, 0, 6, sH);
+    }
+    const sNormalCanvas = heightCanvasToNormalMap(sBump, sW, 3.2);
+
+    // Sidewalk Roughness Map (Matte concrete ~0.82, damp grooves ~0.4)
+    const sRough = document.createElement('canvas');
+    sRough.width = sW;
+    sRough.height = sH;
+    const sRoughCtx = sRough.getContext('2d')!;
+    sRoughCtx.fillStyle = '#D0D0D0'; // ~0.82 roughness
+    sRoughCtx.fillRect(0, 0, sW, sH);
+    for (let x = 0; x < sW; x += 256) {
+      sRoughCtx.fillStyle = '#606060'; // smooth damp grooves
+      sRoughCtx.fillRect(x - 10, 0, 20, sH);
     }
 
     const sTex = new THREE.CanvasTexture(sCanvas);
@@ -727,63 +844,158 @@ function WetSidewalkAndStreet() {
     sTex.repeat.set(18, 1);
     sTex.colorSpace = THREE.SRGBColorSpace;
 
-    // 2. Gritty Urban Charcoal Asphalt Road with Tire Skid Marks & Oil Slick Messiness
+    const sNormTex = new THREE.CanvasTexture(sNormalCanvas);
+    sNormTex.wrapS = sNormTex.wrapT = THREE.RepeatWrapping;
+    sNormTex.repeat.set(18, 1);
+
+    const sRoughTex = new THREE.CanvasTexture(sRough);
+    sRoughTex.wrapS = sRoughTex.wrapT = THREE.RepeatWrapping;
+    sRoughTex.repeat.set(18, 1);
+
+    /* ══════════════════════════════════════════════════════════════════
+       2. Authentic 90s Grey Street / Road Walk (Asphalt Tarmac)
+       Directly inspired by real street photo: natural medium-grey road stone
+       (#62666D), coarse aggregate pebbles, white painted shoulder stripe
+       with distressed edges, and bitumen tar-sealed crack repair lines.
+       ══════════════════════════════════════════════════════════════════ */
+    const aW = 2048;
+    const aH = 1024;
     const aCanvas = document.createElement('canvas');
-    aCanvas.width = 1024;
-    aCanvas.height = 512;
+    aCanvas.width = aW;
+    aCanvas.height = aH;
     const aCtx = aCanvas.getContext('2d')!;
-    aCtx.fillStyle = '#1D2024'; // Dark charcoal asphalt tarmac
-    aCtx.fillRect(0, 0, 1024, 512);
 
-    const aData = aCtx.getImageData(0, 0, 1024, 512);
-    for (let i = 0; i < aData.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 26;
-      aData.data[i] = Math.max(0, Math.min(255, aData.data[i] + n));
-      aData.data[i + 1] = Math.max(0, Math.min(255, aData.data[i + 1] + n));
-      aData.data[i + 2] = Math.max(0, Math.min(255, aData.data[i + 2] + n));
-    }
-    aCtx.putImageData(aData, 0, 0);
+    // Base authentic stony grey asphalt (#62666D to #5E6269)
+    aCtx.fillStyle = '#62666D';
+    aCtx.fillRect(0, 0, aW, aH);
 
-    // Long dark tire skid marks & rubber scuff streaks
-    for (let i = 0; i < 14; i++) {
-      const sx = Math.random() * 1024;
-      const sy = 60 + Math.random() * 380;
-      const sw = 120 + Math.random() * 260;
-      const sh = 10 + Math.random() * 18;
-      aCtx.fillStyle = 'rgba(10, 12, 15, 0.55)';
-      aCtx.fillRect(sx, sy, sw, sh);
-    }
+    // Natural roadside color variation: lighter grey dust accumulation near shoulder, slightly darker grey vehicle tracks
+    const roadGrad = aCtx.createLinearGradient(0, 0, 0, aH);
+    roadGrad.addColorStop(0, '#6F747C');   // Near curb/shoulder: lighter dusty stone grey
+    roadGrad.addColorStop(0.15, '#666B72');
+    roadGrad.addColorStop(0.4, '#585C63'); // Outer wheel track lane
+    roadGrad.addColorStop(0.6, '#60646B'); // Center road
+    roadGrad.addColorStop(0.8, '#585C63'); // Inner wheel track lane
+    roadGrad.addColorStop(1.0, '#6A6F77'); // Far road surface
+    aCtx.fillStyle = roadGrad;
+    aCtx.fillRect(0, 0, aW, aH);
 
-    // Slick dark asphalt oil patches & tar repairs
-    for (let i = 0; i < 22; i++) {
-      const px = Math.random() * 1024;
-      const py = Math.random() * 512;
-      const pr = 16 + Math.random() * 54;
-      const grad = aCtx.createRadialGradient(px, py, 2, px, py, pr);
-      grad.addColorStop(0, 'rgba(8, 10, 12, 0.7)');
-      grad.addColorStop(0.7, 'rgba(14, 16, 19, 0.35)');
-      grad.addColorStop(1, 'rgba(14, 16, 19, 0.0)');
+    // Organic patch variations & road weathering
+    for (let i = 0; i < 65; i++) {
+      const px = Math.random() * aW;
+      const py = Math.random() * aH;
+      const pr = 60 + Math.random() * 220;
+      const grad = aCtx.createRadialGradient(px, py, 10, px, py, pr);
+      grad.addColorStop(0, Math.random() > 0.5 ? 'rgba(120, 125, 134, 0.22)' : 'rgba(78, 82, 88, 0.24)');
+      grad.addColorStop(1, 'rgba(98, 102, 109, 0.0)');
       aCtx.fillStyle = grad;
       aCtx.beginPath();
       aCtx.arc(px, py, pr, 0, Math.PI * 2);
       aCtx.fill();
     }
 
-    // Painted white road shoulder striping
-    aCtx.fillStyle = 'rgba(235, 240, 245, 0.88)';
-    aCtx.fillRect(0, 28, 1024, 8);
+    // High-definition stony aggregate texture (white granite specks & dark basalt grains)
+    const aData = aCtx.getImageData(0, 0, aW, aH);
+    for (let i = 0; i < aData.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * 32;
+      aData.data[i] = Math.max(0, Math.min(255, aData.data[i] + n));
+      aData.data[i + 1] = Math.max(0, Math.min(255, aData.data[i + 1] + n));
+      aData.data[i + 2] = Math.max(0, Math.min(255, aData.data[i + 2] + n));
+    }
+    aCtx.putImageData(aData, 0, 0);
 
-    // Painted yellow dashed road center line
-    aCtx.fillStyle = 'rgba(245, 197, 24, 0.92)';
-    for (let x = 0; x < 1024; x += 128) {
-      aCtx.fillRect(x + 16, 246, 68, 10);
+    // Coarse macro pebbles embedded in asphalt surface
+    for (let i = 0; i < 1200; i++) {
+      const bx = Math.random() * aW;
+      const by = Math.random() * aH;
+      const br = 1 + Math.random() * 2.5;
+      aCtx.fillStyle = Math.random() > 0.45 ? '#80858E' : '#3E4147';
+      aCtx.beginPath();
+      aCtx.arc(bx, by, br, 0, Math.PI * 2);
+      aCtx.fill();
     }
 
-    // Grimy street wear scuffs over the painted markings
-    aCtx.fillStyle = 'rgba(15, 17, 20, 0.55)';
-    for (let i = 0; i < 65; i++) {
-      aCtx.fillRect(Math.random() * 1024, 20, 16 + Math.random() * 40, 25);
-      aCtx.fillRect(Math.random() * 1024, 240, 16 + Math.random() * 40, 22);
+    // Authentic Worn White Painted Shoulder Line / Roadside Stripe (matching photo)
+    // Running parallel to the curb (around Y = 70 to Y = 95)
+    aCtx.save();
+    aCtx.fillStyle = '#E2E6EC'; // Worn white traffic paint
+    aCtx.fillRect(0, 72, aW, 20);
+
+    // Distressed scuffs & road wear cutting into the white painted line
+    aCtx.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 350; i++) {
+      const sx = Math.random() * aW;
+      const sy = 68 + Math.random() * 28;
+      const sw = 4 + Math.random() * 26;
+      const sh = 2 + Math.random() * 10;
+      aCtx.fillRect(sx, sy, sw, sh);
+    }
+    aCtx.restore();
+
+    // Re-layer subtle grey dust over the worn white stripe
+    aCtx.fillStyle = 'rgba(98, 102, 109, 0.28)';
+    aCtx.fillRect(0, 70, aW, 24);
+
+    // Bitumen / Liquid Tar Sealed Crack Lines (snake-like black tar repairs weaving across the road)
+    aCtx.strokeStyle = '#282B30'; // Dark tar bitumen
+    aCtx.lineCap = 'round';
+    aCtx.lineJoin = 'round';
+    for (let i = 0; i < 8; i++) {
+      let currX = (i / 8) * aW + (Math.random() - 0.5) * 150;
+      let currY = 40 + Math.random() * 120;
+      const endY = aH - 40 - Math.random() * 100;
+      const stepY = (endY - currY) / 28;
+
+      aCtx.beginPath();
+      aCtx.moveTo(currX, currY);
+      for (let j = 0; j < 28; j++) {
+        currX += (Math.random() - 0.5) * 45;
+        currY += stepY;
+        aCtx.lineTo(currX, currY);
+      }
+      aCtx.lineWidth = 6 + Math.random() * 4;
+      aCtx.stroke();
+
+      // Inner tar gloss bead
+      aCtx.strokeStyle = '#1D1F23';
+      aCtx.lineWidth *= 0.6;
+      aCtx.stroke();
+    }
+
+    // Subtle dark tire track scuffs & rubber wear along lanes
+    for (let i = 0; i < 35; i++) {
+      const tx = Math.random() * aW;
+      const ty = 260 + Math.random() * 180;
+      const tw = 80 + Math.random() * 240;
+      const th = 12 + Math.random() * 25;
+      aCtx.fillStyle = 'rgba(42, 45, 50, 0.32)';
+      aCtx.fillRect(tx, ty, tw, th);
+    }
+
+    // Asphalt Bump/Height canvas -> Normal Map
+    const aBump = document.createElement('canvas');
+    aBump.width = aW;
+    aBump.height = aH;
+    const aBumpCtx = aBump.getContext('2d')!;
+    aBumpCtx.fillStyle = '#808080';
+    aBumpCtx.fillRect(0, 0, aW, aH);
+    aBumpCtx.drawImage(aCanvas, 0, 0);
+    // Raise white painted line slightly, recess tar cracks slightly
+    aBumpCtx.fillStyle = '#A8A8A8';
+    aBumpCtx.fillRect(0, 72, aW, 20);
+    const aNormalCanvas = heightCanvasToNormalMap(aBump, aW, 3.8);
+
+    // Asphalt Roughness Map (Stony aggregate matte ~0.76, tar crack lines slightly shiny ~0.35)
+    const aRough = document.createElement('canvas');
+    aRough.width = aW;
+    aRough.height = aH;
+    const aRoughCtx = aRough.getContext('2d')!;
+    aRoughCtx.fillStyle = '#C2C2C2'; // ~0.76 roughness
+    aRoughCtx.fillRect(0, 0, aW, aH);
+    aRoughCtx.fillStyle = '#585858'; // shiny tar repair sheen
+    for (let i = 0; i < 8; i++) {
+      // draw rough tar paths
+      aRoughCtx.fillRect((i / 8) * aW, 0, 18, aH);
     }
 
     const aTex = new THREE.CanvasTexture(aCanvas);
@@ -792,34 +1004,76 @@ function WetSidewalkAndStreet() {
     aTex.repeat.set(18, 1);
     aTex.colorSpace = THREE.SRGBColorSpace;
 
-    return [sTex, aTex] as const;
+    const aNormTex = new THREE.CanvasTexture(aNormalCanvas);
+    aNormTex.wrapS = THREE.RepeatWrapping;
+    aNormTex.wrapT = THREE.ClampToEdgeWrapping;
+    aNormTex.repeat.set(18, 1);
+
+    const aRoughTex = new THREE.CanvasTexture(aRough);
+    aRoughTex.wrapS = THREE.RepeatWrapping;
+    aRoughTex.wrapT = THREE.ClampToEdgeWrapping;
+    aRoughTex.repeat.set(18, 1);
+
+    // 3. Weathered Granite Concrete Curb Texture
+    const cCanvas = document.createElement('canvas');
+    cCanvas.width = 512;
+    cCanvas.height = 64;
+    const cCtx = cCanvas.getContext('2d')!;
+    cCtx.fillStyle = '#5A5E65';
+    cCtx.fillRect(0, 0, 512, 64);
+    const cData = cCtx.getImageData(0, 0, 512, 64);
+    for (let i = 0; i < cData.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * 24;
+      cData.data[i] = Math.max(0, Math.min(255, cData.data[i] + n));
+      cData.data[i + 1] = Math.max(0, Math.min(255, cData.data[i + 1] + n));
+      cData.data[i + 2] = Math.max(0, Math.min(255, cData.data[i + 2] + n));
+    }
+    cCtx.putImageData(cData, 0, 0);
+    const cTex = new THREE.CanvasTexture(cCanvas);
+    cTex.wrapS = THREE.RepeatWrapping;
+    cTex.repeat.set(18, 1);
+    cTex.colorSpace = THREE.SRGBColorSpace;
+
+    return [sTex, sNormTex, sRoughTex, aTex, aNormTex, aRoughTex, cTex] as const;
   }, []);
+
+  const normalScale = useMemo(() => new THREE.Vector2(1.6, 1.6), []);
 
   return (
     <group>
-      {/* Gritty urban cement sidewalk slab */}
-      <mesh position={[0, -0.05, 1.6]}>
+      {/* Authentic grey concrete footwalk / sidewalk slab */}
+      <mesh position={[0, -0.05, 1.6]} receiveShadow>
         <boxGeometry args={[72, 0.12, 3.2]} />
         <meshStandardMaterial
           map={sidewalkTex}
-          roughness={0.72}
-          metalness={0.08}
+          normalMap={sidewalkNormalMap}
+          normalScale={normalScale}
+          roughnessMap={sidewalkRoughnessMap}
+          roughness={0.82}
+          metalness={0.04}
         />
       </mesh>
 
-      {/* Weathered concrete curb edge with muddy 90s street patina */}
-      <mesh position={[0, -0.1, 3.2]}>
-        <boxGeometry args={[72, 0.22, 0.15]} />
-        <meshStandardMaterial color="#36322E" roughness={0.78} />
+      {/* Weathered granite concrete curb edge separating footwalk from road */}
+      <mesh position={[0, -0.1, 3.2]} castShadow receiveShadow>
+        <boxGeometry args={[72, 0.22, 0.16]} />
+        <meshStandardMaterial
+          map={curbTex}
+          roughness={0.85}
+          metalness={0.05}
+        />
       </mesh>
 
-      {/* Weathered charcoal asphalt street road below with damp muddy 90s sheen */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.22, 6]}>
-        <planeGeometry args={[72, 10]} />
+      {/* Authentic 90s greyish street road below with fine stone aggregate, white shoulder stripe, and tar repairs */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.22, 6]} receiveShadow>
+        <planeGeometry args={[72, 10, 64, 8]} />
         <meshStandardMaterial
           map={asphaltTex}
-          roughness={0.48}
-          metalness={0.18}
+          normalMap={asphaltNormalMap}
+          normalScale={normalScale}
+          roughnessMap={asphaltRoughnessMap}
+          roughness={0.76}
+          metalness={0.06}
         />
       </mesh>
     </group>
@@ -845,6 +1099,11 @@ function HeroCenterSpotlight() {
         penumbra={0.42}
         distance={14}
         decay={2}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-near={1}
+        shadow-camera-far={14}
+        shadow-bias={-0.0015}
       />
       {/* Center hero pool reinforcement */}
       <pointLight position={[-1.0, 2.5, 2.1]} color="#FFF2DB" intensity={180} distance={8} decay={2} />
@@ -858,8 +1117,21 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
       <fog attach="fog" args={['#141113', 18, 48]} />
 
       {/* Balanced atmospheric fill so masonry & details are beautifully defined and legible */}
-      <ambientLight intensity={0.52} color="#FAF0E6" />
-      <directionalLight position={[3, 12, 8]} intensity={1.35} color="#F5E4C3" />
+      <ambientLight intensity={0.42} color="#FAF0E6" />
+      <directionalLight
+        position={[3, 12, 8]}
+        intensity={1.35}
+        color="#F5E4C3"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-45}
+        shadow-camera-right={45}
+        shadow-camera-top={20}
+        shadow-camera-bottom={-10}
+        shadow-camera-near={1}
+        shadow-camera-far={40}
+        shadow-bias={-0.0012}
+      />
 
       {/* Hero #1: Center Poster Spotlight */}
       <HeroCenterSpotlight />
@@ -901,11 +1173,11 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
       ))}
 
       {/* Authentic Spray Paint Graffiti with Archival Stencil Typography — positioned cleanly between posters */}
-      <GraffitiTag text="EVENTS" subtext="UNDERGROUND TECH ARCHIVE // EST. 1994" color="#00E5FF" accentColor="#00A8CC" position={[-26.0, 2.4, 0.045]} rotation={[0, 0, -0.02]} tagScale={0.86} />
-      <GraffitiTag text="GDG" subtext="CRCE // SUNÉKHEIA // ALL ERAS" color="#FF007F" accentColor="#990044" position={[-14.5, 2.45, 0.045]} rotation={[0, 0, 0.03]} tagScale={0.86} />
-      <GraffitiTag text="MTV" subtext="UNPLUGGED // ARCHIVE SER. 04" color="#00E5FF" accentColor="#006688" position={[-3.8, 2.4, 0.045]} rotation={[0, 0, -0.03]} tagScale={0.86} />
-      <GraffitiTag text="90s" subtext="CONTINUITY // EVOLUTION // LEGACY" color="#FFBB00" accentColor="#AA5500" position={[7.35, 2.45, 0.045]} rotation={[0, 0, 0.04]} tagScale={0.84} />
-      <GraffitiTag text="HACK" subtext="BYTE CLUB // OPEN SYNDICATE" color="#BF00FF" accentColor="#550088" position={[18.65, 2.4, 0.045]} rotation={[0, 0, -0.03]} tagScale={0.84} />
+      <GraffitiTag text="EVENTS" subtext="UNDERGROUND TECH ARCHIVE // EST. 1994" color="#00E5FF" accentColor="#00A8CC" position={[-26.0, 2.4, 0.105]} rotation={[0, 0, -0.02]} tagScale={0.86} />
+      <GraffitiTag text="GDG" subtext="CRCE // SUNÉKHEIA // ALL ERAS" color="#FF007F" accentColor="#990044" position={[-14.5, 2.45, 0.105]} rotation={[0, 0, 0.03]} tagScale={0.86} />
+      <GraffitiTag text="MTV" subtext="UNPLUGGED // ARCHIVE SER. 04" color="#00E5FF" accentColor="#006688" position={[-3.8, 2.4, 0.105]} rotation={[0, 0, -0.03]} tagScale={0.86} />
+      <GraffitiTag text="90s" subtext="CONTINUITY // EVOLUTION // LEGACY" color="#FFBB00" accentColor="#AA5500" position={[7.35, 2.45, 0.105]} rotation={[0, 0, 0.04]} tagScale={0.84} />
+      <GraffitiTag text="HACK" subtext="BYTE CLUB // OPEN SYNDICATE" color="#BF00FF" accentColor="#550088" position={[18.65, 2.4, 0.105]} rotation={[0, 0, -0.03]} tagScale={0.84} />
 
       {/* Rising Street Steam & Dust Motes */}
       <Sparkles
@@ -933,6 +1205,7 @@ export default function WallScene({ progressRef }: WallSceneProps) {
     <Canvas
       camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
       dpr={[1, 1.5]}
+      shadows="soft"
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       style={{
         position: 'absolute',

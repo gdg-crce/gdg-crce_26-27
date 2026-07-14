@@ -288,139 +288,157 @@ export function WallDecalsAndGrime() {
   }, []);
 
   const plasterPositions: [number, number, number][] = [
-    [-21.0, 4.6, 0.015],
-    [-15.5, 2.2, 0.015],
-    [-9.0, 5.2, 0.015],
-    [-3.2, 1.9, 0.015],
-    [3.5, 5.0, 0.015],
-    [9.5, 2.1, 0.015],
-    [16.2, 5.2, 0.015],
-    [21.5, 3.2, 0.015],
+    [-21.0, 4.6, 0.090],
+    [-15.5, 2.2, 0.090],
+    [-9.0, 5.2, 0.090],
+    [-3.2, 1.9, 0.090],
+    [3.5, 5.0, 0.090],
+    [9.5, 2.1, 0.090],
+    [16.2, 5.2, 0.090],
+    [21.5, 3.2, 0.090],
   ];
 
   const grimePositions: [number, number, number][] = [
-    [-24, 4.4, 0.018],
-    [-18, 4.1, 0.018],
-    [-13, 4.5, 0.018],
-    [-7.5, 4.3, 0.018],
-    [-2, 4.4, 0.018],
-    [2, 4.2, 0.018],
-    [9, 4.5, 0.018],
-    [14, 4.3, 0.018],
-    [18.5, 4.4, 0.018],
-    [21, 4.2, 0.018],
+    [-24, 4.4, 0.091],
+    [-18, 4.1, 0.091],
+    [-13, 4.5, 0.091],
+    [-7.5, 4.3, 0.091],
+    [-2, 4.4, 0.091],
+    [2, 4.2, 0.091],
+    [9, 4.5, 0.091],
+    [14, 4.3, 0.091],
+    [18.5, 4.4, 0.091],
+    [21, 4.2, 0.091],
   ];
 
   return (
     <group>
       {/* Plaster & Weathering Patches breaking repetition */}
       {plasterPositions.map((pos, i) => (
-        <mesh key={`plaster-${i}`} position={pos}>
+        <mesh key={`plaster-${i}`} position={pos} castShadow receiveShadow>
           <planeGeometry args={[3.2 + (i % 2) * 0.5, 2.6 + (i % 2) * 0.4]} />
           <meshStandardMaterial
             map={plasterTex}
             transparent={true}
+            depthWrite={false}
             roughness={0.92}
             polygonOffset={true}
             polygonOffsetFactor={-3}
+            polygonOffsetUnits={-3}
           />
         </mesh>
       ))}
 
       {/* Vertical Weathering Streaks under pipes/windows */}
       {grimePositions.map((pos, i) => (
-        <mesh key={`grime-${i}`} position={pos}>
+        <mesh key={`grime-${i}`} position={pos} receiveShadow>
           <planeGeometry args={[1.6, 5.2]} />
           <meshStandardMaterial
             map={grimeTex}
             transparent={true}
+            depthWrite={false}
             roughness={0.9}
             polygonOffset={true}
             polygonOffsetFactor={-2}
+            polygonOffsetUnits={-2}
           />
         </mesh>
       ))}
 
       {/* Left Reference Panel: Layered Ripped Wheatpaste Poster Collages */}
-      <mesh position={[-23.5, 3.4, 0.014]}>
+      <mesh position={[-23.5, 3.4, 0.092]} castShadow receiveShadow>
         <planeGeometry args={[2.8, 2.8]} />
         <meshStandardMaterial
           map={wheatpasteCollage1}
           transparent={true}
+          depthWrite={false}
           roughness={0.82}
           polygonOffset={true}
           polygonOffsetFactor={-3}
+          polygonOffsetUnits={-3}
         />
       </mesh>
-      <mesh position={[-6.2, 3.2, 0.014]}>
+      <mesh position={[-6.2, 3.2, 0.092]} castShadow receiveShadow>
         <planeGeometry args={[2.6, 2.6]} />
         <meshStandardMaterial
           map={wheatpasteCollage2}
           transparent={true}
+          depthWrite={false}
           roughness={0.82}
           polygonOffset={true}
           polygonOffsetFactor={-3}
+          polygonOffsetUnits={-3}
         />
       </mesh>
 
       {/* Middle Reference Panel: Peeling Stucco with Cyan & Rust Graffiti Spray Tags */}
-      <mesh position={[2.8, 2.1, 0.014]}>
+      <mesh position={[2.8, 2.1, 0.093]} castShadow receiveShadow>
         <planeGeometry args={[3.6, 1.8]} />
         <meshStandardMaterial
           map={graffitiPatchTex}
           transparent={true}
+          depthWrite={false}
           roughness={0.88}
           polygonOffset={true}
           polygonOffsetFactor={-3}
+          polygonOffsetUnits={-3}
         />
       </mesh>
 
       {/* Right Reference Panel: Deep Cracked Fissure Wall Patch */}
-      <mesh position={[16.8, 3.6, 0.014]}>
+      <mesh position={[16.8, 3.6, 0.092]} castShadow receiveShadow>
         <planeGeometry args={[3.2, 3.2]} />
         <meshStandardMaterial
           map={crackedPatchTex}
           transparent={true}
+          depthWrite={false}
           roughness={0.92}
           polygonOffset={true}
           polygonOffsetFactor={-3}
+          polygonOffsetUnits={-3}
         />
       </mesh>
 
       {/* 1st Heritage Poster: Complete Full Archival Poster */}
-      <mesh position={[-19.2, 3.3, 0.012]}>
+      <mesh position={[-19.2, 3.3, 0.094]} castShadow receiveShadow>
         <planeGeometry args={[3.2, 1.6]} />
         <meshStandardMaterial
           map={fullPosterTex}
           transparent={true}
+          depthWrite={false}
           roughness={0.7}
           polygonOffset={true}
           polygonOffsetFactor={-2}
+          polygonOffsetUnits={-2}
         />
       </mesh>
 
       {/* 2nd Heritage Poster: Dramatic Zigzag Ripped Torn Half-Poster */}
-      <mesh position={[13.2, 2.3, 0.012]}>
+      <mesh position={[13.2, 2.3, 0.094]} castShadow receiveShadow>
         <planeGeometry args={[2.6, 1.5]} />
         <meshStandardMaterial
           map={tornPosterTex}
           transparent={true}
+          depthWrite={false}
           roughness={0.85}
           polygonOffset={true}
           polygonOffsetFactor={-2}
+          polygonOffsetUnits={-2}
         />
       </mesh>
 
       {/* 90s Underground Sticker Bombing & Parental Advisory Stamp Clusters */}
       {[-11.8, 8.4, 21.2].map((sx, i) => (
-        <mesh key={`sticker-bomb-${i}`} position={[sx, 2.15 + (i % 2) * 0.35, 0.015]}>
+        <mesh key={`sticker-bomb-${i}`} position={[sx, 2.15 + (i % 2) * 0.35, 0.096]} castShadow receiveShadow>
           <planeGeometry args={[2.4, 1.2]} />
           <meshStandardMaterial
             map={stickerBombTex}
             transparent={true}
+            depthWrite={false}
             roughness={0.78}
             polygonOffset={true}
             polygonOffsetFactor={-3}
+            polygonOffsetUnits={-3}
           />
         </mesh>
       ))}
@@ -428,11 +446,11 @@ export function WallDecalsAndGrime() {
       {/* Middle Reference Panel: Curb-side Green Street Weeds at Wall Base */}
       {[-21, -15, -8, -1, 6, 12, 19].map((wx, idx) => (
         <group key={`weed-${idx}`} position={[wx, 0.18, 0.12]}>
-          <mesh rotation={[0.15, idx * 0.4, 0]}>
+          <mesh rotation={[0.15, idx * 0.4, 0]} castShadow receiveShadow>
             <coneGeometry args={[0.14, 0.28, 5]} />
             <meshStandardMaterial color="#2E5A34" roughness={0.75} />
           </mesh>
-          <mesh position={[0.08, 0.02, 0.04]} rotation={[0.2, -idx * 0.3, 0.1]}>
+          <mesh position={[0.08, 0.02, 0.04]} rotation={[0.2, -idx * 0.3, 0.1]} castShadow receiveShadow>
             <coneGeometry args={[0.11, 0.22, 5]} />
             <meshStandardMaterial color="#3A6C42" roughness={0.75} />
           </mesh>
@@ -461,65 +479,65 @@ export function RightSideAlleyDetail() {
   return (
     <group position={[15.5, 5.2, 0.4]}>
       {/* Structural C-Channel Outer Steel Perimeter Frame */}
-      <mesh position={[0, 0, 0.44]} material={ironMat}>
+      <mesh position={[0, 0, 0.44]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[4.4, 0.16, 0.08]} />
       </mesh>
-      <mesh position={[0, 0, -0.44]} material={ironMat}>
+      <mesh position={[0, 0, -0.44]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[4.4, 0.16, 0.08]} />
       </mesh>
-      <mesh position={[-2.16, 0, 0]} material={ironMat}>
+      <mesh position={[-2.16, 0, 0]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[0.08, 0.16, 0.96]} />
       </mesh>
-      <mesh position={[2.16, 0, 0]} material={ironMat}>
+      <mesh position={[2.16, 0, 0]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[0.08, 0.16, 0.96]} />
       </mesh>
 
       {/* Perforated Industrial Walkway Deck Floor */}
-      <mesh position={[0, 0.04, 0]} material={gratingMat}>
+      <mesh position={[0, 0.04, 0]} material={gratingMat} castShadow receiveShadow>
         <boxGeometry args={[4.24, 0.04, 0.82]} />
       </mesh>
 
       {/* Structural Under-Deck Cross Joists adding rich underside depth */}
       {[-1.8, -1.2, -0.6, 0, 0.6, 1.2, 1.8].map((jx, idx) => (
-        <mesh key={`joist-${idx}`} position={[jx, -0.04, 0]} material={ironMat}>
+        <mesh key={`joist-${idx}`} position={[jx, -0.04, 0]} material={ironMat} castShadow receiveShadow>
           <boxGeometry args={[0.05, 0.1, 0.84]} />
         </mesh>
       ))}
 
       {/* Wall Anchor Wallplates & Cantilever Support Struts */}
-      <mesh position={[-1.7, -0.65, -0.46]} material={ironMat}>
+      <mesh position={[-1.7, -0.65, -0.46]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[0.24, 0.48, 0.04]} />
       </mesh>
-      <mesh position={[1.7, -0.65, -0.46]} material={ironMat}>
+      <mesh position={[1.7, -0.65, -0.46]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[0.24, 0.48, 0.04]} />
       </mesh>
-      <mesh position={[-1.7, -0.42, -0.05]} rotation={[0.62, 0, 0]} material={ironMat}>
+      <mesh position={[-1.7, -0.42, -0.05]} rotation={[0.62, 0, 0]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[0.08, 1.15, 0.08]} />
       </mesh>
-      <mesh position={[1.7, -0.42, -0.05]} rotation={[0.62, 0, 0]} material={ironMat}>
+      <mesh position={[1.7, -0.42, -0.05]} rotation={[0.62, 0, 0]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[0.08, 1.15, 0.08]} />
       </mesh>
 
       {/* Steel Toe-Board Kickplate along edge */}
-      <mesh position={[0, 0.14, 0.42]} material={ironMat}>
+      <mesh position={[0, 0.14, 0.42]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[4.36, 0.12, 0.03]} />
       </mesh>
 
       {/* Multi-Tier Safety Railing System */}
-      <mesh position={[0, 0.52, 0.42]} rotation={[0, 0, Math.PI / 2]} material={ironMat}>
+      <mesh position={[0, 0.52, 0.42]} rotation={[0, 0, Math.PI / 2]} material={ironMat} castShadow receiveShadow>
         <cylinderGeometry args={[0.024, 0.024, 4.36, 8]} />
       </mesh>
-      <mesh position={[0, 0.86, 0.42]} material={ironMat}>
+      <mesh position={[0, 0.86, 0.42]} material={ironMat} castShadow receiveShadow>
         <boxGeometry args={[4.38, 0.05, 0.05]} />
       </mesh>
       {[-2.05, -1.35, -0.68, 0, 0.68, 1.35, 2.05].map((rx, i) => (
-        <mesh key={`post-${i}`} position={[rx, 0.46, 0.42]} material={ironMat}>
+        <mesh key={`post-${i}`} position={[rx, 0.46, 0.42]} material={ironMat} castShadow receiveShadow>
           <cylinderGeometry args={[0.028, 0.028, 0.8, 8]} />
         </mesh>
       ))}
 
       {/* Vintage Industrial Caged Light Fixture underneath */}
-      <mesh position={[0, -0.16, 0.1]} material={ironMat}>
+      <mesh position={[0, -0.16, 0.1]} material={ironMat} castShadow receiveShadow>
         <cylinderGeometry args={[0.12, 0.15, 0.14, 12]} />
       </mesh>
       <mesh position={[0, -0.22, 0.1]}>
@@ -547,24 +565,24 @@ export function AlleyDepthLayers() {
   return (
     <group>
       {/* Foreground Hanging Utility Cables / Pillars (Straight & Plumb) */}
-      <mesh position={[-14, 6.4, 2.6]} rotation={[0, 0, 0]} material={cableMat}>
+      <mesh position={[-14, 6.4, 2.6]} rotation={[0, 0, 0]} material={cableMat} castShadow receiveShadow>
         <cylinderGeometry args={[0.03, 0.03, 22, 8]} />
       </mesh>
-      <mesh position={[4, 6.6, 2.9]} rotation={[0, 0, 0]} material={cableMat}>
+      <mesh position={[4, 6.6, 2.9]} rotation={[0, 0, 0]} material={cableMat} castShadow receiveShadow>
         <cylinderGeometry args={[0.028, 0.028, 24, 8]} />
       </mesh>
-      <mesh position={[18, 6.3, 2.5]} rotation={[0, 0, 0]} material={cableMat}>
+      <mesh position={[18, 6.3, 2.5]} rotation={[0, 0, 0]} material={cableMat} castShadow receiveShadow>
         <cylinderGeometry args={[0.03, 0.03, 18, 8]} />
       </mesh>
 
       {/* Street Edge Safety Bollards */}
       {[-20, -8, 8, 20].map((x, i) => (
         <group key={`bollard-${i}`} position={[x, 0.45, 3.1]}>
-          <mesh>
+          <mesh castShadow receiveShadow>
             <cylinderGeometry args={[0.16, 0.18, 0.9, 12]} />
             <meshStandardMaterial color="#2D2926" roughness={0.7} metalness={0.6} />
           </mesh>
-          <mesh position={[0, 0.26, 0]}>
+          <mesh position={[0, 0.26, 0]} castShadow receiveShadow>
             <cylinderGeometry args={[0.165, 0.165, 0.1, 12]} />
             <meshStandardMaterial color="#D98A1E" roughness={0.3} />
           </mesh>
@@ -580,10 +598,26 @@ export function AlleyDepthLayers() {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function UrbanStreetFloor() {
-  const manholeMat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: '#2B2E33', roughness: 0.45, metalness: 0.85 }),
-    []
-  );
+  const [puddleTex, manholeMat, ringMat, drainMat] = useMemo(() => {
+    // Wet puddle texture with soft transparent edges blending into the grey asphalt
+    const pCanvas = document.createElement('canvas');
+    pCanvas.width = 256;
+    pCanvas.height = 256;
+    const pCtx = pCanvas.getContext('2d')!;
+    const grad = pCtx.createRadialGradient(128, 128, 10, 128, 128, 120);
+    grad.addColorStop(0, 'rgba(40, 44, 50, 0.78)');
+    grad.addColorStop(0.6, 'rgba(48, 52, 58, 0.45)');
+    grad.addColorStop(1, 'rgba(48, 52, 58, 0.0)');
+    pCtx.fillStyle = grad;
+    pCtx.fillRect(0, 0, 256, 256);
+    const pTex = new THREE.CanvasTexture(pCanvas);
+
+    const mMat = new THREE.MeshStandardMaterial({ color: '#3A3E45', roughness: 0.52, metalness: 0.88 });
+    const rMat = new THREE.MeshStandardMaterial({ color: '#2C3036', roughness: 0.75 });
+    const dMat = new THREE.MeshStandardMaterial({ color: '#26292E', roughness: 0.55, metalness: 0.82 });
+
+    return [pTex, mMat, rMat, dMat] as const;
+  }, []);
 
   return (
     <group>
@@ -593,12 +627,18 @@ export function UrbanStreetFloor() {
           key={`puddle-${i}`}
           position={[x, -0.21, i === 2 ? 5.5 : 6.0]}
           rotation={[-Math.PI / 2, 0, 0]}
+          receiveShadow
         >
           <planeGeometry args={[i === 2 ? 5.6 : 4.2, 2.4]} />
           <meshStandardMaterial
-            color="#080B0F"
+            map={puddleTex}
+            transparent={true}
+            depthWrite={false}
             roughness={0.04}
-            metalness={0.92}
+            metalness={0.88}
+            polygonOffset={true}
+            polygonOffsetFactor={-1}
+            polygonOffsetUnits={-1}
           />
         </mesh>
       ))}
@@ -606,21 +646,19 @@ export function UrbanStreetFloor() {
       {/* Cast-Iron Embossed Street Manholes */}
       {[-16, -2, 13].map((x, i) => (
         <group key={`manhole-${i}`} position={[x, -0.21, 6.5]}>
-          <mesh rotation={[-Math.PI / 2, 0, 0]} material={manholeMat}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} material={manholeMat} castShadow receiveShadow>
             <circleGeometry args={[0.65, 24]} />
           </mesh>
-          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} material={ringMat} receiveShadow>
             <ringGeometry args={[0.66, 0.74, 24]} />
-            <meshStandardMaterial color="#1E2024" roughness={0.7} />
           </mesh>
         </group>
       ))}
 
       {/* Storm Drain Grates along Curb */}
       {[-21, -11, 0, 11, 21].map((x, i) => (
-        <mesh key={`drain-${i}`} position={[x, -0.09, 3.28]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh key={`drain-${i}`} position={[x, -0.09, 3.28]} rotation={[-Math.PI / 2, 0, 0]} material={drainMat} receiveShadow>
           <planeGeometry args={[1.4, 0.45]} />
-          <meshStandardMaterial color="#1B1C1F" roughness={0.5} metalness={0.8} />
         </mesh>
       ))}
     </group>

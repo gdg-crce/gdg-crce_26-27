@@ -44,7 +44,7 @@ export default function EventPoster3D({
       onPointerOut={() => setHovered(false)}
     >
       {/* Main Poster Face directly adhered to wall */}
-      <mesh ref={meshRef}>
+      <mesh ref={meshRef} castShadow receiveShadow>
         <planeGeometry args={[w, h]} />
         <meshStandardMaterial
           map={texture}
@@ -55,7 +55,8 @@ export default function EventPoster3D({
           emissive={hovered ? '#332211' : '#000000'}
           emissiveIntensity={hovered ? 0.18 : 0}
           polygonOffset={true}
-          polygonOffsetFactor={-1}
+          polygonOffsetFactor={-2}
+          polygonOffsetUnits={-2}
         />
       </mesh>
     </group>
