@@ -1,0 +1,737 @@
+/* ==========================================================================
+   COUNCIL SECTION — AUTHENTIC 2000s WINDOWS XP DESKTOP & RETRO MEDIA PLAYER
+   Hyper-professional aesthetic inspired by authentic Windows XP & Reference Images
+   ========================================================================== */
+
+.xp-council-section {
+  position: relative;
+  width: 100%;
+  background: #000000;
+  color: #111111;
+  font-family: 'Tahoma', 'Segoe UI', Arial, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+   DESKTOP CANVAS & REALISTIC BLISS WALLPAPER
+   -------------------------------------------------------------------------- */
+.xp-desktop-canvas {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  /* Authentic Windows XP Bliss atmosphere: vivid blue sky to horizon mist */
+  background: linear-gradient(180deg, #1b66df 0%, #3e88f5 35%, #76bbf8 58%, #9fd8fc 65%, #469c28 65.1%, #3b841a 80%, #296010 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Realistic Bliss Rolling Green Hill with Depth & Carved Text Effect */
+.xp-bliss-hill {
+  position: absolute;
+  bottom: 30px;
+  left: -10%;
+  width: 125%;
+  height: 46%;
+  background: radial-gradient(ellipse at 42% 0%, #68ce36 0%, #4da523 42%, #388014 80%, #23540c 100%);
+  border-top-left-radius: 65% 100%;
+  border-top-right-radius: 70% 90%;
+  box-shadow: inset 0 20px 45px rgba(255, 255, 210, 0.22);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.xp-bliss-hill-secondary {
+  position: absolute;
+  bottom: 30px;
+  right: -15%;
+  width: 85%;
+  height: 36%;
+  background: radial-gradient(ellipse at 50% 0%, #5dbe31 0%, #44951f 60%, #2c6813 100%);
+  border-top-left-radius: 75% 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Embossed / Carved "GDG CRCE" on the hillside (inspired by Mitch Ivin Bliss hill) */
+.xp-bliss-carving {
+  position: absolute;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg) skewX(-12deg);
+  font-family: 'Arial Black', 'Impact', sans-serif;
+  font-size: clamp(36px, 6.5vw, 84px);
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #387b16;
+  text-shadow:
+    2px 3px 6px rgba(0, 0, 0, 0.45),
+    -1px -2px 3px rgba(130, 240, 80, 0.45);
+  opacity: 0.88;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Clouds in the sky */
+.xp-bliss-clouds {
+  position: absolute;
+  top: 8%;
+  right: 12%;
+  width: 380px;
+  height: 90px;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 70%);
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Subtle screen grid texture */
+.xp-screen-texture {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 0);
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* --------------------------------------------------------------------------
+   AUTHENTIC DESKTOP ICONS (Left Side)
+   -------------------------------------------------------------------------- */
+.xp-desktop-icons {
+  position: absolute;
+  top: 28px;
+  left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 15;
+}
+
+.xp-desktop-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 78px;
+  padding: 5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  transition: all 0.12s ease;
+}
+
+.xp-desktop-icon:hover {
+  background: rgba(49, 106, 197, 0.35);
+  border: 1px dotted rgba(255, 255, 255, 0.5);
+}
+
+.xp-desktop-icon-svg {
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.55));
+  margin-bottom: 4px;
+}
+
+.xp-desktop-icon-label {
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 400;
+  text-align: center;
+  text-shadow: 1px 1px 2px #000000, 0 0 4px #000000;
+  line-height: 1.25;
+}
+
+/* --------------------------------------------------------------------------
+   EVENTS FULLSCREEN -> WINDOW TRANSITION CONTAINER
+   -------------------------------------------------------------------------- */
+.xp-events-transition-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.xp-events-transition-window {
+  width: 100vw;
+  height: 100vh;
+  background: #0a080a;
+  border: 0px solid #0055ea;
+  border-radius: 0px;
+  box-shadow: 0 0px 0px rgba(0,0,0,0);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  transition: box-shadow 0.2s ease;
+}
+
+.xp-events-transition-window.is-windowed {
+  border: 3px solid #0055ea;
+  border-radius: 8px 8px 3px 3px;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.85);
+}
+
+/* Authentic Windows XP Luna Blue Titlebar */
+.xp-titlebar {
+  height: 30px;
+  background: linear-gradient(180deg, #0947e4 0%, #005ce6 10%, #063fc7 82%, #04258f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 10px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 1px 1px 1px #001353;
+  border-bottom: 1px solid #002e8e;
+  flex-shrink: 0;
+}
+
+.xp-titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xp-titlebar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.xp-btn-win {
+  width: 21px;
+  height: 21px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Tahoma', sans-serif;
+  font-weight: 900;
+  font-size: 11px;
+  cursor: pointer;
+  color: #fff;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.xp-btn-min, .xp-btn-max {
+  background: linear-gradient(180deg, #3887f4 0%, #175cd0 100%);
+  border-color: #7ab2ff;
+}
+
+.xp-btn-close {
+  background: linear-gradient(180deg, #df5b47 0%, #c12a1a 100%);
+  border-color: #ffaa9d;
+}
+
+.xp-btn-win:hover {
+  filter: brightness(1.18);
+}
+
+.xp-btn-win:active {
+  filter: brightness(0.88);
+}
+
+.xp-events-window-body {
+  flex: 1;
+  position: relative;
+  background: #0f0d10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   STUDENT COUNCIL RETRO MEDIA PLAYER WINDOW (Reference Image 2 Exact Match)
+   -------------------------------------------------------------------------- */
+.xp-player-window-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  width: 660px;
+  max-width: 95vw;
+  will-change: transform, opacity;
+}
+
+.xp-player-window {
+  width: 100%;
+  background: #ece9d8;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #5a5851;
+  border-bottom: 2px solid #5a5851;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    0 25px 60px rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Classic Win95/WinXP Titlebar */
+.xp-player-titlebar {
+  height: 26px;
+  background: linear-gradient(90deg, #0a246a 0%, #a6caf0 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.xp-player-content {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Top Split: Left Photo Box + Right Media Controls */
+.xp-player-top-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 640px) {
+  .xp-player-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Authentic Sunken 3D Box */
+.xp-sunken-box {
+  background: #101010;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  overflow: hidden;
+  position: relative;
+}
+
+.xp-member-photo-frame {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.xp-member-photo-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.xp-member-avatar-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 2px 7px;
+  font-size: 10px;
+  color: #00ff66;
+  font-weight: 700;
+  letter-spacing: 1px;
+  z-index: 5;
+}
+
+/* Right Controls Box */
+.xp-player-controls-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.xp-disc-and-volume {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  background: #d4d0c8;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+}
+
+/* Realistic CD Disc */
+.xp-cd-disc {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, #ffffff 13%, #222222 15%, #222222 22%, transparent 23%),
+    conic-gradient(from 45deg, #e4e4e4, #a8dcf0, #ffb8d0, #e4e4e4, #ffdf6d, #a8dcf0, #e4e4e4);
+  border: 1px solid #777;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: xpDiscSpin 8s linear infinite;
+}
+
+.xp-cd-disc.fast-spin {
+  animation: xpDiscSpin 1.4s linear infinite;
+}
+
+@keyframes xpDiscSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Realistic LED Equalizer */
+.xp-visualizer {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 40px;
+  padding: 4px 6px;
+  background: #020e02;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+}
+
+.xp-vis-bar {
+  flex: 1;
+  background: linear-gradient(180deg, #ff2a2a 0%, #ffcc00 35%, #00ea3f 100%);
+  border-radius: 1px;
+  transition: height 0.12s ease;
+}
+
+/* Raised 3D Win95/XP Buttons */
+.xp-raised-btn {
+  background: #ece9d8;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #5a5851;
+  border-bottom: 2px solid #5a5851;
+  font-family: 'Tahoma', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #111;
+  padding: 4px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.1s ease;
+}
+
+.xp-raised-btn:hover {
+  filter: brightness(1.04);
+}
+
+.xp-raised-btn:active {
+  border-top: 2px solid #5a5851;
+  border-left: 2px solid #5a5851;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  padding: 5px 9px 3px 11px;
+}
+
+.xp-playback-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.xp-playback-row .xp-raised-btn {
+  flex: 1;
+  min-width: 32px;
+  height: 30px;
+}
+
+/* --------------------------------------------------------------------------
+   MIDDLE DROPDOWN FIELDS (Artist & Title)
+   -------------------------------------------------------------------------- */
+.xp-dropdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.xp-dropdown-label {
+  width: 54px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #222;
+  text-align: right;
+}
+
+.xp-dropdown-select-box {
+  flex: 1;
+  height: 26px;
+  background: #ffffff;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 0 8px;
+  cursor: pointer;
+  position: relative;
+}
+
+.xp-dropdown-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xp-dropdown-arrow {
+  width: 18px;
+  height: 18px;
+  background: #ece9d8;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #5a5851;
+  border-bottom: 1px solid #5a5851;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.xp-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #000;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.xp-dropdown-item {
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #000;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+}
+
+.xp-dropdown-item:hover, .xp-dropdown-item.active {
+  background: #0a246a;
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   BOTTOM SCRUBBER & PROFESSIONAL COUNCIL LINER NOTES
+   -------------------------------------------------------------------------- */
+.xp-scrubber-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #333;
+}
+
+.xp-scrubber-track {
+  flex: 1;
+  height: 16px;
+  background: #d4d0c8;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  position: relative;
+  cursor: pointer;
+}
+
+.xp-scrubber-progress {
+  height: 100%;
+  background: #1178a8;
+}
+
+.xp-scrubber-knob {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 22px;
+  background: #ece9d8;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #5a5851;
+  border-bottom: 2px solid #5a5851;
+}
+
+.xp-member-bio-panel {
+  background: #ffffff;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xp-bio-text {
+  font-size: 12px;
+  color: #222;
+  line-height: 1.45;
+}
+
+.xp-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.xp-tech-tag {
+  background: #f0f4fc;
+  border: 1px solid #7c98c8;
+  color: #0b2d6c;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.xp-social-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   AUTHENTIC WINDOWS XP TASKBAR (Bottom Bar)
+   -------------------------------------------------------------------------- */
+.xp-taskbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 32px;
+  background: linear-gradient(180deg, #1f4cb8 0%, #296be8 8%, #1f50c0 45%, #19419b 88%, #0f2468 100%);
+  border-top: 1px solid #286be6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 50;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* Authentic Green Start Button */
+.xp-start-button {
+  height: 100%;
+  padding: 0 16px 0 10px;
+  background: linear-gradient(180deg, #3c9d18 0%, #4fac24 15%, #3c9318 55%, #286b0e 100%);
+  border-right: 2px solid #1a450a;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.4);
+  transition: filter 0.15s ease;
+}
+
+.xp-start-button:hover {
+  filter: brightness(1.12);
+}
+
+.xp-start-text {
+  color: #ffffff;
+  font-weight: 800;
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Taskbar Windows Row */
+.xp-taskbar-windows {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  overflow: hidden;
+}
+
+.xp-taskbar-item {
+  height: 24px;
+  max-width: 220px;
+  flex: 1;
+  background: linear-gradient(180deg, #3a75e8 0%, #2053c0 100%);
+  border-radius: 3px;
+  border: 1px solid #12337b;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.25);
+  transition: all 0.15s ease;
+}
+
+.xp-taskbar-item.active {
+  background: linear-gradient(180deg, #173d91 0%, #102d6b 100%);
+  box-shadow: inset 2px 2px 3px rgba(0, 0, 0, 0.6);
+}
+
+.xp-taskbar-item:hover {
+  filter: brightness(1.15);
+}
+
+/* System Tray */
+.xp-system-tray {
+  height: 100%;
+  background: linear-gradient(180deg, #0f8fcf 0%, #0d7fb9 50%, #095f8c 100%);
+  border-left: 1px solid #0f4b7a;
+  padding: 0 14px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+}
