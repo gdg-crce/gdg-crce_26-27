@@ -14,6 +14,24 @@ import {
 } from './AlleyProps3D';
 
 /* ═══════════════════════════════════════════════════
+   Module-level Texture Cache
+   Enables instantaneous sharing of heavy procedural canvas
+   textures when WallScene mounts across multiple sections.
+   ═══════════════════════════════════════════════════ */
+let cachedWallTextures: readonly [THREE.CanvasTexture, THREE.CanvasTexture, THREE.CanvasTexture] | null = null;
+let cachedSignTexture: THREE.CanvasTexture | null = null;
+const cachedGraffitiTextures = new Map<string, THREE.CanvasTexture>();
+let cachedSidewalkTextures: readonly [
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture
+] | null = null;
+
+/* ═══════════════════════════════════════════════════
    Height-map → Tangent-space Normal Map
    Derives real per-pixel surface direction from the same
    canvas used for relief, so raking light actually reads
@@ -66,16 +84,24 @@ function heightCanvasToNormalMap(
    Interactive Human Camera Rig — Stride + Mouse Look
    ═══════════════════════════════════════════════════ */
 
-function InteractiveCameraRig({ progressRef }: { progressRef: React.RefObject<number> }) {
+function InteractiveCameraRig({ progressRef, snapToTarget }: { progressRef: React.RefObject<number>; snapToTarget?: boolean }) {
   const { camera } = useThree();
   const lookTarget = useMemo(() => new THREE.Vector3(), []);
+  const initializedRef = useRef(false);
 
   useFrame((state, delta) => {
     const p = progressRef.current ?? 0;
     // Base walking X position along wall (-24 -> 23)
     const targetX = THREE.MathUtils.lerp(-24, 23, p);
 
-    const smoothing = 1 - Math.pow(0.0001, delta);
+    if (!initializedRef.current || snapToTarget) {
+      if (snapToTarget || p > 0.1) {
+        camera.position.x = targetX;
+      }
+      initializedRef.current = true;
+    }
+
+    const smoothing = snapToTarget ? 1.0 : (1 - Math.pow(0.0001, delta));
     camera.position.x += (targetX - camera.position.x) * smoothing;
 
     // Interactive First-Person Head Tilt based on mouse pointer
@@ -155,6 +181,8 @@ function NeonAlleySign3D() {
   });
 
   const signTexture = useMemo(() => {
+    if (cachedSignTexture) return cachedSignTexture;
+
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 128;
@@ -175,7 +203,8 @@ function NeonAlleySign3D() {
     ctx.fillStyle = '#FF2277';
     ctx.fillText('MTV // LIVE 90s', 256, 64);
 
-    return new THREE.CanvasTexture(canvas);
+    cachedSignTexture = new THREE.CanvasTexture(canvas);
+    return cachedSignTexture;
   }, []);
 
   return (
@@ -220,6 +249,8 @@ function NeonAlleySign3D() {
 
 function WeatheredUrbanStreetWall() {
   const [colorMap, normalMap, displacementMap] = useMemo(() => {
+    if (cachedWallTextures) return cachedWallTextures;
+
     const W = 2048;
     const H = 1024;
 
@@ -500,7 +531,8 @@ function WeatheredUrbanStreetWall() {
     dTex.wrapS = dTex.wrapT = THREE.RepeatWrapping;
     dTex.repeat.set(4, 1.2);
 
-    return [cTex, nTex, dTex] as const;
+    cachedWallTextures = [cTex, nTex, dTex] as const;
+    return cachedWallTextures;
   }, []);
 
   const normalScale = useMemo(() => new THREE.Vector2(1.5, 1.5), []);
@@ -546,6 +578,9 @@ function GraffitiTag({
   tagScale = 1,
 }: GraffitiProps) {
   const texture = useMemo(() => {
+    const cacheKey = `${text}_${subtext || ''}_${color}_${accentColor}`;
+    if (cachedGraffitiTextures.has(cacheKey)) return cachedGraffitiTextures.get(cacheKey)!;
+
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 256;
@@ -623,6 +658,7 @@ function GraffitiTag({
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
+    cachedGraffitiTextures.set(cacheKey, tex);
     return tex;
   }, [text, subtext, color, accentColor]);
 
@@ -748,6 +784,8 @@ function WetSidewalkAndStreet() {
     asphaltRoughnessMap,
     curbTex,
   ] = useMemo(() => {
+    if (cachedSidewalkTextures) return cachedSidewalkTextures;
+
     /* ══════════════════════════════════════════════════════════════════
        1. Authentic 90s Grey Concrete Footwalk (Sidewalk against wall)
        Poured urban cement slab with saw-cut expansion joints, fine stone
@@ -1034,7 +1072,8 @@ function WetSidewalkAndStreet() {
     cTex.repeat.set(18, 1);
     cTex.colorSpace = THREE.SRGBColorSpace;
 
-    return [sTex, sNormTex, sRoughTex, aTex, aNormTex, aRoughTex, cTex] as const;
+    cachedSidewalkTextures = [sTex, sNormTex, sRoughTex, aTex, aNormTex, aRoughTex, cTex] as const;
+    return cachedSidewalkTextures;
   }, []);
 
   const normalScale = useMemo(() => new THREE.Vector2(1.6, 1.6), []);
@@ -1111,7 +1150,7 @@ function HeroCenterSpotlight() {
   );
 }
 
-function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
+function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<number>; snapToTarget?: boolean }) {
   return (
     <>
       <fog attach="fog" args={['#141113', 18, 48]} />
@@ -1144,7 +1183,7 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
       <pointLight position={[22, 6.5, 3.5]} color="#FFB653" intensity={210} distance={22} decay={2} />
 
       {/* Interactive First-Person Human Camera + Handheld Flashlight */}
-      <InteractiveCameraRig progressRef={progressRef} />
+      <InteractiveCameraRig progressRef={progressRef} snapToTarget={snapToTarget} />
       <HandheldFlashlight progressRef={progressRef} />
 
       {/* Architectural Wall, Decals & Street Depth */}
@@ -1198,9 +1237,10 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
 
 interface WallSceneProps {
   progressRef: React.RefObject<number>;
+  snapToTarget?: boolean;
 }
 
-export default function WallScene({ progressRef }: WallSceneProps) {
+export default function WallScene({ progressRef, snapToTarget }: WallSceneProps) {
   return (
     <Canvas
       camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
@@ -1218,7 +1258,7 @@ export default function WallScene({ progressRef }: WallSceneProps) {
       }}
     >
       <Suspense fallback={null}>
-        <Scene progressRef={progressRef} />
+        <Scene progressRef={progressRef} snapToTarget={snapToTarget} />
       </Suspense>
     </Canvas>
   );

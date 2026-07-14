@@ -169,7 +169,7 @@
   flex-direction: column;
   overflow: hidden;
   pointer-events: auto;
-  transition: box-shadow 0.2s ease;
+  transition: border-width 0.25s ease, border-radius 0.25s ease, box-shadow 0.25s ease;
 }
 
 .xp-events-transition-window.is-windowed {
@@ -180,7 +180,9 @@
 
 /* Authentic Windows XP Luna Blue Titlebar */
 .xp-titlebar {
-  height: 30px;
+  height: 0px;
+  opacity: 0;
+  overflow: hidden;
   background: linear-gradient(180deg, #0947e4 0%, #005ce6 10%, #063fc7 82%, #04258f 100%);
   display: flex;
   align-items: center;
@@ -192,6 +194,7 @@
   text-shadow: 1px 1px 1px #001353;
   border-bottom: 1px solid #002e8e;
   flex-shrink: 0;
+  transition: height 0.25s ease, opacity 0.25s ease;
 }
 
 .xp-titlebar-left {

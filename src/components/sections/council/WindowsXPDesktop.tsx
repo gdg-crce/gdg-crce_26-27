@@ -7,6 +7,7 @@ interface WindowsXPDesktopProps {
   onSelectTeam: (teamName: string) => void;
   isEventsMinimized: boolean;
   onToggleEventsMinimize: () => void;
+  showDesktopChrome?: boolean;
   children: React.ReactNode;
 }
 
@@ -15,6 +16,7 @@ export default function WindowsXPDesktop({
   onSelectTeam,
   isEventsMinimized,
   onToggleEventsMinimize,
+  showDesktopChrome = true,
   children,
 }: WindowsXPDesktopProps) {
   const [timeStr, setTimeStr] = useState('12:27 AM');
@@ -109,7 +111,15 @@ export default function WindowsXPDesktop({
       <div className="xp-screen-texture" />
 
       {/* Top Left Desktop Shortcuts */}
-      <div className="xp-desktop-icons">
+      <div
+        className="xp-desktop-icons"
+        style={{
+          opacity: showDesktopChrome ? 1 : 0,
+          pointerEvents: showDesktopChrome ? 'auto' : 'none',
+          transition: 'opacity 0.4s ease, transform 0.4s ease',
+          transform: showDesktopChrome ? 'translateY(0)' : 'translateY(-15px)',
+        }}
+      >
         {desktopIcons.map((item, idx) => (
           <div
             key={idx}
@@ -127,7 +137,15 @@ export default function WindowsXPDesktop({
       {children}
 
       {/* Windows XP Taskbar */}
-      <div className="xp-taskbar">
+      <div
+        className="xp-taskbar"
+        style={{
+          opacity: showDesktopChrome ? 1 : 0,
+          pointerEvents: showDesktopChrome ? 'auto' : 'none',
+          transition: 'opacity 0.4s ease, transform 0.4s ease',
+          transform: showDesktopChrome ? 'translateY(0)' : 'translateY(100%)',
+        }}
+      >
         {/* Authentic Start Button with 4-Color Flag */}
         <div className="xp-start-button" title="Click to open GDG CRCE Start Menu">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
