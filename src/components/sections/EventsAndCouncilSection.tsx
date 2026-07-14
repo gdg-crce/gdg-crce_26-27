@@ -8,6 +8,9 @@ import { events } from './events/eventData';
 import { councilMembers } from './council/councilData';
 import WindowsXPDesktop from './council/WindowsXPDesktop';
 import RetroMediaPlayerWindow from './council/RetroMediaPlayerWindow';
+import MSNContactListWindow from './council/MSNContactListWindow';
+import MSNChatWindow from './council/MSNChatWindow';
+import WindowsPictureViewer from './council/WindowsPictureViewer';
 import './council/council.css';
 
 /* Dynamically import the R3F scene — no SSR for WebGL */
@@ -27,6 +30,8 @@ function THREE_MATH_LERP(a: number, b: number, t: number) {
 
 /**
  * EventsAndCouncilSection — Unified Master Choreography Section
+ * Upgraded with !important Bliss grid scanlines, 3D carved grass text, and scaled-up dual MSN windows.
+ *
  *
  * Manages the single continuous ScrollTrigger across the entire experience:
  * 1. 0.00 -> 0.26: Alleyway walk from poster #1 (CRCE HACK) to #9 (TECH TALKS).
@@ -34,7 +39,9 @@ function THREE_MATH_LERP(a: number, b: number, t: number) {
  * 3. 0.32 -> 0.42: Windowize (3D wall shrinks center-out into Windows Media Player frame, revealing XP Desktop).
  * 4. 0.42 -> 0.50: Minimize (window genies down into bottom Windows XP taskbar).
  * 5. 0.48 -> 0.55: Player Reveal (Student Council Retro Media Player window fades in centered).
- * 6. 0.55 -> 0.98: Council Members (scrolling steps through council profile cards).
+ * 6. 0.55 -> 0.93: Council Members (scrolling steps through individual profiles in MSN window).
+ * 7. 0.93 -> 0.96: MSN Minimize (MSN dual-window genies down into taskbar).
+ * 8. 0.96 -> 1.00: Grand Finale (Windows Picture and Fax Viewer pops up with group photo).
  */
 export default function EventsAndCouncilSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -43,6 +50,7 @@ export default function EventsAndCouncilSection() {
   const progressBarRef = useRef<HTMLDivElement>(null);
   const eventsWindowRef = useRef<HTMLDivElement>(null);
   const playerWrapperRef = useRef<HTMLDivElement>(null);
+  const pictureViewerRef = useRef<HTMLDivElement>(null);
   const activeEventRef = useRef(0);
 
   const [activeEvent, setActiveEvent] = useState(0);
@@ -188,26 +196,64 @@ export default function EventsAndCouncilSection() {
           }
         }
 
-        /* ── Phase 5: Student Council Retro Media Player (0.48 -> 0.55) ──── */
+        /* ── Phase 5 -> Phase 7: Student Council MSN Messenger Window (0.48 -> 0.96) ── */
+        const MEMBERS_START = 0.55;
+        const MEMBERS_END = 0.93;
+        const MSN_MIN_START = 0.93;
+        const MSN_MIN_END = 0.96;
+
         if (playerWrapperRef.current) {
-          const fadeT = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
-          playerWrapperRef.current.style.opacity = `${fadeT}`;
-          playerWrapperRef.current.style.pointerEvents =
-            fadeT > 0.5 ? 'auto' : 'none';
+          if (p < 0.48) {
+            playerWrapperRef.current.style.opacity = '0';
+            playerWrapperRef.current.style.pointerEvents = 'none';
+            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+          } else if (p < MEMBERS_START) {
+            const fadeT = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
+            playerWrapperRef.current.style.opacity = `${fadeT}`;
+            playerWrapperRef.current.style.pointerEvents = fadeT > 0.5 ? 'auto' : 'none';
+            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+          } else if (p <= MEMBERS_END) {
+            playerWrapperRef.current.style.opacity = '1';
+            playerWrapperRef.current.style.pointerEvents = 'auto';
+            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+
+            const memberProgress = (p - MEMBERS_START) / (MEMBERS_END - MEMBERS_START);
+            const targetIndex = Math.floor(memberProgress * filteredMembers.length);
+            const clampedIndex = Math.max(
+              0,
+              Math.min(filteredMembers.length - 1, targetIndex)
+            );
+            setActiveMemberIndex(clampedIndex);
+          } else if (p < MSN_MIN_END) {
+            // Genie minimize animation down into bottom taskbar
+            const t = (p - MSN_MIN_START) / (MSN_MIN_END - MSN_MIN_START);
+            const scale = 1.0 - t * 0.9;
+            const translateY = t * 46; // vh down to taskbar
+            playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
+            playerWrapperRef.current.style.opacity = `${1.0 - t * 0.9}`;
+            playerWrapperRef.current.style.pointerEvents = 'none';
+          } else {
+            playerWrapperRef.current.style.opacity = '0';
+            playerWrapperRef.current.style.pointerEvents = 'none';
+            playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
+          }
         }
 
-        /* ── Phase 6: Member Stepping (0.55 -> 0.98) ─────────────────────── */
-        const MEMBERS_START = 0.55;
-        const MEMBERS_END = 0.98;
-        if (p >= MEMBERS_START && p <= MEMBERS_END) {
-          const memberProgress =
-            (p - MEMBERS_START) / (MEMBERS_END - MEMBERS_START);
-          const targetIndex = Math.floor(memberProgress * filteredMembers.length);
-          const clampedIndex = Math.max(
-            0,
-            Math.min(filteredMembers.length - 1, targetIndex)
-          );
-          setActiveMemberIndex(clampedIndex);
+        /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
+        const PV_START = 0.96;
+        if (pictureViewerRef.current) {
+          if (p < PV_START) {
+            pictureViewerRef.current.style.opacity = '0';
+            pictureViewerRef.current.style.pointerEvents = 'none';
+            pictureViewerRef.current.style.transform = 'scale(0.85) translateY(25px)';
+          } else {
+            const pvT = Math.min(1, (p - PV_START) / 0.03);
+            const scale = 0.85 + pvT * 0.15;
+            const translateY = (1 - pvT) * 25;
+            pictureViewerRef.current.style.opacity = `${pvT}`;
+            pictureViewerRef.current.style.pointerEvents = pvT > 0.4 ? 'auto' : 'none';
+            pictureViewerRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+          }
         }
       },
     });
@@ -366,26 +412,33 @@ export default function EventsAndCouncilSection() {
             </div>
           </div>
 
-          {/* Layer 2: Student Council Media Player (Perfectly Centered) */}
+          {/* Layer 2: Student Council MSN Messenger Dual-Window (Contact List + Live Instant Message) */}
           <div
             ref={playerWrapperRef}
             className="xp-player-window-wrapper"
             style={{ opacity: 0, pointerEvents: 'none' }}
           >
-            <RetroMediaPlayerWindow
-              currentMember={currentMember}
-              memberIndex={activeMemberIndex}
-              totalMembers={filteredMembers.length}
-              progressPercent={
-                ((activeMemberIndex + 1) / filteredMembers.length) * 100
-              }
-              onNext={handleNext}
-              onPrev={handlePrev}
-              onSelectMemberById={handleSelectMemberById}
-              selectedTeam={selectedTeam}
-              onSelectTeam={handleSelectTeam}
-              allMembers={filteredMembers}
-            />
+            <div className="msn-dual-desktop-container">
+              <MSNContactListWindow
+                allMembers={filteredMembers}
+                activeMemberIndex={activeMemberIndex}
+                onSelectMemberById={handleSelectMemberById}
+              />
+              <MSNChatWindow
+                currentMember={currentMember}
+                onNext={handleNext}
+                onPrev={handlePrev}
+              />
+            </div>
+          </div>
+
+          {/* Layer 3: Windows Picture and Fax Viewer Grand Finale */}
+          <div
+            ref={pictureViewerRef}
+            className="xp-picture-viewer-wrapper"
+            style={{ opacity: 0, pointerEvents: 'none', transform: 'scale(0.85) translateY(25px)' }}
+          >
+            <WindowsPictureViewer allMembers={filteredMembers} />
           </div>
         </WindowsXPDesktop>
       </div>

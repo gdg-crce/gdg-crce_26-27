@@ -38,11 +38,22 @@ export default function WindowsXPDesktop({
       label: 'My Computer',
       team: 'All Tracks',
       svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <rect x="4" y="6" width="28" height="20" rx="2" fill="#d8e8f8" stroke="#316ac5" strokeWidth="2" />
-          <rect x="7" y="9" width="22" height="14" fill="#184b9e" />
-          <path d="M12 26h12v3H12z" fill="#8ca8d8" />
-          <rect x="8" y="29" width="20" height="2" fill="#316ac5" />
+        <svg viewBox="0 0 48 48" className="xp-desktop-icon-svg" fill="none">
+          <defs>
+            <linearGradient id="pcGrad" x1="0" y1="0" x2="0" y2="48" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#f0f6ff" />
+              <stop offset="100%" stopColor="#a4c2e8" />
+            </linearGradient>
+            <linearGradient id="scrGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#1864d8" />
+              <stop offset="100%" stopColor="#082878" />
+            </linearGradient>
+          </defs>
+          <rect x="6" y="8" width="36" height="26" rx="3" fill="url(#pcGrad)" stroke="#2254b0" strokeWidth="2.5" />
+          <rect x="10" y="12" width="28" height="18" fill="url(#scrGrad)" />
+          <path d="M14 16h12v2H14z" fill="#68a8f8" />
+          <path d="M16 34h16v4H16z" fill="#8ca8d8" stroke="#2254b0" strokeWidth="1.5" />
+          <rect x="10" y="38" width="28" height="3" rx="1.5" fill="#316ac5" />
         </svg>
       ),
     },
@@ -50,9 +61,20 @@ export default function WindowsXPDesktop({
       label: 'Core Council',
       team: 'Core Leadership',
       svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <circle cx="18" cy="14" r="6" fill="#ffd700" stroke="#a07c00" strokeWidth="1.5" />
-          <path d="M8 30c0-6 5-10 10-10s10 4 10 10" fill="#316ac5" />
+        <svg viewBox="0 0 48 48" className="xp-desktop-icon-svg" fill="none">
+          <defs>
+            <radialGradient id="goldGrad" cx="24" cy="18" r="12" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#fff68f" />
+              <stop offset="60%" stopColor="#ffd700" />
+              <stop offset="100%" stopColor="#c09000" />
+            </radialGradient>
+            <linearGradient id="suitGrad" x1="0" y1="28" x2="0" y2="46" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#4184f0" />
+              <stop offset="100%" stopColor="#14489e" />
+            </linearGradient>
+          </defs>
+          <circle cx="24" cy="18" r="9" fill="url(#goldGrad)" stroke="#806000" strokeWidth="2" />
+          <path d="M10 42c0-8 6.5-14 14-14s14 6 14 14" fill="url(#suitGrad)" stroke="#103070" strokeWidth="2" />
         </svg>
       ),
     },
@@ -60,9 +82,15 @@ export default function WindowsXPDesktop({
       label: 'Tech & Web',
       team: 'Tech & Web',
       svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <rect x="5" y="8" width="26" height="20" rx="2" fill="#243048" stroke="#4880d8" strokeWidth="2" />
-          <path d="M11 18l3 3-3 3M17 24h6" stroke="#00ff66" strokeWidth="2" strokeLinecap="round" />
+        <svg viewBox="0 0 48 48" className="xp-desktop-icon-svg" fill="none">
+          <defs>
+            <linearGradient id="termGrad" x1="0" y1="0" x2="0" y2="48" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#2e3d58" />
+              <stop offset="100%" stopColor="#121824" />
+            </linearGradient>
+          </defs>
+          <rect x="6" y="10" width="36" height="28" rx="3" fill="url(#termGrad)" stroke="#4884e8" strokeWidth="2.5" />
+          <path d="M14 22l5 5-5 5M22 32h10" stroke="#00ff66" strokeWidth="3" strokeLinecap="round" />
         </svg>
       ),
     },
@@ -70,11 +98,18 @@ export default function WindowsXPDesktop({
       label: 'UI/UX Design',
       team: 'UI/UX & Design',
       svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <circle cx="18" cy="18" r="13" fill="#ffffff" stroke="#e04070" strokeWidth="2" />
-          <circle cx="13" cy="14" r="2.5" fill="#e04070" />
-          <circle cx="23" cy="14" r="2.5" fill="#3880f0" />
-          <circle cx="18" cy="23" r="2.5" fill="#ffb800" />
+        <svg viewBox="0 0 48 48" className="xp-desktop-icon-svg" fill="none">
+          <defs>
+            <radialGradient id="palGrad" cx="24" cy="24" r="18" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="100%" stopColor="#e4e8f0" />
+            </radialGradient>
+          </defs>
+          <circle cx="24" cy="24" r="16" fill="url(#palGrad)" stroke="#d03060" strokeWidth="2.5" />
+          <circle cx="18" cy="18" r="3" fill="#e04070" />
+          <circle cx="30" cy="18" r="3" fill="#3880f0" />
+          <circle cx="24" cy="30" r="3" fill="#ffb800" />
+          <circle cx="16" cy="27" r="2.5" fill="#00c864" />
         </svg>
       ),
     },
@@ -82,9 +117,16 @@ export default function WindowsXPDesktop({
       label: 'Events & Ops',
       team: 'Events & Ops',
       svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <path d="M6 28L18 8l12 20H6z" fill="#ff9000" stroke="#b05000" strokeWidth="2" />
-          <circle cx="18" cy="22" r="3" fill="#ffffff" />
+        <svg viewBox="0 0 48 48" className="xp-desktop-icon-svg" fill="none">
+          <defs>
+            <linearGradient id="coneGrad" x1="0" y1="10" x2="0" y2="42" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#ffaa00" />
+              <stop offset="100%" stopColor="#cc5500" />
+            </linearGradient>
+          </defs>
+          <path d="M8 38L24 10l16 28H8z" fill="url(#coneGrad)" stroke="#803000" strokeWidth="2.5" />
+          <path d="M13 28h22M11 33h26" stroke="#ffffff" strokeWidth="3" />
+          <circle cx="24" cy="28" r="3" fill="#ffffff" />
         </svg>
       ),
     },
@@ -92,9 +134,15 @@ export default function WindowsXPDesktop({
       label: 'PR Outreach',
       team: 'PR & Outreach',
       svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <path d="M6 14h6l10-7v22l-10-7H6V14z" fill="#2080e0" stroke="#104080" strokeWidth="1.5" />
-          <path d="M26 13c2 2 2 8 0 10" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+        <svg viewBox="0 0 48 48" className="xp-desktop-icon-svg" fill="none">
+          <defs>
+            <linearGradient id="mailGrad" x1="0" y1="14" x2="0" y2="38" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#4498f8" />
+              <stop offset="100%" stopColor="#1460c8" />
+            </linearGradient>
+          </defs>
+          <path d="M6 16h10l14-10v34l-14-10H6V16z" fill="url(#mailGrad)" stroke="#083888" strokeWidth="2.5" />
+          <path d="M34 16c3 3 3 11 0 14M40 12c5 5 5 19 0 24" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
         </svg>
       ),
     },
@@ -106,7 +154,7 @@ export default function WindowsXPDesktop({
       <div className="xp-bliss-clouds" />
       <div className="xp-bliss-hill" />
       <div className="xp-bliss-hill-secondary" />
-      {/* Carved/Embossed GDG CRCE on the hill inspired by Mitch Ivin Bliss hill */}
+      {/* 3D Excavated / Carved Grassy Trench Text across the hill slope */}
       <div className="xp-bliss-carving">GDG CRCE</div>
       <div className="xp-screen-texture" />
 

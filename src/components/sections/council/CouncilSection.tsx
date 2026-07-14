@@ -7,17 +7,22 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { councilMembers, CouncilMember } from './councilData';
 import WindowsXPDesktop from './WindowsXPDesktop';
 import RetroMediaPlayerWindow from './RetroMediaPlayerWindow';
+import MSNContactListWindow from './MSNContactListWindow';
+import MSNChatWindow from './MSNChatWindow';
+import WindowsPictureViewer from './WindowsPictureViewer';
 import './council.css';
 
 const WallScene = dynamic(() => import('@/components/three/WallScene'), {
   ssr: false,
 });
 
+/* CouncilSection — Upgraded with !important Bliss grid scanlines and 3D vector icons */
 export default function CouncilSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const eventsWindowRef = useRef<HTMLDivElement>(null);
   const playerWrapperRef = useRef<HTMLDivElement>(null);
+  const pictureViewerRef = useRef<HTMLDivElement>(null);
   // Lock the transition replica on the SAME final frame the events walk ends on
   // (evt-9 centered) so the fullscreen → window handoff is pixel-seamless.
   const eventsFinalProgressRef = useRef<number>(0.968);
@@ -170,26 +175,63 @@ export default function CouncilSection() {
           }
         }
 
-        // PLAYER — Student Council media player fades in, perfectly centered.
+        // PLAYER -> PHASE 7: Student Council MSN Messenger window (0.68 -> 0.96)
+        const MEMBERS_START = 0.75;
+        const MEMBERS_END = 0.93;
+        const MSN_MIN_START = 0.93;
+        const MSN_MIN_END = 0.96;
+
         if (playerWrapperRef.current) {
-          const fadeT = Math.min(1, Math.max(0, (p - 0.68) / 0.07));
-          playerWrapperRef.current.style.opacity = `${fadeT}`;
-          playerWrapperRef.current.style.pointerEvents =
-            fadeT > 0.5 ? 'auto' : 'none';
+          if (p < 0.68) {
+            playerWrapperRef.current.style.opacity = '0';
+            playerWrapperRef.current.style.pointerEvents = 'none';
+            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+          } else if (p < MEMBERS_START) {
+            const fadeT = Math.min(1, Math.max(0, (p - 0.68) / 0.07));
+            playerWrapperRef.current.style.opacity = `${fadeT}`;
+            playerWrapperRef.current.style.pointerEvents = fadeT > 0.5 ? 'auto' : 'none';
+            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+          } else if (p <= MEMBERS_END) {
+            playerWrapperRef.current.style.opacity = '1';
+            playerWrapperRef.current.style.pointerEvents = 'auto';
+            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+
+            const memberProgress = (p - MEMBERS_START) / (MEMBERS_END - MEMBERS_START);
+            const targetIndex = Math.floor(memberProgress * filteredMembers.length);
+            const clampedIndex = Math.max(
+              0,
+              Math.min(filteredMembers.length - 1, targetIndex)
+            );
+            setActiveMemberIndex(clampedIndex);
+          } else if (p < MSN_MIN_END) {
+            const t = (p - MSN_MIN_START) / (MSN_MIN_END - MSN_MIN_START);
+            const scale = 1.0 - t * 0.9;
+            const translateY = t * 46;
+            playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
+            playerWrapperRef.current.style.opacity = `${1.0 - t * 0.9}`;
+            playerWrapperRef.current.style.pointerEvents = 'none';
+          } else {
+            playerWrapperRef.current.style.opacity = '0';
+            playerWrapperRef.current.style.pointerEvents = 'none';
+            playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
+          }
         }
 
-        // MEMBERS — scroll steps smoothly through the council members.
-        const MEMBERS_START = 0.75;
-        const MEMBERS_END = 0.98;
-        if (p >= MEMBERS_START && p <= MEMBERS_END) {
-          const memberProgress =
-            (p - MEMBERS_START) / (MEMBERS_END - MEMBERS_START);
-          const targetIndex = Math.floor(memberProgress * filteredMembers.length);
-          const clampedIndex = Math.max(
-            0,
-            Math.min(filteredMembers.length - 1, targetIndex)
-          );
-          setActiveMemberIndex(clampedIndex);
+        // PHASE 8: Windows Picture and Fax Viewer Grand Finale Pop-up (0.96 -> 1.00)
+        const PV_START = 0.96;
+        if (pictureViewerRef.current) {
+          if (p < PV_START) {
+            pictureViewerRef.current.style.opacity = '0';
+            pictureViewerRef.current.style.pointerEvents = 'none';
+            pictureViewerRef.current.style.transform = 'scale(0.85) translateY(25px)';
+          } else {
+            const pvT = Math.min(1, (p - PV_START) / 0.03);
+            const scale = 0.85 + pvT * 0.15;
+            const translateY = (1 - pvT) * 25;
+            pictureViewerRef.current.style.opacity = `${pvT}`;
+            pictureViewerRef.current.style.pointerEvents = pvT > 0.4 ? 'auto' : 'none';
+            pictureViewerRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+          }
         }
       },
     });
@@ -328,26 +370,33 @@ export default function CouncilSection() {
             </div>
           </div>
 
-          {/* Layer 2: Student Council Media Player (Perfectly Centered) */}
+          {/* Layer 2: Student Council MSN Messenger Dual-Window */}
           <div
             ref={playerWrapperRef}
             className="xp-player-window-wrapper"
             style={{ opacity: 0, pointerEvents: 'none' }}
           >
-            <RetroMediaPlayerWindow
-              currentMember={currentMember}
-              memberIndex={activeMemberIndex}
-              totalMembers={filteredMembers.length}
-              progressPercent={
-                ((activeMemberIndex + 1) / filteredMembers.length) * 100
-              }
-              onNext={handleNext}
-              onPrev={handlePrev}
-              onSelectMemberById={handleSelectMemberById}
-              selectedTeam={selectedTeam}
-              onSelectTeam={handleSelectTeam}
-              allMembers={filteredMembers}
-            />
+            <div className="msn-dual-desktop-container">
+              <MSNContactListWindow
+                allMembers={filteredMembers}
+                activeMemberIndex={activeMemberIndex}
+                onSelectMemberById={handleSelectMemberById}
+              />
+              <MSNChatWindow
+                currentMember={currentMember}
+                onNext={handleNext}
+                onPrev={handlePrev}
+              />
+            </div>
+          </div>
+
+          {/* Layer 3: Windows Picture and Fax Viewer Grand Finale */}
+          <div
+            ref={pictureViewerRef}
+            className="xp-picture-viewer-wrapper"
+            style={{ opacity: 0, pointerEvents: 'none', transform: 'scale(0.85) translateY(25px)' }}
+          >
+            <WindowsPictureViewer allMembers={filteredMembers} />
           </div>
         </WindowsXPDesktop>
       </div>
