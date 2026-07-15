@@ -245,7 +245,7 @@ function WeatheredUrbanStreetWall() {
       envMapIntensity: 1.75,
     });
     // roughnessMap doubles as the cavity source — cavity is packed in its .b
-    applyMacroLayer(m, tex.macroMap, tex.ghostMap, tex.roughnessMap, tex.detailNormal);
+    applyMacroLayer(m, tex.macroMap, tex.ghostMap, tex.roughnessMap, tex.detailNormal, tex.crackMap);
     return m;
   }, [tex, normalScale]);
 

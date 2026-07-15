@@ -283,6 +283,8 @@ export interface WallTextureSet {
   ghostMap: THREE.CanvasTexture;
   /** High-frequency aggregate grain, tiled far finer than the scan */
   detailNormal: THREE.CanvasTexture;
+  /** Fracture system — RG = normal XY, B = crack mask. One field, every channel. */
+  crackMap: THREE.CanvasTexture;
 }
 
 let cached: WallTextureSet | null = null;
@@ -332,6 +334,7 @@ export function buildWallTextures(loader: THREE.TextureLoader): WallTextureSet {
     macroMap: buildMacroMap(),
     ghostMap: buildGhostMap(),
     detailNormal: buildDetailNormal(),
+    crackMap: buildCrackMap(),
   };
 
   if (process.env.NODE_ENV !== 'production') {
@@ -339,6 +342,190 @@ export function buildWallTextures(loader: THREE.TextureLoader): WallTextureSet {
   }
 
   return cached;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Crack system.
+
+   ONE HEIGHT FIELD DRIVES EVERY CHANNEL. This is the whole design, and it is
+   not optional: cracks are generated once as geometry, then albedo, normal,
+   roughness and cavity are all READ OUT of that same field. A crack therefore
+   darkens, recesses, roughens and collects dirt at exactly the same texels.
+   Painting cracks into the albedo and separately into a normal map is the
+   loudest CG tell available — light rakes over relief the colour never
+   acknowledges, and the eye catches it instantly.
+
+   RESOLUTION. A hairline crack is ~3mm. The macro layer runs 15 px/m, where
+   3mm is 1/20th of a texel — cracks simply cannot live there, which is why they
+   are not in it. This map tiles instead: 1024px over a 3.24m tile is ~316 px/m,
+   so a one-pixel line is ~3mm. Correct by construction.
+
+   TILING WITHOUT A REPEAT. Tiling is normally fatal for something as
+   recognisable as a crack. The escape is a COPRIME repeat: cracks at 21 against
+   the scan's 10. gcd(21,10) = 1, so the two patterns only re-align after the
+   full 68m — no stretch of this wall ever shows the same crack over the same
+   plaster twice. The pair is what the eye reads, not either layer alone. Keep
+   them coprime if you retune: 21 and 10 works, 20 and 10 would repeat every
+   6.8m.
+
+   STRUCTURAL, NOT DECORATIVE. Cracks are grown by a wandering walk that
+   branches and tapers to nothing at both tips, so they read as a fracture
+   propagating through a material rather than a drawn line. Plaster chips lift
+   along their edges, because a crack undermines what sits beside it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Coprime with SCAN_REPEAT_X/Y — see above. Do not make these share a factor. */
+const CRACK_REPEAT_X = 21;
+const CRACK_REPEAT_Y = 3;
+
+function buildCrackMap(): THREE.CanvasTexture {
+  const S = 1024;
+  const h = new Float32Array(S * S); // 0 = intact surface, negative = fracture
+  const rnd = mulberry32(0xc3ac);
+
+  const idx = (x: number, y: number) => (((y % S) + S) % S) * S + (((x % S) + S) % S);
+
+  /** Carve a fracture. Depth is cut, never added — a crack only removes. */
+  const carve = (
+    x0: number,
+    y0: number,
+    dir: number,
+    len: number,
+    width: number,
+    depth: number,
+    branchesLeft: number,
+    onPoint: (x: number, y: number) => void
+  ) => {
+    let x = x0;
+    let y = y0;
+    let d = dir;
+    let t = 0;
+    while (t < len) {
+      /* A fracture is not a root. Rock splits along a stress line: it runs
+         comparatively STRAIGHT, then kinks abruptly when it meets a harder
+         aggregate grain or a weaker seam. A large per-step wander (this was
+         0.3 rad) integrates into smooth sweeping curves, and smooth curves on a
+         wall read as vines, lichen or roots — organic growth, not fracture.
+         Small drift plus rare sharp deflections is the whole difference. */
+      d += (rnd() - 0.5) * 0.075;
+      if (rnd() < 0.035) d += (rnd() - 0.5) * 0.95; // met something harder
+      x += Math.cos(d);
+      y += Math.sin(d);
+      t += 1;
+
+      // Taper to nothing at BOTH ends. A crack that starts or stops at full
+      // width is a drawn line; a real one propagates out of, and dies into,
+      // intact material.
+      const taper = Math.sin((t / len) * Math.PI);
+      const w = width * taper;
+      if (w < 0.3) continue;
+      onPoint(x, y);
+
+      const ri = Math.ceil(w);
+      for (let dy = -ri; dy <= ri; dy++) {
+        for (let dx = -ri; dx <= ri; dx++) {
+          const dist = Math.hypot(dx, dy);
+          if (dist > w) continue;
+          const prof = 1 - dist / w;
+          const v = -depth * taper * prof * prof; // V-section, deepest at centre
+          const i = idx(Math.round(x) + dx, Math.round(y) + dy);
+          if (v < h[i]) h[i] = v;
+        }
+      }
+
+      if (branchesLeft > 0 && rnd() < 0.014) {
+        carve(
+          x,
+          y,
+          d + (rnd() < 0.5 ? 1 : -1) * (0.4 + rnd() * 0.7),
+          len * (0.22 + rnd() * 0.3),
+          width * 0.55,
+          depth * 0.72,
+          branchesLeft - 1,
+          onPoint
+        );
+      }
+    }
+  };
+
+  const spine: Array<[number, number]> = [];
+  const record = (x: number, y: number) => {
+    if (rnd() < 0.06) spine.push([x, y]);
+  };
+
+  /* Three tiers, and the split is the point: a wall with only hairlines has no
+     structure, and a wall with only big cracks has no age. Widths are in texels
+     at ~316 px/m, so 3.4 texels is ~1cm — a real settlement crack — and 0.45 is
+     ~1.5mm, a real hairline. */
+
+  // A FEW major structural cracks — long, steep, branching. Settlement.
+  for (let i = 0; i < 4; i++) {
+    carve(rnd() * S, rnd() * S, Math.PI / 2 + (rnd() - 0.5) * 0.9, 560 + rnd() * 460, 3.0 + rnd() * 1.6, 1.0, 3, record);
+  }
+  // Medium fractures spreading off the structure
+  for (let i = 0; i < 14; i++) {
+    carve(rnd() * S, rnd() * S, rnd() * Math.PI * 2, 150 + rnd() * 240, 1.5 + rnd() * 0.9, 0.72, 2, record);
+  }
+  // Micro hairlines / shrinkage crazing — the ones that only exist up close
+  for (let i = 0; i < 85; i++) {
+    carve(rnd() * S, rnd() * S, rnd() * Math.PI * 2, 24 + rnd() * 70, 0.45 + rnd() * 0.36, 0.36, 1, record);
+  }
+
+  // Chipped plaster along the fractures. A crack undermines its own edges, so
+  // flakes let go beside it — shallow, irregular, and always adjacent to a
+  // crack rather than scattered at random.
+  for (const [cx, cy] of spine) {
+    if (rnd() > 0.34) continue;
+    const ox = cx + (rnd() - 0.5) * 9;
+    const oy = cy + (rnd() - 0.5) * 9;
+    const r = 1.6 + rnd() * 4.4;
+    const depth = 0.16 + rnd() * 0.3;
+    const ri = Math.ceil(r);
+    for (let dy = -ri; dy <= ri; dy++) {
+      for (let dx = -ri; dx <= ri; dx++) {
+        const dist = Math.hypot(dx, dy);
+        if (dist > r) continue;
+        // Ragged rim, not a disc
+        const edge = 0.6 + 0.4 * Math.sin(Math.atan2(dy, dx) * 5 + cx);
+        if (dist > r * edge) continue;
+        const i = idx(Math.round(ox) + dx, Math.round(oy) + dy);
+        const v = -depth * (1 - dist / r);
+        if (v < h[i]) h[i] = v;
+      }
+    }
+  }
+
+  /* Pack: RG = tangent-space normal XY, B = fracture mask. Z is reconstructed
+     in the shader, which frees the third channel for the mask — so the whole
+     crack system costs ONE texture fetch, and the mask is guaranteed to agree
+     with the normal because both come out of this same array. */
+  const c = document.createElement('canvas');
+  c.width = S;
+  c.height = S;
+  const ctx = c.getContext('2d')!;
+  const img = ctx.createImageData(S, S);
+  const H = (x: number, y: number) => h[idx(x, y)];
+  const STRENGTH = 9.0;
+
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const gx = (H(x + 1, y) - H(x - 1, y)) * STRENGTH;
+      const gy = (H(x, y + 1) - H(x, y - 1)) * STRENGTH;
+      const len = Math.sqrt(gx * gx + gy * gy + 1);
+      const i = (y * S + x) * 4;
+      img.data[i] = (-gx / len) * 127.5 + 127.5;
+      img.data[i + 1] = (-gy / len) * 127.5 + 127.5;
+      img.data[i + 2] = Math.min(255, -h[y * S + x] * 255);
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
+  return t;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -794,7 +981,8 @@ export function applyMacroLayer(
   macroMap: THREE.Texture,
   ghostMap: THREE.Texture,
   cavityMap: THREE.Texture,
-  detailNormal: THREE.Texture
+  detailNormal: THREE.Texture,
+  crackMap: THREE.Texture
 ) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uMacroMap = { value: macroMap };
@@ -802,11 +990,15 @@ export function applyMacroLayer(
     // Same image as roughnessMap/aoMap — cavity rides in its unused .b
     shader.uniforms.uCavityMap = { value: cavityMap };
     shader.uniforms.uDetailNormal = { value: detailNormal };
+    shader.uniforms.uCrackMap = { value: crackMap };
     shader.uniforms.uMapRepeat = { value: new THREE.Vector2(SCAN_REPEAT_X, SCAN_REPEAT_Y) };
     // ~60 repeats across 68m: a 1.1m period, below the scale at which the eye
     // can recognise a repeated shape — it reads as tooth, not as pattern.
     shader.uniforms.uDetailRepeat = { value: new THREE.Vector2(6.0, 4.0) };
     shader.uniforms.uDetailStrength = { value: 0.55 };
+    // Coprime with uMapRepeat — see buildCrackMap. The pair never re-aligns.
+    shader.uniforms.uCrackRepeat = { value: new THREE.Vector2(CRACK_REPEAT_X, CRACK_REPEAT_Y) };
+    shader.uniforms.uCrackNormalStrength = { value: 0.9 };
 
     shader.fragmentShader = shader.fragmentShader
       .replace(
@@ -816,9 +1008,12 @@ export function applyMacroLayer(
          uniform sampler2D uGhostMap;
          uniform sampler2D uCavityMap;
          uniform sampler2D uDetailNormal;
+         uniform sampler2D uCrackMap;
          uniform vec2 uMapRepeat;
          uniform vec2 uDetailRepeat;
-         uniform float uDetailStrength;`
+         uniform float uDetailStrength;
+         uniform vec2 uCrackRepeat;
+         uniform float uCrackNormalStrength;`
       )
       /* Detail normal. Replaces the stock chunk rather than appending to it,
          because two normal maps have to be combined in TANGENT space, BEFORE
@@ -832,6 +1027,12 @@ export function applyMacroLayer(
          mapN.xy *= normalScale;
          vec3 detN = texture2D( uDetailNormal, vNormalMapUv * uDetailRepeat ).xyz * 2.0 - 1.0;
          mapN.xy += detN.xy * uDetailStrength;
+         // Fracture relief. Same field the albedo and roughness read below, so
+         // a crack recesses and darkens at identical texels — the alternative
+         // (an independent crack normal) is light raking over relief the colour
+         // does not acknowledge, which the eye catches immediately.
+         vec2 crackN = texture2D( uCrackMap, vNormalMapUv / uMapRepeat * uCrackRepeat ).rg * 2.0 - 1.0;
+         mapN.xy += crackN * uCrackNormalStrength;
          #ifdef USE_TANGENT
            mat3 tbnD = mat3( normalize( vTangent ), normalize( vBitangent ), normal );
          #else
@@ -913,7 +1114,24 @@ export function applyMacroLayer(
          // surface sliding down together.
          float cavity = texture2D( uCavityMap, vMapUv ).b;
          float cavSigned = ( cavity - 0.10 ) * 1.30;
-         diffuseColor.rgb *= clamp( 1.0 - cavSigned, 0.42, 1.18 );`
+         diffuseColor.rgb *= clamp( 1.0 - cavSigned, 0.42, 1.18 );
+
+         // ── Fractures ──
+         // .b of the same field that supplied the normal above. Cracks are dark
+         // because they are self-shadowed and full of dust — NOT because they
+         // are drawn in black. A black line reads as ink on a surface; a dark
+         // GREY recess reads as a hole in one. Kept restrained on purpose: the
+         // brief wants cracks to vanish at distance and only surface up close,
+         // and the relief is already carrying most of the read.
+         float crackMask = texture2D( uCrackMap, vMapUv / uMapRepeat * uCrackRepeat ).b;
+         // Desaturate before darkening. Simply multiplying warm ivory down gives
+         // a TAN line — which reads as a stain or a root, not as a fracture. A
+         // crack is dark because it is self-shadowed and packed with dust, and
+         // both of those are achromatic: it should go dark GREY, never black
+         // (a black line is ink ON a surface; a grey recess is a hole IN one).
+         float crackLum = dot( diffuseColor.rgb, vec3( 0.2126, 0.7152, 0.0722 ) );
+         vec3 crackCol = mix( diffuseColor.rgb, vec3( crackLum ), 0.55 ) * 0.42;
+         diffuseColor.rgb = mix( diffuseColor.rgb, crackCol, crackMask * 0.85 );`
       )
       .replace(
         '#include <roughnessmap_fragment>',
@@ -937,11 +1155,17 @@ export function applyMacroLayer(
          // stays comparatively smooth is a second, independent depth cue: the
          // two read differently under the sky even where their albedo matches.
          float cavityR = texture2D( uCavityMap, vMapUv ).b;
-         roughnessFactor = clamp( roughnessFactor + cavityR * 0.30, 0.05, 1.0 );`
+         roughnessFactor = clamp( roughnessFactor + cavityR * 0.30, 0.05, 1.0 );
+
+         // Fractured plaster exposes raw broken mineral — the roughest thing on
+         // the wall. Third channel driven by the one crack field, so a fracture
+         // recesses, darkens AND roughens at exactly the same texels.
+         float crackR = texture2D( uCrackMap, vMapUv / uMapRepeat * uCrackRepeat ).b;
+         roughnessFactor = clamp( roughnessFactor + crackR * 0.26, 0.05, 1.0 );`
       );
   };
   // Distinct key so this variant doesn't collide with stock standard materials
-  material.customProgramCacheKey = () => 'weathered-wall-macro-v4-cavity-detail';
+  material.customProgramCacheKey = () => 'weathered-wall-macro-v5-cracks';
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
