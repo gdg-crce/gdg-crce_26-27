@@ -34,7 +34,7 @@ interface EventPoster3DProps {
  *
  * • It has lifted corners. Real vertex displacement, because a curl has to
  *   catch light on its underside and show wall behind it — a normal map cannot
- *   fake that. 16x16 quads x 9 posters is ~2.3k tris, i.e. free.
+ *   fake that. 24x24 quads x 9 posters is ~10k tris, i.e. free.
  *
  * • It has faded. See applyPosterFade.
  */
@@ -81,14 +81,25 @@ export default function EventPoster3D({
      peel the same way. Gravity decides the rest: the top corners let go first
      because that is where the sheet's own weight pulls against the paste. */
   const geometry = useMemo(() => {
-    const g = new THREE.PlaneGeometry(w, h, 16, 16);
+    const g = new THREE.PlaneGeometry(w, h, 24, 24);
     const pos = g.attributes.position as THREE.BufferAttribute;
     const rnd = (n: number) => {
       const s = Math.sin(n * 127.1 + variant * 311.7) * 43758.5453;
       return s - Math.floor(s);
     };
-    // Which of the four corners have let go, and by how much
-    const curl = [rnd(1) * 0.05, rnd(2) * 0.05, rnd(3) * 0.09 + 0.02, rnd(4) * 0.09 + 0.02];
+    // Which of the four corners have let go, and by how much. Indices 0/1 are
+    // the bottom pair, 2/3 the top — and the top always wins, because that is
+    // where the sheet's own weight hangs off paste that gave up years ago.
+    // Held to 1.5–6.5cm at the top: enough to read clearly at five metres and
+    // to catch the flashlight on its underside, but a corner peeling further
+    // than a hand's width stops being weathering and starts being a paper
+    // aeroplane taped to a wall.
+    const curl = [
+      rnd(1) * 0.018 + 0.005,
+      rnd(2) * 0.018 + 0.005,
+      rnd(3) * 0.05 + 0.015,
+      rnd(4) * 0.05 + 0.015,
+    ];
 
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
@@ -101,12 +112,15 @@ export default function EventPoster3D({
       const cv = [v, v, 1 - v, 1 - v];
       let z = 0;
       for (let c = 0; c < 4; c++) {
-        const d = Math.max(0, 1 - Math.hypot(cu[c], cv[c]) / 0.42);
+        const d = Math.max(0, 1 - Math.hypot(cu[c], cv[c]) / 0.55);
         z += d * d * d * curl[c];
       }
 
       // Slow sheet bow — paper never lies perfectly flat over old plaster
-      z += Math.sin(u * 3.1 + variant) * Math.cos(v * 2.3 + variant * 0.7) * 0.006;
+      z += Math.sin(u * 3.1 + variant) * Math.cos(v * 2.3 + variant * 0.7) * 0.016;
+      // Cockle ridges — the buckling that paste leaves behind, at sheet scale
+      z += Math.sin(u * 11.0 + variant * 2.1) * 0.005;
+      z += Math.cos(v * 8.3 + variant * 1.7) * 0.004;
 
       pos.setZ(i, z);
     }
@@ -120,20 +134,23 @@ export default function EventPoster3D({
       map: texture,
       alphaMap: tearMask,
       normalMap: wrinkle,
-      normalScale: new THREE.Vector2(0.55, 0.55),
+      normalScale: new THREE.Vector2(1.0, 1.0),
       // Cutout, not blending: writes depth, needs no sorting, and is cheaper
       // than the transparent stack this replaces.
       transparent: false,
       alphaTest: 0.5,
       // Paper is matte but not dead — old print keeps a faint tooth, and the
       // ink sits slightly glossier than the stock around it.
-      roughness: 0.82,
+      roughness: 0.88,
       metalness: 0,
       envMapIntensity: 0.45,
       side: THREE.FrontSide,
     });
     // Fade varies per poster — some have been up far longer than others
-    const fade = 0.34 + ((variant * 0.137) % 1) * 0.4;
+    // Pushed hard: against a real scanned wall the print was the brightest,
+    // most saturated thing in frame, which is precisely backwards. The wall has
+    // to be believed first; the poster is the newest thing on a 20-year surface.
+    const fade = 0.62 + ((variant * 0.137) % 1) * 0.3;
     applyPosterFade(m, fade);
     return m;
   }, [texture, tearMask, wrinkle, variant]);

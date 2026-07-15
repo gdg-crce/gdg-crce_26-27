@@ -77,12 +77,12 @@ export function buildPaperMaps(): PaperMaps {
   // Long cockle ridges: paste is applied with a brush in strokes, and the sheet
   // buckles perpendicular to them. Hence roughly parallel, wandering ridges —
   // not isotropic noise.
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < 46; i++) {
     const x0 = rnd() * S;
-    const amp = 6 + rnd() * 22;
+    const amp = 8 + rnd() * 30;
     const bright = rnd() > 0.5;
-    hx.strokeStyle = bright ? `rgba(190,190,190,${0.16 + rnd() * 0.2})` : `rgba(60,60,60,${0.16 + rnd() * 0.2})`;
-    hx.lineWidth = 4 + rnd() * 16;
+    hx.strokeStyle = bright ? `rgba(215,215,215,${0.24 + rnd() * 0.3})` : `rgba(38,38,38,${0.24 + rnd() * 0.3})`;
+    hx.lineWidth = 3 + rnd() * 18;
     hx.lineCap = 'round';
     hx.beginPath();
     let x = x0;
@@ -95,13 +95,13 @@ export function buildPaperMaps(): PaperMaps {
   }
 
   // Trapped air bubbles — paste never goes down perfectly
-  for (let i = 0; i < 34; i++) {
+  for (let i = 0; i < 52; i++) {
     const bx = 40 + rnd() * (S - 80);
     const by = 40 + rnd() * (S - 80);
     const br = 6 + rnd() * 34;
     const g = hx.createRadialGradient(bx, by, 1, bx, by, br);
-    g.addColorStop(0, 'rgba(205,205,205,0.5)');
-    g.addColorStop(0.7, 'rgba(150,150,150,0.2)');
+    g.addColorStop(0, 'rgba(225,225,225,0.72)');
+    g.addColorStop(0.66, 'rgba(155,155,155,0.3)');
     g.addColorStop(1, 'rgba(128,128,128,0)');
     hx.fillStyle = g;
     hx.beginPath();
@@ -111,24 +111,39 @@ export function buildPaperMaps(): PaperMaps {
 
   // Edge cockle: paper swells most where paste pools at the border
   const eg = hx.createLinearGradient(0, 0, 0, S);
-  eg.addColorStop(0, 'rgba(170,170,170,0.35)');
-  eg.addColorStop(0.12, 'rgba(128,128,128,0)');
-  eg.addColorStop(0.88, 'rgba(128,128,128,0)');
-  eg.addColorStop(1, 'rgba(170,170,170,0.35)');
+  eg.addColorStop(0, 'rgba(196,196,196,0.6)');
+  eg.addColorStop(0.1, 'rgba(128,128,128,0)');
+  eg.addColorStop(0.9, 'rgba(128,128,128,0)');
+  eg.addColorStop(1, 'rgba(196,196,196,0.6)');
   hx.fillStyle = eg;
   hx.fillRect(0, 0, S, S);
+
+  // Directional paper fibre — cheap paper is milled, so its grain runs one way.
+  // Visible fibre is the difference between paper and a printed plastic sheet.
+  hx.lineCap = 'butt';
+  for (let i = 0; i < 900; i++) {
+    const fy = rnd() * S;
+    const fx = rnd() * S;
+    const fl = 8 + rnd() * 46;
+    hx.strokeStyle = rnd() > 0.5 ? `rgba(200,200,200,${rnd() * 0.3})` : `rgba(58,58,58,${rnd() * 0.3})`;
+    hx.lineWidth = 0.7 + rnd() * 0.9;
+    hx.beginPath();
+    hx.moveTo(fx, fy);
+    hx.lineTo(fx + fl, fy + (rnd() - 0.5) * 2.5);
+    hx.stroke();
+  }
 
   // Paper fibre — the micro tooth that stops it reading as plastic film
   const hd = hx.getImageData(0, 0, S, S);
   for (let i = 0; i < hd.data.length; i += 4) {
-    const n = (rnd() - 0.5) * 16;
+    const n = (rnd() - 0.5) * 26;
     hd.data[i] += n;
     hd.data[i + 1] += n;
     hd.data[i + 2] += n;
   }
   hx.putImageData(hd, 0, 0);
 
-  const wrinkleNormal = new THREE.CanvasTexture(heightToNormal(hC, 2.2));
+  const wrinkleNormal = new THREE.CanvasTexture(heightToNormal(hC, 3.4));
   wrinkleNormal.wrapS = wrinkleNormal.wrapT = THREE.ClampToEdgeWrapping;
   wrinkleNormal.anisotropy = 8;
 
@@ -197,11 +212,34 @@ export function buildPaperMaps(): PaperMaps {
       cx.closePath();
       cx.fill();
     }
+    // Pinholes and small punctures — staples, thumbtacks, thrown gravel, and
+    // twenty years of people picking at a corner in passing.
+    for (let i = 0; i < 26; i++) {
+      const hx2 = 20 + rnd() * (S - 40);
+      const hy2 = 20 + rnd() * (S - 40);
+      cx.beginPath();
+      cx.arc(hx2, hy2, 0.9 + rnd() * 3.4, 0, Math.PI * 2);
+      cx.fill();
+    }
+    // Tiny internal tears — short slits where the sheet has split along a
+    // wrinkle and never repaired
+    for (let i = 0; i < 12; i++) {
+      const tx2 = 30 + rnd() * (S - 60);
+      const ty2 = 30 + rnd() * (S - 60);
+      const tl = 6 + rnd() * 30;
+      const ta = rnd() * Math.PI;
+      cx.lineWidth = 1 + rnd() * 2.4;
+      cx.strokeStyle = '#fff';
+      cx.beginPath();
+      cx.moveTo(tx2, ty2);
+      cx.lineTo(tx2 + Math.cos(ta) * tl, ty2 + Math.sin(ta) * tl);
+      cx.stroke();
+    }
     // Nibbles out of the edges
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 22; i++) {
       const edge = Math.floor(rnd() * 4);
       const t = rnd() * S;
-      const r = 5 + rnd() * 22;
+      const r = 4 + rnd() * 26;
       const ex = edge === 0 ? t : edge === 1 ? S : edge === 2 ? t : 0;
       const ey = edge === 0 ? 0 : edge === 1 ? t : edge === 2 ? S : t;
       cx.beginPath();
@@ -300,9 +338,11 @@ export function applyPosterFade(material: THREE.MeshStandardMaterial, amount: nu
            c = mix( c, c * vec3( 1.06, 0.99, 0.82 ), clamp( fadeGrad, 0.0, 1.0 ) );
            // Pigment washes toward the paper's own luminance
            float lum = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) );
-           c = mix( c, vec3( lum ), fadeGrad * 0.42 );
-           // Contrast collapse + lifted blacks toward the paper stock
-           c = mix( c, c * 0.72 + vec3( 0.17, 0.16, 0.13 ), fadeGrad * 0.85 );
+           c = mix( c, vec3( lum ), fadeGrad * 0.5 );
+           // Contrast collapse + lifted blacks toward the paper stock. Kept
+           // gentler than before: the artwork is not ours to wreck, and a
+           // chalked-out print reads as a bad decal, not as sun damage.
+           c = mix( c, c * 0.84 + vec3( 0.1, 0.095, 0.08 ), fadeGrad * 0.6 );
            diffuseColor.rgb = c;
          }`
       );

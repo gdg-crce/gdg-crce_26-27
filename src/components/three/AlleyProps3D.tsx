@@ -10,40 +10,7 @@ import * as THREE from 'three';
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function WallDecalsAndGrime() {
-  const [
-    plasterTex,
-    grimeTex,
-    fullPosterTex,
-    tornPosterTex,
-    wheatpasteCollage1,
-    wheatpasteCollage2,
-    graffitiPatchTex,
-    crackedPatchTex,
-    stickerBombTex,
-    weedTex,
-  ] = useMemo(() => {
-    // 1. Soft Organic Plaster & Aged Concrete Texture (Clean gradient)
-    const pCanvas = document.createElement('canvas');
-    pCanvas.width = 512;
-    pCanvas.height = 512;
-    const pCtx = pCanvas.getContext('2d')!;
-    pCtx.clearRect(0, 0, 512, 512);
-
-    const grad = pCtx.createRadialGradient(256, 256, 30, 256, 256, 220);
-    grad.addColorStop(0, 'rgba(118, 112, 104, 0.88)');
-    grad.addColorStop(0.55, 'rgba(96, 90, 84, 0.65)');
-    grad.addColorStop(1, 'rgba(96, 90, 84, 0.0)');
-    pCtx.fillStyle = grad;
-    pCtx.beginPath();
-    pCtx.arc(256, 256, 220, 0, Math.PI * 2);
-    pCtx.fill();
-
-    pCtx.fillStyle = 'rgba(40, 36, 32, 0.12)';
-    for (let i = 0; i < 600; i++) {
-      pCtx.fillRect(Math.random() * 512, Math.random() * 512, 3, 3);
-    }
-    const pTex = new THREE.CanvasTexture(pCanvas);
-
+  const [grimeTex, tornPosterTex, graffitiPatchTex, stickerBombTex, weedTex] = useMemo(() => {
     // 2. Vertical Rain Runoff Streaks
     const gCanvas = document.createElement('canvas');
     gCanvas.width = 256;
@@ -56,35 +23,6 @@ export function WallDecalsAndGrime() {
     gCtx.fillStyle = gGrad;
     gCtx.fillRect(0, 0, 256, 512);
     const gTex = new THREE.CanvasTexture(gCanvas);
-
-    // 3A. First Poster: Complete Intact Bright Archival Poster
-    const fCanvas = document.createElement('canvas');
-    fCanvas.width = 512;
-    fCanvas.height = 256;
-    const fCtx = fCanvas.getContext('2d')!;
-    fCtx.clearRect(0, 0, 512, 256);
-
-    fCtx.fillStyle = '#E8E0D2';
-    fCtx.fillRect(16, 16, 480, 224);
-
-    fCtx.strokeStyle = '#2A241E';
-    fCtx.lineWidth = 6;
-    fCtx.strokeRect(24, 24, 464, 208);
-
-    fCtx.font = '900 36px "Courier New", monospace';
-    fCtx.fillStyle = '#1A1612';
-    fCtx.textAlign = 'center';
-    fCtx.fillText('GDG CRCE ARCHIVE', 256, 85);
-
-    fCtx.font = 'bold 22px monospace';
-    fCtx.fillStyle = '#3E342B';
-    fCtx.fillText('SUNÉKHEIA // EST. 1994', 256, 135);
-
-    fCtx.font = 'bold 18px monospace';
-    fCtx.fillStyle = '#8B261D';
-    fCtx.fillText('COMPLETE ARCHIVAL COLLECTION', 256, 185);
-
-    const fullTex = new THREE.CanvasTexture(fCanvas);
 
     // 3B. Second Poster: Dramatic Zigzag Torn Half-Poster Remnant
     const tCanvas = document.createElement('canvas');
@@ -131,77 +69,12 @@ export function WallDecalsAndGrime() {
 
     const tornTex = new THREE.CanvasTexture(tCanvas);
 
-    // 4. Left Reference Panel: Layered Ripped Wheatpaste Poster Collage 1
-    const wc1Canvas = document.createElement('canvas');
-    wc1Canvas.width = 512;
-    wc1Canvas.height = 512;
-    const wc1Ctx = wc1Canvas.getContext('2d')!;
-    wc1Ctx.clearRect(0, 0, 512, 512);
-
-    // Bottom layer: distressed magenta/pink poster fragment
-    wc1Ctx.fillStyle = '#C83B5A';
-    wc1Ctx.fillRect(20, 40, 280, 420);
-    wc1Ctx.fillStyle = '#111822';
-    wc1Ctx.font = '900 38px Impact, sans-serif';
-    wc1Ctx.fillText('LIVE 94', 40, 100);
-
-    // Middle layer: ochre yellow flyer remnant
-    wc1Ctx.fillStyle = '#DCA828';
-    wc1Ctx.fillRect(160, 110, 320, 340);
-    wc1Ctx.fillStyle = '#191512';
-    wc1Ctx.font = 'bold 26px monospace';
-    wc1Ctx.fillText('SYNDICATE // TOUR', 180, 160);
-
-    // Top layer: torn cream wheatpaste overcoat with ripped jagged fringe
-    wc1Ctx.beginPath();
-    wc1Ctx.moveTo(40, 20);
-    wc1Ctx.lineTo(470, 20);
-    wc1Ctx.lineTo(460, 190);
-    wc1Ctx.lineTo(380, 240);
-    wc1Ctx.lineTo(440, 320);
-    wc1Ctx.lineTo(310, 480);
-    wc1Ctx.lineTo(60, 460);
-    wc1Ctx.closePath();
-    wc1Ctx.fillStyle = 'rgba(238, 232, 222, 0.94)';
-    wc1Ctx.fill();
-
-    wc1Ctx.font = '900 48px Impact, sans-serif';
-    wc1Ctx.fillStyle = '#22252A';
-    wc1Ctx.fillText('ALL ERAS', 80, 120);
-    wc1Ctx.font = 'bold 24px monospace';
-    wc1Ctx.fillText('CONTINUITY > EVOLUTION', 80, 165);
-
-    const wc1Tex = new THREE.CanvasTexture(wc1Canvas);
-
-    // 5. Left Reference Panel: Layered Ripped Wheatpaste Poster Collage 2
-    const wc2Canvas = document.createElement('canvas');
-    wc2Canvas.width = 512;
-    wc2Canvas.height = 512;
-    const wc2Ctx = wc2Canvas.getContext('2d')!;
-    wc2Ctx.clearRect(0, 0, 512, 512);
-
-    wc2Ctx.fillStyle = '#267C82'; // Teal poster underlayer
-    wc2Ctx.fillRect(40, 30, 420, 440);
-    wc2Ctx.fillStyle = '#F2E8D8';
-    wc2Ctx.fillRect(80, 180, 360, 260);
-    wc2Ctx.fillStyle = '#1A1A1A';
-    wc2Ctx.font = '900 42px "Courier New", monospace';
-    wc2Ctx.fillText('SUNÉKHEIA', 100, 240);
-    wc2Ctx.font = 'bold 24px monospace';
-    wc2Ctx.fillText('WHAT CONTINUES', 100, 285);
-    wc2Ctx.fillText('BECOMES GREATER', 100, 320);
-
-    const wc2Tex = new THREE.CanvasTexture(wc2Canvas);
-
     // 6. Middle Reference Panel: Peeling Stucco with Cyan & Rust Spray Tags
     const gpCanvas = document.createElement('canvas');
     gpCanvas.width = 512;
     gpCanvas.height = 256;
     const gpCtx = gpCanvas.getContext('2d')!;
     gpCtx.clearRect(0, 0, 512, 256);
-
-    gpCtx.fillStyle = 'rgba(138, 145, 152, 0.88)';
-    gpCtx.fillRect(10, 10, 492, 236);
 
     // Cyan spray tag (left)
     gpCtx.font = 'italic 900 58px Impact, sans-serif';
@@ -214,35 +87,6 @@ export function WallDecalsAndGrime() {
     gpCtx.fillText('LEGACY', 270, 165);
 
     const gpTex = new THREE.CanvasTexture(gpCanvas);
-
-    // 7. Right Reference Panel: Deep Cracked Concrete Wall Patch
-    const cpCanvas = document.createElement('canvas');
-    cpCanvas.width = 512;
-    cpCanvas.height = 512;
-    const cpCtx = cpCanvas.getContext('2d')!;
-    cpCtx.clearRect(0, 0, 512, 512);
-
-    cpCtx.fillStyle = 'rgba(92, 96, 104, 0.85)';
-    cpCtx.fillRect(0, 0, 512, 512);
-
-    // Deep jagged structural cracks
-    cpCtx.strokeStyle = '#111418';
-    cpCtx.lineWidth = 5;
-    cpCtx.beginPath();
-    cpCtx.moveTo(180, 0);
-    cpCtx.lineTo(210, 140);
-    cpCtx.lineTo(160, 260);
-    cpCtx.lineTo(230, 410);
-    cpCtx.lineTo(200, 512);
-    cpCtx.stroke();
-
-    cpCtx.beginPath();
-    cpCtx.moveTo(160, 260);
-    cpCtx.lineTo(410, 290);
-    cpCtx.lineTo(512, 240);
-    cpCtx.stroke();
-
-    const cpTex = new THREE.CanvasTexture(cpCanvas);
 
     // 8. Authentic 90s Grunge Sticker Bombing & Flyer Scrap Cluster
     const sbCanvas = document.createElement('canvas');
@@ -314,7 +158,7 @@ export function WallDecalsAndGrime() {
     const weedTex = new THREE.CanvasTexture(wCanvas);
     weedTex.colorSpace = THREE.SRGBColorSpace;
 
-    return [pTex, gTex, fullTex, tornTex, wc1Tex, wc2Tex, gpTex, cpTex, sbTex, weedTex];
+    return [gTex, tornTex, gpTex, sbTex, weedTex];
   }, []);
 
   const plasterPositions: [number, number, number][] = [
@@ -358,22 +202,7 @@ export function WallDecalsAndGrime() {
 
   return (
     <group>
-      {/* Plaster & Weathering Patches breaking repetition */}
-      {plasterPositions.map((pos, i) => (
-        <mesh key={`plaster-${i}`} position={pos} receiveShadow>
-          <planeGeometry args={[3.2 + (i % 2) * 0.5, 2.6 + (i % 2) * 0.4]} />
-          <meshStandardMaterial
-            map={plasterTex}
-            transparent={true}
-            depthWrite={false}
-            roughness={0.92}
-            polygonOffset={true}
-            polygonOffsetFactor={-3}
-            polygonOffsetUnits={-3}
-          />
-        </mesh>
-      ))}
-
+      
       {/* Gravity runoff beneath the pipes and sills that cause it */}
       {grimePositions.map(([gx, gy, gz, gh], i) => (
         <mesh key={`grime-${i}`} position={[gx, gy, gz]} receiveShadow>
@@ -393,32 +222,7 @@ export function WallDecalsAndGrime() {
         </mesh>
       ))}
 
-      {/* Left Reference Panel: Layered Ripped Wheatpaste Poster Collages */}
-      <mesh position={[-23.5, 3.4, 0.006]} receiveShadow>
-        <planeGeometry args={[2.8, 2.8]} />
-        <meshStandardMaterial
-          map={wheatpasteCollage1}
-          transparent={true}
-          depthWrite={false}
-          roughness={0.82}
-          polygonOffset={true}
-          polygonOffsetFactor={-3}
-          polygonOffsetUnits={-3}
-        />
-      </mesh>
-      <mesh position={[-6.2, 3.2, 0.006]} receiveShadow>
-        <planeGeometry args={[2.6, 2.6]} />
-        <meshStandardMaterial
-          map={wheatpasteCollage2}
-          transparent={true}
-          depthWrite={false}
-          roughness={0.82}
-          polygonOffset={true}
-          polygonOffsetFactor={-3}
-          polygonOffsetUnits={-3}
-        />
-      </mesh>
-
+      
       {/* Middle Reference Panel: Peeling Stucco with Cyan & Rust Graffiti Spray Tags */}
       <mesh position={[2.8, 2.1, 0.007]} receiveShadow>
         <planeGeometry args={[3.6, 1.8]} />
@@ -433,34 +237,8 @@ export function WallDecalsAndGrime() {
         />
       </mesh>
 
-      {/* Right Reference Panel: Deep Cracked Fissure Wall Patch */}
-      <mesh position={[16.8, 3.6, 0.006]} receiveShadow>
-        <planeGeometry args={[3.2, 3.2]} />
-        <meshStandardMaterial
-          map={crackedPatchTex}
-          transparent={true}
-          depthWrite={false}
-          roughness={0.92}
-          polygonOffset={true}
-          polygonOffsetFactor={-3}
-          polygonOffsetUnits={-3}
-        />
-      </mesh>
-
-      {/* 1st Heritage Poster: Complete Full Archival Poster */}
-      <mesh position={[-19.2, 3.3, 0.008]} receiveShadow>
-        <planeGeometry args={[3.2, 1.6]} />
-        <meshStandardMaterial
-          map={fullPosterTex}
-          transparent={true}
-          depthWrite={false}
-          roughness={0.7}
-          polygonOffset={true}
-          polygonOffsetFactor={-2}
-          polygonOffsetUnits={-2}
-        />
-      </mesh>
-
+      
+      
       {/* 2nd Heritage Poster: Dramatic Zigzag Ripped Torn Half-Poster */}
       <mesh position={[13.2, 2.3, 0.008]} receiveShadow>
         <planeGeometry args={[2.6, 1.5]} />

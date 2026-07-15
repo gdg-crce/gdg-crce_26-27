@@ -347,11 +347,17 @@ export default function EventsAndCouncilSection() {
                 {/* 3D Wall Scene */}
                 <WallScene progressRef={progressRef} snapToTarget={scrollProgress >= 0.26} />
 
+                {/* Lifted blacks — film shadows never reach zero (under the grain) */}
+                <div className="events-lift" />
+
                 {/* Scanline overlay */}
                 <div className="events-scanlines" />
 
                 {/* Film grain overlay */}
                 <div className="events-grain" />
+
+                {/* Lens falloff */}
+                <div className="events-vignette" />
 
                 {/* Camcorder Viewfinder HUD */}
                 <div className="events-hud">

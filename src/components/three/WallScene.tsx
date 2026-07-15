@@ -111,8 +111,8 @@ function HandheldFlashlight({ progressRef }: { progressRef: React.RefObject<numb
     <pointLight
       ref={lightRef}
       position={[-24, 2.3, 2.8]}
-      color="#FFF4E0"
-      intensity={20}
+      color="#F0EFEA"
+      intensity={22}
       distance={9}
       decay={2}
     />
@@ -134,7 +134,7 @@ function NeonAlleySign3D() {
     const pulse = 0.88 + Math.sin(t * 3.5) * 0.12;
     const intensity = flicker * pulse;
 
-    if (lightRef.current) lightRef.current.intensity = 110 * intensity;
+    if (lightRef.current) lightRef.current.intensity = 34 * intensity;
     if (matRef.current) matRef.current.emissiveIntensity = 1.2 * intensity;
   });
 
@@ -190,9 +190,9 @@ function NeonAlleySign3D() {
       <pointLight
         ref={lightRef}
         position={[0, 0, 1.4]}
-        color="#FF0055"
-        intensity={110}
-        distance={11}
+        color="#FF2D6B"
+        intensity={34}
+        distance={7}
         decay={2}
       />
     </group>
@@ -202,23 +202,24 @@ function NeonAlleySign3D() {
 /* ═══════════════════════════════════════════════════
    Weathered Urban Masonry Wall
 
-   All texture synthesis now lives in ./wallMaterial, where albedo, height,
-   roughness and AO are generated from ONE set of crack/strata/brick data in a
-   single fused pass. Previously the colour cracks and the bump cracks were two
-   independent Math.random() walks — the normal map claimed relief the albedo
-   never acknowledged, which is why light never agreed with the surface.
+   Base material is a photogrammetry scan (see ./wallMaterial for why the
+   procedural generator that used to live there was abandoned). The macro layer,
+   the runoff anchored to real pipes, and the poster-ghost decals still ride on
+   top of it — a scan gives a believable SURFACE, but it knows nothing about
+   this alley.
 
-   The mesh itself is now dead flat. The old 0.3 displacementScale over 42cm
-   quads produced 8cm-proud stucco and 9cm-deep "cracks" smeared into smooth
-   valleys — lumpy terrain that resolved no real feature while costing 6,400
-   verts. Real walls ARE flat at metre scale; their story is at mm–cm scale,
-   which is exactly what a normal map is for. At 4m a 2cm lip subtends 0.3°,
-   so there is no silhouette to lose.
+   The mesh is dead flat. The old 0.3 displacementScale over 42cm quads produced
+   8cm-proud stucco and 9cm-deep "cracks" smeared into smooth valleys — lumpy
+   terrain that resolved no real feature while costing 6,400 verts. Real walls
+   ARE flat at metre scale; their story is at mm–cm scale, which is exactly what
+   a normal map is for. At 4m a 2cm lip subtends 0.3°, so there is no silhouette
+   to lose.
    ═══════════════════════════════════════════════════ */
 
 function WeatheredUrbanStreetWall() {
-  const tex = useMemo(() => buildWallTextures(), []);
-  const normalScale = useMemo(() => new THREE.Vector2(1.35, 1.35), []);
+  const loader = useMemo(() => new THREE.TextureLoader(), []);
+  const tex = useMemo(() => buildWallTextures(loader), [loader]);
+  const normalScale = useMemo(() => new THREE.Vector2(1.1, 1.1), []);
 
   // aoMap samples the second UV channel; a plane only ships `uv`, so alias it.
   const geometry = useMemo(() => {
@@ -892,7 +893,7 @@ function AlleyEnvironment() {
   useEffect(() => {
     const env = buildAlleyEnvironment(gl);
     scene.environment = env;
-    scene.environmentIntensity = 0.6;
+    scene.environmentIntensity = 0.35;
     return () => {
       scene.environment = null;
       env.dispose();
@@ -902,29 +903,63 @@ function AlleyEnvironment() {
   return null;
 }
 
+/**
+ * Wall wash over the centre of the alley.
+ *
+ * This was a 360-intensity theatre spot aimed at one poster, annotated "Hero #1
+ * (Brightest Object)". That is an explicit instruction to the eye to find a
+ * poster first — the exact opposite of what the scene needs. If the wall is not
+ * believed, the posters have nothing to hang on.
+ *
+ * Now it lights a broad region of WALL: wider cone, softer edge, far less
+ * intensity, and dropped low enough to rake across the surface rather than
+ * flood it flat-on. Raking light is what makes plaster strata, trowel edges and
+ * bolt holes cast their own micro-shadows — the same lamp now sells the
+ * masonry instead of haloing a sheet of paper.
+ */
+/**
+ * Dev-only handle on the renderer.
+ *
+ * The scene only draws inside requestAnimationFrame, which never fires while
+ * the tab is hidden — so an automated pane can never see a frame. Exposing gl,
+ * scene and camera allows a render to be driven synchronously and read back.
+ * Remove alongside __wallTex and /api/devshot before shipping.
+ */
+function DevRenderHandle() {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    (window as unknown as { __r3f?: unknown }).__r3f = { gl, scene, camera };
+  }, [gl, scene, camera]);
+
+  return null;
+}
+
 function HeroCenterSpotlight() {
   const targetRef = useRef<THREE.Object3D>(null);
 
   return (
-    <group position={[-1.0, 6.2, 3.2]}>
-      <object3D ref={targetRef} position={[-1.0, 2.45, 0]} />
-      {/* Hero #1 (Brightest Object): Center Poster Theater Halogen Spotlight */}
+    <group position={[-1.0, 7.4, 1.5]}>
+      <object3D ref={targetRef} position={[-1.0, 2.0, 0]} />
       <spotLight
         target={targetRef.current || undefined}
-        color="#FFF4DE"
-        intensity={360}
-        angle={0.65}
-        penumbra={0.42}
-        distance={14}
+        color="#E9EAEA"
+        intensity={75}
+        angle={0.95}
+        penumbra={0.85}
+        distance={16}
         decay={2}
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-near={1}
-        shadow-camera-far={14}
+        shadow-camera-far={16}
         shadow-bias={-0.0015}
       />
-      {/* Center hero pool reinforcement */}
-      <pointLight position={[-1.0, 2.5, 2.1]} color="#FFF2DB" intensity={180} distance={8} decay={2} />
+      {/* Gentle fill so the centre doesn't crush — no longer a hero pool */}
+      <pointLight position={[-1.0, 2.5, 2.1]} color="#E2E4E4" intensity={48} distance={9} decay={2} />
     </group>
   );
 }
@@ -937,21 +972,24 @@ function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<num
       {/* Directional ambient from a procedural sky/ground env — see
           AlleyEnvironment. This replaces the bulk of the old flat ambientLight. */}
       <AlleyEnvironment />
+      <DevRenderHandle />
 
       {/* A trace of ambient only, and cool. The old 0.42 warm fill lit every
           crevice from every direction, which is the definition of an evenly-lit
           render: with no direction there is no form, and no amount of texture
           detail survives that. The env map now carries ambient with a real
           top-down gradient, so this is just a floor to keep blacks readable. */}
-      <ambientLight intensity={0.07} color="#8FA6C8" />
+      <ambientLight intensity={0.06} color="#AEB6C0" />
 
-      {/* Cool skylight, not a sun. This is a night alley lit by sodium lamps and
-          neon; a 1.35 warm key from above was fighting its own premise and
-          flattening the warm/cool separation that makes light read as light. */}
+      {/* Neutral daylight key. Two corrections in one: the original 1.35 warm
+          sun was pouring amber over everything, and my first fix overshot into
+          #9DB2CC — actually blue, which is just a different cast wearing a
+          cooler coat. Daylight-balanced white lets the concrete read grey
+          because it IS grey. Warmth is now confined to the lamp pools. */}
       <directionalLight
         position={[3, 12, 8]}
-        intensity={0.4}
-        color="#93A9C6"
+        intensity={0.5}
+        color="#D6DAE0"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-45}
@@ -967,11 +1005,11 @@ function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<num
       <HeroCenterSpotlight />
 
       {/* Controlled Overhead Streetlamp Pools */}
-      <pointLight position={[-22, 6.5, 3.5]} color="#FFB653" intensity={210} distance={22} decay={2} />
-      <pointLight position={[-11, 6.8, 3.5]} color="#FFB653" intensity={200} distance={22} decay={2} />
-      <pointLight position={[0, 6.5, 3.5]} color="#FFB653" intensity={230} distance={22} decay={2} />
-      <pointLight position={[11, 6.8, 3.5]} color="#FFB653" intensity={200} distance={22} decay={2} />
-      <pointLight position={[22, 6.5, 3.5]} color="#FFB653" intensity={210} distance={22} decay={2} />
+      <pointLight position={[-22, 6.5, 3.5]} color="#E0D6C6" intensity={62} distance={22} decay={2} />
+      <pointLight position={[-11, 6.8, 3.5]} color="#E0D6C6" intensity={58} distance={22} decay={2} />
+      <pointLight position={[0, 6.5, 3.5]} color="#E0D6C6" intensity={70} distance={22} decay={2} />
+      <pointLight position={[11, 6.8, 3.5]} color="#E0D6C6" intensity={58} distance={22} decay={2} />
+      <pointLight position={[22, 6.5, 3.5]} color="#E0D6C6" intensity={62} distance={22} decay={2} />
 
       {/* Interactive First-Person Human Camera + Handheld Flashlight */}
       <InteractiveCameraRig progressRef={progressRef} snapToTarget={snapToTarget} />
@@ -1040,7 +1078,7 @@ export default function WallScene({ progressRef, snapToTarget }: WallSceneProps)
       camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
       dpr={[1, 1.5]}
       shadows="soft"
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      gl={{ antialias: true, powerPreference: 'high-performance', toneMappingExposure: 0.82 }}
       style={{
         position: 'absolute',
         top: 0,
