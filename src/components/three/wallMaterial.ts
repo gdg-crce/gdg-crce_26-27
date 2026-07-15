@@ -28,9 +28,21 @@ import * as THREE from 'three';
       runoff from real features, and cavity accumulation derived from the
       height field itself.
 
-   PALETTE: cool grey concrete, dirty white, neutral cement, faded beige.
-   Warmth is an accent that has to be earned — rust from a bolt hole, the
-   beige of old wheat paste — never the temperature of the wall itself.
+   PALETTE: warm ivory, dirty white, aged beige, light cement grey. Secondary:
+   pale olive, warm charcoal, dust brown, brick red, oxidised brown. The wall
+   stays MUTED — saturated colour belongs to the graffiti and the posters, and
+   nowhere else.
+
+   This used to read "cool grey concrete… warmth is never the temperature of the
+   wall itself", and the albedo was graded blue to enforce it. That was a
+   compensation, not a palette: the rig at the time was a 2.0-intensity golden
+   sun plus five sodium lamps, and the wall was being cooled to survive it. Both
+   are gone. The light is neutral overcast now, so the scan's own warm ivory and
+   muted brick are exactly right and need no correction.
+
+   The rule that survives: if the wall ever reads too warm, fix the LIGHT.
+   Grading the albedo against the lighting is what produced a monochrome wall
+   from a scan chosen for its colour.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Seeded RNG so the wall is identical across reloads ── */
@@ -245,11 +257,14 @@ export const RUNOFF_SOURCES = {
    produced, however hard its thresholds were tuned. The reference photographs
    we were chasing are photographs. That was always the answer.
 
-   ambientCG PaintedPlaster016 — CC0, height-field photogrammetry, white
-   limewash failing off masonry. Baked from a 19.4MB raw 2K set down to 818KB:
-   1024px, AO packed into R and roughness into G of one image (three reads
-   aoMap.r and roughnessMap.g), albedo regraded cool at bake time so it costs
-   nothing at runtime.
+   Source: ambientCG PaintedPlaster016 — CC0, height-field photogrammetry,
+   white limewash failing off masonry.
+   https://ambientcg.com/view?id=PaintedPlaster016
+
+   Baked from a 19.4MB raw 2K set down to 818KB: 1024px, AO packed into R and
+   roughness into G of one image (three reads aoMap.r and roughnessMap.g),
+   albedo regraded cool at bake time so it costs nothing at runtime.
+   Reproduce with:  node scripts/bake-wall-texture.mjs <unzipped-scan-folder>
 
    What still layers on top, and why the scan does not make it redundant:
      • macroMap  — a scan tiles too. Without it this repeats every 4.25m.
@@ -260,20 +275,36 @@ export const RUNOFF_SOURCES = {
 export interface WallTextureSet {
   map: THREE.Texture;
   normalMap: THREE.Texture;
-  /** AO in .r and roughness in .g of one packed image — same texture object */
+  /** AO in .r, roughness in .g, CAVITY in .b — one packed image, same object */
   roughnessMap: THREE.Texture;
   aoMap: THREE.Texture;
   macroMap: THREE.CanvasTexture;
+  /** Poster ghost history — R=sheltered patch, G=paste squeeze-out perimeter */
+  ghostMap: THREE.CanvasTexture;
+  /** High-frequency aggregate grain, tiled far finer than the scan */
+  detailNormal: THREE.CanvasTexture;
 }
 
 let cached: WallTextureSet | null = null;
 
-/** Repeats across the 68m wall. The scan covers roughly 2m, but tiling it 34x
- *  would be absurd even with macro breakup; 16 keeps texel density high
- *  (~240 px/m, double the old procedural tile) while leaving the macro layer a
- *  fighting chance of hiding the period. */
-const SCAN_REPEAT_X = 16;
-const SCAN_REPEAT_Y = 2.4;
+/** Repeats across the 68m wall.
+ *
+ *  Dropped from 16/2.4 to 10/1.5, which makes every feature 1.6x larger.
+ *
+ *  This is a scale argument, not a sharpness one. At 16 repeats a tile covered
+ *  4.25m, so the scan's plaster islands landed at roughly 0.3m on the wall —
+ *  and a wall covered in 0.3m light-dark patches does not read as plaster over
+ *  brick, it reads as camouflage. The reference's plaster fields are nearer a
+ *  metre. Bigger tiles cost texel density (~136 px/m here, against ~240 px/m
+ *  needed to match screen resolution at this camera distance) so the albedo
+ *  goes slightly soft — but the normal map still carries every chip edge at
+ *  full strength, and under flat overcast a slightly soft albedo is what a real
+ *  wall photographs like anyway. Feature scale is worth more than crispness.
+ *
+ *  Fewer repeats also means a longer period, so the macro layer has LESS work
+ *  to do hiding it, not more. */
+const SCAN_REPEAT_X = 10;
+const SCAN_REPEAT_Y = 1.5;
 
 export function buildWallTextures(loader: THREE.TextureLoader): WallTextureSet {
   if (cached) return cached;
@@ -299,6 +330,8 @@ export function buildWallTextures(loader: THREE.TextureLoader): WallTextureSet {
     roughnessMap: aoRough,
     aoMap: aoRough,
     macroMap: buildMacroMap(),
+    ghostMap: buildGhostMap(),
+    detailNormal: buildDetailNormal(),
   };
 
   if (process.env.NODE_ENV !== 'production') {
@@ -306,6 +339,91 @@ export function buildWallTextures(loader: THREE.TextureLoader): WallTextureSet {
   }
 
   return cached;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Detail normal — aggregate grain, tiled far finer than the scan.
+
+   This solves the cost of SCAN_REPEAT_X = 10. Bigger tiles were necessary
+   (0.3m plaster islands read as camouflage) but they dropped texel density to
+   ~136 px/m against the ~240 px/m the screen wants, so the scan's own popcorn
+   grain went soft. Raising the repeat to sharpen it brings the camo straight
+   back — the two requirements fight over one number.
+
+   Splitting frequency across two maps ends the fight. The scan keeps the macro
+   story at 10 repeats; this carries the micro tooth at ~60, where nobody can
+   see a 1.1m period because there is no shape to recognise at that scale — only
+   grain. It is 256px, costs one small texture, and it is the "detail normals"
+   half of the reference's "normal map from height + detail normals".
+
+   Normals only. Tiling an ALBEDO this hard would produce a visible repeating
+   pattern instantly; tiling a normal produces surface tooth, which is what a
+   lime plaster's aggregate actually is — geometry, not pigment.
+
+   Both axes wrap. At a 1.1m period a seam would be far worse than the softness
+   it is here to fix, so the fBm lattices are indexed directly (they wrap) and
+   the pits and the height->normal gradient wrap by modulo.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function buildDetailNormal(): THREE.CanvasTexture {
+  const S = 256;
+
+  // Two octave bands: aggregate lumps, and the fine tooth between them.
+  const lumps = fbmField(S, S, 0xa663, 4, 24, 24);
+  const tooth = fbmField(S, S, 0x5c21, 3, 80, 80);
+  const rnd = mulberry32(0x1d0e);
+
+  const h = new Float32Array(S * S);
+  for (let i = 0; i < S * S; i++) {
+    h[i] = lumps.d[i] * 0.6 + tooth.d[i] * 0.4;
+  }
+
+  // Micro-pitting — the reference calls for it explicitly, and it is what stops
+  // plaster reading as sprayed plastic. Craters, so they only ever remove.
+  for (let p = 0; p < 560; p++) {
+    const cx = Math.floor(rnd() * S);
+    const cy = Math.floor(rnd() * S);
+    const r = 1 + rnd() * 2.4;
+    const depth = 0.28 + rnd() * 0.55;
+    const ri = Math.ceil(r);
+    for (let dy = -ri; dy <= ri; dy++) {
+      for (let dx = -ri; dx <= ri; dx++) {
+        const d = Math.hypot(dx, dy);
+        if (d > r) continue;
+        const xx = (((cx + dx) % S) + S) % S;
+        const yy = (((cy + dy) % S) + S) % S;
+        h[yy * S + xx] -= depth * (1 - d / r);
+      }
+    }
+  }
+
+  const c = document.createElement('canvas');
+  c.width = S;
+  c.height = S;
+  const ctx = c.getContext('2d')!;
+  const img = ctx.createImageData(S, S);
+  const H = (x: number, y: number) => h[((((y % S) + S) % S) * S) + (((x % S) + S) % S)];
+  const STRENGTH = 2.6;
+
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const gx = (H(x + 1, y) - H(x - 1, y)) * STRENGTH;
+      const gy = (H(x, y + 1) - H(x, y - 1)) * STRENGTH;
+      const len = Math.sqrt(gx * gx + gy * gy + 1);
+      const i = (y * S + x) * 4;
+      img.data[i] = (-gx / len) * 127.5 + 127.5;
+      img.data[i + 1] = (-gy / len) * 127.5 + 127.5;
+      img.data[i + 2] = (1 / len) * 127.5 + 127.5;
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 4;
+  return t;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -413,7 +531,246 @@ function buildMacroMap(): THREE.CanvasTexture {
   }
   ctx.putImageData(base, 0, 0);
 
+  /* ── Verdigris / cyan oxidation near industrial bolt points ────────────
+     Copper and iron fasteners corrode to verdigris (copper carbonate) —
+     vivid cyan-teal patches that gravity-streak downward from the bolt.
+     Each patch is anchored to a real feature: pipe brackets and vent
+     window mounting hardware. This is not scatter; it is consequence.    */
+  const vCanvas = document.createElement('canvas');
+  vCanvas.width = W;
+  vCanvas.height = H;
+  const vc = vCanvas.getContext('2d')!;
+  vc.fillStyle = '#000';
+  vc.fillRect(0, 0, W, H);
+  vc.globalCompositeOperation = 'lighter';
+
+  // Bolt points: pipe brackets at pipe X positions, at several heights
+  const boltPoints: [number, number][] = [];
+  for (const px of RUNOFF_SOURCES.pipes) {
+    // Each pipe has 2–3 brackets along its length
+    boltPoints.push([px + 0.15, 6.8]);
+    boltPoints.push([px - 0.1, 4.5]);
+    boltPoints.push([px + 0.2, 2.2]);
+  }
+  // Vent window mounting bolts — 4 corners per window
+  for (const sx of RUNOFF_SOURCES.sills) {
+    boltPoints.push([sx - 1.0, 6.8]);
+    boltPoints.push([sx + 1.0, 6.8]);
+    boltPoints.push([sx - 1.0, 5.6]);
+    boltPoints.push([sx + 1.0, 5.6]);
+  }
+
+  for (const [bx, by] of boltPoints) {
+    const cx2 = toU(bx);
+    const cy2 = toV(by);
+    // Main oxidation bloom — irregular, gravity-biased (more below bolt)
+    const patchCount = 3 + Math.floor(rnd() * 4);
+    for (let p = 0; p < patchCount; p++) {
+      const offX = (rnd() - 0.5) * 18;
+      const offY = rnd() * 14 + p * 3; // bias downward
+      const r = 4 + rnd() * 12;
+      const alpha = 0.12 + rnd() * 0.28;
+      const g2 = vc.createRadialGradient(cx2 + offX, cy2 + offY, 1, cx2 + offX, cy2 + offY, r);
+      g2.addColorStop(0, `rgba(92, 191, 176, ${alpha})`);
+      g2.addColorStop(0.6, `rgba(58, 158, 146, ${alpha * 0.5})`);
+      g2.addColorStop(1, 'rgba(58, 158, 146, 0)');
+      vc.fillStyle = g2;
+      vc.beginPath();
+      vc.arc(cx2 + offX, cy2 + offY, r, 0, Math.PI * 2);
+      vc.fill();
+    }
+    // Gravity drip streak below each bolt
+    const dripLen = 8 + rnd() * 16;
+    const dg = vc.createLinearGradient(0, cy2, 0, cy2 + dripLen);
+    dg.addColorStop(0, `rgba(92, 191, 176, ${0.18 + rnd() * 0.15})`);
+    dg.addColorStop(1, 'rgba(58, 158, 146, 0)');
+    vc.fillStyle = dg;
+    vc.fillRect(cx2 - 3 + (rnd() - 0.5) * 4, cy2, 6 + rnd() * 4, dripLen);
+  }
+
+  // Composite verdigris into the base macro's blue channel (repurposed slightly)
+  // and store the cyan color data for the shader
+  const vData = vc.getImageData(0, 0, W, H).data;
+  const base2 = ctx.getImageData(0, 0, W, H);
+  for (let i = 0; i < W * H; i++) {
+    const j = i * 4;
+    // Encode verdigris intensity into the alpha channel for shader pickup
+    // (macro map was opaque; alpha was unused)
+    base2.data[j + 3] = Math.min(255, 255 - vData[j] * 0.65);
+    // Also tint the red channel slightly where verdigris is strong,
+    // as a secondary read for the shader
+    if (vData[j] > 30) {
+      base2.data[j] = Math.max(0, base2.data[j] - vData[j] * 0.15);
+    }
+  }
+  ctx.putImageData(base2, 0, 0);
+
   const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.ClampToEdgeWrapping;
+  t.wrapT = THREE.ClampToEdgeWrapping;
+  t.anisotropy = 4;
+  return t;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Poster ghost map — the history of what was pasted here before.
+
+   The wall has to feel older than the posters on it, and the way a real wall
+   says that is with the rectangles of everything that came before: sheets that
+   were pasted up, weathered, and scraped off, over and over, for decades.
+
+   WHY A GHOST LOOKS LIGHTER, NOT DIRTIER.
+   The instinct is to draw a stain. It is the other way round. A pasted sheet
+   SHELTERS the wall under it — for however many years it hung there, that
+   rectangle collected no soot and took no rain. Strip it and you expose a
+   patch that is cleaner and paler than everything around it, faintly warmed by
+   the paste that soaked in. The dirt is only at the perimeter, where paste
+   squeezed out past the edge and spent the next decade collecting grime. So a
+   ghost is a pale rectangle with a dirty outline, and that outline is the cue
+   the eye actually reads.
+
+   WHAT THIS MAP DELIBERATELY DOES NOT CARRY.
+   1024px over 68m is ~15 px/m, so one texel is ~7cm. Tack holes and tape tabs
+   are millimetres — they cannot resolve here, and the previous version drawing
+   them at "0.6px radius" was not making tack holes, it was making fist-sized
+   blobs. Sub-pixel storytelling belongs in decals at detail resolution. What a
+   macro layer CAN do is the low-frequency part — a soft tonal rectangle and a
+   broken perimeter — and a ghost is genuinely low-frequency, so nothing is
+   lost by keeping only that.
+
+   R = sheltered-patch coverage · G = paste squeeze-out perimeter · B = unused
+   Alpha is not used as a mask: see the shader note in applyMacroLayer.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function buildGhostMap(): THREE.CanvasTexture {
+  const W = 1024;
+  const H = 256;
+
+  const rnd = mulberry32(0xd3ad);
+
+  const toU = (worldX: number) => ((worldX + WALL.width / 2) / WALL.width) * W;
+  const toV = (worldY: number) => ((WALL.centerY + WALL.height / 2 - worldY) / WALL.height) * H;
+
+  /* Two greyscale accumulation canvases, combined into R and G at the end.
+     Drawing them separately is the only way to keep the channels independent —
+     canvas composites RGB together, so a single canvas cannot hold two masks
+     that overlap. The previous version claimed a channel packing in its header
+     and then never did one; its final "pack" step was getImageData immediately
+     followed by putImageData, which is a no-op. */
+  const mk = () => {
+    const cv = document.createElement('canvas');
+    cv.width = W;
+    cv.height = H;
+    const x = cv.getContext('2d')!;
+    x.fillStyle = '#000';
+    x.fillRect(0, 0, W, H);
+    return { cv, x };
+  };
+  const body = mk(); // R — the sheltered patch
+  const edge = mk(); // G — paste squeeze-out, grime-collecting
+
+  /* Sites where sheets have been going up for decades. Kept off the pipes and
+     at reachable height — nobody pastes a flyer at 8m or over a downpipe. */
+  const ghostWorldPositions = [
+    { x: -28, y: 2.6, w: 1.4, h: 2.0 },
+    { x: -22, y: 1.8, w: 2.0, h: 1.4 },
+    { x: -17, y: 3.0, w: 1.2, h: 1.7 },
+    { x: -10, y: 2.2, w: 1.8, h: 2.4 },
+    { x: -5, y: 1.6, w: 1.5, h: 1.0 },
+    { x: 1, y: 3.2, w: 2.2, h: 1.5 },
+    { x: 6, y: 2.0, w: 1.3, h: 1.9 },
+    { x: 12, y: 2.8, w: 1.6, h: 2.2 },
+    { x: 17, y: 1.4, w: 2.0, h: 1.3 },
+    { x: 24, y: 2.4, w: 1.4, h: 1.8 },
+  ];
+
+  for (const gw of ghostWorldPositions) {
+    const x0 = toU(gw.x);
+    const y0 = toV(gw.y + gw.h / 2);
+    const gwPx = (gw.w / WALL.width) * W;
+    const ghPx = (gw.h / WALL.height) * H;
+
+    // Hand-placed sheets are never square, and never square in the same way
+    const tilt = (rnd() - 0.5) * 0.05;
+    const cx = x0 + gwPx / 2;
+    const cy = y0 + ghPx / 2;
+
+    body.x.save();
+    body.x.translate(cx, cy);
+    body.x.rotate(tilt);
+    body.x.fillStyle = `rgba(255,255,255,${0.5 + rnd() * 0.35})`;
+    body.x.fillRect(-gwPx / 2, -ghPx / 2, gwPx, ghPx);
+    body.x.restore();
+
+    edge.x.save();
+    edge.x.translate(cx, cy);
+    edge.x.rotate(tilt);
+    edge.x.strokeStyle = `rgba(255,255,255,${0.55 + rnd() * 0.4})`;
+    edge.x.lineWidth = 1.2 + rnd() * 1.4;
+    edge.x.strokeRect(-gwPx / 2, -ghPx / 2, gwPx, ghPx);
+    edge.x.restore();
+  }
+
+  /* ── Erosion ────────────────────────────────────────────────────────────
+     This is the whole point, and it is what the old version was missing.
+
+     A crisp rectangle on a wall reads as a UI panel glued to the brick, no
+     matter how low its opacity — the eye finds the straight edge instantly and
+     the illusion dies. But the answer is NOT to blur it. A blurred rectangle
+     is still obviously a rectangle, just a soft one, and soft-cloud edges were
+     the exact note that started this rework.
+
+     Real ghosts erode. The paste bond fails unevenly, weather eats it in
+     patches, someone scraped part of it off years ago and gave up on the rest.
+     So the rectangle survives in fragments: intact along one stretch, gone
+     entirely along another. Multiplying coverage by a broken fBm field does
+     that — the edge stays straight WHERE IT SURVIVES, which is what says
+     "a person put a straight-edged thing here" while the gaps say "and time
+     has been working on it since". Straight but interrupted, not soft.        */
+  /* Frequency is everything here. At baseX=6 over 4 octaves the finest lattice
+     was 48 cells across 1024px — ~21px, which is the entire width of a ghost.
+     The field could therefore only ever say "this whole ghost lives" or "this
+     whole ghost dies", which is not erosion, it is a coin toss. The break-up
+     has to happen WITHIN a ghost to read as decay, so the lattice has to be
+     several times finer than the thing it is eating. */
+  const erosion = fbmField(512, 128, 0x6a57, 4, 26, 9);
+  const grain = fbmField(512, 128, 0x2b19, 5, 60, 20);
+
+  const out = document.createElement('canvas');
+  out.width = W;
+  out.height = H;
+  const octx = out.getContext('2d')!;
+  const img = octx.createImageData(W, H);
+
+  const bd = body.x.getImageData(0, 0, W, H).data;
+  const ed = edge.x.getImageData(0, 0, W, H).data;
+
+  for (let y = 0; y < H; y++) {
+    const v = y / H;
+    for (let x = 0; x < W; x++) {
+      const u = x / W;
+      const i = (y * W + x) * 4;
+
+      const e = sampleField(erosion, u, v);
+      const g = sampleField(grain, u, v);
+
+      // Survival field. Widened from smoothstep(0.34, 0.62) — that threshold
+      // ate most ghosts outright and left the survivors at full strength, so
+      // the wall had three hard rectangles and seven blanks. A gentler ramp
+      // keeps every ghost partially present, which is what "faded" means.
+      const survives = smoothstep(0.18, 0.78, e);
+      // Finer break-up so surviving stretches are not uniform either.
+      const mottle = 0.55 + g * 0.45;
+
+      img.data[i] = bd[i] * survives * mottle;
+      img.data[i + 1] = ed[i] * survives * (0.5 + g * 0.5);
+      img.data[i + 2] = 0;
+      img.data[i + 3] = 255;
+    }
+  }
+  octx.putImageData(img, 0, 0);
+
+  const t = new THREE.CanvasTexture(out);
   t.wrapS = THREE.ClampToEdgeWrapping;
   t.wrapT = THREE.ClampToEdgeWrapping;
   t.anisotropy = 4;
@@ -423,55 +780,196 @@ function buildMacroMap(): THREE.CanvasTexture {
 /* ═══════════════════════════════════════════════════════════════════════════
    Macro-layer shader injection.
 
-   MeshStandardMaterial has no detail/macro slot, so patch it. Two extra
-   fetches from a tiny (1024x256) texture — near-perfect cache hit rate, far
+   MeshStandardMaterial has no detail/macro slot, so patch it. Three extra
+   fetches from tiny (1024x256) textures — near-perfect cache hit rate, far
    cheaper than the memory a non-tiling 4K texture set would cost.
+
+   Now also carries:
+   • Poster ghost history (paste tint, outlines, tape marks)
+   • Verdigris oxidation (cyan patches from macro alpha channel)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export function applyMacroLayer(material: THREE.MeshStandardMaterial, macroMap: THREE.Texture) {
+export function applyMacroLayer(
+  material: THREE.MeshStandardMaterial,
+  macroMap: THREE.Texture,
+  ghostMap: THREE.Texture,
+  cavityMap: THREE.Texture,
+  detailNormal: THREE.Texture
+) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uMacroMap = { value: macroMap };
+    shader.uniforms.uGhostMap = { value: ghostMap };
+    // Same image as roughnessMap/aoMap — cavity rides in its unused .b
+    shader.uniforms.uCavityMap = { value: cavityMap };
+    shader.uniforms.uDetailNormal = { value: detailNormal };
     shader.uniforms.uMapRepeat = { value: new THREE.Vector2(SCAN_REPEAT_X, SCAN_REPEAT_Y) };
+    // ~60 repeats across 68m: a 1.1m period, below the scale at which the eye
+    // can recognise a repeated shape — it reads as tooth, not as pattern.
+    shader.uniforms.uDetailRepeat = { value: new THREE.Vector2(6.0, 4.0) };
+    shader.uniforms.uDetailStrength = { value: 0.55 };
 
     shader.fragmentShader = shader.fragmentShader
       .replace(
         '#include <common>',
         `#include <common>
          uniform sampler2D uMacroMap;
-         uniform vec2 uMapRepeat;`
+         uniform sampler2D uGhostMap;
+         uniform sampler2D uCavityMap;
+         uniform sampler2D uDetailNormal;
+         uniform vec2 uMapRepeat;
+         uniform vec2 uDetailRepeat;
+         uniform float uDetailStrength;`
+      )
+      /* Detail normal. Replaces the stock chunk rather than appending to it,
+         because two normal maps have to be combined in TANGENT space, BEFORE
+         the TBN transform — perturbing the view-space normal afterwards is a
+         different (and wrong) operation. Safe to hard-code the tangent-space
+         branch: this material always has a normalMap, and the wall is a plane
+         with no tangent attribute, so getTangentFrame is always the path. */
+      .replace(
+        '#include <normal_fragment_maps>',
+        `vec3 mapN = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0;
+         mapN.xy *= normalScale;
+         vec3 detN = texture2D( uDetailNormal, vNormalMapUv * uDetailRepeat ).xyz * 2.0 - 1.0;
+         mapN.xy += detN.xy * uDetailStrength;
+         #ifdef USE_TANGENT
+           mat3 tbnD = mat3( normalize( vTangent ), normalize( vBitangent ), normal );
+         #else
+           mat3 tbnD = getTangentFrame( - vViewPosition, normal, vNormalMapUv );
+         #endif
+         normal = normalize( tbnD * mapN );`
       )
       .replace(
         '#include <map_fragment>',
         `#include <map_fragment>
          // vMapUv is uv * repeat, un-wrapped — divide it back out to recover
          // the 0..1 wall-space UV the macro layer lives in.
-         vec3 macroS = texture2D( uMacroMap, vMapUv / uMapRepeat ).rgb;
-         diffuseColor.rgb *= 0.46 + macroS.r * 1.05;
-         diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3(0.22, 0.24, 0.29), macroS.g * 1.35 );`
+         vec2 wallUV = vMapUv / uMapRepeat;
+         vec4 macroS = texture2D( uMacroMap, wallUV );
+
+         // Tonal drift. Was 0.46 + r*1.05 — a 0.46..1.51 multiplier, a ±50%
+         // brightness swing that turned the wall into dark camouflage. The
+         // macro layer's job is to break the tile period, not to repaint the
+         // surface; the scan already carries the light-and-dark. Centred on 1.0
+         // so it modulates rather than darkens.
+         diffuseColor.rgb *= 0.88 + macroS.r * 0.24;
+
+         // Soot. Was a mix toward vec3(0.22,0.24,0.29) at g*1.35 — crushing
+         // whole stretches to 22% brightness, and toward a blue-grey at that,
+         // which is where the wall's cold cast was really coming from. Under
+         // overcast, grime on a pale wall is a soft neutral veil, not a
+         // blackout, and low contrast is the explicit brief.
+         diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3(0.70, 0.70, 0.71), macroS.g * 0.55 );
+
+         // ── Iron oxidation bleeding from bolt points ──
+         // Was vivid cyan verdigris at a 0.65 mix, which put the most saturated
+         // colour in the scene on the wall itself — the one surface the palette
+         // requires stay muted, with colour reserved for graffiti and posters.
+         // It was also the wrong chemistry: verdigris is copper, and every
+         // fastener here is iron. Iron gives oxidised brown, which the palette
+         // does list, and which reads as consequence rather than decoration.
+         float oxidation = 1.0 - macroS.a;
+         diffuseColor.rgb = mix( diffuseColor.rgb, vec3(0.34, 0.18, 0.11), oxidation * 0.32 );
+
+         // ── Poster ghosts ──
+         // The mask here used to be max(ghost.rgb). That read the ghost canvas'
+         // COLOUR, not its coverage: paste drawn at rgba(200,188,160, 0.12) has
+         // an alpha of 0.12 but a max channel of 0.78, so a tint meant to sit
+         // at 12% was applied at 78% and then multiplied by 1.8. Every ghost
+         // was a hard-edged rectangle at ~6x its intended strength. The map now
+         // carries coverage directly in R and G, so the read is honest.
+         vec3 ghost = texture2D( uGhostMap, wallUV ).rgb;
+         // Sheltered patch: paler and cleaner than the wall around it, because
+         // it spent years under a sheet collecting no soot. Faintly warm from
+         // paste that soaked in and never came out.
+         diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3(1.13, 1.09, 1.00), ghost.r * 0.5 );
+         // Squeeze-out perimeter: the one part of a ghost that IS dirty.
+         diffuseColor.rgb *= 1.0 - ghost.g * 0.16;
+
+         // ── Cavity ──
+         // Baked from the scan's own displacement: high wherever a texel sits
+         // below its neighbourhood — mortar joints, the step down off a broken
+         // plaster edge, every pit. Dirt is not sprinkled on a wall, it is
+         // washed downward and left wherever the surface is too low to drain,
+         // so cavity IS the dirt mask, already correlated to the geometry.
+         //
+         // This is where the wall's depth comes from now. The albedo has been
+         // deliberately flattened at bake time to kill the camouflage read, so
+         // depth has to be carried by shading rather than by pigment — which is
+         // also how the real surface works. Slightly cool, because what settles
+         // in a recess is grey dust, not brick.
+         // Signed around the cavity map's own mean (~0.10), so recesses darken
+         // AND proud limewash lifts. This matters: a plain "darken the cavity"
+         // mix only ever subtracts, and measured it dragged the wall's mean from
+         // 144 to 108 — quietly undoing the approved exposure in the name of
+         // depth. Balancing it about the mean buys the same depth for free,
+         // and buys MORE of it, because the proud surfaces now separate upward
+         // from the recesses instead of everything sliding down together.
+         // Signed around the map's own mean (~0.10) rather than a plain darken:
+         // a one-way "multiply the cavity down" only ever subtracts, and dragged
+         // the wall's mean from 144 to 110 — buying depth by spending exposure.
+         // Balancing about the mean gets MORE depth for less, because the proud
+         // limewash separates upward from the recesses instead of the whole
+         // surface sliding down together.
+         float cavity = texture2D( uCavityMap, vMapUv ).b;
+         float cavSigned = ( cavity - 0.10 ) * 1.30;
+         diffuseColor.rgb *= clamp( 1.0 - cavSigned, 0.42, 1.18 );`
       )
       .replace(
         '#include <roughnessmap_fragment>',
         `#include <roughnessmap_fragment>
-         vec3 macroR = texture2D( uMacroMap, vMapUv / uMapRepeat ).rgb;
-         roughnessFactor = clamp( roughnessFactor + macroR.g * 0.10 - macroR.b * 0.30, 0.05, 1.0 );`
+         vec2 wallUVr = vMapUv / uMapRepeat;
+         vec4 macroR = texture2D( uMacroMap, wallUVr );
+         roughnessFactor = clamp( roughnessFactor + macroR.g * 0.10 - macroR.b * 0.30, 0.05, 1.0 );
+         // Dried paste seals the aggregate — the one place on this wall with a
+         // slight sheen, and the reference calls for exactly that.
+         vec3 ghostR = texture2D( uGhostMap, wallUVr ).rgb;
+         roughnessFactor = clamp( roughnessFactor - ghostR.r * 0.14, 0.05, 1.0 );
+         // Rust is a flaky oxide bloom, not a mineral crust — it is ROUGHER
+         // than the plaster it stains, not glossier. The old sign here was
+         // backwards and gave the patches a wet sheen under raking light.
+         float oxidationR = 1.0 - macroR.a;
+         roughnessFactor = clamp( roughnessFactor + oxidationR * 0.12, 0.05, 1.0 );
+
+         // Cavity is packed dust and grit — the roughest thing on the wall, and
+         // the reference's roughness table agrees (lime plaster very rough,
+         // paint smoother). Roughening the recesses while the proud limewash
+         // stays comparatively smooth is a second, independent depth cue: the
+         // two read differently under the sky even where their albedo matches.
+         float cavityR = texture2D( uCavityMap, vMapUv ).b;
+         roughnessFactor = clamp( roughnessFactor + cavityR * 0.30, 0.05, 1.0 );`
       );
   };
   // Distinct key so this variant doesn't collide with stock standard materials
-  material.customProgramCacheKey = () => 'weathered-wall-macro';
+  material.customProgramCacheKey = () => 'weathered-wall-macro-v4-cavity-detail';
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Alley environment map.
+   Alley environment map — OVERCAST DAYLIGHT.
 
-   The scene had NO environment, so every metal (manholes 0.88, pipes 0.75,
-   puddles 0.88) reflected a void and rendered as a flat dark blob, and a flat
-   warm ambientLight filled every crevice from every direction — which is
-   precisely what "evenly lit render" means.
+   Two jobs, and the second is the important one.
 
-   A tiny procedural equirect (cool night sky above, sodium bounce below) gives
-   directional ambient: brighter from above, warmer from below. That gradient
-   alone does more for material read than any amount of ambientLight, and it
-   costs one 256x128 PMREM built once. No network fetch.
+   1. Metals need something to reflect. Without an environment every metal in
+      the scene (manholes, pipes, puddles) mirrors a void and resolves to a
+      flat dark blob. Metal without an environment is not metal.
+
+   2. THIS IS THE KEY LIGHT. Under overcast there is no sun — the whole sky
+      dome is the source. So the lighting lives here, not in a directionalLight,
+      and scene.environmentIntensity is the master exposure dial.
+
+   The obvious trap: "soft even light" sounds like "flat grey everywhere", and
+   flat light would erase the plaster grain, chips and trowel marks the whole
+   material is built to show. Real overcast does not do that. A CIE overcast
+   sky is roughly 3x brighter at the zenith than at the horizon, and the ground
+   is far darker than either. That top-to-bottom ramp is soft directional light:
+   it shades every upward-facing chip differently from every downward-facing
+   one, which is exactly what makes an overcast photograph of a wall read as
+   tactile rather than washed out. The gradient below is that ramp, and it is
+   why the scene can lose its torch and still show its surface.
+
+   Neutral throughout. No sun disc, no blue sky, no golden bounce — a sun patch
+   here is what the reference calls the "HDRI sunset look", and metals would
+   mirror it straight back as the dramatic highlight the brief rules out.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function buildAlleyEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture {
@@ -480,24 +978,29 @@ export function buildAlleyEnvironment(renderer: THREE.WebGLRenderer): THREE.Text
   c.height = 128;
   const ctx = c.getContext('2d')!;
 
+  /* Bright even cloud deck.
+
+     A cloud deck is not a dim light — it is a huge one. An overcast sky still
+     runs thousands of lux, which is why an overcast photograph is PALE rather
+     than murky: the light is soft AND strong at the same time, and it is easy
+     to build only the "soft" half and end up with a dull scene that is
+     technically flat but nothing like the reference.
+
+     The ground half matters as much as the sky half here. A vertical wall sees
+     roughly half sky and half ground, so the ground's value sets the wall's
+     floor. Too dark a ground and the wall's crevices crush toward black — which
+     cannot happen under a real dome, because there is no direction light is
+     failing to arrive from. The nadir is lifted well off black for that reason.  */
   const g = ctx.createLinearGradient(0, 0, 0, 128);
-  g.addColorStop(0.0, '#39404A'); // zenith — overcast sky, neutral cool
-  g.addColorStop(0.42, '#454B53');
-  g.addColorStop(0.5, '#4A4E52'); // horizon — flat, neutral
-  g.addColorStop(0.62, '#3A3833'); // ground bounce, barely warm
-  g.addColorStop(1.0, '#222326'); // nadir — wet tarmac
+  g.addColorStop(0.0, '#EDEFEF'); // zenith — brightest part of the cloud deck
+  g.addColorStop(0.18, '#E4E6E7'); // upper dome
+  g.addColorStop(0.35, '#D6D8D9'); // lower dome, thickening haze
+  g.addColorStop(0.47, '#C2C4C5'); // horizon — dimmest sky, still bright
+  g.addColorStop(0.53, '#A8A9A9'); // opposite building faces, lit only by sky
+  g.addColorStop(0.7, '#8B877F'); // ground bounce — pavement, faint dust warmth
+  g.addColorStop(1.0, '#63605A'); // nadir — under-shadow, nowhere near black
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 256, 128);
-
-  // Warm lamp smudges near the horizon so metals catch something with shape
-  for (let i = 0; i < 5; i++) {
-    const x = 20 + i * 48;
-    const rg = ctx.createRadialGradient(x, 62, 2, x, 62, 26);
-    rg.addColorStop(0, 'rgba(255, 214, 170, 0.32)');
-    rg.addColorStop(1, 'rgba(255, 214, 170, 0)');
-    ctx.fillStyle = rg;
-    ctx.fillRect(x - 26, 36, 52, 52);
-  }
 
   const tex = new THREE.CanvasTexture(c);
   tex.mapping = THREE.EquirectangularReflectionMapping;

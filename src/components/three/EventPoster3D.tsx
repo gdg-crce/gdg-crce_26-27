@@ -146,11 +146,18 @@ export default function EventPoster3D({
       envMapIntensity: 0.45,
       side: THREE.FrontSide,
     });
-    // Fade varies per poster — some have been up far longer than others
-    // Pushed hard: against a real scanned wall the print was the brightest,
-    // most saturated thing in frame, which is precisely backwards. The wall has
-    // to be believed first; the poster is the newest thing on a 20-year surface.
-    const fade = 0.62 + ((variant * 0.137) % 1) * 0.3;
+    // Fade varies per poster — some have been up far longer than others.
+    //
+    // Backed off from 0.62–0.92. That range was set when the wall was graded
+    // grey and lit by a golden spot, so the print was the brightest, most
+    // saturated thing in frame and had to be beaten down. Both causes are gone:
+    // the wall has its own colour back, and flat overcast stops blowing the ink
+    // out. Fading this hard now would fight the brief from the other side —
+    // the wall is meant to be the muted one and the posters are meant to carry
+    // the colour. They are still the NEWEST thing on a 30-year surface, not the
+    // quietest. 0.32–0.58 reads as cheap paper that has been rained on, while
+    // leaving it the only saturated element in the frame.
+    const fade = 0.32 + ((variant * 0.137) % 1) * 0.26;
     applyPosterFade(m, fade);
     return m;
   }, [texture, tearMask, wrinkle, variant]);

@@ -11,18 +11,64 @@ import * as THREE from 'three';
 
 export function WallDecalsAndGrime() {
   const [grimeTex, tornPosterTex, graffitiPatchTex, stickerBombTex, weedTex] = useMemo(() => {
-    // 2. Vertical Rain Runoff Streaks
+    /* 2. Gravity runoff beneath the pipes and sills that shed the water.
+
+       This was a single linear gradient filled across the entire canvas: it
+       faded top-to-bottom, but its LEFT, RIGHT and TOP edges were hard. Mapped
+       onto a 1.3 x 6.8m quad that is a dark rectangle painted on the wall, with
+       three crisp straight sides — the single most obvious artificial mark in
+       the scene, and easy to miss in code because "it's just a gradient".
+
+       Water does not run in rectangles. It runs in fingers: a few concentrated
+       channels, each soft-edged, each drying out somewhere different on the way
+       down. Built per-pixel so the alpha can fall off on EVERY axis — the quad
+       has no edge anywhere, only streaks that fade to nothing. */
+    const gW = 256;
+    const gH = 512;
     const gCanvas = document.createElement('canvas');
-    gCanvas.width = 256;
-    gCanvas.height = 512;
+    gCanvas.width = gW;
+    gCanvas.height = gH;
     const gCtx = gCanvas.getContext('2d')!;
-    const gGrad = gCtx.createLinearGradient(0, 0, 0, 512);
-    gGrad.addColorStop(0, 'rgba(16, 13, 12, 0.65)');
-    gGrad.addColorStop(0.45, 'rgba(20, 17, 15, 0.32)');
-    gGrad.addColorStop(1, 'rgba(20, 17, 15, 0.0)');
-    gCtx.fillStyle = gGrad;
-    gCtx.fillRect(0, 0, 256, 512);
+
+    // A few channels of differing width/strength, none centred, none regular.
+    const channels = [
+      { x: 0.30, w: 0.055, a: 0.62, end: 0.86 },
+      { x: 0.42, w: 0.030, a: 0.44, end: 0.62 },
+      { x: 0.50, w: 0.085, a: 0.70, end: 0.95 },
+      { x: 0.58, w: 0.025, a: 0.38, end: 0.54 },
+      { x: 0.68, w: 0.048, a: 0.52, end: 0.78 },
+      { x: 0.78, w: 0.022, a: 0.30, end: 0.46 },
+    ];
+    const gImg = gCtx.createImageData(gW, gH);
+    for (let y = 0; y < gH; y++) {
+      const v = y / gH;
+      for (let x = 0; x < gW; x++) {
+        const u = x / gW;
+        let a = 0;
+        for (const c of channels) {
+          // Gaussian across the channel: no edge, ever
+          const d = (u - c.x) / c.w;
+          const across = Math.exp(-d * d);
+          // Each channel dries out at its own height
+          const along = Math.max(0, 1 - v / c.end);
+          a += c.a * across * along * along;
+        }
+        // Strongest at the source and fading down; nothing at the very top edge
+        a *= Math.min(1, v * 14);
+        // Kill anything reaching the quad's left/right border
+        a *= Math.min(1, u * 9) * Math.min(1, (1 - u) * 9);
+        // Streak grain — real runoff is fibrous, not a smooth airbrush
+        a *= 0.72 + 0.28 * Math.abs(Math.sin(u * 190 + Math.sin(v * 7) * 2.5));
+        const i = (y * gW + x) * 4;
+        gImg.data[i] = 20;
+        gImg.data[i + 1] = 17;
+        gImg.data[i + 2] = 15;
+        gImg.data[i + 3] = Math.min(255, a * 255);
+      }
+    }
+    gCtx.putImageData(gImg, 0, 0);
     const gTex = new THREE.CanvasTexture(gCanvas);
+    gTex.colorSpace = THREE.SRGBColorSpace;
 
     // 3B. Second Poster: Dramatic Zigzag Torn Half-Poster Remnant
     const tCanvas = document.createElement('canvas');
@@ -31,43 +77,79 @@ export function WallDecalsAndGrime() {
     const tCtx = tCanvas.getContext('2d')!;
     tCtx.clearRect(0, 0, 512, 256);
 
-    tCtx.beginPath();
-    tCtx.moveTo(20, 20);
-    tCtx.lineTo(260, 20);
-    const ripPoints = [
-      [350, 50],
-      [215, 85],
-      [340, 120],
-      [210, 155],
-      [325, 190],
-      [230, 215],
-      [270, 236],
-    ];
-    ripPoints.forEach(([rx, ry]) => tCtx.lineTo(rx, ry));
-    tCtx.lineTo(20, 236);
-    tCtx.closePath();
+    /* Torn poster remnant — paper that was scraped at and gave up halfway,
+       still bonded to the aggregate by dried paste.
 
-    tCtx.fillStyle = 'rgba(188, 180, 166, 0.94)';
+       What this used to be: a 0.94-alpha near-white polygon with a 0.98 white
+       stroke around it, a seven-point zigzag "rip", and crisp legible text. It
+       read as a paper pennant stapled to the wall — an opaque card floating on
+       a photoreal surface, which is the loudest CG tell available.
+
+       Three things make paper read as fused to a wall rather than laid on it:
+       the tear is FIBROUS (a jittered walk, not a zigzag), the paper is DIRTY
+       (it has been rained on for years — never brighter than the plaster), and
+       the print is ILLEGIBLE (ink is the first thing UV kills; if you can read
+       it, it went up last week). */
+    const tornEdge = () => {
+      // Ragged fibrous tear down the right side — small steps, occasional bite
+      tCtx.beginPath();
+      tCtx.moveTo(14, 16);
+      tCtx.lineTo(250, 12);
+      let y = 12;
+      let x = 250;
+      while (y < 240) {
+        y += 4 + Math.random() * 9;
+        x += (Math.random() - 0.45) * 46;
+        x = Math.min(360, Math.max(150, x));
+        tCtx.lineTo(x, y);
+        // occasional deep bite where a whole flake let go
+        if (Math.random() < 0.16) {
+          tCtx.lineTo(x - 30 - Math.random() * 40, y + 2 + Math.random() * 6);
+        }
+      }
+      tCtx.lineTo(16, 242);
+      tCtx.closePath();
+    };
+
+    tornEdge();
+    // Dirty paper. Grey-beige, well under the plaster's value, and translucent
+    // enough that the wall's own grain reads through it.
+    tCtx.fillStyle = 'rgba(150, 143, 129, 0.62)';
     tCtx.fill();
 
-    tCtx.strokeStyle = 'rgba(240, 232, 218, 0.98)';
-    tCtx.lineWidth = 5;
-    tCtx.stroke();
-
+    // Faded print. Barely there — a shape you read as "there was text here",
+    // not text you can actually read.
+    tCtx.save();
+    tCtx.clip(); // print cannot exist past the tear
     tCtx.textAlign = 'left';
     tCtx.font = 'bold 30px "Courier New", monospace';
-    tCtx.fillStyle = 'rgba(55, 48, 40, 0.88)';
+    tCtx.fillStyle = 'rgba(72, 64, 54, 0.30)';
     tCtx.fillText('GDG ARCH', 45, 85);
-
     tCtx.font = 'bold 21px monospace';
-    tCtx.fillStyle = 'rgba(80, 70, 60, 0.84)';
+    tCtx.fillStyle = 'rgba(84, 74, 62, 0.24)';
     tCtx.fillText('SUNÉKHEIA /', 45, 135);
-
     tCtx.font = 'italic 17px monospace';
-    tCtx.fillStyle = 'rgba(140, 45, 35, 0.8)';
+    tCtx.fillStyle = 'rgba(120, 58, 44, 0.22)';
     tCtx.fillText('[ TORN REM', 45, 182);
+    tCtx.restore();
+
+    // Erode it: blotches of paper already gone, so the remnant is patchy rather
+    // than a solid sheet with a decorative edge.
+    tCtx.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 90; i++) {
+      const ex = Math.random() * 380;
+      const ey = Math.random() * 256;
+      const er = 3 + Math.random() * 22;
+      const g = tCtx.createRadialGradient(ex, ey, 0, ex, ey, er);
+      g.addColorStop(0, `rgba(0,0,0,${0.25 + Math.random() * 0.6})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      tCtx.fillStyle = g;
+      tCtx.fillRect(ex - er, ey - er, er * 2, er * 2);
+    }
+    tCtx.globalCompositeOperation = 'source-over';
 
     const tornTex = new THREE.CanvasTexture(tCanvas);
+    tornTex.colorSpace = THREE.SRGBColorSpace;
 
     // 6. Middle Reference Panel: Peeling Stucco with Cyan & Rust Spray Tags
     const gpCanvas = document.createElement('canvas');
@@ -95,26 +177,48 @@ export function WallDecalsAndGrime() {
     const sbCtx = sbCanvas.getContext('2d')!;
     sbCtx.clearRect(0, 0, 512, 256);
 
-    // PARENTAL ADVISORY EXPLICIT CONTENT sticker
-    sbCtx.fillStyle = '#111111';
-    sbCtx.fillRect(25, 30, 180, 85);
-    sbCtx.strokeStyle = '#FFFFFF';
-    sbCtx.lineWidth = 3;
-    sbCtx.strokeRect(30, 35, 170, 75);
-    sbCtx.fillStyle = '#FFFFFF';
+    /* Sticker cluster.
+
+       These were pure #111111 and #E8DFB8 rectangles with #FFFFFF text — the
+       brightest, blackest, crispest things anywhere in frame, sitting on a
+       photographed wall. They read as UI chips pasted over the render.
+
+       A sticker that has been outdoors for years is sun-bleached, its edges are
+       lifting, and its corners are gone. Nothing here is pure black or pure
+       white, nothing is fully opaque, and no edge survives intact. */
+    const bleach = (x: number, y: number, w: number, h: number, fill: string) => {
+      sbCtx.save();
+      sbCtx.beginPath();
+      // Corners knocked off and edges nibbled — no sticker keeps its rectangle
+      const step = 9;
+      sbCtx.moveTo(x + 6, y);
+      for (let px = x + 6; px < x + w - 6; px += step) sbCtx.lineTo(px, y + (Math.random() - 0.5) * 3);
+      sbCtx.lineTo(x + w, y + 5 + Math.random() * 4);
+      for (let py = y + 6; py < y + h - 6; py += step) sbCtx.lineTo(x + w + (Math.random() - 0.5) * 3, py);
+      sbCtx.lineTo(x + w - 7 - Math.random() * 8, y + h);
+      for (let px = x + w - 10; px > x + 6; px -= step) sbCtx.lineTo(px, y + h + (Math.random() - 0.5) * 3);
+      sbCtx.lineTo(x, y + h - 6 - Math.random() * 6);
+      for (let py = y + h - 8; py > y + 6; py -= step) sbCtx.lineTo(x + (Math.random() - 0.5) * 3, py);
+      sbCtx.closePath();
+      sbCtx.fillStyle = fill;
+      sbCtx.fill();
+      sbCtx.restore();
+    };
+
+    // Parental advisory — bleached to a soft charcoal, never #111
+    bleach(25, 30, 180, 85, 'rgba(46, 42, 40, 0.80)');
+    sbCtx.fillStyle = 'rgba(198, 194, 186, 0.62)';
     sbCtx.font = '900 18px Impact, sans-serif';
     sbCtx.fillText('PARENTAL', 115, 60);
     sbCtx.fillText('ADVISORY', 115, 82);
     sbCtx.font = 'bold 11px monospace';
     sbCtx.fillText('EXPLICIT UNDERGROUND', 115, 100);
 
-    // Yellowed barcoded 90s gig pass sticker
-    sbCtx.fillStyle = '#E8DFB8';
-    sbCtx.fillRect(225, 45, 160, 110);
-    sbCtx.fillStyle = '#1A1412';
+    // Gig pass — yellowed and dimmed well below the plaster's value
+    bleach(225, 45, 160, 110, 'rgba(176, 168, 140, 0.74)');
+    sbCtx.fillStyle = 'rgba(48, 42, 36, 0.55)';
     sbCtx.font = 'bold 16px monospace';
     sbCtx.fillText('REC // 1994', 305, 75);
-    // Barcode stripes
     for (let bx = 245; bx < 365; bx += 8) {
       sbCtx.fillRect(bx, 90, 4 + (bx % 3), 45);
     }
@@ -127,7 +231,22 @@ export function WallDecalsAndGrime() {
       sbCtx.fill();
     }
 
+    // Lift and scuff: patches where the sticker has abraded back to wall
+    sbCtx.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 46; i++) {
+      const ex = Math.random() * 420;
+      const ey = Math.random() * 200;
+      const er = 2 + Math.random() * 13;
+      const g = sbCtx.createRadialGradient(ex, ey, 0, ex, ey, er);
+      g.addColorStop(0, `rgba(0,0,0,${0.3 + Math.random() * 0.55})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      sbCtx.fillStyle = g;
+      sbCtx.fillRect(ex - er, ey - er, er * 2, er * 2);
+    }
+    sbCtx.globalCompositeOperation = 'source-over';
+
     const sbTex = new THREE.CanvasTexture(sbCanvas);
+    sbTex.colorSpace = THREE.SRGBColorSpace;
 
     // 9. Weed tuft alpha card — blades splaying from a common root, tapering to
     // a point, each bending a little further than the last. Drawn rather than
@@ -253,10 +372,25 @@ export function WallDecalsAndGrime() {
         />
       </mesh>
 
-      {/* 90s Underground Sticker Bombing & Parental Advisory Stamp Clusters */}
-      {[-11.8, 8.4, 21.2].map((sx, i) => (
+      {/* 90s Underground Sticker Bombing & Parental Advisory Stamp Clusters.
+
+          X positions matter here in a way they do not for the other decals.
+          Stickers sit at z = 0.016, ABOVE the posters at 0.012 — they are the
+          newest thing on the wall, which is correct. But it means a sticker
+          sharing an X with a poster punches straight through its face. These
+          were at -11.8 / 8.4 / 21.2, and every one of those is inside a poster
+          (-11.8 is dead centre of DEVFEST).
+
+          The decals below the posters in the z-ladder do not have this problem
+          and are deliberately left overlapping: graffiti at 0.007 disappearing
+          behind a poster reads as "tagged first, pasted over later", which is
+          the wall's history rather than a mistake.
+
+          These three X values sit in the gaps between poster spans. Narrowed to
+          1.7m so they fit the tightest of them with room to spare. */}
+      {[-9.0, 1.75, 13.05].map((sx, i) => (
         <mesh key={`sticker-bomb-${i}`} position={[sx, 2.15 + (i % 2) * 0.35, 0.016]} receiveShadow>
-          <planeGeometry args={[2.4, 1.2]} />
+          <planeGeometry args={[1.7, 0.85]} />
           <meshStandardMaterial
             map={stickerBombTex}
             transparent={true}
@@ -379,17 +513,19 @@ export function RightSideAlleyDetail() {
         </mesh>
       ))}
 
-      {/* Vintage Industrial Caged Light Fixture underneath */}
+      {/* Vintage Industrial Caged Light Fixture underneath.
+          It is daytime, so the lamp is OFF — a street fixture burning at noon
+          is a tell, and its #FF9A40 pointLight at intensity 25 was washing this
+          whole stretch of wall amber while the rest of the alley sat neutral.
+          The fixture stays as a prop; only the light goes. */}
       <mesh position={[0, -0.16, 0.1]} material={ironMat} castShadow receiveShadow>
         <cylinderGeometry args={[0.12, 0.15, 0.14, 12]} />
       </mesh>
       <mesh position={[0, -0.22, 0.1]}>
         <sphereGeometry args={[0.07, 12, 12]} />
-        <meshStandardMaterial color="#FFB060" emissive="#FF8C30" emissiveIntensity={0.8} roughness={0.2} />
+        {/* Cold bulb: dirty glass, no emission. */}
+        <meshStandardMaterial color="#9C9788" roughness={0.35} metalness={0} />
       </mesh>
-
-      {/* Dimmed, Soft Atmospheric Industrial Amber Downlight */}
-      <pointLight position={[0, -0.32, 0.1]} color="#FF9A40" intensity={25} distance={6.5} decay={2} />
     </group>
   );
 }

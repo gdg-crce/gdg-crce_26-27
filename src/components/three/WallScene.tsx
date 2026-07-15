@@ -86,40 +86,6 @@ function InteractiveCameraRig({ progressRef, snapToTarget }: { progressRef: Reac
 }
 
 /* ═══════════════════════════════════════════════════
-   Interactive Handheld Inspection Flashlight
-   Smoothly tracks cursor across wall & posters
-   ═══════════════════════════════════════════════════ */
-
-function HandheldFlashlight({ progressRef }: { progressRef: React.RefObject<number> }) {
-  const lightRef = useRef<THREE.PointLight>(null);
-
-  useFrame((state, delta) => {
-    if (!lightRef.current) return;
-    const p = progressRef.current ?? 0;
-    const camX = THREE.MathUtils.lerp(-24, 23, p);
-
-    // Map pointer coords (-1..1) to wall surface position
-    const targetX = camX + state.pointer.x * 3.5;
-    const targetY = 2.3 + state.pointer.y * 2.2;
-
-    const smoothing = 1 - Math.pow(0.0002, delta);
-    lightRef.current.position.x += (targetX - lightRef.current.position.x) * smoothing;
-    lightRef.current.position.y += (targetY - lightRef.current.position.y) * smoothing;
-  });
-
-  return (
-    <pointLight
-      ref={lightRef}
-      position={[-24, 2.3, 2.8]}
-      color="#F0EFEA"
-      intensity={22}
-      distance={9}
-      decay={2}
-    />
-  );
-}
-
-/* ═══════════════════════════════════════════════════
    Flickering 3D Neon Alley Sign ("MTV // ON AIR")
    ═══════════════════════════════════════════════════ */
 
@@ -129,13 +95,18 @@ function NeonAlleySign3D() {
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    // Controlled neon electrical flicker (#3 in lighting hierarchy)
+    // Controlled neon electrical flicker
     const flicker = Math.random() > 0.94 ? 0.35 : 1.0;
     const pulse = 0.88 + Math.sin(t * 3.5) * 0.12;
     const intensity = flicker * pulse;
 
-    if (lightRef.current) lightRef.current.intensity = 34 * intensity;
-    if (matRef.current) matRef.current.emissiveIntensity = 1.2 * intensity;
+    // Daylight neon behaves backwards from night neon: the tubes have to glow
+    // HARDER to still read as lit against a bright sky, while throwing almost
+    // nothing onto the wall. At 14 this pooled magenta across the plaster —
+    // colour on the wall itself, which the palette reserves for graffiti and
+    // posters. 2.0 keeps a faint halo at the tubes and nothing beyond them.
+    if (lightRef.current) lightRef.current.intensity = 2.0 * intensity;
+    if (matRef.current) matRef.current.emissiveIntensity = 1.0 * intensity;
   });
 
   const signTexture = useMemo(() => {
@@ -181,17 +152,20 @@ function NeonAlleySign3D() {
           map={signTexture}
           emissive="#FF0055"
           emissiveMap={signTexture}
-          emissiveIntensity={1.2}
+          emissiveIntensity={1.0}
           roughness={0.2}
         />
       </mesh>
 
-      {/* Controlled Neon Light (#3 in hierarchy) */}
+      {/* Declared value must match what useFrame settles on. It used to say 14
+          while the frame loop drove it to a different number, so the very first
+          frame — and any frame where the loop has not run yet — flooded the
+          plaster magenta. */}
       <pointLight
         ref={lightRef}
         position={[0, 0, 1.4]}
         color="#FF2D6B"
-        intensity={34}
+        intensity={2}
         distance={7}
         decay={2}
       />
@@ -219,7 +193,17 @@ function NeonAlleySign3D() {
 function WeatheredUrbanStreetWall() {
   const loader = useMemo(() => new THREE.TextureLoader(), []);
   const tex = useMemo(() => buildWallTextures(loader), [loader]);
-  const normalScale = useMemo(() => new THREE.Vector2(1.1, 1.1), []);
+  /* The scan's normal is the ONLY thing carrying relief — the mesh is flat and
+     the albedo is deliberately flattened at bake time to kill the camo read. So
+     this map has to work harder than a default 1.0: at 1.1 the plaster's step
+     down to the brick barely shaded and the wall read papery.
+
+     Relief is not free under a dome: every texel this tilts away from the bright
+     zenith turns toward the dark ground half, so pushing the normal DARKENS the
+     wall (1.6 measured a drop from 144 to 110). That is paid for with
+     envMapIntensity below rather than by backing the relief off — the depth is
+     the point, and brightness is the cheaper thing to buy back. */
+  const normalScale = useMemo(() => new THREE.Vector2(1.6, 1.6), []);
 
   // aoMap samples the second UV channel; a plane only ships `uv`, so alias it.
   const geometry = useMemo(() => {
@@ -235,15 +219,33 @@ function WeatheredUrbanStreetWall() {
       normalScale,
       roughnessMap: tex.roughnessMap,
       aoMap: tex.aoMap,
-      aoMapIntensity: 1.0,
+      // AO only attenuates INDIRECT light — and here indirect light is nearly
+      // all the light, so aoMap bites far harder than it would under a sun rig.
+      // At 1.0 the scan's baked occlusion drove crevices toward black (measured
+      // darkest pixel 10/255), which is impossible under a dome and was a large
+      // part of what read as "dull". The cavity layer now carries the recesses
+      // deliberately, so this only needs to deepen true occlusion.
+      aoMapIntensity: 0.7,
       // roughness/metalness are multipliers over the maps, so keep them at 1/0
       // and let the maps do the talking. A scalar 0.92 across brick, paint,
       // soot and damp is one material — and one material reads as CG.
       roughness: 1.0,
       metalness: 0.0,
-      envMapIntensity: 0.5,
+      // The sky dome is the key light now, so this is no longer a reflection
+      // trim — it is how much daylight the wall receives. At 0.5 the wall was
+      // being lit at half strength and then darkened again by the macro layer,
+      // which is most of why it read as a night wall in a daylit scene.
+      //
+      // Past 1.0 this is an art dial, but it is the RIGHT dial: it lifts only
+      // the wall, leaving the pavement and posters alone — both were already
+      // peaking near clipping (227 and 221), so buying wall brightness with
+      // toneMappingExposure or environmentIntensity would have blown them.
+      // Raised to pay for the relief: normalScale 1.6 plus the cavity layer
+      // cost the wall ~25% of its brightness, and this hands it back.
+      envMapIntensity: 1.75,
     });
-    applyMacroLayer(m, tex.macroMap);
+    // roughnessMap doubles as the cavity source — cavity is packed in its .b
+    applyMacroLayer(m, tex.macroMap, tex.ghostMap, tex.roughnessMap, tex.detailNormal);
     return m;
   }, [tex, normalScale]);
 
@@ -893,7 +895,10 @@ function AlleyEnvironment() {
   useEffect(() => {
     const env = buildAlleyEnvironment(gl);
     scene.environment = env;
-    scene.environmentIntensity = 0.35;
+    // Master exposure for the whole scene. With the sun, the spot and the five
+    // lamps gone, essentially all light now arrives from the dome, so this dial
+    // does what their intensities used to — turn it, not them.
+    scene.environmentIntensity = 1.7;
     return () => {
       scene.environment = null;
       env.dispose();
@@ -903,20 +908,6 @@ function AlleyEnvironment() {
   return null;
 }
 
-/**
- * Wall wash over the centre of the alley.
- *
- * This was a 360-intensity theatre spot aimed at one poster, annotated "Hero #1
- * (Brightest Object)". That is an explicit instruction to the eye to find a
- * poster first — the exact opposite of what the scene needs. If the wall is not
- * believed, the posters have nothing to hang on.
- *
- * Now it lights a broad region of WALL: wider cone, softer edge, far less
- * intensity, and dropped low enough to rake across the surface rather than
- * flood it flat-on. Raking light is what makes plaster strata, trowel edges and
- * bolt holes cast their own micro-shadows — the same lamp now sells the
- * masonry instead of haloing a sheet of paper.
- */
 /**
  * Dev-only handle on the renderer.
  *
@@ -938,58 +929,47 @@ function DevRenderHandle() {
   return null;
 }
 
-function HeroCenterSpotlight() {
-  const targetRef = useRef<THREE.Object3D>(null);
-
-  return (
-    <group position={[-1.0, 7.4, 1.5]}>
-      <object3D ref={targetRef} position={[-1.0, 2.0, 0]} />
-      <spotLight
-        target={targetRef.current || undefined}
-        color="#E9EAEA"
-        intensity={75}
-        angle={0.95}
-        penumbra={0.85}
-        distance={16}
-        decay={2}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-near={1}
-        shadow-camera-far={16}
-        shadow-bias={-0.0015}
-      />
-      {/* Gentle fill so the centre doesn't crush — no longer a hero pool */}
-      <pointLight position={[-1.0, 2.5, 2.1]} color="#E2E4E4" intensity={48} distance={9} decay={2} />
-    </group>
-  );
-}
-
 function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<number>; snapToTarget?: boolean }) {
   return (
     <>
-      <fog attach="fog" args={['#141113', 18, 48]} />
+      {/* Aerial perspective, neutral. Matches the horizon of the sky dome so
+          the far end of the alley dissolves into cloud instead of into a warm
+          haze that would reintroduce the golden cast through the back door. */}
+      <fog attach="fog" args={['#A6A8A9', 35, 70]} />
 
-      {/* Directional ambient from a procedural sky/ground env — see
-          AlleyEnvironment. This replaces the bulk of the old flat ambientLight. */}
+      {/* THE KEY LIGHT. Under overcast the sky dome is the source, so almost
+          all illumination arrives from here as image-based lighting rather than
+          from discrete lights. See buildAlleyEnvironment. */}
       <AlleyEnvironment />
       <DevRenderHandle />
 
-      {/* A trace of ambient only, and cool. The old 0.42 warm fill lit every
-          crevice from every direction, which is the definition of an evenly-lit
-          render: with no direction there is no form, and no amount of texture
-          detail survives that. The env map now carries ambient with a real
-          top-down gradient, so this is just a floor to keep blacks readable. */}
-      <ambientLight intensity={0.06} color="#AEB6C0" />
+      {/* ── Overcast daylight rig ──────────────────────────────────────────
+          What this replaces: a 2.0-intensity #FFD060 "golden morning sun" at
+          y=5 raking long shadows, a warm sky fill, a 75 spotlight, and five
+          #FFD890 sodium lamps at 32–38. That rig was every single item on the
+          reference's avoid list at once — golden orange light, strong shadows,
+          an HDRI sunset look and dramatic highlights.
 
-      {/* Neutral daylight key. Two corrections in one: the original 1.35 warm
-          sun was pouring amber over everything, and my first fix overshot into
-          #9DB2CC — actually blue, which is just a different cast wearing a
-          cooler coat. Daylight-balanced white lets the concrete read grey
-          because it IS grey. Warmth is now confined to the lamp pools. */}
+          It also explains the cool bake we just undid. The albedo had been
+          graded blue to fight all this amber. Remove the amber and the
+          compensation has to come off too, or the wall goes cold. Light and
+          albedo were dragging each other in opposite directions; now neither
+          has to.                                                            */}
+
+      {/* Whisper of neutral fill. The env already lights everything, but deep
+          cavities receive almost nothing from a dome and would crush to black —
+          and crushed blacks are contrast, which the brief rules out. */}
+      <ambientLight intensity={0.46} color="#DFE2E2" />
+
+      {/* Not a sun. A weak, nearly-overhead neutral light that exists only so
+          solid props (bins, pipes, railings) drop a soft contact shadow and
+          stay attached to the ground. High angle keeps shadows short and
+          directly under things, the way they behave under a cloud deck; at 0.6
+          it grounds objects without ever reading as a light source. */}
       <directionalLight
-        position={[3, 12, 8]}
-        intensity={0.5}
-        color="#D6DAE0"
+        position={[8, 22, 10]}
+        intensity={0.6}
+        color="#E6E9E9"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-45}
@@ -997,23 +977,16 @@ function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<num
         shadow-camera-top={20}
         shadow-camera-bottom={-10}
         shadow-camera-near={1}
-        shadow-camera-far={40}
-        shadow-bias={-0.0012}
+        shadow-camera-far={50}
+        shadow-bias={-0.0008}
       />
 
-      {/* Hero #1: Center Poster Spotlight */}
-      <HeroCenterSpotlight />
-
-      {/* Controlled Overhead Streetlamp Pools */}
-      <pointLight position={[-22, 6.5, 3.5]} color="#E0D6C6" intensity={62} distance={22} decay={2} />
-      <pointLight position={[-11, 6.8, 3.5]} color="#E0D6C6" intensity={58} distance={22} decay={2} />
-      <pointLight position={[0, 6.5, 3.5]} color="#E0D6C6" intensity={70} distance={22} decay={2} />
-      <pointLight position={[11, 6.8, 3.5]} color="#E0D6C6" intensity={58} distance={22} decay={2} />
-      <pointLight position={[22, 6.5, 3.5]} color="#E0D6C6" intensity={62} distance={22} decay={2} />
-
-      {/* Interactive First-Person Human Camera + Handheld Flashlight */}
+      {/* Camera rig. The cursor-tracked flashlight that used to live here is
+          gone: a torch pool chasing the mouse is the opposite of "naturally
+          photographed", and it was the brightest thing in a frame that is
+          supposed to be evenly lit. The sky dome's zenith-to-horizon ramp is
+          what reveals the surface now. */}
       <InteractiveCameraRig progressRef={progressRef} snapToTarget={snapToTarget} />
-      <HandheldFlashlight progressRef={progressRef} />
 
       {/* Architectural Wall, Decals & Street Depth */}
       <WeatheredUrbanStreetWall />
@@ -1078,14 +1051,16 @@ export default function WallScene({ progressRef, snapToTarget }: WallSceneProps)
       camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
       dpr={[1, 1.5]}
       shadows="soft"
-      gl={{ antialias: true, powerPreference: 'high-performance', toneMappingExposure: 0.82 }}
+      gl={{ antialias: true, powerPreference: 'high-performance', toneMappingExposure: 1.15 }}
       style={{
         position: 'absolute',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        background: '#161315',
+        // Matches the fog and the sky dome's horizon. A dark warm brown here
+        // showed through as a night-alley edge around a daylit scene.
+        background: '#A6A8A9',
         cursor: 'crosshair',
       }}
     >
