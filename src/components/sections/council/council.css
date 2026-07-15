@@ -22,20 +22,7 @@
   width: 100% !important;
   height: 100vh !important;
   overflow: hidden !important;
-  /* Authentic Windows XP Bliss sky gradient matching reference image */
-  background: linear-gradient(
-    180deg,
-    #007dd6 0%,
-    #258ce2 24%,
-    #56abf0 48%,
-    #8ecffb 64%,
-    #c8ebff 73%,
-    #dcf4ff 75%,
-    #66b224 75.1%,
-    #539b1a 84%,
-    #3c7a10 94%,
-    #2d5e0a 100%
-  ) !important;
+  background: url('/wallpaper.png') center/cover no-repeat !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
@@ -63,6 +50,7 @@
   box-shadow: inset 0 26px 58px rgba(255, 255, 220, 0.32), 0 -4px 18px rgba(0, 50, 0, 0.5) !important;
   pointer-events: none !important;
   z-index: 1 !important;
+  display: none !important;
 }
 
 .xp-bliss-hill-secondary {
@@ -83,6 +71,7 @@
   border-top-left-radius: 78% 100% !important;
   pointer-events: none !important;
   z-index: 0 !important;
+  display: none !important;
 }
 
 /* Hyper-realistic 3D Carved Grassy Trench Text (matching MITCH IVIN reference) */
@@ -108,6 +97,7 @@
   pointer-events: none !important;
   z-index: 2 !important;
   white-space: nowrap !important;
+  display: none !important;
 }
 
 /* Clouds in the sky */
@@ -121,6 +111,7 @@
   filter: blur(15px) !important;
   pointer-events: none !important;
   z-index: 1 !important;
+  display: none !important;
 }
 
 /* Screen Grid & Green Scanline Overlay (Matching reference image grid texture) */
