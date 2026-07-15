@@ -3,7 +3,12 @@ export interface GDGEvent {
   title: string;
   subtitle: string;
   posterImage: string;
-  /** [x, y, z] position on wall. z should be ~0.11 to sit proud of wall surface and high relief. */
+  /**
+   * [x, y, z] position on wall. z sits at 0.012 — 12mm, the thickness of paste
+   * and paper. It was 0.11 (eleven centimetres) only to clear the wall's old
+   * displacement map; with the wall flat, a poster that floats a hand's width
+   * off the brick and casts a drop shadow is the loudest CG tell in the frame.
+   */
   position: [number, number, number];
   /** Slight tilt in radians for organic wheat-paste feel */
   rotation: number;
@@ -21,7 +26,7 @@ export const events: GDGEvent[] = [
     title: 'CRCE HACK 2026',
     subtitle: 'Retro Tech Hackathon',
     posterImage: '/elements/poster-1.png',
-    position: [-22.5, 2.4, 0.11],
+    position: [-22.5, 2.4, 0.012],
     rotation: -0.02,
     scale: 1.05,
   },
@@ -30,7 +35,7 @@ export const events: GDGEvent[] = [
     title: 'AGENT SESSIONS',
     subtitle: 'AI Workshop Series',
     posterImage: '/elements/poster-2.png',
-    position: [-17.2, 2.3, 0.11],
+    position: [-17.2, 2.3, 0.012],
     rotation: 0.025,
     scale: 0.98,
   },
@@ -39,7 +44,7 @@ export const events: GDGEvent[] = [
     title: 'DEVFEST 2026',
     subtitle: 'Build the Future',
     posterImage: '/elements/poster-3.png',
-    position: [-11.8, 2.5, 0.11],
+    position: [-11.8, 2.5, 0.012],
     rotation: 0.015,
     scale: 1.1,
   },
@@ -48,7 +53,7 @@ export const events: GDGEvent[] = [
     title: 'BYTE CLUB',
     subtitle: 'Weekly Code Jams',
     posterImage: '/elements/poster-4.png',
-    position: [-6.5, 2.25, 0.11],
+    position: [-6.5, 2.25, 0.012],
     rotation: -0.035,
     scale: 0.95,
   },
@@ -57,7 +62,7 @@ export const events: GDGEvent[] = [
     title: 'PIXEL PARTY',
     subtitle: 'Design Workshop',
     posterImage: '/elements/poster-5.png',
-    position: [-1.0, 2.45, 0.11],
+    position: [-1.0, 2.45, 0.012],
     rotation: 0.02,
     scale: 1.02,
   },
@@ -66,7 +71,7 @@ export const events: GDGEvent[] = [
     title: 'NEURAL NIGHTS',
     subtitle: 'ML / AI Deep Dives',
     posterImage: '/elements/poster-6.png',
-    position: [4.5, 2.55, 0.11],
+    position: [4.5, 2.55, 0.012],
     rotation: -0.015,
     scale: 1.0,
   },
@@ -75,7 +80,7 @@ export const events: GDGEvent[] = [
     title: 'OPEN SOURCE FEST',
     subtitle: 'Contribute & Learn',
     posterImage: '/elements/poster-3.png',
-    position: [10.2, 2.3, 0.11],
+    position: [10.2, 2.3, 0.012],
     rotation: -0.028,
     scale: 1.06,
   },
@@ -84,7 +89,7 @@ export const events: GDGEvent[] = [
     title: 'RETRO GAME JAM',
     subtitle: '48hr Game Dev Sprint',
     posterImage: '/elements/poster-5.png',
-    position: [15.8, 2.48, 0.11],
+    position: [15.8, 2.48, 0.012],
     rotation: 0.018,
     scale: 1.0,
   },
@@ -93,7 +98,7 @@ export const events: GDGEvent[] = [
     title: 'TECH TALKS',
     subtitle: 'Speaker Series',
     posterImage: '/elements/poster-4.png',
-    position: [21.5, 2.35, 0.11],
+    position: [21.5, 2.35, 0.012],
     rotation: 0.01,
     scale: 1.04,
   },

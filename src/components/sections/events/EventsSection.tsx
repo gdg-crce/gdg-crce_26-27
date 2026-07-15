@@ -108,11 +108,17 @@ export default function EventsSection() {
         {/* 3D Wall Scene */}
         <WallScene progressRef={progressRef} />
 
+        {/* Lifted blacks — film shadows never reach zero (sits under the scene grain) */}
+        <div className="events-lift" />
+
         {/* Scanline overlay — VHS / MTV texture */}
         <div className="events-scanlines" />
 
         {/* Film grain overlay */}
         <div className="events-grain" />
+
+        {/* Lens falloff */}
+        <div className="events-vignette" />
 
         {/* Cinematic 90s Camcorder Viewfinder HUD */}
         <div className="events-hud">

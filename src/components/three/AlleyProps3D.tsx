@@ -20,6 +20,7 @@ export function WallDecalsAndGrime() {
     graffitiPatchTex,
     crackedPatchTex,
     stickerBombTex,
+    weedTex,
   ] = useMemo(() => {
     // 1. Soft Organic Plaster & Aged Concrete Texture (Clean gradient)
     const pCanvas = document.createElement('canvas');
@@ -284,38 +285,82 @@ export function WallDecalsAndGrime() {
 
     const sbTex = new THREE.CanvasTexture(sbCanvas);
 
-    return [pTex, gTex, fullTex, tornTex, wc1Tex, wc2Tex, gpTex, cpTex, sbTex];
+    // 9. Weed tuft alpha card — blades splaying from a common root, tapering to
+    // a point, each bending a little further than the last. Drawn rather than
+    // modelled because grass has no volume worth spending triangles on.
+    const wCanvas = document.createElement('canvas');
+    wCanvas.width = 256;
+    wCanvas.height = 256;
+    const wCtx = wCanvas.getContext('2d')!;
+    wCtx.clearRect(0, 0, 256, 256);
+    for (let i = 0; i < 17; i++) {
+      const t = i / 16;
+      const rootX = 108 + t * 40 + (Math.random() - 0.5) * 22;
+      const lean = (t - 0.5) * 2.1 + (Math.random() - 0.5) * 0.5;
+      const len = 120 + Math.random() * 105;
+      const tipX = rootX + lean * 62;
+      const tipY = 250 - len;
+      const bulge = 5 + Math.random() * 4;
+      // Each blade: a curved sliver, wide at the root, pinched at the tip
+      wCtx.beginPath();
+      wCtx.moveTo(rootX - bulge, 252);
+      wCtx.quadraticCurveTo(rootX - bulge * 0.7 + lean * 20, 252 - len * 0.55, tipX, tipY);
+      wCtx.quadraticCurveTo(rootX + bulge * 0.7 + lean * 20, 252 - len * 0.55, rootX + bulge, 252);
+      wCtx.closePath();
+      const shade = 150 + Math.floor(Math.random() * 105);
+      wCtx.fillStyle = `rgb(${shade},${shade},${shade})`;
+      wCtx.fill();
+    }
+    const weedTex = new THREE.CanvasTexture(wCanvas);
+    weedTex.colorSpace = THREE.SRGBColorSpace;
+
+    return [pTex, gTex, fullTex, tornTex, wc1Tex, wc2Tex, gpTex, cpTex, sbTex, weedTex];
   }, []);
 
   const plasterPositions: [number, number, number][] = [
-    [-21.0, 4.6, 0.090],
-    [-15.5, 2.2, 0.090],
-    [-9.0, 5.2, 0.090],
-    [-3.2, 1.9, 0.090],
-    [3.5, 5.0, 0.090],
-    [9.5, 2.1, 0.090],
-    [16.2, 5.2, 0.090],
-    [21.5, 3.2, 0.090],
+    [-21.0, 4.6, 0.004],
+    [-15.5, 2.2, 0.004],
+    [-9.0, 5.2, 0.004],
+    [-3.2, 1.9, 0.004],
+    [3.5, 5.0, 0.004],
+    [9.5, 2.1, 0.004],
+    [16.2, 5.2, 0.004],
+    [21.5, 3.2, 0.004],
   ];
 
-  const grimePositions: [number, number, number][] = [
-    [-24, 4.4, 0.091],
-    [-18, 4.1, 0.091],
-    [-13, 4.5, 0.091],
-    [-7.5, 4.3, 0.091],
-    [-2, 4.4, 0.091],
-    [2, 4.2, 0.091],
-    [9, 4.5, 0.091],
-    [14, 4.3, 0.091],
-    [18.5, 4.4, 0.091],
-    [21, 4.2, 0.091],
+  /**
+   * Runoff streaks, anchored to the features that actually shed water.
+   *
+   * These used to be ten quads evenly spaced along the wall at a constant
+   * y = 4.4 — a metronome of identical stains at identical heights, none of
+   * them near the drain pipes standing right there. Nothing said "this stain
+   * has a cause", and evenly-spaced anything is the fastest way to read as
+   * procedural.
+   *
+   * X now matches the drain pipes (AlleyIndustrialDetails, x = -24/-13/-2/9/21)
+   * and the vent sills (x = -18/2/14). The pipes leak from high up and stain
+   * long; the sills only catch what lands on them and stain short. The broad
+   * soft version of this is baked into the wall's macro layer — these add the
+   * sharper near-field detail on top of it.
+   */
+  const grimePositions: [number, number, number, number][] = [
+    // [x, y, z, height] — pipes: long stains, offset slightly to one side
+    [-23.7, 4.2, 0.005, 6.4],
+    [-12.7, 4.4, 0.005, 6.8],
+    [-1.7, 4.1, 0.005, 6.2],
+    [9.3, 4.5, 0.005, 6.6],
+    [21.3, 4.3, 0.005, 6.4],
+    // sills: shorter, wider fans starting below the window
+    [-18, 3.4, 0.005, 3.6],
+    [2, 3.5, 0.005, 3.4],
+    [14, 3.4, 0.005, 3.6],
   ];
 
   return (
     <group>
       {/* Plaster & Weathering Patches breaking repetition */}
       {plasterPositions.map((pos, i) => (
-        <mesh key={`plaster-${i}`} position={pos} castShadow receiveShadow>
+        <mesh key={`plaster-${i}`} position={pos} receiveShadow>
           <planeGeometry args={[3.2 + (i % 2) * 0.5, 2.6 + (i % 2) * 0.4]} />
           <meshStandardMaterial
             map={plasterTex}
@@ -329,15 +374,18 @@ export function WallDecalsAndGrime() {
         </mesh>
       ))}
 
-      {/* Vertical Weathering Streaks under pipes/windows */}
-      {grimePositions.map((pos, i) => (
-        <mesh key={`grime-${i}`} position={pos} receiveShadow>
-          <planeGeometry args={[1.6, 5.2]} />
+      {/* Gravity runoff beneath the pipes and sills that cause it */}
+      {grimePositions.map(([gx, gy, gz, gh], i) => (
+        <mesh key={`grime-${i}`} position={[gx, gy, gz]} receiveShadow>
+          <planeGeometry args={[i < 5 ? 1.3 : 2.6, gh]} />
           <meshStandardMaterial
             map={grimeTex}
             transparent={true}
+            opacity={0.85}
             depthWrite={false}
-            roughness={0.9}
+            roughness={0.95}
+            metalness={0}
+            envMapIntensity={0.3}
             polygonOffset={true}
             polygonOffsetFactor={-2}
             polygonOffsetUnits={-2}
@@ -346,7 +394,7 @@ export function WallDecalsAndGrime() {
       ))}
 
       {/* Left Reference Panel: Layered Ripped Wheatpaste Poster Collages */}
-      <mesh position={[-23.5, 3.4, 0.092]} castShadow receiveShadow>
+      <mesh position={[-23.5, 3.4, 0.006]} receiveShadow>
         <planeGeometry args={[2.8, 2.8]} />
         <meshStandardMaterial
           map={wheatpasteCollage1}
@@ -358,7 +406,7 @@ export function WallDecalsAndGrime() {
           polygonOffsetUnits={-3}
         />
       </mesh>
-      <mesh position={[-6.2, 3.2, 0.092]} castShadow receiveShadow>
+      <mesh position={[-6.2, 3.2, 0.006]} receiveShadow>
         <planeGeometry args={[2.6, 2.6]} />
         <meshStandardMaterial
           map={wheatpasteCollage2}
@@ -372,7 +420,7 @@ export function WallDecalsAndGrime() {
       </mesh>
 
       {/* Middle Reference Panel: Peeling Stucco with Cyan & Rust Graffiti Spray Tags */}
-      <mesh position={[2.8, 2.1, 0.093]} castShadow receiveShadow>
+      <mesh position={[2.8, 2.1, 0.007]} receiveShadow>
         <planeGeometry args={[3.6, 1.8]} />
         <meshStandardMaterial
           map={graffitiPatchTex}
@@ -386,7 +434,7 @@ export function WallDecalsAndGrime() {
       </mesh>
 
       {/* Right Reference Panel: Deep Cracked Fissure Wall Patch */}
-      <mesh position={[16.8, 3.6, 0.092]} castShadow receiveShadow>
+      <mesh position={[16.8, 3.6, 0.006]} receiveShadow>
         <planeGeometry args={[3.2, 3.2]} />
         <meshStandardMaterial
           map={crackedPatchTex}
@@ -400,7 +448,7 @@ export function WallDecalsAndGrime() {
       </mesh>
 
       {/* 1st Heritage Poster: Complete Full Archival Poster */}
-      <mesh position={[-19.2, 3.3, 0.094]} castShadow receiveShadow>
+      <mesh position={[-19.2, 3.3, 0.008]} receiveShadow>
         <planeGeometry args={[3.2, 1.6]} />
         <meshStandardMaterial
           map={fullPosterTex}
@@ -414,7 +462,7 @@ export function WallDecalsAndGrime() {
       </mesh>
 
       {/* 2nd Heritage Poster: Dramatic Zigzag Ripped Torn Half-Poster */}
-      <mesh position={[13.2, 2.3, 0.094]} castShadow receiveShadow>
+      <mesh position={[13.2, 2.3, 0.008]} receiveShadow>
         <planeGeometry args={[2.6, 1.5]} />
         <meshStandardMaterial
           map={tornPosterTex}
@@ -429,7 +477,7 @@ export function WallDecalsAndGrime() {
 
       {/* 90s Underground Sticker Bombing & Parental Advisory Stamp Clusters */}
       {[-11.8, 8.4, 21.2].map((sx, i) => (
-        <mesh key={`sticker-bomb-${i}`} position={[sx, 2.15 + (i % 2) * 0.35, 0.096]} castShadow receiveShadow>
+        <mesh key={`sticker-bomb-${i}`} position={[sx, 2.15 + (i % 2) * 0.35, 0.016]} receiveShadow>
           <planeGeometry args={[2.4, 1.2]} />
           <meshStandardMaterial
             map={stickerBombTex}
@@ -443,17 +491,34 @@ export function WallDecalsAndGrime() {
         </mesh>
       ))}
 
-      {/* Middle Reference Panel: Curb-side Green Street Weeds at Wall Base */}
-      {[-21, -15, -8, -1, 6, 12, 19].map((wx, idx) => (
-        <group key={`weed-${idx}`} position={[wx, 0.18, 0.12]}>
-          <mesh rotation={[0.15, idx * 0.4, 0]} castShadow receiveShadow>
-            <coneGeometry args={[0.14, 0.28, 5]} />
-            <meshStandardMaterial color="#2E5A34" roughness={0.75} />
-          </mesh>
-          <mesh position={[0.08, 0.02, 0.04]} rotation={[0.2, -idx * 0.3, 0.1]} castShadow receiveShadow>
-            <coneGeometry args={[0.11, 0.22, 5]} />
-            <meshStandardMaterial color="#3A6C42" roughness={0.75} />
-          </mesh>
+      {/* Weeds in the wall/pavement joint.
+
+          These were solid cones in #2E5A34 — which read, unmistakably, as
+          traffic cones or little Christmas trees. Cones were never going to be
+          weeds: a blade of grass has no volume, and any solid primitive at this
+          scale announces itself as a primitive.
+
+          Alpha cards instead. Two crossed quads per tuft with a drawn blade
+          mask, so they read as foliage from every angle the camera walks
+          through, at a third of the triangles. They also cast no shadow —
+          grass this small contributes noise, not shape. */}
+      {[-21, -15.4, -8.2, -1.3, 6.4, 12.1, 19.2].map((wx, idx) => (
+        <group key={`weed-${idx}`} position={[wx + (idx % 3) * 0.3, 0.2, 0.14]}>
+          {[0, Math.PI / 2.2].map((ry, k) => (
+            <mesh key={k} rotation={[0, ry + idx * 0.5, (idx % 2 ? 1 : -1) * 0.06]} receiveShadow>
+              <planeGeometry args={[0.5 + (idx % 3) * 0.1, 0.42 + (idx % 2) * 0.12]} />
+              <meshStandardMaterial
+                map={weedTex}
+                transparent
+                alphaTest={0.42}
+                side={THREE.DoubleSide}
+                color={idx % 2 ? '#4A5C34' : '#3C4E2C'}
+                roughness={0.86}
+                metalness={0}
+                envMapIntensity={0.35}
+              />
+            </mesh>
+          ))}
         </group>
       ))}
     </group>
@@ -630,12 +695,19 @@ export function UrbanStreetFloor() {
           receiveShadow
         >
           <planeGeometry args={[i === 2 ? 5.6 : 4.2, 2.4]} />
+          {/* Water is a dielectric, not chrome. metalness 0.88 told the BRDF to
+              tint reflections by the base colour and drop diffuse entirely —
+              with no environment in the scene that resolved to a black smear.
+              metalness 0 + low roughness gives the real thing: Fresnel, so the
+              puddle is near-invisible underfoot and mirror-bright at a glancing
+              angle, which is exactly how wet tarmac behaves as you walk past. */}
           <meshStandardMaterial
             map={puddleTex}
             transparent={true}
             depthWrite={false}
-            roughness={0.04}
-            metalness={0.88}
+            roughness={0.09}
+            metalness={0}
+            envMapIntensity={1.35}
             polygonOffset={true}
             polygonOffsetFactor={-1}
             polygonOffsetUnits={-1}
