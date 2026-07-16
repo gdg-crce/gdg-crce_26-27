@@ -135,7 +135,7 @@ export default function WindowsXPDesktop({
 
           <div className="xp-taskbar-item active">
             <span style={{ fontSize: '13px' }}>💿</span>
-            <span>Student Council 2026-27 Player</span>
+            <span>GDG Council 2026-27 Player</span>
           </div>
         </div>
 

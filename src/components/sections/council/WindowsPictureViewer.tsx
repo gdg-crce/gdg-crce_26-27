@@ -74,11 +74,8 @@ export default function WindowsPictureViewer({
         >
           {/* Header Banner */}
           <div className="xp-pv-group-header">
-            <div className="xp-pv-badge">⚡ GDG ON CAMPUS CRCE // CLASS OF 2026-27</div>
-            <h2 className="xp-pv-group-title">STUDENT COUNCIL GROUP PORTRAIT</h2>
-            <p className="xp-pv-group-subtitle">
-              Architecting High-Performance Engineering & Community Systems at 60 FPS
-            </p>
+            <h2 className="xp-pv-group-title">GDG_CRCE_Council_2026-27_Group_Photo.bmp</h2>
+            <p className="xp-pv-group-subtitle">Dimensions: 1400 x 800 • 24-bit color</p>
           </div>
 
           {/* Polaroid Group Collage Grid */}
@@ -117,7 +114,7 @@ export default function WindowsPictureViewer({
             onClick={handleZoomOut}
             title="Zoom Out (-)"
           >
-            <span>🔍-</span>
+            <span className="xp-pv-icon-img">🔎➖</span>
           </button>
           <span className="xp-pv-zoom-indicator">
             {Math.round(zoomLevel * 100)}%
@@ -128,7 +125,7 @@ export default function WindowsPictureViewer({
             onClick={handleZoomIn}
             title="Zoom In (+)"
           >
-            <span>🔍+</span>
+            <span className="xp-pv-icon-img">🔎➕</span>
           </button>
         </div>
 
@@ -137,19 +134,19 @@ export default function WindowsPictureViewer({
         <div className="xp-pv-toolbar-group">
           <button
             type="button"
-            className="xp-pv-btn circular"
+            className="xp-pv-btn"
             onClick={handleReset}
             title="Actual Size / Best Fit"
           >
-            <span>🔲</span>
+            <span className="xp-pv-icon-img">🖼️</span>
           </button>
           <button
             type="button"
-            className="xp-pv-btn circular"
+            className="xp-pv-btn"
             onClick={handleRotate}
             title="Rotate Clockwise (Ctrl+K)"
           >
-            <span>🔄</span>
+            <span className="xp-pv-icon-img">↻</span>
           </button>
         </div>
 
@@ -162,7 +159,7 @@ export default function WindowsPictureViewer({
             onClick={() => window.print()}
             title="Print this picture (Ctrl+P)"
           >
-            <span>🖨️ Print</span>
+            <span className="xp-pv-icon-img">🖨️</span>
           </button>
           <button
             type="button"
@@ -170,7 +167,7 @@ export default function WindowsPictureViewer({
             onClick={handleReset}
             title="Copy to Clipboard"
           >
-            <span>📋 Copy</span>
+            <span className="xp-pv-icon-img">📋</span>
           </button>
         </div>
       </div>

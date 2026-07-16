@@ -9,6 +9,7 @@ import {
   Outfit,
   Cormorant_Garamond,
   Inter,
+  IBM_Plex_Mono,
 } from 'next/font/google';
 
 // 1970s Typography: Groovy Serif + Warm Sans
@@ -80,6 +81,14 @@ export const inter = Inter({
   weight: ['300', '400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-editorial-body',
+});
+
+// Y2K Archive Typography: technical monospaced archive feel (IE6 / TheFacebook era)
+export const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-ibm-plex-mono',
 });
 
 // Map of era fonts to make it easy to apply dynamically based on current era

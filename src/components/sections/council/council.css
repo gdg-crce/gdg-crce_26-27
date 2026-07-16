@@ -22,7 +22,7 @@
   width: 100% !important;
   height: 100vh !important;
   overflow: hidden !important;
-  background: url('/wallpaper.png') center/cover no-repeat !important;
+  background: url('/walpaper.png') center/cover no-repeat !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
@@ -37,13 +37,11 @@
   height: 52% !important;
   /* Base radial lighting gradient PLUS vertical green grass blades texture */
   background:
-    repeating-linear-gradient(
-      88deg,
+    repeating-linear-gradient(88deg,
       rgba(255, 255, 255, 0.04) 0px,
       rgba(255, 255, 255, 0.04) 2px,
       rgba(0, 0, 0, 0.07) 2px,
-      rgba(0, 0, 0, 0.07) 4px
-    ),
+      rgba(0, 0, 0, 0.07) 4px),
     radial-gradient(ellipse at 44% 0%, #76db3a 0%, #54b223 38%, #3c8814 75%, #25580a 100%) !important;
   border-top-left-radius: 68% 100% !important;
   border-top-right-radius: 72% 88% !important;
@@ -60,13 +58,11 @@
   width: 90% !important;
   height: 40% !important;
   background:
-    repeating-linear-gradient(
-      86deg,
+    repeating-linear-gradient(86deg,
       rgba(255, 255, 255, 0.03) 0px,
       rgba(255, 255, 255, 0.03) 2px,
       rgba(0, 0, 0, 0.06) 2px,
-      rgba(0, 0, 0, 0.06) 4px
-    ),
+      rgba(0, 0, 0, 0.06) 4px),
     radial-gradient(ellipse at 52% 0%, #68cf36 0%, #4a9f20 58%, #306e12 100%) !important;
   border-top-left-radius: 78% 100% !important;
   pointer-events: none !important;
@@ -205,7 +201,7 @@
   background: #0a080a;
   border: 0px solid #0055ea;
   border-radius: 0px;
-  box-shadow: 0 0px 0px rgba(0,0,0,0);
+  box-shadow: 0 0px 0px rgba(0, 0, 0, 0);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -229,16 +225,14 @@
   height: 0px;
   opacity: 0;
   overflow: hidden;
-  background: linear-gradient(
-    180deg,
-    #0d5fff 0%,
-    #0956f4 4%,
-    #0250ee 9%,
-    #0b58f0 46%,
-    #0243dc 86%,
-    #0139cf 95%,
-    #0a57ef 100%
-  );
+  background: linear-gradient(180deg,
+      #0d5fff 0%,
+      #0956f4 4%,
+      #0250ee 9%,
+      #0b58f0 46%,
+      #0243dc 86%,
+      #0139cf 95%,
+      #0a57ef 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -296,7 +290,8 @@
     0 1px 1px rgba(0, 0, 0, 0.35);
 }
 
-.xp-btn-min, .xp-btn-max {
+.xp-btn-min,
+.xp-btn-max {
   background: linear-gradient(180deg, #5aa0f7 0%, #2e77ec 45%, #1a5bd6 56%, #1250cb 100%);
   border-color: #aaccff;
 }
@@ -361,16 +356,14 @@
 /* Authentic Windows XP Luna Titlebar (matches the transition window) */
 .xp-player-titlebar {
   height: 29px;
-  background: linear-gradient(
-    180deg,
-    #0d5fff 0%,
-    #0956f4 4%,
-    #0250ee 9%,
-    #0b58f0 46%,
-    #0243dc 86%,
-    #0139cf 95%,
-    #0a57ef 100%
-  );
+  background: linear-gradient(180deg,
+      #0d5fff 0%,
+      #0956f4 4%,
+      #0250ee 9%,
+      #0b58f0 46%,
+      #0243dc 86%,
+      #0139cf 95%,
+      #0a57ef 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -495,8 +488,13 @@
 }
 
 @keyframes xpDiscSpin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Realistic LED Equalizer */
@@ -627,7 +625,7 @@
   right: 0;
   background: #ffffff;
   border: 1px solid #000;
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
   max-height: 200px;
   overflow-y: auto;
   z-index: 100;
@@ -642,7 +640,8 @@
   justify-content: space-between;
 }
 
-.xp-dropdown-item:hover, .xp-dropdown-item.active {
+.xp-dropdown-item:hover,
+.xp-dropdown-item.active {
   background: #0a246a;
   color: #ffffff;
 }
@@ -739,18 +738,16 @@
   right: 0 !important;
   width: 100% !important;
   height: 32px !important;
-  background: linear-gradient(
-    180deg,
-    #2f7bea 0%,
-    #2565de 3%,
-    #2f7cea 6%,
-    #2b6fe4 10%,
-    #245cdb 14%,
-    #2258d8 88%,
-    #1f52cc 92%,
-    #18439e 97%,
-    #1c489f 100%
-  ) !important;
+  background: linear-gradient(180deg,
+      #2f7bea 0%,
+      #2565de 3%,
+      #2f7cea 6%,
+      #2b6fe4 10%,
+      #245cdb 14%,
+      #2258d8 88%,
+      #1f52cc 92%,
+      #18439e 97%,
+      #1c489f 100%) !important;
   border-top: 1px solid #0831d9 !important;
   display: flex !important;
   align-items: center !important;
@@ -770,23 +767,19 @@
   height: 100%;
   padding: 0 24px 3px 10px;
   background:
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(255, 255, 255, 0.5) 0%,
       rgba(255, 255, 255, 0.08) 42%,
       rgba(255, 255, 255, 0) 44%,
-      rgba(0, 0, 0, 0.12) 100%
-    ),
-    linear-gradient(
-      180deg,
+      rgba(0, 0, 0, 0.12) 100%),
+    linear-gradient(180deg,
       #5db63a 0%,
       #4fa62d 8%,
       #46a028 42%,
       #3d9522 52%,
       #37901d 56%,
       #2f8416 90%,
-      #297d12 100%
-    );
+      #297d12 100%);
   border: none;
   border-top-right-radius: 10px;
   border-bottom-right-radius: 15px;
@@ -934,14 +927,37 @@
 
 /* Nudge Animation (Authentic Window Shaking) */
 @keyframes msn-shake {
-  0% { transform: translate(0, 0); }
-  15% { transform: translate(-14px, 10px); }
-  30% { transform: translate(16px, -12px); }
-  45% { transform: translate(-12px, -10px); }
-  60% { transform: translate(14px, 12px); }
-  75% { transform: translate(-8px, 8px); }
-  90% { transform: translate(10px, -6px); }
-  100% { transform: translate(0, 0); }
+  0% {
+    transform: translate(0, 0);
+  }
+
+  15% {
+    transform: translate(-14px, 10px);
+  }
+
+  30% {
+    transform: translate(16px, -12px);
+  }
+
+  45% {
+    transform: translate(-12px, -10px);
+  }
+
+  60% {
+    transform: translate(14px, 12px);
+  }
+
+  75% {
+    transform: translate(-8px, 8px);
+  }
+
+  90% {
+    transform: translate(10px, -6px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 .msn-chat-window.is-nudging {
@@ -951,16 +967,14 @@
 /* Titlebar & Menubar */
 .msn-titlebar {
   height: 38px !important;
-  background: linear-gradient(
-    180deg,
-    #0d5fff 0%,
-    #0956f4 6%,
-    #0250ee 12%,
-    #0b58f0 48%,
-    #0243dc 88%,
-    #0139cf 95%,
-    #0a57ef 100%
-  ) !important;
+  background: linear-gradient(180deg,
+      #0d5fff 0%,
+      #0956f4 6%,
+      #0250ee 12%,
+      #0b58f0 48%,
+      #0243dc 88%,
+      #0139cf 95%,
+      #0a57ef 100%) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -1699,7 +1713,7 @@
 .xp-pv-image-canvas {
   background: #ffffff !important;
   border: 1px solid #c0c0b8 !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+  box-shadow: 0 0 0 1px #ece9d8, 0 0 0 2px #707070 !important;
   padding: 32px !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1734,12 +1748,10 @@
 
 .xp-pv-group-title {
   margin: 0 !important;
-  font-family: 'Trebuchet MS', 'Tahoma', sans-serif !important;
-  font-size: 34px !important;
-  font-weight: 900 !important;
-  color: #003399 !important;
-  letter-spacing: 0.5px !important;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1) !important;
+  font-family: 'Tahoma', sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
 }
 
 .xp-pv-group-subtitle {
@@ -1758,34 +1770,23 @@
 
 .xp-pv-polaroid-card {
   background: #ffffff !important;
-  border: 1px solid #dcdcdc !important;
-  border-radius: 4px !important;
-  padding: 10px 10px 14px 10px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid #808080 !important;
+  padding: 8px 8px 12px 8px !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   gap: 10px !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-}
-
-.xp-pv-polaroid-card:hover {
-  transform: translateY(-4px) scale(1.04) !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25) !important;
-  z-index: 10 !important;
 }
 
 .xp-pv-polaroid-photo {
   width: 100% !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 4px !important;
-  border: 2px solid #ffffff !important;
+  border: 1px solid #000000 !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative !important;
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3) !important;
 }
 
 .xp-pv-polaroid-glyph {
@@ -1864,20 +1865,16 @@
 }
 
 .xp-pv-btn {
-  background: linear-gradient(180deg, #ffffff 0%, #e0e6f0 100%) !important;
-  border: 1px solid #6b89c3 !important;
-  border-radius: 4px !important;
-  padding: 6px 14px !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 3px !important;
+  padding: 6px 6px !important;
   font-family: 'Tahoma', sans-serif !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: #003399 !important;
+  font-size: 18px !important;
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  justify-content: center !important;
   cursor: pointer !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
-  transition: all 0.15s ease !important;
 }
 
 .xp-pv-btn.circular {
@@ -1890,9 +1887,8 @@
 }
 
 .xp-pv-btn:hover {
-  background: linear-gradient(180deg, #f0f6ff 0%, #c6dcfc 100%) !important;
+  background: #c1d2ee !important;
   border-color: #316ac5 !important;
-  filter: brightness(1.05) !important;
 }
 
 .xp-pv-zoom-indicator {

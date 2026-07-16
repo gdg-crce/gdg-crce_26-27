@@ -7,9 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { events } from './events/eventData';
 import { councilMembers } from './council/councilData';
 import WindowsXPDesktop from './council/WindowsXPDesktop';
-import RetroMediaPlayerWindow from './council/RetroMediaPlayerWindow';
-import MSNContactListWindow from './council/MSNContactListWindow';
-import MSNChatWindow from './council/MSNChatWindow';
+import Y2KArchiveSystem from './council/Y2KArchiveSystem';
 import WindowsPictureViewer from './council/WindowsPictureViewer';
 import './council/council.css';
 
@@ -30,7 +28,8 @@ function THREE_MATH_LERP(a: number, b: number, t: number) {
 
 /**
  * EventsAndCouncilSection — Unified Master Choreography Section
- * Upgraded with !important Bliss grid scanlines, 3D carved grass text, and scaled-up dual MSN windows.
+ * Upgraded with !important Bliss grid scanlines, 3D carved grass text, and the
+ * IE6 TheFacebook council archive window.
  *
  *
  * Manages the single continuous ScrollTrigger across the entire experience:
@@ -38,9 +37,9 @@ function THREE_MATH_LERP(a: number, b: number, t: number) {
  * 2. 0.26 -> 0.32: Dwell on poster #9 (TECH TALKS) in 100% fullscreen.
  * 3. 0.32 -> 0.42: Windowize (3D wall shrinks center-out into Windows Media Player frame, revealing XP Desktop).
  * 4. 0.42 -> 0.50: Minimize (window genies down into bottom Windows XP taskbar).
- * 5. 0.48 -> 0.55: Player Reveal (Student Council Retro Media Player window fades in centered).
- * 6. 0.55 -> 0.93: Council Members (scrolling steps through individual profiles in MSN window).
- * 7. 0.93 -> 0.96: MSN Minimize (MSN dual-window genies down into taskbar).
+ * 5. 0.48 -> 0.55: Archive Reveal (IE6 TheFacebook council window fades in centered).
+ * 6. 0.55 -> 0.93: Council Archive holds centered (TheFacebook profile: pinned people + social grid).
+ * 7. 0.93 -> 0.96: Archive Minimize (IE6 window genies down into taskbar).
  * 8. 0.96 -> 1.00: Grand Finale (Windows Picture and Fax Viewer pops up with group photo).
  */
 export default function EventsAndCouncilSection() {
@@ -63,33 +62,6 @@ export default function EventsAndCouncilSection() {
     if (selectedTeam === 'All Tracks') return councilMembers;
     return councilMembers.filter((m) => m.team === selectedTeam);
   }, [selectedTeam]);
-
-  const currentMember =
-    filteredMembers[activeMemberIndex] || filteredMembers[0] || councilMembers[0];
-
-  const handleNext = useCallback(() => {
-    setActiveMemberIndex((prev) => (prev + 1) % filteredMembers.length);
-  }, [filteredMembers.length]);
-
-  const handlePrev = useCallback(() => {
-    setActiveMemberIndex((prev) =>
-      prev - 1 < 0 ? filteredMembers.length - 1 : prev - 1
-    );
-  }, [filteredMembers.length]);
-
-  const handleSelectMemberById = useCallback(
-    (id: number) => {
-      const idx = filteredMembers.findIndex((m) => m.id === id);
-      if (idx !== -1) {
-        setActiveMemberIndex(idx);
-      } else {
-        setSelectedTeam('All Tracks');
-        const globalIdx = councilMembers.findIndex((m) => m.id === id);
-        if (globalIdx !== -1) setActiveMemberIndex(globalIdx);
-      }
-    },
-    [filteredMembers]
-  );
 
   const handleSelectTeam = useCallback((team: string) => {
     setSelectedTeam(team);
@@ -196,37 +168,32 @@ export default function EventsAndCouncilSection() {
           }
         }
 
-        /* ── Phase 5 -> Phase 7: Student Council MSN Messenger Window (0.48 -> 0.96) ── */
+        /* ── Phase 5 -> Phase 7: Student Council TheFacebook Archive Window (0.48 -> 0.96) ── */
         const MEMBERS_START = 0.55;
         const MEMBERS_END = 0.93;
-        const MSN_MIN_START = 0.93;
-        const MSN_MIN_END = 0.96;
+        const ARCHIVE_MIN_START = 0.93;
+        const ARCHIVE_MIN_END = 0.96;
 
         if (playerWrapperRef.current) {
           if (p < 0.48) {
             playerWrapperRef.current.style.opacity = '0';
             playerWrapperRef.current.style.pointerEvents = 'none';
-            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+            playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
           } else if (p < MEMBERS_START) {
-            const fadeT = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
-            playerWrapperRef.current.style.opacity = `${fadeT}`;
-            playerWrapperRef.current.style.pointerEvents = fadeT > 0.5 ? 'auto' : 'none';
-            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+            const t = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
+            const scale = 0.1 + t * 0.9;
+            const translateY = (1 - t) * 46;
+            playerWrapperRef.current.style.opacity = '1';
+            playerWrapperRef.current.style.pointerEvents = t > 0.5 ? 'auto' : 'none';
+            playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
           } else if (p <= MEMBERS_END) {
+            // TheFacebook archive window holds centered through this scroll range.
             playerWrapperRef.current.style.opacity = '1';
             playerWrapperRef.current.style.pointerEvents = 'auto';
             playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
-
-            const memberProgress = (p - MEMBERS_START) / (MEMBERS_END - MEMBERS_START);
-            const targetIndex = Math.floor(memberProgress * filteredMembers.length);
-            const clampedIndex = Math.max(
-              0,
-              Math.min(filteredMembers.length - 1, targetIndex)
-            );
-            setActiveMemberIndex(clampedIndex);
-          } else if (p < MSN_MIN_END) {
+          } else if (p < ARCHIVE_MIN_END) {
             // Genie minimize animation down into bottom taskbar
-            const t = (p - MSN_MIN_START) / (MSN_MIN_END - MSN_MIN_START);
+            const t = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
             const scale = 1.0 - t * 0.9;
             const translateY = t * 46; // vh down to taskbar
             playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
@@ -266,7 +233,7 @@ export default function EventsAndCouncilSection() {
       clearTimeout(timeout);
       trigger.kill();
     };
-  }, [filteredMembers.length, isEventsMinimized]);
+  }, [isEventsMinimized]);
 
   const current = events[activeEvent];
 
@@ -418,24 +385,13 @@ export default function EventsAndCouncilSection() {
             </div>
           </div>
 
-          {/* Layer 2: Student Council MSN Messenger Dual-Window (Contact List + Live Instant Message) */}
+          {/* Layer 2: Student Council TheFacebook Archive (IE6 window on the XP desktop) */}
           <div
             ref={playerWrapperRef}
             className="xp-player-window-wrapper"
             style={{ opacity: 0, pointerEvents: 'none' }}
           >
-            <div className="msn-dual-desktop-container">
-              <MSNContactListWindow
-                allMembers={filteredMembers}
-                activeMemberIndex={activeMemberIndex}
-                onSelectMemberById={handleSelectMemberById}
-              />
-              <MSNChatWindow
-                currentMember={currentMember}
-                onNext={handleNext}
-                onPrev={handlePrev}
-              />
-            </div>
+            <Y2KArchiveSystem embedded />
           </div>
 
           {/* Layer 3: Windows Picture and Fax Viewer Grand Finale */}

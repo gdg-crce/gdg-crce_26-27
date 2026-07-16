@@ -1,0 +1,1788 @@
+/* =============================================================================
+   Y2KArchiveSystem — Internet Explorer 6 window + mid-2000s "TheFacebook" profile
+   Encapsulated CSS Module. Clean, high-contrast digital aesthetic.
+   Typography: IBM Plex Mono (via --font-ibm-plex-mono, wired in layout.tsx).
+   Palette: Facebook Blue #3b5998 · white page · sharp 1px borders.
+   ========================================================================== */
+
+.viewport {
+  --fb-blue: #3b5998;
+  --fb-blue-mid: #6d84b4;
+  --fb-blue-soft: #8b9dc3;
+  --fb-blue-pale: #dfe3ee;
+  --fb-bg: #edeff4;
+  --ink: #111318;
+  --luna: #ece9d8;
+  --hair: #1c1c1c;
+
+  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', 'Courier New', monospace;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  padding: 28px 16px;
+  background:
+    repeating-linear-gradient(45deg, #2f6b2f 0 2px, #2b632b 2px 4px);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+/* Embedded mode — floats the IE window on a host surface (e.g. the XP desktop):
+   no standalone backdrop/padding, vertically centered, height-capped so it
+   never clips the desktop taskbar. The page scrolls internally when capped. */
+.embedded {
+  padding-bottom: 72px;
+  height: 100%;
+  align-items: center;
+  background: transparent;
+}
+.embedded .ieWindow {
+  max-height: 92vh;
+}
+.embedded .page {
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Crisp, non-smoothed pixel-art rendering for all 16-bit icons */
+.pixel {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+  flex: 0 0 auto;
+}
+
+/* -----------------------------------------------------------------------------
+   1. IE6 WINDOW FRAME
+   -------------------------------------------------------------------------- */
+.ieWindow {
+  width: 100%;
+  max-width: 960px;
+  background: var(--luna);
+  border: 1px solid #0a246a;
+  border-radius: 8px 8px 0 0;
+  box-shadow:
+    0 0 0 1px #ffffff inset,
+    0 18px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.maximized {
+  max-width: 100%;
+  border-radius: 0;
+}
+
+/* --- Title bar (Windows XP Luna blue) --- */
+.titleBar {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 0 6px;
+  background: linear-gradient(
+    180deg,
+    #0d5fff 0%,
+    #0956f4 8%,
+    #0250ee 14%,
+    #0b58f0 50%,
+    #0243dc 90%,
+    #0139cf 96%,
+    #0a57ef 100%
+  );
+  color: #fff;
+  user-select: none;
+}
+
+.titleLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.titleText {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
+}
+
+.titleButtons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.winBtn {
+  width: 22px;
+  height: 21px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.7),
+    inset 0 -3px 5px rgba(0, 0, 0, 0.2),
+    0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+.winMin,
+.winMax {
+  background: linear-gradient(180deg, #5aa0f7 0%, #2e77ec 45%, #1a5bd6 56%, #1250cb 100%);
+  border-color: #aaccff;
+}
+
+.winClose {
+  background: linear-gradient(180deg, #f7a58f 0%, #e8654a 42%, #d83b20 56%, #c92c12 100%);
+  border-color: #ffc6b8;
+}
+
+.winBtn:hover {
+  filter: brightness(1.15) saturate(1.05);
+}
+
+.winBtn:active {
+  filter: brightness(0.9);
+}
+
+/* --- Menu bar --- */
+.menuBar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  background: var(--luna);
+  border-bottom: 1px solid #aca899;
+  font-size: 12px;
+  color: #1a1a1a;
+}
+
+.menuItem {
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: default;
+}
+
+.menuItem:hover {
+  border-color: #b6bdd2;
+  background: #dfe3ee;
+}
+
+.menuUnderline {
+  text-decoration: underline;
+}
+
+/* --- Toolbar (beveled grey panel) --- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #ece9d8 42%, #e3ddc7 100%);
+  border-bottom: 1px solid #aca899;
+}
+
+.tbBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  color: #303030;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tbBtn:hover {
+  border-color: #a7c4e8;
+  background: linear-gradient(180deg, #fdfefe 0%, #dcecfb 100%);
+}
+
+.tbBtn:active {
+  border-color: #6d9fd6;
+  background: linear-gradient(180deg, #cfe0f4 0%, #eaf3fe 100%);
+}
+
+.tbBtn:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+.tbBtn:disabled:hover {
+  border-color: transparent;
+  background: transparent;
+}
+
+.tbLabel {
+  line-height: 1;
+}
+
+.tbCaret {
+  font-size: 8px;
+  color: #444;
+  margin-left: -1px;
+}
+
+.tbSep {
+  width: 1px;
+  height: 24px;
+  margin: 0 3px;
+  background: #b7b3a2;
+  box-shadow: 1px 0 0 #ffffff;
+}
+
+/* --- Address bar --- */
+.addressBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 6px;
+  background: var(--luna);
+  border-bottom: 1px solid #7f9db9;
+}
+
+.addressLabel {
+  font-size: 12px;
+  color: #4a4a4a;
+}
+
+.addressField {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  height: 24px;
+  padding: 0 6px;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.18);
+}
+
+.addressInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  color: #16213a;
+  letter-spacing: 0.1px;
+}
+
+.goBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px 0 7px;
+  border: 1px solid #7f9db9;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #fbfdff 0%, #dfe9f6 100%);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: #21395f;
+}
+
+.goBtn:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #d2e2f6 100%);
+}
+
+.linksLabel {
+  font-size: 12px;
+  color: #4a4a4a;
+  white-space: nowrap;
+}
+
+/* -----------------------------------------------------------------------------
+   2. BROWSER PAGE (the rendered "TheFacebook" document)
+   -------------------------------------------------------------------------- */
+.page {
+  height: 560px;
+  overflow-y: auto;
+  background: var(--fb-bg);
+  border-top: 1px solid #ffffff;
+}
+
+.page::-webkit-scrollbar {
+  width: 16px;
+}
+.page::-webkit-scrollbar-track {
+  background: #d4d0c8;
+  box-shadow: inset 1px 0 0 #fff;
+}
+.page::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #eef1f8, #b7c4de);
+  border: 1px solid #7f9db9;
+}
+
+/* --- TheFacebook top nav --- */
+.fbNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--fb-blue);
+  border-bottom: 3px solid #2b3a63;
+}
+
+.fbWordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.fbWordmark:hover {
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+}
+
+.fbWordmarkThe {
+  opacity: 0.72;
+  font-weight: 400;
+}
+
+.fbNavLinks {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fbNavLink {
+  padding: 3px 8px;
+  color: #cdd6ea;
+  font-size: 11px;
+  border: 1px solid transparent;
+  cursor: default;
+}
+
+.fbNavLink:hover {
+  color: #fff;
+  border-color: var(--fb-blue-mid);
+  background: #34497e;
+}
+
+.fbSearch {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 6px;
+  background: #fff;
+  border: 1px solid #1e2a4a;
+}
+
+.fbSearch input {
+  width: 116px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  color: #333;
+}
+
+/* --- Page body wrapper --- */
+.fbBody {
+  padding: 14px;
+}
+
+/* -----------------------------------------------------------------------------
+   3. HEADER ARCHITECTURE — banner + overlapping square profile photo
+   -------------------------------------------------------------------------- */
+.profileHeader {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
+  margin-bottom: 14px;
+}
+
+.banner {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  background:
+    linear-gradient(120deg, rgba(59, 89, 152, 0.92) 0%, rgba(43, 58, 99, 0.92) 100%),
+    repeating-linear-gradient(90deg, #4a69ad 0 38px, #3b5998 38px 40px);
+  border-bottom: 1px solid var(--fb-blue-soft);
+}
+
+.bannerGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.6;
+}
+
+.bannerText {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  text-align: right;
+  color: #fff;
+}
+
+.bannerTitle {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.bannerSub {
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #cdd6ea;
+}
+
+.bannerCursor {
+  position: absolute;
+  bottom: 18px;
+  right: 30px;
+  opacity: 0.9;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.4));
+}
+
+/* Square profile photo overlapping the bottom-left corner of the banner */
+.profilePhoto {
+  position: absolute;
+  left: 16px;
+  top: 92px;
+  width: 116px;
+  height: 116px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  color: #fff;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px var(--hair), 3px 3px 0 rgba(0, 0, 0, 0.22);
+}
+
+.profileIdentity {
+  padding: 14px 16px 16px 148px;
+  min-height: 56px;
+}
+
+.identityName {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--fb-blue);
+}
+
+.identityMeta {
+  margin-top: 3px;
+  font-size: 11px;
+  color: #556;
+  line-height: 1.5;
+}
+
+.identityBadges {
+  margin-top: 9px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #21395f;
+  background: var(--fb-blue-pale);
+  border: 1px solid var(--fb-blue-soft);
+}
+
+/* -----------------------------------------------------------------------------
+   4. TWO-COLUMN PROFILE LAYOUT
+   -------------------------------------------------------------------------- */
+.columns {
+  display: grid;
+  grid-template-columns: 208px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* --- Left info sidebar (sells the FB profile look) --- */
+.sidebar {
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
+}
+
+.sideHead {
+  padding: 5px 9px;
+  background: var(--fb-blue);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.sideBody {
+  padding: 10px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #cdd3e2;
+  font-size: 11px;
+  color: #333;
+}
+
+.infoRow:last-child {
+  border-bottom: 0;
+}
+
+.infoKey {
+  color: var(--fb-blue);
+  font-weight: 700;
+}
+
+.infoVal {
+  color: #333;
+  line-height: 1.45;
+}
+
+/* --- Main column --- */
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  background: var(--fb-blue);
+  color: #fff;
+}
+
+.panelTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.panelMeta {
+  font-size: 10px;
+  color: #cdd6ea;
+}
+
+/* -----------------------------------------------------------------------------
+   5. PINNED PEOPLE — vertical stack of three blocks
+   -------------------------------------------------------------------------- */
+.pinnedList {
+  display: flex;
+  flex-direction: column;
+}
+
+.pinnedRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--fb-blue-pale);
+  background: #fff;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pinnedRow:last-child {
+  border-bottom: 0;
+}
+
+.pinnedRow:hover {
+  background: #f5f7fc;
+}
+
+.pinnedPhoto {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27px;
+  color: #fff;
+  border: 1px solid var(--hair);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.12);
+}
+
+.pinnedInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.pinnedName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fb-blue);
+}
+
+.pinnedRole {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #47506a;
+  line-height: 1.45;
+}
+
+.pinnedTag {
+  align-self: center;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--fb-blue-mid);
+  border: 1px solid var(--fb-blue);
+  white-space: nowrap;
+}
+
+.pinNum {
+  font-size: 10px;
+  color: var(--fb-blue-soft);
+  font-weight: 700;
+  width: 20px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+/* -----------------------------------------------------------------------------
+   6. SOCIAL GRID — precise 2x2 grid with centered caption tags
+   -------------------------------------------------------------------------- */
+.socialGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  padding: 16px;
+}
+
+.gridCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.gridCell:hover .gridSquare {
+  filter: brightness(1.06);
+}
+.gridCell:hover .gridName {
+  color: var(--fb-blue);
+  text-decoration: underline;
+}
+
+.gridSquare {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 46px;
+  color: #fff;
+  border: 1px solid var(--hair);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.12);
+}
+
+.gridSlot {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.gridCaption {
+  margin-top: 8px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: #21395f;
+  background: var(--fb-blue-pale);
+  border: 1px solid var(--fb-blue-soft);
+}
+
+.gridName {
+  margin-top: 5px;
+  font-size: 10px;
+  text-align: center;
+  color: #6a7186;
+}
+
+/* -----------------------------------------------------------------------------
+   7. IE6 STATUS BAR
+   -------------------------------------------------------------------------- */
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 22px;
+  padding: 0 4px;
+  background: var(--luna);
+  border-top: 1px solid #ffffff;
+}
+
+.statusLeft,
+.statusZone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+  padding: 0 7px;
+  font-size: 11px;
+  color: #333;
+  border: 1px solid #b7b3a2;
+  box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+.statusLeft {
+  flex: 1;
+  margin-right: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.statusProgress {
+  position: absolute;
+  inset: 1px;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  padding: 0 3px;
+  background: repeating-linear-gradient(90deg, #2f6b2f 0 6px, transparent 6px 9px);
+  background-size: 0% 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.85s linear;
+}
+
+.statusProgressActive {
+  background-size: 100% 100%;
+}
+
+.statusZone {
+  flex: 0 0 auto;
+}
+
+/* -----------------------------------------------------------------------------
+   8. EXTRA IE6 CHROME — icon-only buttons, throbber, Links bar, status zone
+   -------------------------------------------------------------------------- */
+.tbIconOnly {
+  gap: 0;
+  padding: 0 6px;
+}
+
+.tbDisabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+/* Animated throbber (waving-flag/spinning "e") pinned to the toolbar's right */
+.throbber {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-left: 1px solid #b7b3a2;
+  box-shadow: -1px 0 0 #ffffff;
+}
+
+.throbberSpin {
+  animation: y2kThrob 0.7s linear infinite;
+}
+
+@keyframes y2kThrob {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Default IE6 "Links" bar */
+.linksBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 3px;
+  background: var(--luna);
+  border-bottom: 1px solid #7f9db9;
+  font-size: 11px;
+  color: #4a4a4a;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.linksBarLabel {
+  color: #4a4a4a;
+  margin-right: 2px;
+}
+
+.linksBarItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  color: #21395f;
+  border: 1px solid transparent;
+  cursor: default;
+}
+
+.linksBarItem:hover {
+  border-color: #b6bdd2;
+  background: #dfe3ee;
+}
+
+.statusRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statusPad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid #b7b3a2;
+  box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+/* -----------------------------------------------------------------------------
+   9. THEFACEBOOK TOP BAR EXTRAS + TAB STRIP
+   -------------------------------------------------------------------------- */
+.fbNavRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fbOnline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #cdeccd;
+}
+
+.onlineDot {
+  width: 8px;
+  height: 8px;
+  background: #39d353;
+  border: 1px solid #1f8a3b;
+  box-shadow: 0 0 4px #39d353;
+  animation: y2kBlink 1.4s steps(1) infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes y2kBlink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.fbUser {
+  font-size: 11px;
+  color: #fff;
+}
+
+.fbLogout {
+  font-size: 11px;
+  color: #cdd6ea;
+  cursor: pointer;
+}
+
+.fbLogout:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.fbTabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 4px 10px 0;
+  background: var(--fb-blue-mid);
+  border-bottom: 2px solid var(--fb-blue);
+}
+
+.fbTab {
+  padding: 5px 14px;
+  border: 1px solid #3f5488;
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background: #56709f;
+  color: #eef1f8;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fbTab:hover {
+  background: #6a83b0;
+  color: #fff;
+}
+
+.fbTabActive {
+  background: #fff;
+  color: var(--fb-blue);
+  font-weight: 700;
+  position: relative;
+  top: 1px;
+}
+
+/* -----------------------------------------------------------------------------
+   10. LEFT RAIL — mini profile, quick links, period ad box
+   -------------------------------------------------------------------------- */
+.miniProfile {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  border-bottom: 1px solid var(--fb-blue-pale);
+}
+
+.miniAvatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #fff;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  border: 1px solid var(--hair);
+}
+
+.miniName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fb-blue);
+}
+
+.miniStatus {
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #5a8f5a;
+}
+
+.quickLinks {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 1px;
+}
+
+.quickLink {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  color: #21395f;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quickLink:hover {
+  border-color: var(--fb-blue-soft);
+  background: var(--fb-blue-pale);
+}
+
+.quickLinkActive {
+  background: var(--fb-blue-pale);
+  border-color: var(--fb-blue-soft);
+  font-weight: 700;
+}
+
+.quickDisabled {
+  color: #9aa0b0;
+  cursor: default;
+}
+.quickDisabled:hover {
+  border-color: transparent;
+  background: transparent;
+}
+
+.adBox {
+  margin: 8px;
+  border: 1px solid var(--fb-blue-soft);
+  background: linear-gradient(180deg, #fffef4, #eef1f8);
+}
+
+.adTitle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  background: repeating-linear-gradient(45deg, #ffe28a 0 6px, #ffd45e 6px 12px);
+  border-bottom: 1px solid #c9a12a;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b4a10;
+}
+
+.adText {
+  padding: 8px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #4a4a4a;
+}
+
+.hitCounter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 8px 8px;
+  padding: 4px 6px;
+  background: #101010;
+  border: 1px solid #000;
+  font-size: 9px;
+  color: #6a7186;
+}
+
+.hitDigits {
+  font-family: inherit;
+  letter-spacing: 3px;
+  color: #39d353;
+  background: #000;
+  padding: 1px 4px;
+  border: 1px solid #1f8a3b;
+}
+
+/* -----------------------------------------------------------------------------
+   11. ACCOUNT-INFO GRID (shared by profile + account + member detail)
+   -------------------------------------------------------------------------- */
+.acctGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  padding: 11px 12px;
+  font-size: 11px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.acctKey {
+  color: var(--fb-blue);
+  font-weight: 700;
+}
+
+.badge {
+  cursor: pointer;
+}
+
+/* -----------------------------------------------------------------------------
+   12. MEMBERS DIRECTORY
+   -------------------------------------------------------------------------- */
+.dirHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--fb-blue);
+  color: #fff;
+  border: 1px solid var(--fb-blue);
+}
+
+.dirCount {
+  font-size: 10px;
+  color: #cdd6ea;
+}
+
+.dirFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dirFilterTab {
+  padding: 4px 9px;
+  border: 1px solid var(--fb-blue-soft);
+  background: #fff;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: #21395f;
+  cursor: pointer;
+}
+
+.dirFilterTab:hover {
+  background: var(--fb-blue-pale);
+}
+
+.dirFilterActive {
+  background: var(--fb-blue);
+  border-color: var(--fb-blue);
+  color: #fff;
+}
+
+.memberGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.memberCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 10px 10px;
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+
+.memberCard:hover {
+  border-color: var(--fb-blue);
+  box-shadow: 2px 2px 0 rgba(59, 89, 152, 0.25);
+}
+
+.memberCardPhoto {
+  width: 74px;
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  color: #fff;
+  border: 1px solid var(--hair);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.12);
+}
+
+.memberCardBody {
+  min-width: 0;
+  width: 100%;
+}
+
+.memberCardName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fb-blue);
+}
+
+.memberCardRole {
+  margin-top: 2px;
+  font-size: 10px;
+  color: #47506a;
+  line-height: 1.4;
+}
+
+.memberCardTeam {
+  margin-top: 3px;
+  font-size: 9px;
+  color: #8b93a8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.memberCardView {
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--fb-blue-mid);
+}
+
+.memberCard:hover .memberCardView {
+  color: var(--fb-blue);
+  text-decoration: underline;
+}
+
+/* -----------------------------------------------------------------------------
+   13. MEMBER DETAIL (profile.php?id=)
+   -------------------------------------------------------------------------- */
+.detailBack {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px solid var(--fb-blue-soft);
+  background: var(--fb-blue-pale);
+  font-family: inherit;
+  font-size: 11px;
+  color: #21395f;
+  cursor: pointer;
+}
+
+.detailBack:hover {
+  background: #cfd8ec;
+}
+
+.detailTop {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.detailLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailAvatar {
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  color: #fff;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px var(--hair), 3px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+.detailActions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--fb-blue-soft);
+  background: linear-gradient(180deg, #ffffff, #eef1f8);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: #21395f;
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  background: linear-gradient(180deg, #ffffff, #dfe3ee);
+}
+
+.actionPrimary {
+  background: var(--fb-blue);
+  border-color: var(--fb-blue);
+  color: #fff;
+}
+.actionPrimary:hover {
+  background: #34497e;
+}
+
+.socialRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.socialLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid var(--fb-blue-soft);
+  background: #fff;
+  font-size: 10px;
+  color: #21395f;
+  cursor: pointer;
+}
+
+.socialLink:hover {
+  background: var(--fb-blue-pale);
+  text-decoration: underline;
+}
+
+.detailRight {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.detailName {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fb-blue);
+  line-height: 1.1;
+}
+
+.detailRole {
+  font-size: 12px;
+  color: #47506a;
+}
+
+.detailMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.teamBadge {
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--fb-blue-mid);
+  border: 1px solid var(--fb-blue);
+}
+
+.detailMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #6a7186;
+}
+
+.dPanel {
+  border: 1px solid var(--fb-blue-soft);
+  background: #fff;
+}
+
+.dPanelHead {
+  padding: 4px 10px;
+  background: var(--fb-blue-pale);
+  border-bottom: 1px solid var(--fb-blue-soft);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fb-blue);
+  letter-spacing: 0.3px;
+}
+
+.dPanelBody {
+  padding: 10px;
+  font-size: 12px;
+  color: #333;
+  line-height: 1.55;
+}
+
+.techChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.techChip {
+  padding: 3px 8px;
+  font-size: 10px;
+  color: #21395f;
+  background: var(--fb-blue-pale);
+  border: 1px solid var(--fb-blue-soft);
+}
+
+.quoteBox {
+  position: relative;
+  padding: 12px 14px 12px 34px;
+  background: var(--fb-blue-pale);
+  border: 1px solid var(--fb-blue-soft);
+  border-left: 3px solid var(--fb-blue);
+  font-size: 12px;
+  font-style: italic;
+  color: #2b3a63;
+  line-height: 1.5;
+}
+
+.quoteMark {
+  position: absolute;
+  left: 10px;
+  top: 4px;
+  font-size: 30px;
+  color: var(--fb-blue-soft);
+  font-style: normal;
+}
+
+.teammates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+}
+
+.teammateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px 4px 4px;
+  border: 1px solid var(--fb-blue-soft);
+  background: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--fb-blue);
+  cursor: pointer;
+}
+
+.teammateChip:hover {
+  background: var(--fb-blue-pale);
+  text-decoration: underline;
+}
+
+.teammateAvatar {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #fff;
+  border: 1px solid var(--hair);
+  flex: 0 0 auto;
+}
+
+/* -----------------------------------------------------------------------------
+   14. GROUPS
+   -------------------------------------------------------------------------- */
+.groupList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.groupItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
+}
+
+.groupIcon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fb-blue-pale);
+  border: 1px solid var(--fb-blue-soft);
+}
+
+.groupInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.groupName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fb-blue);
+}
+
+.groupCount {
+  margin-top: 2px;
+  font-size: 10px;
+  color: #6a7186;
+}
+
+.groupAvatars {
+  display: flex;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.groupAvatar {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #fff;
+  border: 1px solid var(--hair);
+}
+
+.groupView {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 5px 10px;
+  border: 1px solid var(--fb-blue-soft);
+  background: linear-gradient(180deg, #ffffff, #eef1f8);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: #21395f;
+  cursor: pointer;
+}
+
+.groupView:hover {
+  background: var(--fb-blue-pale);
+}
+
+/* -----------------------------------------------------------------------------
+   15. THE WALL
+   -------------------------------------------------------------------------- */
+.wallCompose {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
+}
+
+.wallComposeAvatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #fff;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  border: 1px solid var(--hair);
+}
+
+.wallComposeInput {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--fb-blue-soft);
+  background: #f6f7fb;
+  font-family: inherit;
+  font-size: 11px;
+  color: #8b93a8;
+}
+
+.wallList {
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
+}
+
+.wallPost {
+  display: flex;
+  gap: 10px;
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--fb-blue-pale);
+}
+
+.wallPost:last-child {
+  border-bottom: 0;
+}
+
+.wallAvatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #fff;
+  border: 1px solid var(--hair);
+  cursor: pointer;
+}
+
+.wallPostBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.wallPostHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wallPostName {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fb-blue);
+  cursor: pointer;
+}
+
+.wallPostName:hover {
+  text-decoration: underline;
+}
+
+.wallPostTime {
+  font-size: 10px;
+  color: #8b93a8;
+  white-space: nowrap;
+}
+
+.wallPostText {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.wallPostActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--fb-blue-mid);
+}
+
+/* -----------------------------------------------------------------------------
+   16. ACCOUNT VIEW + FOOTER
+   -------------------------------------------------------------------------- */
+.acctCheckRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: #333;
+}
+
+.acctNote {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 11px;
+  background: var(--fb-blue-pale);
+  border: 1px solid var(--fb-blue-soft);
+  font-size: 11px;
+  color: #2b3a63;
+}
+
+.fbFooter {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fb-blue-soft);
+  text-align: center;
+}
+
+.fbFooterProd {
+  font-size: 11px;
+  font-style: italic;
+  color: #6a7186;
+}
+
+.fbFooterLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--fb-blue-mid);
+}
+
+/* New-element responsive tweaks */
+@media (max-width: 720px) {
+  .detailTop {
+    grid-template-columns: 1fr;
+  }
+  .acctGrid {
+    grid-template-columns: 1fr;
+  }
+  .detailAvatar {
+    width: 120px;
+    height: 120px;
+    font-size: 52px;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Responsive — the retro window scales down gracefully on narrow screens
+   -------------------------------------------------------------------------- */
+@media (max-width: 720px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+  .bannerTitle {
+    font-size: 22px;
+  }
+  .fbSearch {
+    display: none;
+  }
+  .titleText {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 520px) {
+  .socialGrid {
+    grid-template-columns: 1fr;
+  }
+  .tbLabel {
+    display: none;
+  }
+  .bannerText {
+    right: 12px;
+  }
+}
