@@ -1,0 +1,8 @@
+cat <<EOT > .claudeignore
+node_modules/
+.next/
+dist/
+*.glb
+*.gltf
+package-lock.json
+EOT
