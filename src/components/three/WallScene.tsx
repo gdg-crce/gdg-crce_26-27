@@ -86,6 +86,70 @@ function InteractiveCameraRig({ progressRef, snapToTarget }: { progressRef: Reac
 }
 
 /* ═══════════════════════════════════════════════════
+   Flickering Cyan Neon Tube (Aesthetic Top Light)
+   ═══════════════════════════════════════════════════ */
+
+function CyanNeonTube3D() {
+  const lightGroupRef = useRef<THREE.Group>(null);
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const flicker = Math.random() > 0.93 ? 0.2 : 1.0;
+    const pulse = 0.9 + Math.sin(t * 2.5) * 0.1;
+    const intensity = flicker * pulse;
+
+    if (matRef.current) matRef.current.emissiveIntensity = 2.5 * intensity;
+    if (lightGroupRef.current) {
+      lightGroupRef.current.children.forEach((child) => {
+        if ((child as THREE.PointLight).isLight) {
+          (child as THREE.PointLight).intensity = 3.0 * intensity;
+        }
+      });
+    }
+  });
+
+  return (
+    <group position={[0, 7.6, 0.22]}>
+      {/* Long Neon Tube lying horizontally */}
+      <mesh rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.03, 0.03, 50, 8]} />
+        <meshStandardMaterial
+          ref={matRef}
+          color="#A0FFFF"
+          emissive="#00FFFF"
+          emissiveIntensity={2.5}
+          roughness={0.1}
+          metalness={0.1}
+        />
+      </mesh>
+      
+      {/* Tube Mounting Brackets */}
+      {[-24, -18, -12, -6, 0, 6, 12, 18, 24].map((x, i) => (
+        <mesh key={i} position={[x, 0.05, -0.06]} castShadow receiveShadow>
+          <boxGeometry args={[0.2, 0.12, 0.12]} />
+          <meshStandardMaterial color="#111" roughness={0.9} />
+        </mesh>
+      ))}
+
+      {/* Point lights distributed along the tube for an even neon glow on the wall */}
+      <group ref={lightGroupRef}>
+        {[-20, -10, 0, 10, 20].map((x, i) => (
+          <pointLight
+            key={i}
+            position={[x, -0.2, 0.8]}
+            color="#00FFFF"
+            intensity={3}
+            distance={15}
+            decay={2}
+          />
+        ))}
+      </group>
+    </group>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
    Flickering 3D Neon Alley Sign ("MTV // ON AIR")
    ═══════════════════════════════════════════════════ */
 
@@ -981,6 +1045,18 @@ function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<num
         shadow-bias={-0.0008}
       />
 
+      {/* Dim sodium lamps for neon light effect with little brightness */}
+      {[-24, -13, -2, 9, 21].map((x, i) => (
+        <pointLight
+          key={`lamp-${i}`}
+          position={[x, 5.5, 2]}
+          color="#FFD890"
+          intensity={3}
+          distance={18}
+          decay={2}
+        />
+      ))}
+
       {/* Camera rig. The cursor-tracked flashlight that used to live here is
           gone: a torch pool chasing the mouse is the opposite of "naturally
           photographed", and it was the brightest thing in a frame that is
@@ -991,6 +1067,7 @@ function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<num
       {/* Architectural Wall, Decals & Street Depth */}
       <WeatheredUrbanStreetWall />
       <WallDecalsAndGrime />
+      <CyanNeonTube3D />
       <NeonAlleySign3D />
       <AlleyIndustrialDetails />
       <AlleyDepthLayers />

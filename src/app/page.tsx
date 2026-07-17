@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Preloader from '@/components/sections/Preloader';
 import HeroVideoSection from '@/components/sections/hero-video/HeroVideoSection';
 import EventsAndCouncilSection from '@/components/sections/EventsAndCouncilSection';
+import AboutSection from '@/components/sections/about/AboutSection';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,7 @@ export default function Home() {
       )}
       <main className="relative z-0">
         <HeroVideoSection startPlaying={videoStarted} />
+        <AboutSection />
         <EventsAndCouncilSection />
       </main>
     </div>

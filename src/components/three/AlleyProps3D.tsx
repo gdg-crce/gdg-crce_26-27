@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    1. WALL DECALS & ARCHITECTURAL WEATHERING (Clean, subtle, NO spiders)
@@ -453,6 +454,19 @@ export function RightSideAlleyDetail() {
     []
   );
 
+  const lightRef = useRef<THREE.PointLight>(null);
+  const bulbMatRef = useRef<THREE.MeshStandardMaterial>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const flicker = Math.random() > 0.92 ? 0.3 : 1.0;
+    const pulse = 0.85 + Math.sin(t * 8.0) * 0.15;
+    const intensity = flicker * pulse;
+
+    if (lightRef.current) lightRef.current.intensity = 15 * intensity;
+    if (bulbMatRef.current) bulbMatRef.current.emissiveIntensity = 2.0 * intensity;
+  });
+
   return (
     <group position={[15.5, 5.2, 0.4]}>
       {/* Structural C-Channel Outer Steel Perimeter Frame */}
@@ -513,19 +527,15 @@ export function RightSideAlleyDetail() {
         </mesh>
       ))}
 
-      {/* Vintage Industrial Caged Light Fixture underneath.
-          It is daytime, so the lamp is OFF — a street fixture burning at noon
-          is a tell, and its #FF9A40 pointLight at intensity 25 was washing this
-          whole stretch of wall amber while the rest of the alley sat neutral.
-          The fixture stays as a prop; only the light goes. */}
+      {/* Vintage Industrial Caged Light Fixture underneath */}
       <mesh position={[0, -0.16, 0.1]} material={ironMat} castShadow receiveShadow>
         <cylinderGeometry args={[0.12, 0.15, 0.14, 12]} />
       </mesh>
       <mesh position={[0, -0.22, 0.1]}>
         <sphereGeometry args={[0.07, 12, 12]} />
-        {/* Cold bulb: dirty glass, no emission. */}
-        <meshStandardMaterial color="#9C9788" roughness={0.35} metalness={0} />
+        <meshStandardMaterial ref={bulbMatRef} color="#FF9A40" emissive="#FF9A40" emissiveIntensity={2.0} roughness={0.2} metalness={0.1} />
       </mesh>
+      <pointLight ref={lightRef} position={[0, -0.4, 0.1]} color="#FF9A40" intensity={15} distance={15} decay={2} castShadow />
     </group>
   );
 }

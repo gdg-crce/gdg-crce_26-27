@@ -25,10 +25,10 @@ No test suite is configured.
 
 ## Architecture Overview
 
-This is a **single-page cinematic experience** for GDG CRCE, structured as a linear three-act sequence:
+This is a **single-page cinematic experience** for GDG CRCE, structured as a linear four-act sequence:
 
 ```
-Preloader → HeroVideoSection → EventsAndCouncilSection
+Preloader → HeroVideoSection → AboutSection → EventsAndCouncilSection
 ```
 
 The page (`src/app/page.tsx`) manages two state flags: `loading` and `videoStarted`. The Preloader mounts on top of the main content, calls `onStartTransition` to wake the hero video early (zero-gap handoff), then calls `onComplete` to unmount itself.

@@ -12,6 +12,10 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [fadeInDone, setFadeInDone] = useState(false);
+  // The intro plays ONCE and holds on the Samvad frame — we then reveal the
+  // crisp Samvad photo so the About section can zoom into its red REC dot.
+  const [videoEnded, setVideoEnded] = useState(false);
+  const endedRef = useRef(false);
 
   // Sync video start explicitly when startPlaying turns true (when VHS tape transition completes)
   useEffect(() => {
@@ -53,7 +57,8 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
           if (!video) return;
 
           if (entry.isIntersecting) {
-            if (startPlaying) {
+            // Never replay once it has ended — it holds on the Samvad frame.
+            if (startPlaying && !endedRef.current) {
               const playPromise = video.play();
               if (playPromise !== undefined) {
                 playPromise.catch(() => {});
@@ -85,12 +90,12 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       {/* Dark aesthetic background while video initializes */}
       <div className="absolute inset-0 bg-[#080706] z-0" />
 
-      {/* Full screen optimized storytelling video with soft fade-in */}
+      {/* Full screen optimized storytelling video with soft fade-in.
+          No loop — it plays once and freezes on the closing Samvad frame. */}
       <video
         ref={videoRef}
         src="/videos/intro.mp4"
         preload="auto"
-        loop
         muted
         playsInline
         controls={false}
@@ -98,9 +103,49 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
         disableRemotePlayback
         onLoadedData={() => setIsLoaded(true)}
         onCanPlay={() => setIsLoaded(true)}
+        onEnded={() => {
+          endedRef.current = true;
+          const video = videoRef.current;
+          if (video) {
+            video.pause();
+            // Hold the last frame under the photo in case the browser blanks it.
+            try {
+              video.currentTime = Math.max(0, (video.duration || 0) - 0.05);
+            } catch {}
+          }
+          setVideoEnded(true);
+
+          // Hand off to the zoom section. Once the crisp Samvad photo has faded
+          // in, jump to #about so the user's very next scroll ZOOMS the frame
+          // instead of scrolling it away. The About section opens on the exact
+          // same photo at 1× scale, so this jump is visually invisible — it just
+          // removes the dead viewport of plain scrolling between the two.
+          window.setTimeout(() => {
+            const about = document.getElementById('about');
+            if (about && window.scrollY < window.innerHeight * 0.5) {
+              about.scrollIntoView({ behavior: 'auto', block: 'start' });
+            }
+          }, 720);
+        }}
         className={`absolute inset-0 w-full h-full object-cover z-10 transform-gpu will-change-transform transition-opacity duration-1000 ease-in-out ${
           isLoaded && (fadeInDone || startPlaying) ? 'opacity-100' : 'opacity-0'
         }`}
+      />
+
+      {/* Crisp Samvad frame revealed as the intro ends. This is the exact frame
+          the About section then zooms into — same asset, seamless handoff. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/samvad-frame.jpg"
+        alt="GDG CRCE — Samvad, 1987"
+        draggable={false}
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+        className={`pointer-events-none absolute inset-0 w-full h-full object-cover z-[15] transition-opacity duration-700 ease-in-out ${
+          videoEnded ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ objectPosition: 'center 22%' }}
       />
 
       {/* Subtle bottom vignette gradient blending smoothly into the next section */}
