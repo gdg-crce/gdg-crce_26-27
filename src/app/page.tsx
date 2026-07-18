@@ -5,6 +5,7 @@ import Preloader from '@/components/sections/Preloader';
 import HeroVideoSection from '@/components/sections/hero-video/HeroVideoSection';
 import EventsSection from '@/components/sections/events/EventsSection';
 import CouncilSection from '@/components/sections/council';
+import ContactSection from '@/components/sections/ContactSection';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,7 @@ export default function Home() {
         <HeroVideoSection startPlaying={videoStarted} />
         <EventsSection />
         <CouncilSection />
+        <ContactSection />
       </main>
     </div>
   );
