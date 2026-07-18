@@ -1,5 +1,5 @@
 import {
-  Fraunces,
+  Shrikhand,
   Plus_Jakarta_Sans,
   Righteous,
   Space_Grotesk,
@@ -13,8 +13,9 @@ import {
 } from 'next/font/google';
 
 // 1970s Typography: Groovy Serif + Warm Sans
-export const fraunces = Fraunces({
+export const shrikhand = Shrikhand({
   subsets: ['latin'],
+  weight: '400',
   display: 'swap',
   variable: '--font-70s-display',
 });
@@ -94,7 +95,7 @@ export const ibmPlexMono = IBM_Plex_Mono({
 // Map of era fonts to make it easy to apply dynamically based on current era
 export const eraFonts = {
   '1970s': {
-    display: fraunces.className,
+    display: shrikhand.className,
     body: jakarta.className,
   },
   '1980s': {

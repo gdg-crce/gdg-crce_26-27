@@ -39,6 +39,29 @@ const ZOOM_MAX = 6; // how far the frame pushes into the red dot before the bloo
  * so the camera + spin stay off the React render path — same pattern as
  * EventsAndCouncilSection's progressRef. The ball rotates ONLY on scroll.
  */
+const ABOUT_TEXTS = [
+  {
+    kicker: 'GDG CRCE // About',
+    heading: <>What continues,<br /><em>becomes greater.</em></>,
+    body: 'Google Developer Group CRCE is a student-led community of builders, designers and dreamers. Every council inherits the work, the culture and the momentum of the one before it — and adds its own signal to the mix. We don’t restart each year. We continue.',
+  },
+  {
+    kicker: 'GDG CRCE // Legacy',
+    heading: <>From analog roots,<br /><em>to digital futures.</em></>,
+    body: 'We honor the builders of the past who laid the foundation. Their momentum fuels our drive to push the boundaries of what’s possible. The technology changes, but the spirit of creation remains constant.',
+  },
+  {
+    kicker: 'GDG CRCE // Community',
+    heading: <>A collective of<br /><em>passionate creators.</em></>,
+    body: 'More than just code, we are a network of peers supporting each other. Through workshops, hackathons, and late-night debugging sessions, we build both software and lifelong connections.',
+  },
+  {
+    kicker: 'GDG CRCE // Future',
+    heading: <>The next chapter,<br /><em>written by you.</em></>,
+    body: 'Whether you’re writing your first line of code or deploying complex systems, there’s a place for you here. Step in, add your unique voice to the mix, and make your mark on the legacy.',
+  },
+];
+
 export default function AboutSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,7 +70,7 @@ export default function AboutSection() {
   const canvasWrapRef = useRef<HTMLDivElement>(null);
   const bloomRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
   const revealRef = useRef<number>(0);
   const rotationRef = useRef<number>(0);
 
@@ -78,7 +101,7 @@ export default function AboutSection() {
       trigger: sectionRef.current,
       pin: containerRef.current,
       start: 'top top',
-      end: '+=5600',
+      end: '+=12000', // Increased from 9000 for a slower, more cinematic scroll duration
       scrub: 0.7,
       onUpdate: (self) => {
         const p = self.progress;
@@ -87,56 +110,72 @@ export default function AboutSection() {
         // are both anchored to the red dot ALREADY in the photo (--dot-x/--dot-y).
         // We never draw a dot of our own.
         if (containerRef.current) {
-          containerRef.current.style.setProperty('--rec', ramp(0.06, 0.5, p).toFixed(3));
+          containerRef.current.style.setProperty('--rec', ramp(0.02, 0.12, p).toFixed(3));
         }
 
-        // Scroll rushes the frame INTO that red dot (transform-origin sits on it
-        // in CSS). The whole frame then fades under the bloom.
+        // Scroll rushes the frame INTO that red dot
         if (photoWrapRef.current) {
-          const scale = 1 + easeIn(0, 0.5, p) * (ZOOM_MAX - 1);
+          const scale = 1 + easeIn(0, 0.12, p) * (ZOOM_MAX - 1);
           photoWrapRef.current.style.transform = `scale(${scale.toFixed(3)})`;
-          photoWrapRef.current.style.opacity = (1 - ramp(0.55, 0.68, p)).toFixed(3);
+          photoWrapRef.current.style.opacity = (1 - ramp(0.12, 0.16, p)).toFixed(3);
         }
         if (overlaysRef.current) {
-          overlaysRef.current.style.opacity = (1 - ramp(0.55, 0.68, p)).toFixed(3);
+          overlaysRef.current.style.opacity = (1 - ramp(0.12, 0.16, p)).toFixed(3);
         }
 
-        // Hard white peak around 0.60 — the actual mask over the swap.
+        // Hard white peak around 0.14
         if (flashRef.current) {
-          const f = p < 0.6 ? ramp(0.5, 0.6, p) : 1 - ramp(0.6, 0.72, p);
+          const f = p < 0.14 ? ramp(0.10, 0.14, p) : 1 - ramp(0.14, 0.20, p);
           flashRef.current.style.opacity = clamp01(f).toFixed(3);
         }
 
-        // Warm radial bloom rises with the flash, then lingers and cools out,
-        // easing the eye from over-exposed white into the amber nightclub.
+        // Warm radial bloom rises with the flash, then lingers and cools out
         if (bloomRef.current) {
-          const b = p < 0.62 ? ramp(0.48, 0.62, p) : 1 - ramp(0.62, 0.86, p);
+          const b = p < 0.15 ? ramp(0.10, 0.15, p) : 1 - ramp(0.15, 0.30, p);
           bloomRef.current.style.opacity = (clamp01(b) * 0.95).toFixed(3);
         }
 
-        // 3D canvas fades in behind the bloom.
+        // 3D canvas fades in behind the bloom early on
         if (canvasWrapRef.current) {
-          canvasWrapRef.current.style.opacity = ramp(0.56, 0.72, p).toFixed(3);
+          canvasWrapRef.current.style.opacity = ramp(0.13, 0.20, p).toFixed(3);
         }
 
         // Hand settle + scroll-rotation to Three.js.
-        revealRef.current = ramp(0.6, 0.97, p);
-        rotationRef.current = clamp01((p - 0.5) / 0.5); // linear ¼→full over the reveal
+        // Settle completes by 0.35, rotation spans the whole scroll.
+        revealRef.current = ramp(0.14, 0.35, p);
+        rotationRef.current = clamp01((p - 0.10) / 0.90);
 
-        // About Us copy enters from right, stays, and exits to left.
-        if (contentRef.current) {
-          // Cinematic entrance: starts later (0.78) and takes a longer scroll duration (0.12)
-          const enter = ramp(0.78, 0.90, p);
-          const exit = ramp(0.95, 1.0, p);
-          const opacity = enter - exit;
+        // Sequential About Us copy: enters from right, WAITS, and exits to left.
+        const textStartP = 0.35; // Starts precisely when the disco ball finishes settling
+        const textEndP = 1.0;
+        const range = textEndP - textStartP;
+        const segment = range / ABOUT_TEXTS.length;
+
+        ABOUT_TEXTS.forEach((_, i) => {
+          const el = contentRefs.current[i];
+          if (!el) return;
+
+          const start = textStartP + i * segment;
+          const end = start + segment;
           
-          // Increased to 40vw for a wider, grander sweeping motion
-          const translateX = (1 - enter) * 40 - exit * 40;
+          // Allocate 30% of this text's duration to entering, 30% to exiting for a slower, smoother cinematic fade
+          // The middle 40% is a wait (plateau) where the user reads
+          const fadeLen = segment * 0.30;
           
-          contentRef.current.style.opacity = Math.max(0, opacity).toFixed(3);
-          contentRef.current.style.transform = `translateX(${translateX.toFixed(2)}vw)`;
-          contentRef.current.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
-        }
+          const enterProgress = ramp(start, start + fadeLen, p);
+          const exitProgress = ramp(end - fadeLen, end, p);
+          
+          const opacity = enterProgress - exitProgress;
+          
+          const translateX = (1 - enterProgress) * 40 - exitProgress * 40;
+          
+          el.style.opacity = Math.max(0, Math.min(1, opacity)).toFixed(3);
+          el.style.transform = `translateX(${translateX.toFixed(2)}vw)`;
+          el.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
+          
+          // Sync text shimmer with disco ball rotation
+          el.style.setProperty('--shimmer-pos', `${(rotationRef.current * 200).toFixed(1)}%`);
+        });
       },
     });
 
@@ -186,21 +225,20 @@ export default function AboutSection() {
         <div ref={bloomRef} className="samvad-bloom" />
         <div ref={flashRef} className="samvad-flash" />
 
-        {/* About Us copy */}
-        <div ref={contentRef} className="about-content">
-          <div className="kicker">GDG CRCE // About</div>
-          <h2>
-            What continues,
-            <br />
-            <em>becomes greater.</em>
-          </h2>
-          <p>
-            Google Developer Group CRCE is a student-led community of builders, designers and
-            dreamers. Every council inherits the work, the culture and the momentum of the one
-            before it — and adds its own signal to the mix. We don&rsquo;t restart each year. We
-            continue.
-          </p>
-        </div>
+        {/* Sequential About Us copy */}
+        {ABOUT_TEXTS.map((content, i) => (
+          <div
+            key={i}
+            ref={(el) => {
+              contentRefs.current[i] = el;
+            }}
+            className="about-content"
+          >
+            <div className="kicker">{content.kicker}</div>
+            <h2>{content.heading}</h2>
+            <p>{content.body}</p>
+          </div>
+        ))}
       </div>
     </section>
   );

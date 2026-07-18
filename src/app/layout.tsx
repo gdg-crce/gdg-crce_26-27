@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import {
-  fraunces,
+  shrikhand,
   jakarta,
   righteous,
   spaceGrotesk,
@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${jakarta.variable} ${righteous.variable} ${spaceGrotesk.variable} ${specialElite.variable} ${shareTechMono.variable} ${orbitron.variable} ${outfit.variable} ${ibmPlexMono.variable} h-full scroll-smooth antialiased`}
+      className={`${shrikhand.variable} ${jakarta.variable} ${righteous.variable} ${spaceGrotesk.variable} ${specialElite.variable} ${shareTechMono.variable} ${orbitron.variable} ${outfit.variable} ${ibmPlexMono.variable} h-full scroll-smooth antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#23252C] selection:bg-red-800 selection:text-white">
         {children}
