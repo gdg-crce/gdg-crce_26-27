@@ -32,8 +32,8 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       // 1. First trigger soft fade-in of the video container
       setFadeInDone(true);
 
-      // 2. Ensure body overflow is unlocked so user can scroll freely
-      document.body.style.overflow = '';
+      // 2. Lock body overflow so user cannot scroll during the video
+      document.body.style.overflow = 'hidden';
 
       // 3. Play video immediately so it is running directly behind the zooming VHS tape with zero gap
       try {
@@ -84,7 +84,9 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-screen overflow-hidden bg-[#080706] select-none"
+      className={`fixed inset-0 w-full h-screen overflow-hidden select-none z-[9990] transition-opacity duration-500 ${
+        videoEnded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      }`}
       aria-label="Storytelling Cinematic Intro"
     >
       {/* Dark aesthetic background while video initializes */}
@@ -115,17 +117,8 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
           }
           setVideoEnded(true);
 
-          // Hand off to the zoom section. Once the crisp Samvad photo has faded
-          // in, jump to #about so the user's very next scroll ZOOMS the frame
-          // instead of scrolling it away. The About section opens on the exact
-          // same photo at 1× scale, so this jump is visually invisible — it just
-          // removes the dead viewport of plain scrolling between the two.
-          window.setTimeout(() => {
-            const about = document.getElementById('about');
-            if (about && window.scrollY < window.innerHeight * 0.5) {
-              about.scrollIntoView({ behavior: 'auto', block: 'start' });
-            }
-          }, 720);
+          // Unlock scrolling now that the video is finished.
+          document.body.style.overflow = '';
         }}
         className={`absolute inset-0 w-full h-full object-cover z-10 transform-gpu will-change-transform transition-opacity duration-1000 ease-in-out ${
           isLoaded && (fadeInDone || startPlaying) ? 'opacity-100' : 'opacity-0'
