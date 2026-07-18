@@ -177,7 +177,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 8%;
+  bottom: 4%;
   z-index: 11;
   padding: 0 clamp(1.5rem, 6vw, 7rem);
   opacity: 0;

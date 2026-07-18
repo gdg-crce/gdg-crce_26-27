@@ -78,10 +78,10 @@ function DiscoBall({
       spinRef.current.rotation.y = (rotationRef?.current ?? 0) * Math.PI * 2.5;
     }
 
-    // Ball slides from screen-centre (origin) up-left into its resting corner.
+    // Ball slides from screen-centre (origin) up-right into its resting corner.
     if (anchorRef.current) {
       anchorRef.current.position.set(
-        THREE.MathUtils.lerp(0, -0.75, rv),
+        THREE.MathUtils.lerp(0, 0.80, rv),
         THREE.MathUtils.lerp(0, 1.35, rv),
         0
       );
@@ -138,7 +138,7 @@ function DiscoBall({
       <Sparkles
         count={40}
         scale={[9, 7, 5]}
-        position={[-0.4, 1.0, -1]}
+        position={[0.5, 1.0, -1]}
         size={2.2}
         speed={0.3}
         noise={1.2}

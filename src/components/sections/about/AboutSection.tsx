@@ -123,12 +123,19 @@ export default function AboutSection() {
         revealRef.current = ramp(0.6, 0.97, p);
         rotationRef.current = clamp01((p - 0.5) / 0.5); // linear ¼→full over the reveal
 
-        // About Us copy rises in last.
+        // About Us copy enters from right, stays, and exits to left.
         if (contentRef.current) {
-          const c = ramp(0.8, 0.98, p);
-          contentRef.current.style.opacity = c.toFixed(3);
-          contentRef.current.style.transform = `translateY(${((1 - c) * 44).toFixed(1)}px)`;
-          contentRef.current.style.pointerEvents = c > 0.5 ? 'auto' : 'none';
+          // Cinematic entrance: starts later (0.78) and takes a longer scroll duration (0.12)
+          const enter = ramp(0.78, 0.90, p);
+          const exit = ramp(0.95, 1.0, p);
+          const opacity = enter - exit;
+          
+          // Increased to 40vw for a wider, grander sweeping motion
+          const translateX = (1 - enter) * 40 - exit * 40;
+          
+          contentRef.current.style.opacity = Math.max(0, opacity).toFixed(3);
+          contentRef.current.style.transform = `translateX(${translateX.toFixed(2)}vw)`;
+          contentRef.current.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
         }
       },
     });
@@ -193,7 +200,6 @@ export default function AboutSection() {
             before it — and adds its own signal to the mix. We don&rsquo;t restart each year. We
             continue.
           </p>
-          <div className="tagline">Sunékheia — the shimmer that never stops.</div>
         </div>
       </div>
     </section>
