@@ -108,3 +108,17 @@ public/
   videos/       # intro.mp4 (pre-buffered in preloader before main sequence starts)
   logo.png      # GDG logo used as VHS play button
 ```
+### Act 4 — Contact Us (`src/components/sections/contact/ContactSection.tsx`)
+
+The final act of the single-page cinematic experience. The layout under the animation layer is entirely static—all logos, social links, and text are immediately present with no fade-ins or scroll-triggered visibility states[cite: 2]. 
+
+- **Era Mapping:** Strictly locked to the **2000s Era** layout metrics[cite: 2]. Header text ("CONTACT US") and footer branding ("What continues, becomes greater") must use `--font-00s-display` (Orbitron) with a distinctive cyan arcade/cyberpunk neon glow text-shadow effect[cite: 2].
+- **Interactive Layer:** Contains a high-performance animation layer featuring two procedurally rendered hands (built via layered vector SVGs or Canvas elements mimicking the textured Pinterest reference)[cite: 2].
+- **Scroll Tracking:** The hands' movement (gliding from the horizontal screen margins to meet at the dead-center GDG logo) must be driven strictly via a GSAP ScrollTrigger mutable `progressRef` mapping[cite: 2]. Never hook this animation to React state variables, as it will violate the 60fps performance rule[cite: 2].
+- **Hardcoded Contact Data Matrix:**
+  * GitHub Container Target: `https://github.com/CRCE-GDSC`
+  * LinkedIn Container Target: `https://www.linkedin.com/company/gdsc-crce/`
+  * Instagram Container Target: `https://www.instagram.com/gdg_crce/`
+  * Email Contact Trigger: `mailto:crcegdsc@gmail.com`
+  * Physical Location Label (Fallback text if needed): "Fr. Conceicao Rodrigues College of Engineering, Bandstand, Bandra (W) Mumbai - 400050"
+- **Layout Grid:** Features the GDG logo container as the central focus point where the fingertips meet, flanked by the clickable social nodes listed above[cite: 2]. The official email sits pinned to the bottom-left viewport, and the quote text is pinned to the bottom-right[cite: 2].
