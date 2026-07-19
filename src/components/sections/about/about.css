@@ -14,7 +14,7 @@
 .about-section {
   position: relative;
   width: 100%;
-  background: #07060a;
+  background: #0a0a0a;
 }
 
 .about-pin {
@@ -22,26 +22,103 @@
      the over-exposure glow and the bloom, so all three stay welded to the dot.
      Tune these two once the real photo is in place if the zoom/glow isn't
      landing exactly on the dot. --rec (0→1) is set from scroll. */
-  --dot-x: 34%;
-  --dot-y: 13%;
+  --dot-x: 40%;
+  --dot-y: 3%;
   --rec: 0;
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: #07060a;
+  background: #0a0a0a;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AMBIENT LIGHT RAYS (behind the ball, z-index 0)
+   Reworked per review — the old shader shafts read as "gimmicky". These are
+   soft, slow, and mostly-invisible: warm amber spokes bursting from centre,
+   with a few COOL blue/violet gels crossing on the diagonal, so the palette
+   reads warm-and-cool at once. They rotate once every 60-90s — ambient, not
+   spinning. The radial mask keeps them off the ball's centre and the frame
+   edges, so it's a glow the ball sits in, never a full-screen wash.
+   ══════════════════════════════════════════════════════════════════════════ */
+.about-rays,
+.about-rays-cool {
+  position: absolute;
+  inset: -40%;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  will-change: transform;
+  /* Soft off the ball, fading at the frame — a glow the ball sits in, never a
+     full-screen wash. Wide feather so the shafts read as SOFT light, not spikes. */
+  -webkit-mask-image: radial-gradient(closest-side, transparent 13%, #000 34%, #000 60%, transparent 95%);
+  mask-image: radial-gradient(closest-side, transparent 13%, #000 34%, #000 60%, transparent 95%);
+}
+/* Warm amber/gold light — broad, soft, feathered shafts (not thin spikes) that
+   drift slowly. Subtle: this is ambience the ball glows into, per the review. */
+.about-rays {
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(255, 200, 126, 0) 0deg,
+    rgba(255, 200, 126, 0.11) 7deg,
+    rgba(255, 176, 96, 0.05) 12deg,
+    rgba(255, 200, 126, 0) 20deg,
+    rgba(255, 200, 126, 0) 30deg
+  );
+  animation: raySpin 92s linear infinite;
+}
+/* Cool cyan/violet light, fewer & wider, drifting the other way so it softly
+   crosses the warm side (the stage-gel warm-and-cool read) without spiking. */
+.about-rays-cool {
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  background: repeating-conic-gradient(
+    from 20deg at 50% 50%,
+    rgba(120, 196, 240, 0) 0deg,
+    rgba(120, 196, 240, 0.16) 8deg,
+    rgba(150, 120, 226, 0.08) 14deg,
+    rgba(120, 196, 240, 0) 22deg,
+    rgba(120, 196, 240, 0) 44deg
+  );
+  animation: raySpinRev 78s linear infinite;
+}
+/* Soft warm-cool pool centred on the ball so it rests in light, not a void. */
+.about-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    46vmax 40vmax at 50% 48%,
+    rgba(255, 182, 110, 0.11) 0%,
+    rgba(122, 98, 182, 0.05) 42%,
+    transparent 70%
+  );
+}
+@keyframes raySpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes raySpinRev {
+  to {
+    transform: rotate(-360deg);
+  }
 }
 
 /* ── 3D layer ─────────────────────────────────────────────────────────────
-   Warm-dark backdrop so that as the bloom recedes the scene cools into a
-   nightclub glow rather than a black void. */
+   Transparent so the light rays behind (z-index 0) show through around the
+   ball; the ball's own pixels occlude the ray centre, so the shafts fan out
+   from behind it. Fades in on scroll as the bloom recedes. */
 .about-canvas {
   position: absolute;
   inset: 0;
   z-index: 1;
   opacity: 0;
   will-change: opacity;
-  background: radial-gradient(120% 90% at 75% 20%, #2a160a 0%, #170c10 46%, #07060a 100%);
+  background: transparent;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -173,87 +250,106 @@
 /* ══════════════════════════════════════════════════════════════════════════
    ABOUT US COPY
    ══════════════════════════════════════════════════════════════════════════ */
+/* Perspective stage the copy orbits inside. Kept OFF .about-pin on purpose so
+   it never touches the samvad photo's own transform (the dot zoom). The cards
+   are centred; JS translates each on a 3D arc around the ball. */
+.about-copy-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  perspective: 1200px;
+  pointer-events: none;
+}
 .about-content {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 4%;
-  z-index: 11;
-  padding: 0 clamp(1.5rem, 6vw, 7rem);
+  top: 50%;
+  left: 50%;
+  width: min(86vw, 27rem);
+  transform: translate(-50%, -50%);
+  transform-style: preserve-3d;
   opacity: 0;
-  will-change: opacity, transform;
+  will-change: transform, opacity;
   color: #f0e2c8;
 }
+/* Text hugs the edge nearest the ball (left cards to their right edge, right
+   cards to their left edge) so the copy reads outward from a clean gap. */
+.about-content.left {
+  text-align: right;
+}
 .about-content .kicker {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.65rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.9rem;
   font-family: var(--font-90s-body), monospace;
   text-transform: uppercase;
-  letter-spacing: 0.4em;
-  font-size: 0.78rem;
-  color: #e0a526;
+  letter-spacing: 0.38em;
+  font-size: 0.72rem;
+  color: #cfa252;
 }
 .about-content .kicker::before {
   content: '';
-  width: 2.4rem;
+  width: 2.2rem;
   height: 1px;
-  background: #e0a526;
-}
-.about-content h2, .about-content p, .about-content h2 em {
-  color: transparent;
-  background: repeating-linear-gradient(
-    110deg,
-    var(--base-color) 0%,
-    var(--base-color) 12%,
-    #ffffff 16%,
-    var(--shimmer-warm) 18%,
-    #ffffff 20%,
-    var(--base-color) 24%,
-    var(--base-color) 40%
-  );
-  background-size: 200% 200%;
-  background-position: var(--shimmer-pos, 0%) center;
-  -webkit-background-clip: text;
-  background-clip: text;
+  background: #cfa252;
+  opacity: 0.8;
 }
 
+/* Headline — Fascinate, with a gold → cream → coral shimmer that sweeps across
+   the letters (background-position loop) so light appears to travel over them
+   in sync with the ball's glints. Toned down from the old saturated red/gold. */
 .about-content h2 {
-  --base-color: #f6e7c4;
-  --shimmer-warm: #ffda85;
-  margin: 0 0 1.2rem;
-  font-family: var(--font-70s-display), serif;
-  font-weight: 700;
-  font-size: clamp(2.2rem, 6.5vw, 5.5rem);
-  line-height: 0.98;
-  /* text-shadow still works with background-clip in webkit, adds a nice glow */
-  text-shadow: 0 2px 34px rgba(232, 165, 38, 0.25);
+  margin: 0 0 0.9rem;
+  font-family: var(--font-fascinate), var(--font-70s-display), serif;
+  font-weight: 400;
+  font-size: clamp(1.7rem, 4.2vw, 3.15rem);
+  line-height: 1.04;
+  letter-spacing: 0.005em;
+  color: transparent;
+  background: linear-gradient(
+    100deg,
+    #c9a24a 0%,
+    #e9dcbb 18%,
+    #fbf4e6 30%,
+    #f0b78c 45%,
+    #dd7550 60%,
+    #c9a24a 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 2px 16px rgba(220, 150, 96, 0.16));
+  animation: shimmerSweep 7.5s ease-in-out infinite;
 }
 .about-content h2 em {
   font-style: italic;
-  --base-color: #e8412a;
-  --shimmer-warm: #ff8c73;
 }
 .about-content p {
-  --base-color: #d8c9ad;
-  --shimmer-warm: #e8cd9c;
-  max-width: 40ch;
+  max-width: 34ch;
   margin: 0;
   font-family: var(--font-70s-body), sans-serif;
-  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  font-size: clamp(0.92rem, 1.35vw, 1.08rem);
   line-height: 1.62;
+  color: #c9bda3;
 }
-.about-content .tagline {
-  margin-top: 1.6rem;
-  font-family: var(--font-70s-display), serif;
-  font-style: italic;
-  font-size: clamp(1.05rem, 2vw, 1.6rem);
-  color: #e0a526;
+.about-content.left p {
+  margin-left: auto;
+}
+
+@keyframes shimmerSweep {
+  0% {
+    background-position: 200% 50%;
+  }
+  100% {
+    background-position: -60% 50%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .samvad-grain {
+  .samvad-grain,
+  .about-rays,
+  .about-rays-cool,
+  .about-content h2 {
     animation: none;
   }
 }

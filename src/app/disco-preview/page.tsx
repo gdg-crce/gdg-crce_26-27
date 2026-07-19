@@ -19,7 +19,7 @@ export default function DiscoPreviewPage() {
   }, []);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(120% 90% at 30% 14%, #2a160a 0%, #170c10 46%, #07060a 100%)' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a' }}>
       <DiscoBallScene revealRef={revealRef} rotationRef={rotationRef} active />
       <input
         type="range"

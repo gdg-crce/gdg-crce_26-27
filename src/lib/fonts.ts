@@ -10,6 +10,7 @@ import {
   Cormorant_Garamond,
   Inter,
   IBM_Plex_Mono,
+  Fascinate,
 } from 'next/font/google';
 
 // 1970s Typography: Groovy Serif + Warm Sans
@@ -82,6 +83,14 @@ export const inter = Inter({
   weight: ['300', '400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-editorial-body',
+});
+
+// Disco / About Us display — retro mirror-tile lettering for the disco-ball hero
+export const fascinate = Fascinate({
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-fascinate',
 });
 
 // Y2K Archive Typography: technical monospaced archive feel (IE6 / TheFacebook era)

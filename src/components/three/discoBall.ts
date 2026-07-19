@@ -29,55 +29,103 @@ function mulberry32(seed: number) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Warm nightlife environment (equirect → PMREM).
+   Nightlife environment (equirect → PMREM). This IS the sparkle: the mirror
+   plates are near-perfect reflectors, so each facet samples ONE point of this
+   dome. To read like the reference photos — a bright ball densely peppered with
+   warm+cool sparkle, not a black orb with six dim patches — the dome needs:
 
-   A dark, warm dome with a handful of bright spotlight blobs. The tiles are
-   near-mirrors, so these blobs become the crisp high-contrast reflections
-   from the reference photo; the ball rotating past them is the twinkle.
-   One cool violet accent keeps the 70s palette's aqua/purple undertone alive
-   against all the amber.
+     • MANY smallish, BRIGHT spotlights spread all around, so lots of facets
+       (whatever direction they face) land on a light → dense sparkle.
+     • A soft, dim room-glow band lifting the whole thing off pure black, so the
+       "dark" facets read as dim reflections, not dead voids.
+     • Warm (amber/gold/white) dominant, with cool (cyan/blue/violet) crossing,
+       so the palette reads warm-AND-cool like stage gels.
+     • A few tiny near-white pinpoints for the hot flashes that make it twinkle.
+
+   Higher res (1024×512) so the facet reflections stay crisp points, not smears.
+   Brightness is meant to be REAL here now — the earlier "too dark" note came
+   from starving this map. Exposure / envMapIntensity fine-tune from the scene.
    ───────────────────────────────────────────────────────────────────────── */
 export function buildNightlifeEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture {
+  const W = 1024;
+  const H = 512;
   const c = document.createElement('canvas');
-  c.width = 512;
-  c.height = 256;
+  c.width = W;
+  c.height = H;
   const ctx = c.getContext('2d')!;
 
-  // Mostly-dark warm room, so the bright sources read as GLARE, not a wash.
-  // The single over-exposed key is what puts the white hotspot on the ball;
-  // the amber/orange/red fills give the reference photo's colour variety and
-  // the cool accent stops it collapsing to one flat orange.
-  const g = ctx.createLinearGradient(0, 0, 0, 256);
-  g.addColorStop(0.0, '#0b0603'); // near-black warm
-  g.addColorStop(0.34, '#1c0f06');
-  g.addColorStop(0.5, '#2a1608'); // dim warm mid
-  g.addColorStop(0.66, '#180d05');
-  g.addColorStop(1.0, '#070402');
+  // Dim room base with a warm floor + cool ceiling — lifted well off black so
+  // away-facing facets keep a real low reflection (body), not a dead void.
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0.0, '#161a24'); // cool dim ceiling
+  g.addColorStop(0.45, '#1b1a18');
+  g.addColorStop(0.62, '#2a2013'); // warm dim mid (dance-floor bounce)
+  g.addColorStop(1.0, '#18120b'); // warm floor
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 512, 256);
+  ctx.fillRect(0, 0, W, H);
 
-  // Additive radial light sources.
-  const blob = (x: number, y: number, r: number, inner: string) => {
+  // Broad soft room-glow so the whole ball reads bright, warm-dominant. Big low
+  // blobs = the ambient bounce that lights the MANY facets between the spots.
+  const soft = (x: number, y: number, r: number, col: string, a: number) => {
+    const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, col.replace('%A%', String(a)));
+    rg.addColorStop(0.6, col.replace('%A%', String(a * 0.4)));
+    rg.addColorStop(1, col.replace('%A%', '0'));
+    ctx.fillStyle = rg;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  };
+  ctx.globalCompositeOperation = 'lighter';
+  soft(380, 250, 500, 'rgba(190,138,84,%A%)', 0.95); // warm room bounce (dominant)
+  soft(170, 300, 380, 'rgba(210,150,88,%A%)', 0.7); // warm left fill
+  soft(760, 210, 420, 'rgba(88,122,178,%A%)', 0.6); // cool room bounce (accent)
+
+  // Bright spotlights — the sparkle sources. Fuller, harder core (holds full
+  // brightness out to ~55% of the radius) so a flat facet reflecting one reads
+  // as a solid bright tile, with just a little bloom at the edge.
+  const spot = (x: number, y: number, r: number, inner: string) => {
     const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
     rg.addColorStop(0, inner);
-    rg.addColorStop(0.5, inner.replace(')', ', 0.5)').replace('rgb', 'rgba'));
+    rg.addColorStop(0.55, inner.replace(')', ', 0.85)').replace('rgb', 'rgba'));
+    rg.addColorStop(0.8, inner.replace(')', ', 0.3)').replace('rgb', 'rgba'));
     rg.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = rg;
     ctx.fillRect(x - r, y - r, r * 2, r * 2);
   };
 
-  ctx.globalCompositeOperation = 'lighter';
-  // One intense, over-exposed key light (double blob for a blown-out core) —
-  // this is the white glare that streaks across the tiles as the ball turns.
-  blob(232, 74, 94, 'rgb(255,246,224)');
-  blob(232, 72, 44, 'rgb(255,255,255)');
-  // Warm amber + orange fills.
-  blob(366, 122, 78, 'rgb(255,166,80)');
-  blob(148, 150, 86, 'rgb(232,96,26)');
-  // Deep warm red pool (the reference's red facets).
-  blob(300, 202, 66, 'rgb(198,44,20)');
-  // Cool violet accent — keeps the 70s aqua/purple undertone alive.
-  blob(74, 92, 42, 'rgb(96,72,210)');
+  // Warm-white keys spread across all longitudes + both hemispheres, so facets
+  // facing ANY direction (rim AND the camera-facing centre) land on a light and
+  // the whole ball sparkles — not just the grazing rim.
+  spot(150, 150, 80, 'rgb(255,249,236)');
+  spot(500, 180, 84, 'rgb(255,248,232)');
+  spot(860, 150, 78, 'rgb(255,247,230)');
+  spot(330, 350, 78, 'rgb(255,246,228)');
+  spot(710, 360, 80, 'rgb(255,248,232)');
+  // Gold / amber — the dominant colour, evenly distributed.
+  spot(60, 270, 60, 'rgb(255,198,124)');
+  spot(270, 210, 58, 'rgb(246,176,96)');
+  spot(420, 110, 56, 'rgb(255,190,110)');
+  spot(600, 290, 60, 'rgb(250,182,104)');
+  spot(790, 230, 58, 'rgb(255,196,120)');
+  spot(950, 320, 58, 'rgb(240,168,90)');
+  spot(400, 430, 56, 'rgb(252,184,106)');
+  spot(760, 90, 52, 'rgb(255,190,110)');
+  // Cool cyan / blue accents (fewer & a touch smaller — warm stays dominant).
+  spot(200, 410, 52, 'rgb(104,168,226)');
+  spot(560, 420, 48, 'rgb(120,196,224)');
+  spot(880, 415, 50, 'rgb(110,180,230)');
+  spot(120, 350, 46, 'rgb(96,150,220)');
+  // Violet + teal (70s aqua/purple undertone).
+  spot(340, 80, 44, 'rgb(158,116,220)');
+  spot(985, 180, 42, 'rgb(80,186,176)');
+  // Tiny near-white pinpoints — the hot flashes that twinkle as the ball turns.
+  spot(150, 150, 16, 'rgb(255,255,255)');
+  spot(500, 182, 16, 'rgb(255,255,255)');
+  spot(860, 152, 15, 'rgb(255,255,255)');
+  spot(330, 350, 15, 'rgb(255,255,255)');
+  spot(710, 360, 15, 'rgb(255,255,255)');
+  spot(600, 290, 13, 'rgb(255,255,255)');
+  spot(950, 320, 12, 'rgb(255,255,255)');
+  spot(270, 210, 12, 'rgb(255,255,255)');
   ctx.globalCompositeOperation = 'source-over';
 
   const tex = new THREE.CanvasTexture(c);
