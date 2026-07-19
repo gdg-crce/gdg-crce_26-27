@@ -58,30 +58,27 @@
    drift slowly. Subtle: this is ambience the ball glows into, per the review. */
 .about-rays {
   mix-blend-mode: screen;
-  opacity: 0.6;
-  background: repeating-conic-gradient(
-    from 0deg at 50% 50%,
-    rgba(255, 200, 126, 0) 0deg,
-    rgba(255, 200, 126, 0.11) 7deg,
-    rgba(255, 176, 96, 0.05) 12deg,
-    rgba(255, 200, 126, 0) 20deg,
-    rgba(255, 200, 126, 0) 30deg
-  );
+  opacity: 0.75;
+  background: repeating-conic-gradient(from 0deg at 50% 50%,
+      rgba(255, 200, 126, 0) 0deg,
+      rgba(255, 200, 126, 0.15) 10deg,
+      rgba(255, 176, 96, 0.08) 16deg,
+      rgba(255, 200, 126, 0) 25deg,
+      rgba(255, 200, 126, 0) 30deg);
   animation: raySpin 92s linear infinite;
 }
+
 /* Cool cyan/violet light, fewer & wider, drifting the other way so it softly
    crosses the warm side (the stage-gel warm-and-cool read) without spiking. */
 .about-rays-cool {
   mix-blend-mode: screen;
-  opacity: 0.6;
-  background: repeating-conic-gradient(
-    from 20deg at 50% 50%,
-    rgba(120, 196, 240, 0) 0deg,
-    rgba(120, 196, 240, 0.16) 8deg,
-    rgba(150, 120, 226, 0.08) 14deg,
-    rgba(120, 196, 240, 0) 22deg,
-    rgba(120, 196, 240, 0) 44deg
-  );
+  opacity: 0.75;
+  background: repeating-conic-gradient(from 20deg at 50% 50%,
+      rgba(120, 196, 240, 0) 0deg,
+      rgba(120, 196, 240, 0.2) 11deg,
+      rgba(150, 120, 226, 0.1) 18deg,
+      rgba(120, 196, 240, 0) 30deg,
+      rgba(120, 196, 240, 0) 44deg);
   animation: raySpinRev 78s linear infinite;
 }
 /* Soft warm-cool pool centred on the ball so it rests in light, not a void. */
@@ -92,8 +89,8 @@
   pointer-events: none;
   background: radial-gradient(
     46vmax 40vmax at 50% 48%,
-    rgba(255, 182, 110, 0.11) 0%,
-    rgba(122, 98, 182, 0.05) 42%,
+    rgba(255, 182, 110, 0.22) 0%,
+    rgba(122, 98, 182, 0.12) 42%,
     transparent 70%
   );
 }
@@ -198,7 +195,7 @@
 .samvad-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 100% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+  background: radial-gradient(120% 100% at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.85) 100%);
 }
 @keyframes grainShift {
   0% {

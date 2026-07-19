@@ -200,8 +200,8 @@ function DiscoBall({
   return (
     <group ref={anchor}>
       <group ref={spin}>
-        <DiscoBallModel fit={BALL_FIT} envIntensity={3.0} showChain />
-        <Glints radius={BALL_RADIUS} count={12} />
+        <DiscoBallModel fit={BALL_FIT} envIntensity={4.2} showChain />
+        <Glints radius={BALL_RADIUS} count={35} />
         <mesh position={[0, 4, 0]}>
           <cylinderGeometry args={[0.012, 0.012, 8]} />
           <meshStandardMaterial color="#8f9298" roughness={0.4} metalness={1} />
@@ -224,7 +224,7 @@ function SpotlightProps() {
         target-position={[0, 0, 0]}
         angle={0.6}
         penumbra={0.9}
-        intensity={14}
+        intensity={24}
         distance={18}
         color="#ffcf92"
       />
@@ -233,7 +233,7 @@ function SpotlightProps() {
         target-position={[0, 0, 0]}
         angle={0.6}
         penumbra={0.9}
-        intensity={9}
+        intensity={16}
         distance={18}
         color="#8fc0ea"
       />
@@ -274,7 +274,7 @@ export default function DiscoBallScene({
       frameloop={active ? 'always' : 'never'}
       camera={{ position: [0, 0, 2.2], fov: 42, near: 0.1, far: 100 }}
       dpr={[1, 1.5]}
-      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance', toneMappingExposure: 1.18 }}
+      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance', toneMappingExposure: 1.35 }}
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'transparent' }}
     >
       <Environment />
