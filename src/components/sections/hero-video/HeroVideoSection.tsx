@@ -1,10 +1,21 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface HeroVideoSectionProps {
   startPlaying?: boolean;
 }
+
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+/** Eased ramp: 0 below `a`, 1 above `b`, smoothstep between. */
+const ramp = (a: number, b: number, x: number) => {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
+
+/** Hard ceiling on the scroll lock, so an unexpectedly long intro can never
+ *  trap the page. */
+const MAX_LOCK_MS = 20000;
 
 export default function HeroVideoSection({ startPlaying = false }: HeroVideoSectionProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -12,12 +23,9 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [fadeInDone, setFadeInDone] = useState(false);
-  // The intro plays ONCE and holds on the Samvad frame — we then reveal the
-  // crisp Samvad photo so the About section can zoom into its red REC dot.
-  const [videoEnded, setVideoEnded] = useState(false);
-  const endedRef = useRef(false);
 
-  // Sync video start explicitly when startPlaying turns true (when VHS tape transition completes)
+  // Sync video start explicitly when startPlaying turns true (when the VHS tape
+  // transition completes).
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -32,10 +40,11 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       // 1. First trigger soft fade-in of the video container
       setFadeInDone(true);
 
-      // 2. Lock body overflow so user cannot scroll during the video
+      // 2. Lock body overflow so the user cannot scroll during the first pass
       document.body.style.overflow = 'hidden';
 
-      // 3. Play video immediately so it is running directly behind the zooming VHS tape with zero gap
+      // 3. Play immediately so it is running directly behind the zooming VHS
+      //    tape with zero gap
       try {
         video.currentTime = 0;
       } catch {}
@@ -46,99 +55,98 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
     }
   }, [startPlaying]);
 
+  // The intro LOOPS now, so `ended` never fires. Release the scroll lock once
+  // the first play-through has wrapped instead — the loop then just keeps
+  // running underneath the About section as it fades in over the top.
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    if (!startPlaying) return;
+    const video = videoRef.current;
+    if (!video) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = videoRef.current;
-          if (!video) return;
+    let released = false;
+    const unlock = () => {
+      if (released) return;
+      released = true;
+      document.body.style.overflow = '';
+    };
 
-          if (entry.isIntersecting) {
-            // Never replay once it has ended — it holds on the Samvad frame.
-            if (startPlaying && !endedRef.current) {
-              const playPromise = video.play();
-              if (playPromise !== undefined) {
-                playPromise.catch(() => {});
-              }
-            }
-          } else {
-            video.pause();
-          }
-        });
-      },
-      {
-        threshold: 0.1,
-      }
-    );
+    let last = 0;
+    const onTime = () => {
+      // currentTime jumping backwards means the loop wrapped: one pass done.
+      if (video.currentTime < last - 0.25) unlock();
+      last = video.currentTime;
+    };
+    video.addEventListener('timeupdate', onTime);
 
-    observer.observe(container);
+    // Safety net for an unknown/absent duration or throttled timeupdate.
+    const fallback = Math.min(((video.duration || 12) + 0.5) * 1000, MAX_LOCK_MS);
+    const timer = setTimeout(unlock, fallback);
 
     return () => {
-      observer.disconnect();
+      video.removeEventListener('timeupdate', onTime);
+      clearTimeout(timer);
+      document.body.style.overflow = '';
+    };
+  }, [startPlaying]);
+
+  // Scroll hands the screen over to the About section: the video fades out
+  // across the first viewport of scroll while the turntable fades up over it.
+  // Once it is fully hidden the element is paused — a looping full-screen video
+  // decoding behind an opaque section is pure waste.
+  useEffect(() => {
+    const onScroll = () => {
+      const el = containerRef.current;
+      const video = videoRef.current;
+      if (!el) return;
+
+      const e = clamp01(window.scrollY / (window.innerHeight || 1));
+      const opacity = 1 - ramp(0.12, 0.8, e);
+      el.style.opacity = opacity.toFixed(3);
+      el.style.pointerEvents = opacity < 0.02 ? 'none' : '';
+
+      if (video) {
+        if (opacity < 0.02) {
+          if (!video.paused) video.pause();
+        } else if (video.paused && startPlaying) {
+          video.play().catch(() => {});
+        }
+      }
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
     };
   }, [startPlaying]);
 
   return (
     <section
       ref={containerRef}
-      className={`fixed inset-0 w-full h-screen overflow-hidden select-none z-[9990] transition-opacity duration-500 ${
-        videoEnded ? 'opacity-0 pointer-events-none' : 'opacity-100'
-      }`}
+      className="fixed inset-0 w-full h-screen overflow-hidden select-none z-[9990]"
       aria-label="Storytelling Cinematic Intro"
     >
       {/* Dark aesthetic background while video initializes */}
       <div className="absolute inset-0 bg-[#080706] z-0" />
 
-      {/* Full screen optimized storytelling video with soft fade-in.
-          No loop — it plays once and freezes on the closing Samvad frame. */}
+      {/* Full screen storytelling video on an endless loop. */}
       <video
         ref={videoRef}
         src="/videos/intro.mp4"
         preload="auto"
         muted
+        loop
         playsInline
         controls={false}
         disablePictureInPicture
         disableRemotePlayback
         onLoadedData={() => setIsLoaded(true)}
         onCanPlay={() => setIsLoaded(true)}
-        onEnded={() => {
-          endedRef.current = true;
-          const video = videoRef.current;
-          if (video) {
-            video.pause();
-            // Hold the last frame under the photo in case the browser blanks it.
-            try {
-              video.currentTime = Math.max(0, (video.duration || 0) - 0.05);
-            } catch {}
-          }
-          setVideoEnded(true);
-
-          // Unlock scrolling now that the video is finished.
-          document.body.style.overflow = '';
-        }}
         className={`absolute inset-0 w-full h-full object-cover z-10 transform-gpu will-change-transform transition-opacity duration-1000 ease-in-out ${
           isLoaded && (fadeInDone || startPlaying) ? 'opacity-100' : 'opacity-0'
         }`}
-      />
-
-      {/* Crisp Samvad frame revealed as the intro ends. This is the exact frame
-          the About section then zooms into — same asset, seamless handoff. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/samvad-frame.jpg"
-        alt="GDG CRCE — Samvad, 1987"
-        draggable={false}
-        onError={(e) => {
-          e.currentTarget.style.display = 'none';
-        }}
-        className={`pointer-events-none absolute inset-0 w-full h-full object-cover z-[15] transition-opacity duration-700 ease-in-out ${
-          videoEnded ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{ objectPosition: 'center 22%' }}
       />
 
       {/* Subtle bottom vignette gradient blending smoothly into the next section */}

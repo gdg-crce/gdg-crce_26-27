@@ -10,7 +10,7 @@ import {
   Cormorant_Garamond,
   Inter,
   IBM_Plex_Mono,
-  Fascinate,
+  Kaushan_Script,
 } from 'next/font/google';
 
 // 1970s Typography: Groovy Serif + Warm Sans
@@ -85,12 +85,13 @@ export const inter = Inter({
   variable: '--font-editorial-body',
 });
 
-// Disco / About Us display — retro mirror-tile lettering for the disco-ball hero
-export const fascinate = Fascinate({
+// About Us / turntable — the brush-script signature the record label is set in
+// ("Sunékheia:"). Everything else on that label is Cormorant small-caps.
+export const kaushanScript = Kaushan_Script({
   subsets: ['latin'],
   weight: '400',
   display: 'swap',
-  variable: '--font-fascinate',
+  variable: '--font-brush',
 });
 
 // Y2K Archive Typography: technical monospaced archive feel (IE6 / TheFacebook era)

@@ -1,337 +1,523 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './about.css';
 
-/* No SSR for the WebGL disco ball. */
-const DiscoBallScene = dynamic(() => import('@/components/three/DiscoBallScene'), {
-  ssr: false,
-});
-
+/* ── scalar helpers (same idiom as WhatWeDoSection) ─────────────────────── */
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 /** Eased ramp: 0 below `a`, 1 above `b`, smoothstep between. */
 const ramp = (a: number, b: number, x: number) => {
   const t = clamp01((x - a) / (b - a));
   return t * t * (3 - 2 * t);
 };
-/** Accelerating ramp (ease-in) — used so the zoom keeps rushing into the dot. */
-const easeIn = (a: number, b: number, x: number, pow = 1.7) =>
-  Math.pow(clamp01((x - a) / (b - a)), pow);
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-const ZOOM_MAX = 6; // how far the frame pushes into the red dot before the bloom
+/* ── design space ───────────────────────────────────────────────────────
+   Every number below is in the 1600×900 stage coordinate system that
+   about.css lays the turntable out in. Change one here and the stylesheet
+   has to follow (the disc/label rects are hard-coded there). */
+const STAGE_W = 1600;
+const STAGE_H = 900;
+const REC_CX = 984;
+const REC_CY = 445;
+const REC_R = 760;
+const LABEL_R = 288;
+const PIVOT_X = 146;
+const PIVOT_Y = 84;
+const ARM_LEN = 625;
 
-/* Where the copy sequence lives inside the single 0→1 scroll (after the ball
-   has settled at ~0.35). Each card gets an equal slice; inside its slice it
-   enters, holds (reads), then exits. */
-const TEXT_START = 0.35;
-const TEXT_END = 1.0;
+/** Groove radius, from the record centre, that the stylus rides in for each
+ *  track — plus the parked position, which has to clear the disc entirely.
+ *  Scaled with REC_R (×760/830) so every detent still lands between the band
+ *  separators, which about.css draws as percentages of the disc. */
+const TRACK_RADII = [578, 514, 450];
+const PARK_RADIUS = 786; // > REC_R, so the arm sits off the record at rest
+const RUNOUT_RADIUS = 430; // slow inward creep through the last track
 
-/**
- * Cinematic orbit — ported from commit 144f93d's `SwirlingHtml`. Each card
- * sweeps in on a cylinder around the ball's Y axis (from behind, emerging at
- * the horizon), rests beside the ball, then continues orbiting out and toward
- * the camera while fading. Returns a CSS transform + opacity driven by the same
- * scroll progress that runs the samvad intro — no separate scroll system.
- *
- * `PX` maps the reference's world units to screen pixels; `narrow` swaps the
- * side-orbit for a centred vertical float on phones (the horizontal arc can't
- * fit a small viewport), mirroring the reference's mobile branch.
- */
-function computeCard(
-  p: number,
-  i: number,
-  count: number,
-  cfg: { targetX: number; targetY: number },
-  PX: number,
-  narrow: boolean
-): { opacity: number; transform: string } {
-  const seg = (TEXT_END - TEXT_START) / count;
-  const s0 = TEXT_START + i * seg;
-  const enterEnd = s0 + seg * 0.3;
-  const exitStart = s0 + seg * 0.7;
-  const exitEnd = s0 + seg;
+/** Revolutions the record makes across the whole pinned scroll. At 6500px of
+ *  scroll this is ~930px per turn — fast enough to feel driven by the wheel,
+ *  slow enough that a flick doesn't blur it. */
+const SPIN_TURNS = 7;
 
-  // Local time: 0 (offstage) → 1 (at rest) → 2 (fully exited).
-  let t: number;
-  if (p <= s0) t = 0;
-  else if (p < enterEnd) t = (p - s0) / (enterEnd - s0);
-  else if (p < exitStart) t = 1;
-  else if (p < exitEnd) t = 1 + (p - exitStart) / (exitEnd - exitStart);
-  else t = 2;
-
-  let op = clamp01(t <= 1 ? t : 2 - t);
-  op = op * op * (3 - 2 * op); // smooth the fade
-
-  const isLeft = cfg.targetX < 0;
-
-  if (narrow) {
-    let y: number, z: number;
-    if (t <= 1) {
-      const e = Math.sin((t * Math.PI) / 2);
-      y = (1 - e) * 60; // rise from below
-      z = -150 * (1 - e); // in from behind
-    } else {
-      const e = Math.sin(((t - 1) * Math.PI) / 2);
-      y = -52 * e; // float up on exit
-      z = 150 * e; // toward the camera
-    }
-    return {
-      opacity: op,
-      transform: `translate(-50%, -50%) translate3d(0px, ${y.toFixed(1)}px, ${z.toFixed(1)}px)`,
-    };
-  }
-
-  const R = Math.abs(cfg.targetX);
-  let x: number, y: number, z: number;
-  if (t <= 1) {
-    const e = Math.sin((t * Math.PI) / 2);
-    const theta = isLeft ? 1.6 * Math.PI - 0.6 * Math.PI * e : 1.4 * Math.PI + 0.6 * Math.PI * e;
-    x = R * Math.cos(theta);
-    z = R * Math.sin(theta);
-    y = cfg.targetY * (0.5 + 0.5 * e);
-  } else {
-    const e = Math.sin(((t - 1) * Math.PI) / 2);
-    const theta = isLeft ? Math.PI - 0.3 * Math.PI * e : 2.0 * Math.PI + 0.3 * Math.PI * e;
-    const cr = R * (1.0 + e * 0.35);
-    x = cr * Math.cos(theta);
-    z = cr * Math.sin(theta) + 1.5 * e; // pull closer to camera
-    y = cfg.targetY + cfg.targetY * 0.15 * e;
-  }
-
-  // Edge-anchor so the card's INNER edge sits on the orbit radius and never
-  // laps over the centred ball: right cards grow rightward from their left
-  // edge, left cards grow leftward from their right edge.
-  const base = isLeft ? 'translate(-100%, -50%)' : 'translate(0, -50%)';
-  // World units → px. CSS Y is down-positive, 3D Y up-positive, so negate Y.
-  return {
-    opacity: op,
-    transform: `${base} translate3d(${(x * PX).toFixed(1)}px, ${(-y * PX).toFixed(1)}px, ${(z * PX).toFixed(1)}px)`,
-  };
+/** Distance from the record centre to the stylus for a given arm angle. */
+function radiusForAngle(deg: number) {
+  const a = (deg * Math.PI) / 180;
+  return Math.hypot(
+    PIVOT_X + ARM_LEN * Math.cos(a) - REC_CX,
+    PIVOT_Y + ARM_LEN * Math.sin(a) - REC_CY
+  );
 }
 
-/**
- * AboutSection — "the shimmer that never stops".
- *
- * Picks up exactly where the hero video freezes (on the Samvad frame). One
- * pinned ScrollTrigger drives a single 0→1 progress through five beats:
- *   0.00 – 0.50  scroll rushes the frame INTO the red REC dot; the dot pulses
- *                and intensifies from a flat graphic to an over-exposed light.
- *   0.50 – 0.60  BLOOM BURST: a white flash peaks to mask the 2D→3D swap.
- *   0.56 – 0.72  the 3D disco-ball canvas fades in as the bloom cools to amber.
- *   0.60 – 0.97  the ball dollies out from a facet close-up and settles.
- *   0.80 – 0.98  the About Us copy rises into place.
- *
- * The 3D settle and rotation are handed to Three.js through refs (never state)
- * so the camera + spin stay off the React render path — same pattern as
- * EventsAndCouncilSection's progressRef. The ball rotates ONLY on scroll.
- */
-/* `side` / `targetX` / `targetY` position each card on the orbit around the
-   ball (targetX sign picks which shoulder; |targetX| is the orbit radius). */
-const ABOUT_TEXTS = [
+/** Inverse of the above. Monotonic across the 40°–96° window the arm lives in,
+ *  so a bisection is exact enough and keeps the geometry editable in one
+ *  place — nudge REC_CX or ARM_LEN and every detent re-solves itself. */
+function angleForRadius(r: number) {
+  let lo = 40;
+  let hi = 96;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (radiusForAngle(mid) < r) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+const ANG_PARK = angleForRadius(PARK_RADIUS);
+const ANG_TRACK = TRACK_RADII.map(angleForRadius);
+const ANG_RUNOUT = angleForRadius(RUNOUT_RADIUS);
+
+/* ── scroll timeline ────────────────────────────────────────────────────
+   One 0→1 progress through the whole pinned scroll:
+     0.00 – 0.10  the arm drops in from above the frame
+     0.15 – 0.27  it swings over the disc and LOWERS onto the outer groove;
+                  on touchdown the label ignites and track 1 reads in
+     0.27 – 0.44  TRACK 1 — Our Theme      (orange)
+     0.44 – 0.53  the arm advances a detent; label + copy swap
+     0.53 – 0.69  TRACK 2 — Our Vision     (deep red)
+     0.69 – 0.78  second advance
+     0.78 – 1.00  TRACK 3 — Our Mission    (amber)
+   Copy swaps are out-then-in with no overlap, so two paragraphs never
+   cross-dissolve into mush on top of each other. */
+const SWAP_1 = { outA: 0.44, outB: 0.487, inA: 0.495, inB: 0.545 };
+const SWAP_2 = { outA: 0.69, outB: 0.737, inA: 0.745, inB: 0.795 };
+const TOUCHDOWN = { a: 0.25, b: 0.32 };
+
+/** Arm angle keyframes. Sampled with smoothstep between neighbours. */
+const ARM_KEYS: [number, number][] = [
+  [0.0, ANG_PARK],
+  [0.15, ANG_PARK],
+  [0.27, ANG_TRACK[0]],
+  [0.44, ANG_TRACK[0]],
+  [0.53, ANG_TRACK[1]],
+  [0.69, ANG_TRACK[1]],
+  [0.78, ANG_TRACK[2]],
+  [1.0, ANG_RUNOUT],
+];
+
+/** How far the arm is raised off the platter. 1 = cued up, 0 = needle down. */
+const LIFT_KEYS: [number, number][] = [
+  [0.0, 1],
+  [0.15, 1],
+  [0.27, 0],
+  [1.0, 0],
+];
+
+function sampleKeys(keys: [number, number][], p: number) {
+  if (p <= keys[0][0]) return keys[0][1];
+  for (let i = 1; i < keys.length; i++) {
+    const [x1, v1] = keys[i];
+    if (p <= x1) {
+      const [x0, v0] = keys[i - 1];
+      return lerp(v0, v1, ramp(x0, x1, p));
+    }
+  }
+  return keys[keys.length - 1][1];
+}
+
+/* ── copy ───────────────────────────────────────────────────────────────
+   Line breaks are authored, not wrapped: the copy has to sit inside a circle,
+   so the rag is part of the layout. */
+type Track = {
+  key: string;
+  /** Stacked one letter per line under the horizontal "Our". */
+  word: string;
+  /** Brush-script line, theme card only. */
+  brush?: string;
+  lines: string[];
+};
+
+const TRACKS: Track[] = [
   {
-    side: 'left' as const,
-    targetX: -3.4,
-    targetY: 0.4,
-    kicker: 'GDG CRCE // About',
-    heading: <>What continues,<br /><em>becomes greater.</em></>,
-    body: 'Google Developer Group CRCE is a student-led community of builders, designers and dreamers. Every council inherits the work, the culture and the momentum of the one before it — and adds its own signal to the mix. We don’t restart each year. We continue.',
+    key: 'theme',
+    word: 'Theme',
+    brush: 'Sunékheia:',
+    lines: ['What continues,', 'becomes greater.'],
   },
   {
-    side: 'right' as const,
-    targetX: 3.4,
-    targetY: -0.15,
-    kicker: 'GDG CRCE // Legacy',
-    heading: <>From analog roots,<br /><em>to digital futures.</em></>,
-    body: 'We honor the builders of the past who laid the foundation. Their momentum fuels our drive to push the boundaries of what’s possible. The technology changes, but the spirit of creation remains constant.',
+    key: 'vision',
+    word: 'Vision',
+    lines: [
+      'To carry forward the',
+      'foundation built by',
+      'those before us,',
+      'transforming their legacy',
+      'into collective momentum',
+      'as we learn, build, and',
+      'shape what comes next.',
+    ],
   },
   {
-    side: 'left' as const,
-    targetX: -3.4,
-    targetY: -0.5,
-    kicker: 'GDG CRCE // Community',
-    heading: <>A collective of<br /><em>passionate creators.</em></>,
-    body: 'More than just code, we are a network of peers supporting each other. Through workshops, hackathons, and late-night debugging sessions, we build both software and lifelong connections.',
-  },
-  {
-    side: 'right' as const,
-    targetX: 3.4,
-    targetY: 0.45,
-    kicker: 'GDG CRCE // Future',
-    heading: <>The next chapter,<br /><em>written by you.</em></>,
-    body: 'Whether you’re writing your first line of code or deploying complex systems, there’s a place for you here. Step in, add your unique voice to the mix, and make your mark on the legacy.',
+    key: 'mission',
+    word: 'Mission',
+    lines: [
+      'To build in the open,',
+      'to teach what we learn,',
+      'and to leave this',
+      'community further along',
+      'than we found it — so',
+      'every batch begins where',
+      'the last one reached.',
+    ],
   },
 ];
 
+/**
+ * AboutSection — a full-bleed turntable, played by the scrollbar.
+ *
+ * Scroll turns the record. `--spin` is a real rotation angle handed to every
+ * layer that is physically part of the disc — the vinyl's surface marks and
+ * the label's printed swirl — so the platter genuinely rotates under the
+ * needle rather than a light being swept across a still image. Stop scrolling
+ * and it stops, because your wheel is the motor.
+ *
+ * Scroll also walks the tonearm: it descends into frame, cues onto the outer
+ * groove, then steps inward through three detents, and each detent is a
+ * section of the copy.
+ *
+ * Every per-frame write goes straight to `element.style` inside the
+ * ScrollTrigger callback — no React state on the scroll path, same rule the
+ * Events and WhatWeDo sections follow.
+ */
 export default function AboutSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const photoWrapRef = useRef<HTMLDivElement>(null);
-  const overlaysRef = useRef<HTMLDivElement>(null);
-  const canvasWrapRef = useRef<HTMLDivElement>(null);
-  const bloomRef = useRef<HTMLDivElement>(null);
-  const flashRef = useRef<HTMLDivElement>(null);
-  const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const revealRef = useRef<number>(0);
-  const rotationRef = useRef<number>(0);
+  const sectionRef = useRef<HTMLElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const armRef = useRef<SVGGElement>(null);
+  const labelRef = useRef<HTMLDivElement>(null);
+  const bandRef = useRef<HTMLDivElement>(null);
+  const labRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const copyRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const sideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const [active, setActive] = useState(false);
-  const [mounted3D, setMounted3D] = useState(false);
-
-  // Render (and first-mount) the WebGL scene only near the viewport, so it costs
-  // nothing while the user is still up in the hero section.
+  /* Cover-scale the design stage to the viewport, then project the label's
+     centre back out into viewport pixels for the (unscaled) text layer. */
   useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        const on = entries[0].isIntersecting;
-        setActive(on);
-        if (on) setMounted3D(true);
-      },
-      { rootMargin: '300px 0px 300px 0px', threshold: 0 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
+    const fit = () => {
+      const stage = stageRef.current;
+      const pin = pinRef.current;
+      if (!stage || !pin) return;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const s = Math.max(vw / STAGE_W, vh / STAGE_H);
+
+      // On wide screens the reference framing is used as-authored. As the
+      // viewport approaches square, cover-scaling would push the label off to
+      // the right, so slide the stage until the record is centred instead.
+      const recentre = 1 - clamp01((vw / vh - 1.05) / 0.55);
+      const ox = -(REC_CX - STAGE_W / 2) * recentre;
+
+      stage.style.transform = `translate(-50%, -50%) scale(${s.toFixed(4)}) translate(${ox.toFixed(1)}px, 0px)`;
+
+      pin.style.setProperty('--label-cx', `${(vw / 2 + (REC_CX - STAGE_W / 2 + ox) * s).toFixed(1)}px`);
+      pin.style.setProperty('--label-cy', `${(vh / 2 + (REC_CY - STAGE_H / 2) * s).toFixed(1)}px`);
+      pin.style.setProperty('--label-r', `${(LABEL_R * s).toFixed(1)}px`);
+    };
+
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
   }, []);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    const st = ScrollTrigger.create({
+    const draw = (p: number) => {
+      // ── the platter turns ────────────────────────────────────────────
+      // A real angle, inherited by every layer that is part of the record.
+      // ScrollTrigger's scrub eases it, so a flick of the wheel spins the
+      // disc up and lets it coast to a stop instead of snapping.
+      stageRef.current?.style.setProperty('--spin', `${(p * 360 * SPIN_TURNS).toFixed(1)}deg`);
+
+      // ── tonearm ──────────────────────────────────────────────────────
+      const deg = sampleKeys(ARM_KEYS, p);
+      const lift = sampleKeys(LIFT_KEYS, p);
+      // Entry: the arm falls in from above the top of the frame.
+      const entry = ramp(0.005, 0.095, p);
+      const armY = -230 * (1 - entry) + lift * -86;
+      const armX = lift * -24;
+
+      const arm = armRef.current;
+      if (arm) {
+        arm.style.opacity = entry.toFixed(3);
+        arm.style.transform =
+          `translate(${armX.toFixed(1)}px, ${armY.toFixed(1)}px) ` +
+          `rotate(${deg.toFixed(2)}deg) scale(${(1 + lift * 0.03).toFixed(3)})`;
+        // A shadow that opens up as the arm rises is what actually sells the
+        // descent — the rotation alone reads as a swing, not a drop.
+        arm.style.filter =
+          `drop-shadow(${(4 + lift * 13).toFixed(1)}px ${(7 + lift * 30).toFixed(1)}px ` +
+          `${(9 + lift * 26).toFixed(1)}px rgba(0,0,0,${(0.55 - lift * 0.26).toFixed(2)}))`;
+      }
+
+      // ── label ignition ───────────────────────────────────────────────
+      const lit = ramp(TOUCHDOWN.a - 0.02, TOUCHDOWN.b, p);
+      labelRef.current?.style.setProperty('--lit', lit.toFixed(3));
+
+      // ── groove-band highlight, welded to where the needle actually is ──
+      const band = bandRef.current;
+      if (band) {
+        const pct = (radiusForAngle(deg) / REC_R) * 100;
+        band.style.setProperty('--b0', `${(pct - 4.2).toFixed(2)}%`);
+        band.style.setProperty('--b1', `${(pct + 4.2).toFixed(2)}%`);
+        band.style.opacity = lit.toFixed(3);
+      }
+
+      // ── label colour ─────────────────────────────────────────────────
+      // Stacked bottom-to-top and revealed in order by a radial wipe (see
+      // .tt-lab) — there is always an opaque disc underneath, and no frame
+      // ever shows a blend of two label colours.
+      const sw1 = ramp(SWAP_1.outA, SWAP_1.inB, p);
+      const sw2 = ramp(SWAP_2.outA, SWAP_2.inB, p);
+      labRefs.current[0]?.style.setProperty('--wipe', '60');
+      labRefs.current[1]?.style.setProperty('--wipe', (sw1 * 60).toFixed(2));
+      labRefs.current[2]?.style.setProperty('--wipe', (sw2 * 60).toFixed(2));
+
+      // ── copy ─────────────────────────────────────────────────────────
+      const vis = [
+        ramp(TOUCHDOWN.a, TOUCHDOWN.b, p) * (1 - ramp(SWAP_1.outA, SWAP_1.outB, p)),
+        ramp(SWAP_1.inA, SWAP_1.inB, p) * (1 - ramp(SWAP_2.outA, SWAP_2.outB, p)),
+        ramp(SWAP_2.inA, SWAP_2.inB, p),
+      ];
+
+      for (let i = 0; i < TRACKS.length; i++) {
+        const v = vis[i];
+        const copy = copyRefs.current[i];
+        if (copy) {
+          copy.style.opacity = v.toFixed(3);
+          copy.style.transform = `translateY(${((1 - v) * 16).toFixed(1)}px)`;
+        }
+        const side = sideRefs.current[i];
+        if (side) {
+          side.style.opacity = v.toFixed(3);
+          side.style.transform = `translateY(${((1 - v) * -18).toFixed(1)}px)`;
+        }
+      }
+    };
+
+    // The section fades up as it rises into view — the hero video is fading
+    // out underneath it over the same stretch of scroll.
+    const approach = ScrollTrigger.create({
       trigger: sectionRef.current,
-      pin: containerRef.current,
-      start: 'top top',
-      end: '+=8000', // tightened from 12000 so the scrub tracks the pointer snappily
-      scrub: 0.6,
+      start: 'top bottom',
+      end: 'top top',
+      scrub: 1,
       onUpdate: (self) => {
-        const p = self.progress;
-
-        // --rec (0→1) is the over-exposure amount, read by the glow + bloom which
-        // are both anchored to the red dot ALREADY in the photo (--dot-x/--dot-y).
-        // We never draw a dot of our own.
-        if (containerRef.current) {
-          containerRef.current.style.setProperty('--rec', ramp(0.02, 0.12, p).toFixed(3));
-        }
-
-        // Scroll rushes the frame INTO that red dot
-        if (photoWrapRef.current) {
-          const scale = 1 + easeIn(0, 0.12, p) * (ZOOM_MAX - 1);
-          photoWrapRef.current.style.transform = `scale(${scale.toFixed(3)})`;
-          photoWrapRef.current.style.opacity = (1 - ramp(0.12, 0.16, p)).toFixed(3);
-        }
-        if (overlaysRef.current) {
-          overlaysRef.current.style.opacity = (1 - ramp(0.12, 0.16, p)).toFixed(3);
-        }
-
-        // Hard white peak around 0.14
-        if (flashRef.current) {
-          const f = p < 0.14 ? ramp(0.10, 0.14, p) : 1 - ramp(0.14, 0.20, p);
-          flashRef.current.style.opacity = clamp01(f).toFixed(3);
-        }
-
-        // Warm radial bloom rises with the flash, then lingers and cools out
-        if (bloomRef.current) {
-          const b = p < 0.15 ? ramp(0.10, 0.15, p) : 1 - ramp(0.15, 0.30, p);
-          bloomRef.current.style.opacity = (clamp01(b) * 0.95).toFixed(3);
-        }
-
-        // 3D canvas fades in behind the bloom early on
-        if (canvasWrapRef.current) {
-          canvasWrapRef.current.style.opacity = ramp(0.13, 0.20, p).toFixed(3);
-        }
-
-        // Hand settle + scroll-rotation to Three.js.
-        // Settle completes by 0.35, rotation spans the whole scroll.
-        revealRef.current = ramp(0.14, 0.35, p);
-        rotationRef.current = clamp01((p - 0.10) / 0.90);
-
-        // Cinematic orbit copy — each card sweeps around the ball (see
-        // computeCard). Uses the same scroll `p`; the samvad intro above is
-        // untouched. PX + narrow are read from the viewport each tick (cheap).
-        const vw = window.innerWidth;
-        const PX = Math.min(Math.max(vw * 0.055, 58), 88);
-        const narrow = vw < 900;
-
-        ABOUT_TEXTS.forEach((cfg, i) => {
-          const el = contentRefs.current[i];
-          if (!el) return;
-          const { opacity, transform } = computeCard(p, i, ABOUT_TEXTS.length, cfg, PX, narrow);
-          el.style.opacity = opacity.toFixed(3);
-          el.style.transform = transform;
-        });
+        if (pinRef.current) pinRef.current.style.opacity = ramp(0.18, 0.94, self.progress).toFixed(3);
+      },
+      onRefresh: (self) => {
+        if (pinRef.current) pinRef.current.style.opacity = ramp(0.18, 0.94, self.progress).toFixed(3);
       },
     });
 
-    const to = setTimeout(() => ScrollTrigger.refresh(), 160);
+    const play = ScrollTrigger.create({
+      trigger: sectionRef.current,
+      pin: pinRef.current,
+      start: 'top top',
+      end: '+=6500',
+      scrub: 1.2,
+      onUpdate: (self) => draw(self.progress),
+      onRefresh: (self) => draw(self.progress),
+    });
+
+    draw(0);
+    const to = setTimeout(() => ScrollTrigger.refresh(), 180);
     return () => {
       clearTimeout(to);
-      st.kill();
+      approach.kill();
+      play.kill();
     };
   }, []);
 
   return (
-    <section ref={sectionRef} id="about" className="about-section" aria-label="About GDG CRCE">
-      <div ref={containerRef} className="about-pin">
-        {/* Ambient light rays behind the ball (z-index 0). Warm amber burst +
-            cool blue/violet gels crossing on the diagonal; both rotate slowly. */}
-        <div className="about-glow" aria-hidden="true" />
-        <div className="about-rays" aria-hidden="true" />
-        <div className="about-rays-cool" aria-hidden="true" />
+    <section ref={sectionRef} id="about" className="tt-section" aria-label="About GDG CRCE">
+      <div ref={pinRef} className="tt-pin">
+        {/* ── the turntable, in 1600×900 design space ── */}
+        <div ref={stageRef} className="tt-stage">
+          <div className="tt-plinth" aria-hidden="true" />
 
-        {/* 3D disco ball (transparent canvas over the rays) */}
-        <div ref={canvasWrapRef} className="about-canvas">
-          {mounted3D && (
-            <DiscoBallScene revealRef={revealRef} rotationRef={rotationRef} active={active} />
-          )}
-        </div>
+          {/* The record itself rotates — grooves, vinyl and all. The room
+              light and the needle's groove highlight are NOT on the record, so
+              they live in a separate, non-rotating layer of the same size. */}
+          <div className="tt-disc" aria-hidden="true" />
+          <div className="tt-disc-optics" aria-hidden="true">
+            <div ref={bandRef} className="tt-band" />
+            <div className="tt-sheen" />
+          </div>
 
-        {/* The real 1987 Samvad frame — scroll zooms it into its own red dot. */}
-        <div ref={photoWrapRef} className="samvad-photo-wrap">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            className="samvad-photo"
-            src="/samvad-frame.jpg"
-            alt="GDG CRCE — Samvad, 1987"
-            draggable={false}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </div>
-
-        {/* Analog overlays for cohesion during the zoom */}
-        <div ref={overlaysRef} className="samvad-overlays">
-          <div className="samvad-scanlines" />
-          <div className="samvad-grain" />
-          <div className="samvad-vignette" />
-        </div>
-
-        {/* Over-exposure glow — a LIGHT anchored to the dot already in the photo
-            (never a drawn dot). Scroll intensifies it into the bloom. */}
-        <div className="samvad-dot-glow" aria-hidden="true" />
-
-        {/* Bloom burst — masks the 2D→3D coordinate swap */}
-        <div ref={bloomRef} className="samvad-bloom" />
-        <div ref={flashRef} className="samvad-flash" />
-
-        {/* Cinematic orbit copy — cards sweep around the ball on scroll */}
-        <div className="about-copy-stage">
-          {ABOUT_TEXTS.map((content, i) => (
-            <div
-              key={i}
-              ref={(el) => {
-                contentRefs.current[i] = el;
-              }}
-              className={`about-content ${content.side}`}
-            >
-              <div className="kicker">{content.kicker}</div>
-              <h2>{content.heading}</h2>
-              <p>{content.body}</p>
+          <div ref={labelRef} className="tt-label" aria-hidden="true">
+            {TRACKS.map((t, i) => (
+              <div
+                key={t.key}
+                ref={(el) => { labRefs.current[i] = el; }}
+                className={`tt-lab tt-lab-${t.key}`}
+              />
+            ))}
+            <div className="tt-swirl">
+              <div className="tt-swirl-a" />
+              <div className="tt-swirl-b" />
             </div>
-          ))}
+
+            {/* THE PRINT RING — what actually makes a record look like it is
+                spinning. A vinyl disc is rotationally symmetric everywhere
+                except its label, so in real footage the ONLY thing your eye
+                tracks is the printed artwork going round. Ring text and tick
+                marks give it that, and they rotate by the same --spin as the
+                disc. The copy in the middle stays upright because it has to
+                stay readable — real labels get away with spinning text, a
+                mission statement does not. */}
+            <svg className="tt-label-print" viewBox="0 0 616 616">
+              <defs>
+                {/* r=264: the text sits in the solid colour band OUTSIDE the
+                    swirl (which ends at 84% → r≈259), so ink never fights paint */}
+                <path
+                  id="ttRimPath"
+                  fill="none"
+                  d="M 308,308 m -264,0 a 264,264 0 1,1 528,0 a 264,264 0 1,1 -528,0"
+                />
+              </defs>
+              <g className="tt-label-print-spin">
+                {/* evenly spaced radial ticks — a dashed stroke is the cheapest
+                    honest way to draw 60 printed marks around a circle */}
+                <circle
+                  cx="308" cy="308" r="296"
+                  fill="none"
+                  stroke="rgba(0,0,0,0.32)"
+                  strokeWidth="9"
+                  strokeDasharray="2.5 28"
+                />
+                <circle
+                  cx="308" cy="308" r="258"
+                  fill="none"
+                  stroke="rgba(0,0,0,0.20)"
+                  strokeWidth="1.5"
+                />
+                <text className="tt-label-print-text">
+                  {/* textLength forces the string to close the ring exactly
+                      (2π·264 ≈ 1659), so there is never a bald patch drifting
+                      past to give the trick away */}
+                  <textPath href="#ttRimPath" startOffset="0" textLength="1659" lengthAdjust="spacing">
+                    GDG CRCE · SUNÉKHEIA · WHAT CONTINUES, BECOMES GREATER · 33⅓ RPM ·
+                  </textPath>
+                </text>
+              </g>
+            </svg>
+            <div className="tt-label-rim" />
+            <div className="tt-label-dim" />
+          </div>
+
+          {/* volume knob on the plinth */}
+          <div className="tt-knob" aria-hidden="true">
+            <div className="tt-knob-face" />
+          </div>
+          <span className="tt-knob-mark tt-knob-minus" aria-hidden="true">–</span>
+          <span className="tt-knob-mark tt-knob-plus" aria-hidden="true">+</span>
+
+          {/* ── tonearm ──
+              Drawn pointing along +X from the pivot; the whole swing group is
+              rotated about (146, 84) from the scroll callback. */}
+          <svg className="tt-hardware" viewBox="0 0 1600 900" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="ttChrome" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f6f8f9" />
+                <stop offset="22%" stopColor="#cfd5d8" />
+                <stop offset="46%" stopColor="#7c8388" />
+                <stop offset="64%" stopColor="#b9c0c4" />
+                <stop offset="84%" stopColor="#e8edef" />
+                <stop offset="100%" stopColor="#8f979b" />
+              </linearGradient>
+              <linearGradient id="ttChromeDark" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#cdd3d6" />
+                <stop offset="30%" stopColor="#8a9195" />
+                <stop offset="58%" stopColor="#4c5256" />
+                <stop offset="82%" stopColor="#98a0a4" />
+                <stop offset="100%" stopColor="#5c6367" />
+              </linearGradient>
+              <linearGradient id="ttShell" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#e6ebee" />
+                <stop offset="34%" stopColor="#a7aeb3" />
+                <stop offset="72%" stopColor="#565c61" />
+                <stop offset="100%" stopColor="#2f3438" />
+              </linearGradient>
+              <linearGradient id="ttBase" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0%" stopColor="#3b3e42" />
+                <stop offset="48%" stopColor="#212427" />
+                <stop offset="100%" stopColor="#121417" />
+              </linearGradient>
+            </defs>
+
+            {/* fixed pivot housing, bolted to the plinth */}
+            <g>
+              <rect x="86" y="8" width="122" height="140" rx="16" fill="url(#ttBase)" />
+              <rect
+                x="86" y="8" width="122" height="140" rx="16"
+                fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="1.5"
+              />
+              <circle cx="146" cy="84" r="37" fill="url(#ttChromeDark)" />
+              <circle cx="146" cy="84" r="28" fill="url(#ttChrome)" />
+            </g>
+
+            <g ref={armRef} className="tt-arm-swing">
+              {/* counterweight, behind the pivot */}
+              <rect x="44" y="59" width="74" height="50" rx="25" fill="url(#ttChromeDark)" />
+              <rect x="112" y="72" width="34" height="24" rx="10" fill="url(#ttChrome)" />
+              {/* bearing */}
+              <circle cx="146" cy="84" r="24" fill="url(#ttChrome)" />
+              <circle cx="146" cy="84" r="11" fill="#23262a" />
+              {/* tube */}
+              <rect x="168" y="76.5" width="492" height="15" rx="7.5" fill="url(#ttChrome)" />
+              {/* collar */}
+              <rect x="650" y="70" width="22" height="28" rx="6" fill="url(#ttChromeDark)" />
+              {/* headshell */}
+              <path d="M668 64 L732 60 L764 78 L764 98 L732 108 L668 104 Z" fill="url(#ttShell)" />
+              {/* finger lift */}
+              <path d="M700 60 L718 34 L727 37 L710 62 Z" fill="url(#ttChrome)" />
+              {/* cartridge + stylus */}
+              <rect x="730" y="72" width="34" height="26" rx="4" fill="#191c1f" />
+              <path d="M762 92 L771 84" stroke="#e9f0f4" strokeWidth="3.4" strokeLinecap="round" />
+            </g>
+          </svg>
+        </div>
+
+        {/* Photographic finish over the whole frame, under the text. */}
+        <div className="tt-vignette" aria-hidden="true" />
+        <div className="tt-grain" aria-hidden="true" />
+
+        {/* ── text, in viewport space (see about.css header) ── */}
+        <div className="tt-hud">
+          <div className="tt-side">
+            <div className="tt-side-stack">
+              {TRACKS.map((t, i) => (
+                <div
+                  key={t.key}
+                  ref={(el) => { sideRefs.current[i] = el; }}
+                  className="tt-side-title"
+                >
+                  <span className="tt-side-our">Our</span>
+                  {t.word.toUpperCase().split('').map((ch, j) => (
+                    <span key={j} className="tt-side-letter">{ch}</span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="tt-center">
+            {TRACKS.map((t, i) => (
+              <div
+                key={t.key}
+                ref={(el) => { copyRefs.current[i] = el; }}
+                className={`tt-copy${t.brush ? '' : ' tt-copy-para'}`}
+              >
+                {t.brush && <span className="tt-copy-brush">{t.brush}</span>}
+                {t.lines.map((line, j) => (
+                  <span key={j} className="tt-copy-line">{line}</span>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

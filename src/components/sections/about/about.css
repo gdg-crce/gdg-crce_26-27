@@ -1,352 +1,594 @@
-/* ══════════════════════════════════════════════════════════════════════════
-   ABOUT SECTION — Samvad photo → zoom into the REC dot → bloom → disco ball.
+/* ═══════════════════════════════════════════════════════════════════════════
+   AboutSection — "the record that keeps playing"
 
-   Layer stack inside .about-pin (low → high):
-     1  .about-canvas       the R3F disco ball (warm-dark backdrop underneath)
-     2  .samvad-photo-wrap  the real 1987 Samvad frame; scroll zooms it into the
-                            red dot (transform-origin sits on the dot)
-     6  overlays            scanline / grain / vignette (analog cohesion)
-     9  .samvad-bloom       warm radial bloom from the dot (masks the swap, cools)
-    10  .samvad-flash       hard white peak (hides the exact 2D→3D swap)
-    11  .about-content      the About Us copy (fades in last)
-   ══════════════════════════════════════════════════════════════════════════ */
+   A full-bleed 2D turntable shot from above. Everything geometric lives in a
+   fixed 1600×900 DESIGN SPACE (`.tt-stage`) that is cover-scaled to the
+   viewport, so the composition is identical at every screen size — the same
+   thing a photograph gets for free.
 
-.about-section {
+   Text does NOT live in that scaled space. It sits in `.tt-hud`, a
+   viewport-space layer positioned from --label-cx / --label-cy / --label-r,
+   which AboutSection projects out of the stage transform on every resize.
+   Scaled text goes soft and scales clean past legibility on phones; projected
+   text stays crisp and is free to re-flow.
+
+   Design-space landmarks (keep in sync with AboutSection.tsx):
+     record centre (984, 445)   radius 760
+     label                      radius 288
+     tonearm pivot (146, 84)    arm length 625
+
+   THE RECORD TURNS ON SCROLL, not on a timer. --spin is a real angle in
+   degrees written from the scroll callback, and every layer that is physically
+   part of the record (the vinyl's surface marks, the label's printed swirl)
+   is rotated by it. .tt-sheen deliberately does NOT rotate: it is the room
+   light, which stays where it is while the record turns underneath it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tt-section {
   position: relative;
   width: 100%;
-  background: #0a0a0a;
+  background: #08080a;
 }
 
-.about-pin {
-  /* Location of the red recording dot INSIDE the photo. Drives the zoom origin,
-     the over-exposure glow and the bloom, so all three stay welded to the dot.
-     Tune these two once the real photo is in place if the zoom/glow isn't
-     landing exactly on the dot. --rec (0→1) is set from scroll. */
-  --dot-x: 40%;
-  --dot-y: 3%;
-  --rec: 0;
+.tt-pin {
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: #0a0a0a;
+  background: #0b0b0d;
+  /* Sits over the fixed hero video, which fades out beneath it. */
+  z-index: 9995;
+  /* Driven by the approach ScrollTrigger as the section rises into view. */
+  opacity: 0;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   AMBIENT LIGHT RAYS (behind the ball, z-index 0)
-   Reworked per review — the old shader shafts read as "gimmicky". These are
-   soft, slow, and mostly-invisible: warm amber spokes bursting from centre,
-   with a few COOL blue/violet gels crossing on the diagonal, so the palette
-   reads warm-and-cool at once. They rotate once every 60-90s — ambient, not
-   spinning. The radial mask keeps them off the ball's centre and the frame
-   edges, so it's a glow the ball sits in, never a full-screen wash.
-   ══════════════════════════════════════════════════════════════════════════ */
-.about-rays,
-.about-rays-cool {
+.tt-stage {
   position: absolute;
-  inset: -40%;
-  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: 1600px;
+  height: 900px;
+  transform-origin: 50% 50%;
+  /* transform (cover scale + narrow-screen recentre) is written from JS. */
+  transform: translate(-50%, -50%);
+}
+
+/* ── the plinth: everything the record does not cover ──────────────────── */
+
+.tt-plinth {
+  position: absolute;
+  inset: -50%;
+  background:
+    /* light plinth wedge in the bottom-left, where the knob sits */
+    radial-gradient(30% 22% at 25.5% 78.5%,
+      #dcdcd7 0%, #b5b5ae 26%, #6e6e69 46%, #2b2b2b 66%, rgba(20, 20, 22, 0) 80%),
+    /* the platter mat the record sits on */
+    radial-gradient(60% 60% at 56% 50%, #1b1b1e 0%, #131316 46%, #0a0a0c 100%);
+}
+
+/* ── the record ────────────────────────────────────────────────────────── */
+
+.tt-disc,
+.tt-disc-optics {
+  position: absolute;
+  left: 224px;   /* 984 − 760 */
+  top: -315px;   /* 445 − 760 */
+  width: 1520px;
+  height: 1520px;
+  border-radius: 50%;
+}
+
+/* The record. This element is the thing that turns — the vinyl and its grooves
+   physically rotate, rather than a texture being swept across a still disc. */
+.tt-disc {
+  transform: rotate(var(--spin, 0deg));
+  will-change: transform;
+  background:
+    /* The vinyl's own tone variation — the one thing on the disc that is not
+       rotationally symmetric, and therefore the only thing that can show the
+       disc turning. Kept as DARKENING only: a white film laid over the record
+       reads as a texture sliding across it, which is exactly the fake we are
+       trying not to build. Black-on-black is the vinyl itself. */
+    conic-gradient(from 0deg at 50% 50%,
+      rgba(0, 0, 0, 0) 0deg, rgba(0, 0, 0, 0.30) 58deg,
+      rgba(0, 0, 0, 0.05) 122deg, rgba(0, 0, 0, 0.34) 190deg,
+      rgba(0, 0, 0, 0.04) 246deg, rgba(0, 0, 0, 0.26) 308deg,
+      rgba(0, 0, 0, 0) 360deg),
+    /* track-band separators — the tonearm's three detents sit between these */
+    radial-gradient(circle closest-side at 50% 50%,
+      rgba(0, 0, 0, 0) 0 54.8%,
+      rgba(0, 0, 0, 0.62) 55.2% 55.8%,
+      rgba(0, 0, 0, 0) 56.2% 63.0%,
+      rgba(0, 0, 0, 0.62) 63.4% 64.0%,
+      rgba(0, 0, 0, 0) 64.4% 71.4%,
+      rgba(0, 0, 0, 0.62) 71.8% 72.4%,
+      rgba(0, 0, 0, 0) 72.8% 79.8%,
+      rgba(0, 0, 0, 0.62) 80.2% 80.8%,
+      rgba(0, 0, 0, 0) 81.2% 100%),
+    /* the grooves themselves */
+    repeating-radial-gradient(circle at 50% 50%,
+      rgba(255, 255, 255, 0.052) 0px 1.1px,
+      rgba(0, 0, 0, 0.30) 1.1px 2.4px,
+      rgba(255, 255, 255, 0.016) 2.4px 3.9px,
+      rgba(0, 0, 0, 0.14) 3.9px 5.8px),
+    /* vinyl body — lit from the upper left */
+    radial-gradient(circle closest-side at 34% 26%,
+      #313135 0%, #232327 24%, #16161a 52%, #0d0d10 78%, #08080a 100%);
+  /* Physical presence: a lit machined edge at the top where the light is, the
+     rolled shoulder a pressing has, then the disc's own contact shadow on the
+     platter. Without the contact shadow the record reads as printed onto the
+     deck rather than lying on it. */
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.10),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.045),
+    inset 0 -3px 14px rgba(0, 0, 0, 0.55),
+    0 0 0 2px rgba(0, 0, 0, 0.92),
+    0 18px 34px -6px rgba(0, 0, 0, 0.9),
+    0 40px 90px -18px rgba(0, 0, 0, 0.8);
+}
+
+/* Optics layer — everything that is NOT on the record. Same circle, same
+   place, but it never rotates, because a room light that swept round with the
+   platter is precisely the fake this section is not allowed to use. */
+.tt-disc-optics {
   pointer-events: none;
+}
+
+/* ── the specular: what actually makes vinyl look like vinyl ───────────────
+   A record is a diffraction grating — thousands of concentric grooves — so it
+   does not scatter light the way a matte black disc does. It throws TWO
+   opposed, elongated highlight lobes along the light axis, and it splits the
+   edge of each lobe into spectrum. That pair of facts is what the eye reads as
+   "vinyl"; without them this is just a dark circle with rings on it.
+
+   All of it is FIXED. It belongs to the room light, not to the record, which
+   is exactly why the disc is free to turn underneath it. Light sits at the
+   upper left (matching the deck and the disc body), so the lobes run along the
+   upper-left ↔ lower-right diagonal at 315° and 135°. */
+.tt-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    /* spectral fringing on the trailing edge of each lobe — the giveaway that
+       this is a grooved surface and not polished plastic. Kept far below the
+       white lobes: at full strength it reads as an oil slick, not as vinyl. */
+    conic-gradient(from 0deg at 50% 50%,
+      rgba(0, 0, 0, 0) 100deg,
+      rgba(96, 156, 255, 0.055) 118deg,
+      rgba(255, 244, 214, 0.030) 136deg,
+      rgba(255, 138, 104, 0.055) 154deg,
+      rgba(0, 0, 0, 0) 172deg,
+      rgba(0, 0, 0, 0) 280deg,
+      rgba(96, 156, 255, 0.048) 298deg,
+      rgba(255, 244, 214, 0.026) 316deg,
+      rgba(255, 138, 104, 0.048) 334deg,
+      rgba(0, 0, 0, 0) 352deg),
+    /* the two specular lobes */
+    conic-gradient(from 0deg at 50% 50%,
+      rgba(255, 255, 255, 0) 103deg,
+      rgba(255, 255, 255, 0.15) 135deg,
+      rgba(255, 255, 255, 0) 167deg,
+      rgba(255, 255, 255, 0) 283deg,
+      rgba(255, 255, 255, 0.19) 315deg,
+      rgba(255, 255, 255, 0) 347deg),
+    /* broad ambient falloff from the same window */
+    radial-gradient(62% 62% at 28% 20%,
+      rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 70%);
+  /* Hold it off the label and let it die at the rim — a specular that runs to
+     the very edge reads as a glow around the disc rather than light on it. */
+  -webkit-mask-image: radial-gradient(circle closest-side at 50% 50%,
+    transparent 36%, #000 49%, #000 91%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side at 50% 50%,
+    transparent 36%, #000 49%, #000 91%, transparent 100%);
+  mix-blend-mode: screen;
+}
+
+/* The groove band the stylus is currently in, lifted a hair. The radii are
+   lerped between detents by AboutSection so it tracks the needle. */
+.tt-band {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle closest-side at 50% 50%,
+    rgba(255, 255, 255, 0) 0 var(--b0, 60%),
+    rgba(255, 255, 255, 0.055) calc(var(--b0, 60%) + 0.6%) calc(var(--b1, 68%) - 0.6%),
+    rgba(255, 255, 255, 0) var(--b1, 68%) 100%);
+  mix-blend-mode: screen;
+}
+
+/* ── the label ─────────────────────────────────────────────────────────── */
+
+.tt-label {
+  position: absolute;
+  left: 696px;   /* 984 − 288 */
+  top: 157px;    /* 445 − 288 */
+  width: 576px;
+  height: 576px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #17171a;
+  /* A label is a paper disc GLUED to the vinyl, so it wants a cut edge, a
+     tight contact seam and its own catch of the window light — not a soft
+     glow, which just makes it hover. */
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 -6px 16px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(0, 0, 0, 0.75),
+    0 3px 8px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(0, 0, 0, 0.35);
+}
+
+/* One flat disc per track, stacked and revealed by a radial WIPE, not a fade.
+   Cross-fading orange into red by opacity passes through their average, which
+   is a muddy desaturated brown — visibly worse than either colour. A wipe has
+   no blended state at all: the new colour floods out from the spindle, which
+   is also the most record-like way for a label to change. --wipe is 0→60
+   (circle(60%) already covers the whole square box). */
+.tt-lab {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  clip-path: circle(calc(var(--wipe, 60) * 1%) at 50% 50%);
+}
+.tt-lab-theme   { background: radial-gradient(circle closest-side at 44% 36%, #d3822a 0%, #c4711f 46%, #a95c17 100%); }
+.tt-lab-vision  { background: radial-gradient(circle closest-side at 44% 36%, #c01a10 0%, #ab1109 46%, #870b06 100%); }
+.tt-lab-mission { background: radial-gradient(circle closest-side at 44% 36%, #eab02c 0%, #dfa11c 46%, #bd8210 100%); }
+
+/* The swirled paint inside the ring. Deliberately no filter: blur() — this
+   layer spins every frame, and soft wide gradient stops give the same liquid
+   read for free where a blur would force a re-raster every tick. */
+.tt-swirl {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 84%;          /* the solid colour ring is whatever is left over */
+  height: 84%;
+  border-radius: 50%;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+}
+
+.tt-swirl-a,
+.tt-swirl-b {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150%;
+  height: 150%;
   border-radius: 50%;
   will-change: transform;
-  /* Soft off the ball, fading at the frame — a glow the ball sits in, never a
-     full-screen wash. Wide feather so the shafts read as SOFT light, not spikes. */
-  -webkit-mask-image: radial-gradient(closest-side, transparent 13%, #000 34%, #000 60%, transparent 95%);
-  mask-image: radial-gradient(closest-side, transparent 13%, #000 34%, #000 60%, transparent 95%);
-}
-/* Warm amber/gold light — broad, soft, feathered shafts (not thin spikes) that
-   drift slowly. Subtle: this is ambience the ball glows into, per the review. */
-.about-rays {
-  mix-blend-mode: screen;
-  opacity: 0.75;
-  background: repeating-conic-gradient(from 0deg at 50% 50%,
-      rgba(255, 200, 126, 0) 0deg,
-      rgba(255, 200, 126, 0.15) 10deg,
-      rgba(255, 176, 96, 0.08) 16deg,
-      rgba(255, 200, 126, 0) 25deg,
-      rgba(255, 200, 126, 0) 30deg);
-  animation: raySpin 92s linear infinite;
 }
 
-/* Cool cyan/violet light, fewer & wider, drifting the other way so it softly
-   crosses the warm side (the stage-gel warm-and-cool read) without spiking. */
-.about-rays-cool {
-  mix-blend-mode: screen;
-  opacity: 0.75;
-  background: repeating-conic-gradient(from 20deg at 50% 50%,
-      rgba(120, 196, 240, 0) 0deg,
-      rgba(120, 196, 240, 0.2) 11deg,
-      rgba(150, 120, 226, 0.1) 18deg,
-      rgba(120, 196, 240, 0) 30deg,
-      rgba(120, 196, 240, 0) 44deg);
-  animation: raySpinRev 78s linear infinite;
-}
-/* Soft warm-cool pool centred on the ball so it rests in light, not a void. */
-.about-glow {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    46vmax 40vmax at 50% 48%,
-    rgba(255, 182, 110, 0.22) 0%,
-    rgba(122, 98, 182, 0.12) 42%,
-    transparent 70%
-  );
-}
-@keyframes raySpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes raySpinRev {
-  to {
-    transform: rotate(-360deg);
-  }
+/* Off-centre elliptical blobs, NOT a conic sweep. An evenly-stepped conic
+   around a centre point is exactly how you draw brushed aluminium, and that is
+   precisely what it rendered as — a chrome disc. Irregular overlapping ellipses
+   read as liquid because they have no common centre and no repeating period.
+   The single conic that remains is very low contrast and only ties them
+   together into one rotational direction. */
+.tt-swirl-a {
+  background:
+    radial-gradient(46% 32% at 22% 30%, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0) 62%),
+    radial-gradient(38% 50% at 76% 24%, rgba(0, 0, 0, 0.74) 0%, rgba(0, 0, 0, 0) 58%),
+    radial-gradient(56% 28% at 70% 76%, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0) 64%),
+    radial-gradient(32% 44% at 28% 74%, rgba(0, 0, 0, 0.68) 0%, rgba(0, 0, 0, 0) 60%),
+    radial-gradient(64% 22% at 50% 52%, rgba(255, 255, 255, 0.36) 0%, rgba(255, 255, 255, 0) 68%),
+    conic-gradient(from 40deg at 46% 52%,
+      rgba(255, 255, 255, 0.14) 0deg, rgba(0, 0, 0, 0.14) 130deg,
+      rgba(255, 255, 255, 0.10) 232deg, rgba(0, 0, 0, 0.14) 310deg,
+      rgba(255, 255, 255, 0.14) 360deg);
+  mix-blend-mode: overlay;
+  transform: translate(-50%, -50%) rotate(var(--spin, 0deg));
 }
 
-/* ── 3D layer ─────────────────────────────────────────────────────────────
-   Transparent so the light rays behind (z-index 0) show through around the
-   ball; the ball's own pixels occlude the ray centre, so the shafts fan out
-   from behind it. Fades in on scroll as the bloom recedes. */
-.about-canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  opacity: 0;
-  will-change: opacity;
-  background: transparent;
+/* The contrasting streaks the same swirled paint carries. Printed on the same
+   label, so it turns by the same angle — just held at a fixed phase offset so
+   the two layers cross into curved flow instead of moving as one slab. */
+.tt-swirl-b {
+  background:
+    radial-gradient(40% 13% at 34% 38%, rgba(150, 208, 160, 0.40) 0%, rgba(150, 208, 160, 0) 70%),
+    radial-gradient(15% 34% at 70% 60%, rgba(206, 226, 176, 0.30) 0%, rgba(206, 226, 176, 0) 72%),
+    radial-gradient(30% 12% at 62% 26%, rgba(120, 188, 176, 0.28) 0%, rgba(120, 188, 176, 0) 74%),
+    radial-gradient(12% 28% at 26% 66%, rgba(168, 200, 150, 0.24) 0%, rgba(168, 200, 150, 0) 74%);
+  mix-blend-mode: soft-light;
+  transform: translate(-50%, -50%) rotate(calc(var(--spin, 0deg) + 130deg));
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   SAMVAD PHOTO + ZOOM
-   The photo carries its own red dot; we only zoom INTO it (origin on the dot)
-   and never draw a dot of our own.
-   ══════════════════════════════════════════════════════════════════════════ */
-.samvad-photo-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  overflow: hidden;
-  transform-origin: var(--dot-x) var(--dot-y);
-  will-change: transform, opacity;
-  background: #07060a;
-}
-
-.samvad-photo {
+/* Printed ring on the label — see the comment on the markup. This is the
+   element that carries the rotation, so it must stay clearly legible: it sits
+   above the swirl, and it is dark ink on the label colour rather than a light
+   film over the vinyl. */
+.tt-label-print {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 22%;
-  user-select: none;
-  -webkit-user-drag: none;
+  pointer-events: none;
+  overflow: visible;
 }
 
-/* Over-exposure glow — a LIGHT sitting exactly on the photo's own red dot
-   (--dot-x/--dot-y, which is also the zoom origin, so the dot stays pinned to
-   this screen point as the frame zooms). Scroll (--rec) grows it from nothing to
-   a white-hot bloom, so the image's flat red dot appears to over-expose. No dot
-   is ever drawn — this is purely the light. */
-.samvad-dot-glow {
+.tt-label-print-spin {
+  transform-box: view-box;
+  transform-origin: 308px 308px;
+  transform: rotate(var(--spin, 0deg));
+  will-change: transform;
+}
+
+.tt-label-print-text {
+  font-family: var(--font-editorial-display), Georgia, serif;
+  font-size: 30px;
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  fill: rgba(0, 0, 0, 0.42);
+}
+
+/* Rim shading so the label reads as pressed paper, not a flat CSS circle. */
+.tt-label-rim {
   position: absolute;
-  left: var(--dot-x);
-  top: var(--dot-y);
-  width: 46vmax;
-  height: 46vmax;
-  z-index: 8;
-  pointer-events: none;
+  inset: 0;
   border-radius: 50%;
-  mix-blend-mode: screen;
-  opacity: var(--rec);
-  transform: translate(-50%, -50%) scale(calc(0.04 + var(--rec) * 1));
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 234, 194, 0.85) 16%,
-    rgba(255, 150, 66, 0.5) 38%,
-    rgba(255, 96, 42, 0) 70%
-  );
+  pointer-events: none;
+  background: radial-gradient(circle closest-side at 50% 50%,
+    rgba(0, 0, 0, 0) 0 80%,
+    rgba(0, 0, 0, 0.16) 92%,
+    rgba(0, 0, 0, 0.34) 100%);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.05);
 }
 
-/* ── Analog overlays (kept subtle — the photo already carries grain) ──────── */
-.samvad-overlays {
+/* Everything colour-bearing on the label sits under this until the needle
+   drops — the record is not playing yet. --lit is driven 0→1 at touchdown. */
+.tt-label-dim {
   position: absolute;
   inset: 0;
-  z-index: 6;
+  border-radius: 50%;
   pointer-events: none;
-  will-change: opacity;
-}
-.samvad-scanlines {
-  position: absolute;
-  inset: 0;
-  opacity: 0.18;
-  mix-blend-mode: multiply;
-  background: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0 1px, transparent 1px 3px);
-}
-.samvad-grain {
-  position: absolute;
-  inset: -60%;
-  opacity: 0.07;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  animation: grainShift 0.55s steps(3) infinite;
-}
-.samvad-vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 100% at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.85) 100%);
-}
-@keyframes grainShift {
-  0% {
-    transform: translate(0, 0);
-  }
-  25% {
-    transform: translate(-3%, 2%);
-  }
-  50% {
-    transform: translate(2%, -3%);
-  }
-  75% {
-    transform: translate(-2%, -2%);
-  }
-  100% {
-    transform: translate(0, 0);
-  }
+  background: #0d0d10;
+  opacity: calc(1 - var(--lit, 0));
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   BLOOM BURST — the mask for the 2D→3D coordinate swap
-   ══════════════════════════════════════════════════════════════════════════ */
-.samvad-bloom {
+/* ── photographic finish ───────────────────────────────────────────────────
+   Viewport-space, over the stage but under the text. Static — grain that
+   crawls reads as video noise, and this is meant to read as one exposure.
+   Cheap, and it does more for "photograph" than any single gradient here:
+   real camera output has a noise floor, and its absence is a large part of
+   why clean CSS renders look synthetic. */
+
+.tt-grain {
   position: absolute;
   inset: 0;
-  z-index: 9;
   pointer-events: none;
-  opacity: 0;
-  will-change: opacity;
-  mix-blend-mode: screen;
-  background: radial-gradient(
-    circle at var(--dot-x) var(--dot-y),
-    #ffffff 0%,
-    #fff3df 24%,
-    #ffd39a 50%,
-    rgba(255, 170, 80, 0) 78%
-  );
-}
-.samvad-flash {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-  opacity: 0;
-  will-change: opacity;
-  background: #ffffff;
+  opacity: 0.065;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='170' height='170'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   ABOUT US COPY
-   ══════════════════════════════════════════════════════════════════════════ */
-/* Perspective stage the copy orbits inside. Kept OFF .about-pin on purpose so
-   it never touches the samvad photo's own transform (the dot zoom). The cards
-   are centred; JS translates each on a 3D arc around the ball. */
-.about-copy-stage {
+/* Lens falloff. Corners of a real frame are always down on the centre. */
+.tt-vignette {
   position: absolute;
   inset: 0;
-  z-index: 11;
-  perspective: 1200px;
   pointer-events: none;
+  background: radial-gradient(126% 106% at 54% 46%,
+    rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.26) 74%, rgba(0, 0, 0, 0.58) 100%);
 }
-.about-content {
+
+/* ── volume knob (bottom-left, on the lit part of the plinth) ──────────── */
+
+.tt-knob {
   position: absolute;
+  left: 80px;   /* centre (132, 792), r 52 */
+  top: 740px;
+  width: 104px;
+  height: 104px;
+}
+
+.tt-knob-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* Brushed aluminium: a many-stop conic for the turned finish, with one soft
+     radial for the light coming in over the upper left. */
+  background:
+    radial-gradient(circle closest-side at 36% 28%,
+      rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 48%),
+    conic-gradient(from 0deg at 50% 50%,
+      #f2f3f2 0deg, #9a9c9c 38deg, #e9eae9 76deg, #8f9191 118deg,
+      #f4f5f4 160deg, #999b9b 206deg, #eceded 250deg, #8d8f8f 296deg, #f2f3f2 360deg);
+  box-shadow:
+    inset 0 0 0 5px rgba(255, 255, 255, 0.26),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.42),
+    0 9px 22px rgba(0, 0, 0, 0.6);
+}
+
+.tt-knob-mark {
+  position: absolute;
+  top: 856px;
+  font-family: var(--font-editorial-display), Georgia, serif;
+  font-size: 40px;
+  line-height: 1;
+  color: #2a2a28;
+  opacity: 0.85;
+}
+.tt-knob-minus { left: 54px; }
+.tt-knob-plus  { left: 196px; }
+
+/* ── tonearm (one SVG over the whole design space) ──────────────────────── */
+
+.tt-hardware {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+  height: 900px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.tt-arm-swing {
+  transform-box: view-box;
+  transform-origin: 146px 84px;
+  will-change: transform, filter;
+  /* transform + drop-shadow are both written from AboutSection's onUpdate —
+     the shadow opening up as the arm lifts is what sells the descent. */
+}
+
+/* ── HUD: viewport-space text ──────────────────────────────────────────── */
+
+.tt-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: #fdfcfa;
+}
+
+/* Side title — "Our" horizontal, the second word stacked one letter per line,
+   exactly as the reference sets it. */
+.tt-side {
+  position: absolute;
+  left: clamp(18px, 3.4vw, 74px);
   top: 50%;
-  left: 50%;
-  width: min(86vw, 27rem);
-  transform: translate(-50%, -50%);
-  transform-style: preserve-3d;
-  opacity: 0;
-  will-change: transform, opacity;
-  color: #f0e2c8;
-}
-/* Text hugs the edge nearest the ball (left cards to their right edge, right
-   cards to their left edge) so the copy reads outward from a clean gap. */
-.about-content.left {
-  text-align: right;
-}
-.about-content .kicker {
-  display: inline-flex;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.65rem;
-  margin-bottom: 0.9rem;
-  font-family: var(--font-90s-body), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.38em;
-  font-size: 0.72rem;
-  color: #cfa252;
-}
-.about-content .kicker::before {
-  content: '';
-  width: 2.2rem;
-  height: 1px;
-  background: #cfa252;
-  opacity: 0.8;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85), 0 0 3px rgba(0, 0, 0, 0.6);
+
+  /* One size drives the whole stack, capped against the VIEWPORT as well as
+     the label. The tallest title is "Our" + seven stacked letters (MISSION),
+     which measures ~11× this value; at 5.2vh that lands inside 21%–79% of the
+     frame, clearing the knob at 82% and the top edge.
+
+     The vh cap is the load-bearing half. Sizing off --label-r alone works only
+     while the cover scale is height-driven: past 16:9 it switches to
+     width-driven, so on a wide monitor the label (and with it the title) keeps
+     growing against a viewport height that does not — and MISSION walks
+     straight through the knob and off both ends of the frame. */
+  --side-fs: min(calc(var(--label-r, 260px) * 0.205), 5.2vh);
 }
 
-/* Headline — Fascinate, with a gold → cream → coral shimmer that sweeps across
-   the letters (background-position loop) so light appears to travel over them
-   in sync with the ball's glints. Toned down from the old saturated red/gold. */
-.about-content h2 {
-  margin: 0 0 0.9rem;
-  font-family: var(--font-fascinate), var(--font-70s-display), serif;
-  font-weight: 400;
-  font-size: clamp(1.7rem, 4.2vw, 3.15rem);
-  line-height: 1.04;
-  letter-spacing: 0.005em;
-  color: transparent;
-  background: linear-gradient(
-    100deg,
-    #c9a24a 0%,
-    #e9dcbb 18%,
-    #fbf4e6 30%,
-    #f0b78c 45%,
-    #dd7550 60%,
-    #c9a24a 100%
-  );
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  filter: drop-shadow(0 2px 16px rgba(220, 150, 96, 0.16));
-  animation: shimmerSweep 7.5s ease-in-out infinite;
+/* All three titles share one grid cell, so swapping one for the next never
+   shifts the layout. */
+.tt-side-stack {
+  display: grid;
+  place-items: center;
 }
-.about-content h2 em {
-  font-style: italic;
-}
-.about-content p {
-  max-width: 34ch;
-  margin: 0;
-  font-family: var(--font-70s-body), sans-serif;
-  font-size: clamp(0.92rem, 1.35vw, 1.08rem);
-  line-height: 1.62;
-  color: #c9bda3;
-}
-.about-content.left p {
-  margin-left: auto;
+.tt-side-stack > .tt-side-title {
+  grid-area: 1 / 1;
 }
 
-@keyframes shimmerSweep {
-  0% {
-    background-position: 200% 50%;
+.tt-side-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-editorial-display), Georgia, serif;
+  font-variant: small-caps;
+  font-weight: 500;
+  line-height: 1;
+  opacity: 0;
+}
+
+/* Both sizes ride --side-fs at the ratios they already had (1.146× and
+   0.488×), so the proportions are unchanged — only the cap is new. */
+.tt-side-our {
+  font-size: calc(var(--side-fs) * 1.146);
+  letter-spacing: 0.03em;
+  margin-bottom: calc(var(--side-fs) * 0.488);
+}
+
+.tt-side-letter {
+  display: block;
+  font-size: var(--side-fs);
+  line-height: 1.34;
+  letter-spacing: 0.02em;
+}
+
+/* Centre copy — anchored to the label's projected screen position. */
+.tt-center {
+  position: absolute;
+  left: var(--label-cx, 50%);
+  top: var(--label-cy, 50%);
+  width: calc(var(--label-r, 260px) * 1.58);
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+.tt-center > .tt-copy {
+  grid-area: 1 / 1;
+}
+
+.tt-copy {
+  width: 100%;
+  opacity: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.42);
+}
+
+.tt-copy-brush {
+  display: block;
+  font-family: var(--font-brush), cursive;
+  font-size: calc(var(--label-r, 260px) * 0.315);
+  line-height: 1.06;
+  margin-bottom: calc(var(--label-r, 260px) * 0.085);
+  /* Kaushan sits low in its box; nudge the optical centre back up. */
+  padding-top: calc(var(--label-r, 260px) * 0.03);
+}
+
+.tt-copy-line {
+  display: block;
+  /* Line breaks are authored (see TRACKS in AboutSection) because the copy has
+     to sit inside a circle. Wrapping would silently re-rag it — everything
+     scales off --label-r, so a line that fits at one size fits at all. */
+  white-space: nowrap;
+  font-family: var(--font-editorial-display), Georgia, serif;
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: calc(var(--label-r, 260px) * 0.150);
+  line-height: 1.30;
+  letter-spacing: 0.012em;
+}
+
+/* The long vision/mission paragraphs have to fit inside a circle, so they run
+   smaller and tighter than the two-line theme card. */
+.tt-copy-para .tt-copy-line {
+  font-size: calc(var(--label-r, 260px) * 0.116);
+  line-height: 1.34;
+}
+
+/* ── narrow viewports ──────────────────────────────────────────────────── */
+/* Cover-scaling keeps the record full-bleed and AboutSection recentres the
+   stage so the label lands mid-screen. The side title cannot stay in the left
+   margin at that point — there isn't one — so it lays out along the top. */
+
+@media (max-aspect-ratio: 13 / 10) {
+  .tt-side {
+    left: 50%;
+    top: clamp(20px, 6vh, 74px);
+    transform: translateX(-50%);
+    flex-direction: row;
+    align-items: baseline;
   }
-  100% {
-    background-position: -60% 50%;
+  .tt-side-title {
+    flex-direction: row;
+    align-items: baseline;
+  }
+  .tt-side-our {
+    margin-bottom: 0;
+    margin-right: calc(var(--label-r, 200px) * 0.10);
+  }
+  .tt-side-letter {
+    font-size: calc(var(--label-r, 200px) * 0.185);
+    letter-spacing: 0.16em;
+  }
+  .tt-center {
+    width: calc(var(--label-r, 200px) * 1.64);
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .samvad-grain,
-  .about-rays,
-  .about-rays-cool,
-  .about-content h2 {
-    animation: none;
-  }
-}
+/* ── reduced motion ────────────────────────────────────────────────────── */
+
+/* Nothing here autoplays any more — the record only turns while the user is
+   actually scrolling — so there is no ambient motion left to opt out of. */
