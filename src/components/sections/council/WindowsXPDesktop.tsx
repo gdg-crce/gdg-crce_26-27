@@ -153,6 +153,11 @@ export default function WindowsXPDesktop({
             <span style={{ fontSize: '13px' }}>💿</span>
             <span>Student Council 2026-27 Player</span>
           </div>
+
+          <div className="xp-taskbar-item">
+            <span style={{ fontSize: '13px' }}>📧</span>
+            <span>Contact Us</span>
+          </div>
         </div>
 
         {/* System Tray */}
