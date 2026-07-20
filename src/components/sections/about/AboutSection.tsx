@@ -22,19 +22,17 @@ const STAGE_W = 1600;
 const STAGE_H = 900;
 const REC_CX = 984;
 const REC_CY = 445;
-const REC_R = 760;
+const REC_R = 830;
 const LABEL_R = 288;
 const PIVOT_X = 146;
 const PIVOT_Y = 84;
 const ARM_LEN = 625;
 
 /** Groove radius, from the record centre, that the stylus rides in for each
- *  track — plus the parked position, which has to clear the disc entirely.
- *  Scaled with REC_R (×760/830) so every detent still lands between the band
- *  separators, which about.css draws as percentages of the disc. */
-const TRACK_RADII = [578, 514, 450];
-const PARK_RADIUS = 786; // > REC_R, so the arm sits off the record at rest
-const RUNOUT_RADIUS = 430; // slow inward creep through the last track
+ *  track — plus the parked position, which has to clear the disc entirely. */
+const TRACK_RADII = [631, 561, 491];
+const PARK_RADIUS = 858; // > REC_R, so the arm sits off the record at rest
+const RUNOUT_RADIUS = 470; // slow inward creep through the last track
 
 /** Revolutions the record makes across the whole pinned scroll. At 6500px of
  *  scroll this is ~930px per turn — fast enough to feel driven by the wheel,
@@ -439,11 +437,14 @@ export default function AboutSection() {
           {/* The record itself rotates — grooves, vinyl and all. The room
               light and the needle's groove highlight are NOT on the record, so
               they live in a separate, non-rotating layer of the same size. */}
-          <div className="tt-disc" aria-hidden="true" />
+          <div className="tt-disc" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a background
+                image cannot be pivoted on the pressing's off-centre spindle; the
+                <img> lets us cancel the file's centring error so it spins true */}
+            <img className="tt-disc-img" src="/record%20player/disc.png" alt="" draggable={false} />
+          </div>
           <div className="tt-disc-optics" aria-hidden="true">
             <div ref={bandRef} className="tt-band" />
-            <div className="tt-sheen" />
-            <div className="tt-sun" />
           </div>
 
           <div ref={labelRef} className="tt-label" aria-hidden="true">

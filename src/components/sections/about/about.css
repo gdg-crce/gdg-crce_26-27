@@ -71,118 +71,56 @@
 .tt-disc,
 .tt-disc-optics {
   position: absolute;
-  left: 224px;   /* 984 − 760 */
-  top: -315px;   /* 445 − 760 */
-  width: 1520px;
-  height: 1520px;
+  /* Disc matches the tonearm's REC_R slot (830): 830 radius, so
+     the pressing reads correctly in frame. Kept centred on REC (984,445),
+     and the optics box tracks it 1:1 so the groove highlight never spills past
+     the vinyl onto the plinth. */
+  left: 154px;   /* 984 − 830 */
+  top: -385px;   /* 445 − 830 */
+  width: 1660px;
+  height: 1660px;
   border-radius: 50%;
 }
 
-/* The record. This element is the thing that turns — the vinyl and its grooves
-   physically rotate, rather than a texture being swept across a still disc. */
+/* The record. A PHOTOGRAPH of a real pressing (public/record player/disc.png,
+   transparent PNG) — not a CSS synthesis. The grooves, the gloss, the soft
+   surface reflections and the rolled edge are all real, which is the whole
+   reason it reads as vinyl instead of as a render, and it is why ~600 lines of
+   painted gradients used to live here and no longer need to.
+
+   This element is the PIVOT: it rotates about its own centre (984,445 = the
+   spindle), and .tt-disc-img inside is positioned so the pressing's own centre
+   lands exactly there. That is the whole trick — spin the frame about the
+   spindle, park the photo's spindle on it, and the disc turns in place instead
+   of orbiting. Its baked reflections are soft and diffuse, so they read as
+   surface sheen turning, while the FIXED room light on .tt-disc-optics above
+   stays put — a disc spinning under a window. */
 .tt-disc {
   transform: rotate(var(--spin, 0deg));
   will-change: transform;
-  background:
-    /* The vinyl's own tone variation — the one thing on the disc that is not
-       rotationally symmetric, and therefore the only thing that can show the
-       disc turning. Kept as DARKENING only: a white film laid over the record
-       reads as a texture sliding across it, which is exactly the fake we are
-       trying not to build. Black-on-black is the vinyl itself. */
-    conic-gradient(from 0deg at 50% 50%,
-      rgba(0, 0, 0, 0) 0deg, rgba(0, 0, 0, 0.30) 58deg,
-      rgba(0, 0, 0, 0.05) 122deg, rgba(0, 0, 0, 0.34) 190deg,
-      rgba(0, 0, 0, 0.04) 246deg, rgba(0, 0, 0, 0.26) 308deg,
-      rgba(0, 0, 0, 0) 360deg),
-    /* track-band separators — the tonearm's three detents sit between these.
-       These four are the HEAVY ones and their radii are load-bearing: the
-       detents in AboutSection.tsx (TRACK_RADII / REC_R → 59.2%, 67.6%, 76.0%)
-       are chosen to land in the gaps between them. Move one and the needle
-       comes down on a separator. */
-    radial-gradient(circle closest-side at 50% 50%,
-      rgba(0, 0, 0, 0) 0 54.8%,
-      rgba(0, 0, 0, 0.62) 55.2% 55.8%,
-      rgba(0, 0, 0, 0) 56.2% 63.0%,
-      rgba(0, 0, 0, 0.62) 63.4% 64.0%,
-      rgba(0, 0, 0, 0) 64.4% 71.4%,
-      rgba(0, 0, 0, 0.62) 71.8% 72.4%,
-      rgba(0, 0, 0, 0) 72.8% 79.8%,
-      rgba(0, 0, 0, 0.62) 80.2% 80.8%,
-      rgba(0, 0, 0, 0) 81.2% 100%),
-    /* SECONDARY RINGS. A pressing is not an even field of grooves between four
-       separators — pitch changes with how loud the passage is, so a record is
-       ringed all over with fine boundaries where one span of groove meets the
-       next. These are the ones you actually see in a photograph.
-       Deliberately much lighter than the separators above (0.20–0.30 against
-       0.62): at equal weight the eye cannot tell a track break from a pitch
-       change and the disc reads as a target, not a record. Each ring is a dark
-       line with a lit upper shoulder, which is what gives it a radius rather
-       than just a colour. Nothing below 41% — the label covers to ~37.9%. */
-    radial-gradient(circle closest-side at 50% 50%,
-      rgba(0, 0, 0, 0) 0 40.6%,
-      rgba(255, 255, 255, 0.030) 40.8% 41.0%, rgba(0, 0, 0, 0.26) 41.2% 41.6%,
-      rgba(0, 0, 0, 0) 41.9% 44.4%,
-      rgba(255, 255, 255, 0.028) 44.6% 44.8%, rgba(0, 0, 0, 0.24) 45.0% 45.4%,
-      rgba(0, 0, 0, 0) 45.7% 48.2%,
-      rgba(255, 255, 255, 0.030) 48.4% 48.6%, rgba(0, 0, 0, 0.28) 48.8% 49.3%,
-      rgba(0, 0, 0, 0) 49.6% 51.8%,
-      rgba(255, 255, 255, 0.026) 52.0% 52.2%, rgba(0, 0, 0, 0.22) 52.4% 52.8%,
-      rgba(0, 0, 0, 0) 53.1% 58.9%,
-      rgba(255, 255, 255, 0.030) 59.1% 59.3%, rgba(0, 0, 0, 0.26) 59.5% 60.0%,
-      rgba(0, 0, 0, 0) 60.3% 61.4%,
-      rgba(255, 255, 255, 0.024) 61.6% 61.8%, rgba(0, 0, 0, 0.20) 62.0% 62.3%,
-      rgba(0, 0, 0, 0) 62.6% 67.3%,
-      rgba(255, 255, 255, 0.030) 67.5% 67.7%, rgba(0, 0, 0, 0.26) 67.9% 68.4%,
-      rgba(0, 0, 0, 0) 68.7% 69.9%,
-      rgba(255, 255, 255, 0.024) 70.1% 70.3%, rgba(0, 0, 0, 0.20) 70.5% 70.8%,
-      rgba(0, 0, 0, 0) 71.1% 75.7%,
-      rgba(255, 255, 255, 0.030) 75.9% 76.1%, rgba(0, 0, 0, 0.26) 76.3% 76.8%,
-      rgba(0, 0, 0, 0) 77.1% 78.3%,
-      rgba(255, 255, 255, 0.024) 78.5% 78.7%, rgba(0, 0, 0, 0.20) 78.9% 79.2%,
-      rgba(0, 0, 0, 0) 79.5% 83.4%,
-      rgba(255, 255, 255, 0.030) 83.6% 83.8%, rgba(0, 0, 0, 0.28) 84.0% 84.5%,
-      rgba(0, 0, 0, 0) 84.8% 87.1%,
-      rgba(255, 255, 255, 0.026) 87.3% 87.5%, rgba(0, 0, 0, 0.24) 87.7% 88.1%,
-      rgba(0, 0, 0, 0) 88.4% 90.6%,
-      rgba(255, 255, 255, 0.028) 90.8% 91.0%, rgba(0, 0, 0, 0.26) 91.2% 91.7%,
-      rgba(0, 0, 0, 0) 92.0% 94.0%,
-      /* the lead-out: the last land before the rim, always the widest and the
-         most visible ring on a real disc */
-      rgba(255, 255, 255, 0.040) 94.2% 94.5%, rgba(0, 0, 0, 0.34) 94.7% 95.5%,
-      rgba(0, 0, 0, 0) 95.9% 100%),
-    /* the grooves themselves. Pitch tightened from 5.8px to 3.9px — denser, so
-       the disc reads as thousands of grooves rather than as a coarse ribbing.
-       Do NOT push it below ~3px: a repeating radial gradient finer than about
-       three device pixels aliases into moiré rings that no amount of contrast
-       tuning will fix, and unlike everything else here it will not average out,
-       because a rotationally symmetric pattern does not move when the disc
-       turns. Two interleaved periods (3.9 / 9.4) keep it from reading as one
-       machined screw thread. */
-    repeating-radial-gradient(circle at 50% 50%,
-      rgba(255, 255, 255, 0.020) 0px 2.6px,
-      rgba(0, 0, 0, 0.10) 2.6px 4.8px,
-      rgba(255, 255, 255, 0.012) 4.8px 7.2px,
-      rgba(0, 0, 0, 0.07) 7.2px 9.4px),
-    repeating-radial-gradient(circle at 50% 50%,
-      rgba(255, 255, 255, 0.050) 0px 0.8px,
-      rgba(0, 0, 0, 0.30) 0.8px 1.7px,
-      rgba(255, 255, 255, 0.014) 1.7px 2.7px,
-      rgba(0, 0, 0, 0.15) 2.7px 3.9px),
-    /* vinyl body — lit from the upper left */
-    radial-gradient(circle closest-side at 34% 26%,
-      #313135 0%, #232327 24%, #16161a 52%, #0d0d10 78%, #08080a 100%);
-  /* Physical presence: a lit machined edge at the top where the light is, the
-     rolled shoulder a pressing has, then the disc's own contact shadow on the
-     platter. Without the contact shadow the record reads as printed onto the
-     deck rather than lying on it. */
-  box-shadow:
-    inset 0 2px 3px rgba(255, 255, 255, 0.10),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.045),
-    inset 0 -3px 14px rgba(0, 0, 0, 0.55),
-    0 0 0 2px rgba(0, 0, 0, 0.92),
-    0 18px 34px -6px rgba(0, 0, 0, 0.9),
-    0 40px 90px -18px rgba(0, 0, 0, 0.8);
 }
+
+/* The pressing itself. Centred on the disc's rotation axis by cancelling the
+   file's own centring error, so it spins true. */
+.tt-disc-img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* SIZE KNOB: the photographed disc is 81.5% of the file, so ~123% perfectly
+     fills the frame with the photograph's own natural rolled edge. */
+  width: 123%;
+  height: auto;
+  /* CENTRE FIX: the pressing's centre was measured at 49.22%, 48.49% of the
+     file — up and to the left of the file centre. These two offsets push the
+     image back the other way so its centre sits on the pivot. translate() is
+     relative to the image, so they are the raw file-fractions and stay correct
+     at any width. Re-measure if the PNG is re-exported. */
+  transform: translate(calc(-50% + 0.78%), calc(-50% + 1.51%));
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 
 /* Optics layer — everything that is NOT on the record. Same circle, same
    place, but it never rotates, because a room light that swept round with the
@@ -191,126 +129,6 @@
   pointer-events: none;
 }
 
-/* ── the specular: what actually makes vinyl look like vinyl ───────────────
-   A record is a diffraction grating — thousands of concentric grooves — so it
-   does not scatter light the way a matte black disc does. It throws TWO
-   opposed, elongated highlight lobes along the light axis, and it splits the
-   edge of each lobe into spectrum. That pair of facts is what the eye reads as
-   "vinyl"; without them this is just a dark circle with rings on it.
-
-   All of it is FIXED. It belongs to the room light, not to the record, which
-   is exactly why the disc is free to turn underneath it. Light sits at the
-   upper left (matching the deck and the disc body), so the lobes run along the
-   upper-left ↔ lower-right diagonal at 315° and 135°. */
-.tt-sheen {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  background:
-    /* spectral fringing on the trailing edge of each lobe — the giveaway that
-       this is a grooved surface and not polished plastic. Kept far below the
-       white lobes: at full strength it reads as an oil slick, not as vinyl. */
-    conic-gradient(from 0deg at 50% 50%,
-      rgba(0, 0, 0, 0) 100deg,
-      rgba(96, 156, 255, 0.055) 118deg,
-      rgba(255, 244, 214, 0.030) 136deg,
-      rgba(255, 138, 104, 0.055) 154deg,
-      rgba(0, 0, 0, 0) 172deg,
-      rgba(0, 0, 0, 0) 280deg,
-      rgba(96, 156, 255, 0.048) 298deg,
-      rgba(255, 244, 214, 0.026) 316deg,
-      rgba(255, 138, 104, 0.048) 334deg,
-      rgba(0, 0, 0, 0) 352deg),
-    /* the two specular lobes */
-    conic-gradient(from 0deg at 50% 50%,
-      rgba(255, 255, 255, 0) 103deg,
-      rgba(255, 255, 255, 0.15) 135deg,
-      rgba(255, 255, 255, 0) 167deg,
-      rgba(255, 255, 255, 0) 283deg,
-      rgba(255, 255, 255, 0.19) 315deg,
-      rgba(255, 255, 255, 0) 347deg),
-    /* broad ambient falloff from the same window */
-    radial-gradient(62% 62% at 28% 20%,
-      rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 70%);
-  /* Hold it off the label and let it die at the rim — a specular that runs to
-     the very edge reads as a glow around the disc rather than light on it. */
-  -webkit-mask-image: radial-gradient(circle closest-side at 50% 50%,
-    transparent 36%, #000 49%, #000 91%, transparent 100%);
-  mask-image: radial-gradient(circle closest-side at 50% 50%,
-    transparent 36%, #000 49%, #000 91%, transparent 100%);
-  mix-blend-mode: screen;
-}
-
-/* ── sunlight ──────────────────────────────────────────────────────────────
-   .tt-sheen above is the room: neutral, even, always there. This is the SUN —
-   one warm shaft coming in through a window at the upper left, which is what
-   takes the deck from "lit" to "photographed in a real room at a real time of
-   day". Three things have to be true for it to read as sunlight rather than as
-   an orange filter:
-
-   1. It is WARM AND DIRECTIONAL, and the room light is not. A single colour
-      temperature everywhere is the look of a render. The contrast between the
-      neutral #fff sheen and this amber shaft is the whole effect — which is
-      also why this layer must stay warm-only and must never be widened into a
-      general glow.
-   2. It has a SHAPE WITH SOFT EDGES. Sun through a window is a patch with a
-      border, not a radial falloff centred on the disc. The patch here is an
-      off-centre ellipse whose alpha dies well before the rim, so the lower
-      right of the record stays in the room's cooler light.
-   3. It DOES NOT ROTATE. Same rule as .tt-sheen, and the reason both live in
-      .tt-disc-optics: the sun does not go round with the platter. The record
-      turning underneath a fixed warm patch is the entire illusion — spin this
-      layer and it collapses into a texture painted on the disc.
-
-   Vinyl is a diffraction grating, so a warm source does not just brighten it:
-   the grooves throw the warm end of the spectrum outward along the light axis.
-   That is the amber lobe, and it is what makes the sun look like it is landing
-   on grooves rather than on a black plate. */
-.tt-sun {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  background:
-    /* the hot core of the shaft — small, and the only near-white thing here.
-       A wide hot core is a lamp; a tight one with a long warm skirt is sun. */
-    radial-gradient(20% 15% at 30% 22%,
-      rgba(255, 246, 224, 0.30) 0%,
-      rgba(255, 226, 168, 0.14) 42%,
-      rgba(255, 210, 140, 0) 100%),
-    /* the patch itself: an off-centre ellipse, long on the light axis */
-    radial-gradient(54% 40% at 33% 26%,
-      rgba(255, 216, 152, 0.155) 0%,
-      rgba(255, 198, 128, 0.085) 38%,
-      rgba(255, 180, 110, 0.030) 66%,
-      rgba(255, 170, 100, 0) 100%),
-    /* warm diffraction lobes, aligned to the same 315°/135° axis the neutral
-       specular uses — the sun and the room light cannot disagree about where
-       the window is. Narrower and warmer than the white lobes, so it reads as
-       the warm fringe riding on them rather than as a second highlight. */
-    conic-gradient(from 0deg at 50% 50%,
-      rgba(0, 0, 0, 0) 288deg,
-      rgba(255, 194, 116, 0.075) 315deg,
-      rgba(0, 0, 0, 0) 342deg,
-      rgba(0, 0, 0, 0) 112deg,
-      rgba(255, 186, 108, 0.045) 135deg,
-      rgba(0, 0, 0, 0) 158deg),
-    /* the bounce: warm light that made it across the disc and came back off the
-       platter mat, lifting the far shoulder just enough that the unlit half is
-       not dead. Very low — at any strength you can point at, it flattens the
-       shaft it is supposed to be the tail of. */
-    radial-gradient(46% 46% at 74% 82%,
-      rgba(255, 172, 104, 0.038) 0%,
-      rgba(255, 160, 96, 0) 72%);
-  /* Held off the label (paper is matte and takes none of this) and dying before
-     the rim, same as the sheen. */
-  -webkit-mask-image: radial-gradient(circle closest-side at 50% 50%,
-    transparent 34%, #000 46%, #000 93%, transparent 100%);
-  mask-image: radial-gradient(circle closest-side at 50% 50%,
-    transparent 34%, #000 46%, #000 93%, transparent 100%);
-  mix-blend-mode: screen;
-}
 
 /* The groove band the stylus is currently in, lifted a hair. The radii are
    lerped between detents by AboutSection so it tracks the needle. */
@@ -367,13 +185,17 @@
   inset: 0;
   border-radius: 50%;
   clip-path: circle(calc(var(--wipe, 60) * 1%) at 50% 50%);
-  /* cover, zoomed 16% past the label rim: the scans carry a ragged dark vinyl
-     fringe in their corners, and this pushes it outside the label circle so the
-     paint runs edge to edge. Bumping this crops the teal flecks near the rim —
-     don't raise it to chase a stray dark pixel the rim shadow already hides. */
+  /* Zoomed ~16% past the label rim: the scans carry a ragged dark vinyl fringe
+     in their corners, and this pushes it outside the label circle so the paint
+     runs edge to edge. Bumping this crops the teal flecks near the rim — don't
+     raise it to chase a stray dark pixel the rim shadow already hides.
+     SINGLE value on purpose: the swirl files are ~0.96 aspect (not square), so
+     two values ('116% 116%') stretched them into the square label and pulled
+     the spiral eye off centre. One value preserves the aspect, so the eye stays
+     on the spindle as it spins. */
   background-position: center;
   background-repeat: no-repeat;
-  background-size: 116% 116%;
+  background-size: 116%;
   transform: rotate(var(--spin, 0deg));
   will-change: transform;
 }
