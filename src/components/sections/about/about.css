@@ -94,7 +94,11 @@
       rgba(0, 0, 0, 0.05) 122deg, rgba(0, 0, 0, 0.34) 190deg,
       rgba(0, 0, 0, 0.04) 246deg, rgba(0, 0, 0, 0.26) 308deg,
       rgba(0, 0, 0, 0) 360deg),
-    /* track-band separators — the tonearm's three detents sit between these */
+    /* track-band separators — the tonearm's three detents sit between these.
+       These four are the HEAVY ones and their radii are load-bearing: the
+       detents in AboutSection.tsx (TRACK_RADII / REC_R → 59.2%, 67.6%, 76.0%)
+       are chosen to land in the gaps between them. Move one and the needle
+       comes down on a separator. */
     radial-gradient(circle closest-side at 50% 50%,
       rgba(0, 0, 0, 0) 0 54.8%,
       rgba(0, 0, 0, 0.62) 55.2% 55.8%,
@@ -105,12 +109,65 @@
       rgba(0, 0, 0, 0) 72.8% 79.8%,
       rgba(0, 0, 0, 0.62) 80.2% 80.8%,
       rgba(0, 0, 0, 0) 81.2% 100%),
-    /* the grooves themselves */
+    /* SECONDARY RINGS. A pressing is not an even field of grooves between four
+       separators — pitch changes with how loud the passage is, so a record is
+       ringed all over with fine boundaries where one span of groove meets the
+       next. These are the ones you actually see in a photograph.
+       Deliberately much lighter than the separators above (0.20–0.30 against
+       0.62): at equal weight the eye cannot tell a track break from a pitch
+       change and the disc reads as a target, not a record. Each ring is a dark
+       line with a lit upper shoulder, which is what gives it a radius rather
+       than just a colour. Nothing below 41% — the label covers to ~37.9%. */
+    radial-gradient(circle closest-side at 50% 50%,
+      rgba(0, 0, 0, 0) 0 40.6%,
+      rgba(255, 255, 255, 0.030) 40.8% 41.0%, rgba(0, 0, 0, 0.26) 41.2% 41.6%,
+      rgba(0, 0, 0, 0) 41.9% 44.4%,
+      rgba(255, 255, 255, 0.028) 44.6% 44.8%, rgba(0, 0, 0, 0.24) 45.0% 45.4%,
+      rgba(0, 0, 0, 0) 45.7% 48.2%,
+      rgba(255, 255, 255, 0.030) 48.4% 48.6%, rgba(0, 0, 0, 0.28) 48.8% 49.3%,
+      rgba(0, 0, 0, 0) 49.6% 51.8%,
+      rgba(255, 255, 255, 0.026) 52.0% 52.2%, rgba(0, 0, 0, 0.22) 52.4% 52.8%,
+      rgba(0, 0, 0, 0) 53.1% 58.9%,
+      rgba(255, 255, 255, 0.030) 59.1% 59.3%, rgba(0, 0, 0, 0.26) 59.5% 60.0%,
+      rgba(0, 0, 0, 0) 60.3% 61.4%,
+      rgba(255, 255, 255, 0.024) 61.6% 61.8%, rgba(0, 0, 0, 0.20) 62.0% 62.3%,
+      rgba(0, 0, 0, 0) 62.6% 67.3%,
+      rgba(255, 255, 255, 0.030) 67.5% 67.7%, rgba(0, 0, 0, 0.26) 67.9% 68.4%,
+      rgba(0, 0, 0, 0) 68.7% 69.9%,
+      rgba(255, 255, 255, 0.024) 70.1% 70.3%, rgba(0, 0, 0, 0.20) 70.5% 70.8%,
+      rgba(0, 0, 0, 0) 71.1% 75.7%,
+      rgba(255, 255, 255, 0.030) 75.9% 76.1%, rgba(0, 0, 0, 0.26) 76.3% 76.8%,
+      rgba(0, 0, 0, 0) 77.1% 78.3%,
+      rgba(255, 255, 255, 0.024) 78.5% 78.7%, rgba(0, 0, 0, 0.20) 78.9% 79.2%,
+      rgba(0, 0, 0, 0) 79.5% 83.4%,
+      rgba(255, 255, 255, 0.030) 83.6% 83.8%, rgba(0, 0, 0, 0.28) 84.0% 84.5%,
+      rgba(0, 0, 0, 0) 84.8% 87.1%,
+      rgba(255, 255, 255, 0.026) 87.3% 87.5%, rgba(0, 0, 0, 0.24) 87.7% 88.1%,
+      rgba(0, 0, 0, 0) 88.4% 90.6%,
+      rgba(255, 255, 255, 0.028) 90.8% 91.0%, rgba(0, 0, 0, 0.26) 91.2% 91.7%,
+      rgba(0, 0, 0, 0) 92.0% 94.0%,
+      /* the lead-out: the last land before the rim, always the widest and the
+         most visible ring on a real disc */
+      rgba(255, 255, 255, 0.040) 94.2% 94.5%, rgba(0, 0, 0, 0.34) 94.7% 95.5%,
+      rgba(0, 0, 0, 0) 95.9% 100%),
+    /* the grooves themselves. Pitch tightened from 5.8px to 3.9px — denser, so
+       the disc reads as thousands of grooves rather than as a coarse ribbing.
+       Do NOT push it below ~3px: a repeating radial gradient finer than about
+       three device pixels aliases into moiré rings that no amount of contrast
+       tuning will fix, and unlike everything else here it will not average out,
+       because a rotationally symmetric pattern does not move when the disc
+       turns. Two interleaved periods (3.9 / 9.4) keep it from reading as one
+       machined screw thread. */
     repeating-radial-gradient(circle at 50% 50%,
-      rgba(255, 255, 255, 0.052) 0px 1.1px,
-      rgba(0, 0, 0, 0.30) 1.1px 2.4px,
-      rgba(255, 255, 255, 0.016) 2.4px 3.9px,
-      rgba(0, 0, 0, 0.14) 3.9px 5.8px),
+      rgba(255, 255, 255, 0.020) 0px 2.6px,
+      rgba(0, 0, 0, 0.10) 2.6px 4.8px,
+      rgba(255, 255, 255, 0.012) 4.8px 7.2px,
+      rgba(0, 0, 0, 0.07) 7.2px 9.4px),
+    repeating-radial-gradient(circle at 50% 50%,
+      rgba(255, 255, 255, 0.050) 0px 0.8px,
+      rgba(0, 0, 0, 0.30) 0.8px 1.7px,
+      rgba(255, 255, 255, 0.014) 1.7px 2.7px,
+      rgba(0, 0, 0, 0.15) 2.7px 3.9px),
     /* vinyl body — lit from the upper left */
     radial-gradient(circle closest-side at 34% 26%,
       #313135 0%, #232327 24%, #16161a 52%, #0d0d10 78%, #08080a 100%);
@@ -185,6 +242,76 @@
   mix-blend-mode: screen;
 }
 
+/* ── sunlight ──────────────────────────────────────────────────────────────
+   .tt-sheen above is the room: neutral, even, always there. This is the SUN —
+   one warm shaft coming in through a window at the upper left, which is what
+   takes the deck from "lit" to "photographed in a real room at a real time of
+   day". Three things have to be true for it to read as sunlight rather than as
+   an orange filter:
+
+   1. It is WARM AND DIRECTIONAL, and the room light is not. A single colour
+      temperature everywhere is the look of a render. The contrast between the
+      neutral #fff sheen and this amber shaft is the whole effect — which is
+      also why this layer must stay warm-only and must never be widened into a
+      general glow.
+   2. It has a SHAPE WITH SOFT EDGES. Sun through a window is a patch with a
+      border, not a radial falloff centred on the disc. The patch here is an
+      off-centre ellipse whose alpha dies well before the rim, so the lower
+      right of the record stays in the room's cooler light.
+   3. It DOES NOT ROTATE. Same rule as .tt-sheen, and the reason both live in
+      .tt-disc-optics: the sun does not go round with the platter. The record
+      turning underneath a fixed warm patch is the entire illusion — spin this
+      layer and it collapses into a texture painted on the disc.
+
+   Vinyl is a diffraction grating, so a warm source does not just brighten it:
+   the grooves throw the warm end of the spectrum outward along the light axis.
+   That is the amber lobe, and it is what makes the sun look like it is landing
+   on grooves rather than on a black plate. */
+.tt-sun {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    /* the hot core of the shaft — small, and the only near-white thing here.
+       A wide hot core is a lamp; a tight one with a long warm skirt is sun. */
+    radial-gradient(20% 15% at 30% 22%,
+      rgba(255, 246, 224, 0.30) 0%,
+      rgba(255, 226, 168, 0.14) 42%,
+      rgba(255, 210, 140, 0) 100%),
+    /* the patch itself: an off-centre ellipse, long on the light axis */
+    radial-gradient(54% 40% at 33% 26%,
+      rgba(255, 216, 152, 0.155) 0%,
+      rgba(255, 198, 128, 0.085) 38%,
+      rgba(255, 180, 110, 0.030) 66%,
+      rgba(255, 170, 100, 0) 100%),
+    /* warm diffraction lobes, aligned to the same 315°/135° axis the neutral
+       specular uses — the sun and the room light cannot disagree about where
+       the window is. Narrower and warmer than the white lobes, so it reads as
+       the warm fringe riding on them rather than as a second highlight. */
+    conic-gradient(from 0deg at 50% 50%,
+      rgba(0, 0, 0, 0) 288deg,
+      rgba(255, 194, 116, 0.075) 315deg,
+      rgba(0, 0, 0, 0) 342deg,
+      rgba(0, 0, 0, 0) 112deg,
+      rgba(255, 186, 108, 0.045) 135deg,
+      rgba(0, 0, 0, 0) 158deg),
+    /* the bounce: warm light that made it across the disc and came back off the
+       platter mat, lifting the far shoulder just enough that the unlit half is
+       not dead. Very low — at any strength you can point at, it flattens the
+       shaft it is supposed to be the tail of. */
+    radial-gradient(46% 46% at 74% 82%,
+      rgba(255, 172, 104, 0.038) 0%,
+      rgba(255, 160, 96, 0) 72%);
+  /* Held off the label (paper is matte and takes none of this) and dying before
+     the rim, same as the sheen. */
+  -webkit-mask-image: radial-gradient(circle closest-side at 50% 50%,
+    transparent 34%, #000 46%, #000 93%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side at 50% 50%,
+    transparent 34%, #000 46%, #000 93%, transparent 100%);
+  mix-blend-mode: screen;
+}
+
 /* The groove band the stylus is currently in, lifted a hair. The radii are
    lerped between detents by AboutSection so it tracks the needle. */
 .tt-band {
@@ -223,85 +350,41 @@
     0 0 30px rgba(0, 0, 0, 0.35);
 }
 
-/* One flat disc per track, stacked and revealed by a radial WIPE, not a fade.
-   Cross-fading orange into red by opacity passes through their average, which
-   is a muddy desaturated brown — visibly worse than either colour. A wipe has
-   no blended state at all: the new colour floods out from the spindle, which
-   is also the most record-like way for a label to change. --wipe is 0→60
-   (circle(60%) already covers the whole square box). */
+/* One painted disc per track, stacked and revealed by a radial WIPE, not a
+   fade. Cross-fading orange into red by opacity passes through their average,
+   which is a muddy desaturated brown — visibly worse than either colour. A wipe
+   has no blended state at all: the new colour floods out from the spindle,
+   which is also the most record-like way for a label to change. --wipe is 0→60
+   (circle(60%) already covers the whole square box).
+
+   Each disc is a photographed swirl of paint (public/record player/*.png), and
+   the whole layer TURNS: the paint's spiral is the clearest spin cue on the
+   record, so it rotates by the same --spin as the printed ring above it. The
+   centred-circle clip is rotation-invariant, so the wipe still floods from the
+   spindle while the disc spins underneath it. */
 .tt-lab {
   position: absolute;
   inset: 0;
   border-radius: 50%;
   clip-path: circle(calc(var(--wipe, 60) * 1%) at 50% 50%);
-}
-.tt-lab-theme   { background: radial-gradient(circle closest-side at 44% 36%, #d3822a 0%, #c4711f 46%, #a95c17 100%); }
-.tt-lab-vision  { background: radial-gradient(circle closest-side at 44% 36%, #c01a10 0%, #ab1109 46%, #870b06 100%); }
-.tt-lab-mission { background: radial-gradient(circle closest-side at 44% 36%, #eab02c 0%, #dfa11c 46%, #bd8210 100%); }
-
-/* The swirled paint inside the ring. Deliberately no filter: blur() — this
-   layer spins every frame, and soft wide gradient stops give the same liquid
-   read for free where a blur would force a re-raster every tick. */
-.tt-swirl {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 84%;          /* the solid colour ring is whatever is left over */
-  height: 84%;
-  border-radius: 50%;
-  overflow: hidden;
-  transform: translate(-50%, -50%);
-}
-
-.tt-swirl-a,
-.tt-swirl-b {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 150%;
-  height: 150%;
-  border-radius: 50%;
+  /* cover, zoomed 16% past the label rim: the scans carry a ragged dark vinyl
+     fringe in their corners, and this pushes it outside the label circle so the
+     paint runs edge to edge. Bumping this crops the teal flecks near the rim —
+     don't raise it to chase a stray dark pixel the rim shadow already hides. */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 116% 116%;
+  transform: rotate(var(--spin, 0deg));
   will-change: transform;
 }
+.tt-lab-theme   { background-image: url('/record%20player/Orange%20record.png'); }
+.tt-lab-vision  { background-image: url('/record%20player/Red%20record.png'); }
+.tt-lab-mission { background-image: url('/record%20player/Yellow%20record.png'); }
 
-/* Off-centre elliptical blobs, NOT a conic sweep. An evenly-stepped conic
-   around a centre point is exactly how you draw brushed aluminium, and that is
-   precisely what it rendered as — a chrome disc. Irregular overlapping ellipses
-   read as liquid because they have no common centre and no repeating period.
-   The single conic that remains is very low contrast and only ties them
-   together into one rotational direction. */
-.tt-swirl-a {
-  background:
-    radial-gradient(46% 32% at 22% 30%, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0) 62%),
-    radial-gradient(38% 50% at 76% 24%, rgba(0, 0, 0, 0.74) 0%, rgba(0, 0, 0, 0) 58%),
-    radial-gradient(56% 28% at 70% 76%, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0) 64%),
-    radial-gradient(32% 44% at 28% 74%, rgba(0, 0, 0, 0.68) 0%, rgba(0, 0, 0, 0) 60%),
-    radial-gradient(64% 22% at 50% 52%, rgba(255, 255, 255, 0.36) 0%, rgba(255, 255, 255, 0) 68%),
-    conic-gradient(from 40deg at 46% 52%,
-      rgba(255, 255, 255, 0.14) 0deg, rgba(0, 0, 0, 0.14) 130deg,
-      rgba(255, 255, 255, 0.10) 232deg, rgba(0, 0, 0, 0.14) 310deg,
-      rgba(255, 255, 255, 0.14) 360deg);
-  mix-blend-mode: overlay;
-  transform: translate(-50%, -50%) rotate(var(--spin, 0deg));
-}
-
-/* The contrasting streaks the same swirled paint carries. Printed on the same
-   label, so it turns by the same angle — just held at a fixed phase offset so
-   the two layers cross into curved flow instead of moving as one slab. */
-.tt-swirl-b {
-  background:
-    radial-gradient(40% 13% at 34% 38%, rgba(150, 208, 160, 0.40) 0%, rgba(150, 208, 160, 0) 70%),
-    radial-gradient(15% 34% at 70% 60%, rgba(206, 226, 176, 0.30) 0%, rgba(206, 226, 176, 0) 72%),
-    radial-gradient(30% 12% at 62% 26%, rgba(120, 188, 176, 0.28) 0%, rgba(120, 188, 176, 0) 74%),
-    radial-gradient(12% 28% at 26% 66%, rgba(168, 200, 150, 0.24) 0%, rgba(168, 200, 150, 0) 74%);
-  mix-blend-mode: soft-light;
-  transform: translate(-50%, -50%) rotate(calc(var(--spin, 0deg) + 130deg));
-}
-
-/* Printed ring on the label — see the comment on the markup. This is the
-   element that carries the rotation, so it must stay clearly legible: it sits
-   above the swirl, and it is dark ink on the label colour rather than a light
-   film over the vinyl. */
+/* Printed ring on the label — see the comment on the markup. It shares the
+   disc's rotation, so it must stay clearly legible: it sits above the painted
+   disc, and it is dark ink printed on the paint rather than a light film over
+   the vinyl. */
 .tt-label-print {
   position: absolute;
   inset: 0;

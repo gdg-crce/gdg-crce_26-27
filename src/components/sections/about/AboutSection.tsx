@@ -41,6 +41,17 @@ const RUNOUT_RADIUS = 430; // slow inward creep through the last track
  *  slow enough that a flick doesn't blur it. */
 const SPIN_TURNS = 7;
 
+/** Free-spin: the deck's own motor, which takes over the moment the wheel stops.
+ *  33⅓ RPM is 200°/s — the speed printed on the label, so the two agree.
+ *  The platter never snaps between the two drives: `FREE_TAU` is the seconds-ish
+ *  constant the motor spins up and down over, which is what a belt drive does
+ *  and what stops a flick of the wheel from reading as a jump-cut. */
+const FREE_DEG_PER_SEC = 200;
+const FREE_TAU = 0.42;
+/** Wheel input counts as "still scrolling" for this long after the last tick.
+ *  Below ~150ms the motor stutters between wheel notches. */
+const SCROLL_IDLE_MS = 190;
+
 /** Distance from the record centre to the stylus for a given arm angle. */
 function radiusForAngle(deg: number) {
   const a = (deg * Math.PI) / 180;
@@ -191,6 +202,18 @@ export default function AboutSection() {
   const copyRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
+  /* Platter drive. The angle written to --spin is the SUM of two independent
+     sources, so neither has to know about the other:
+       scrollSpinRef — where the wheel has dragged the record to
+       freeSpinRef   — how far the motor has carried it since mount
+     Both only ever accumulate forward, so handing off between them can never
+     produce a backward jerk. */
+  const scrollSpinRef = useRef(0);
+  const freeSpinRef = useRef(0);
+  const freeRateRef = useRef(0);
+  const lastScrollRef = useRef(-1e9);
+  const inViewRef = useRef(false);
+
   /* Cover-scale the design stage to the viewport, then project the label's
      centre back out into viewport pixels for the (unscaled) text layer. */
   useEffect(() => {
@@ -228,8 +251,10 @@ export default function AboutSection() {
       // ── the platter turns ────────────────────────────────────────────
       // A real angle, inherited by every layer that is part of the record.
       // ScrollTrigger's scrub eases it, so a flick of the wheel spins the
-      // disc up and lets it coast to a stop instead of snapping.
-      stageRef.current?.style.setProperty('--spin', `${(p * 360 * SPIN_TURNS).toFixed(1)}deg`);
+      // disc up and lets it coast to a stop instead of snapping. The write
+      // itself belongs to the rAF loop below — this only banks the wheel's
+      // contribution, because the motor is adding to the same angle.
+      scrollSpinRef.current = p * 360 * SPIN_TURNS;
 
       // ── tonearm ──────────────────────────────────────────────────────
       const deg = sampleKeys(ARM_KEYS, p);
@@ -312,22 +337,95 @@ export default function AboutSection() {
       },
     });
 
+    // The wheel is only "driving" while the angle it asks for is actually
+    // changing. Scrub keeps firing onUpdate as it eases out, so testing the
+    // delta — not the event — is what lets the motor pick up on the way down.
+    let lastP = -1;
+    const onUpdate = (p: number) => {
+      if (Math.abs(p - lastP) > 1e-5) lastScrollRef.current = performance.now();
+      lastP = p;
+      draw(p);
+    };
+
     const play = ScrollTrigger.create({
       trigger: sectionRef.current,
       pin: pinRef.current,
       start: 'top top',
       end: '+=6500',
       scrub: 1.2,
-      onUpdate: (self) => draw(self.progress),
-      onRefresh: (self) => draw(self.progress),
+      onUpdate: (self) => onUpdate(self.progress),
+      onRefresh: (self) => onUpdate(self.progress),
     });
 
-    draw(0);
+    // ── the motor ────────────────────────────────────────────────────────
+    // A deck does not stop turning because you stopped touching it. The wheel
+    // and the motor drive the SAME angle: while you scroll, the motor eases to
+    // a stop and hands the record over; when you let go it eases back up to
+    // 33⅓ and keeps it going. Only ever runs while the section is on screen —
+    // an off-screen rAF is a background tax on every other section's frame.
+    const stage = stageRef.current;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let raf = 0;
+    let last = performance.now();
+
+    const tick = (now: number) => {
+      raf = requestAnimationFrame(tick);
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+
+      const idle = now - lastScrollRef.current > SCROLL_IDLE_MS;
+      const target = idle && !reduced ? FREE_DEG_PER_SEC : 0;
+      freeRateRef.current += (target - freeRateRef.current) * Math.min(1, dt / FREE_TAU);
+      freeSpinRef.current += freeRateRef.current * dt;
+
+      stage?.style.setProperty(
+        '--spin',
+        `${(scrollSpinRef.current + freeSpinRef.current).toFixed(1)}deg`
+      );
+    };
+
+    const startLoop = () => {
+      if (raf) return;
+      last = performance.now();
+      raf = requestAnimationFrame(tick);
+    };
+    const stopLoop = () => {
+      if (!raf) return;
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+
+    // rAF does not fire on a hidden tab, so `last` would be stale on return and
+    // the record would teleport by however long the tab was in the background.
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') stopLoop();
+      else if (inViewRef.current) startLoop();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    const presence = ScrollTrigger.create({
+      trigger: sectionRef.current,
+      start: 'top bottom',
+      end: 'bottom top',
+      onToggle: (self) => {
+        inViewRef.current = self.isActive;
+        if (self.isActive && document.visibilityState !== 'hidden') startLoop();
+        else stopLoop();
+      },
+    });
+
+    onUpdate(0);
+    stage?.style.setProperty('--spin', '0deg');
+    if (presence.isActive) startLoop();
+
     const to = setTimeout(() => ScrollTrigger.refresh(), 180);
     return () => {
       clearTimeout(to);
+      stopLoop();
+      document.removeEventListener('visibilitychange', onVisibility);
       approach.kill();
       play.kill();
+      presence.kill();
     };
   }, []);
 
@@ -345,6 +443,7 @@ export default function AboutSection() {
           <div className="tt-disc-optics" aria-hidden="true">
             <div ref={bandRef} className="tt-band" />
             <div className="tt-sheen" />
+            <div className="tt-sun" />
           </div>
 
           <div ref={labelRef} className="tt-label" aria-hidden="true">
@@ -355,10 +454,6 @@ export default function AboutSection() {
                 className={`tt-lab tt-lab-${t.key}`}
               />
             ))}
-            <div className="tt-swirl">
-              <div className="tt-swirl-a" />
-              <div className="tt-swirl-b" />
-            </div>
 
             {/* THE PRINT RING — what actually makes a record look like it is
                 spinning. A vinyl disc is rotationally symmetric everywhere
@@ -370,8 +465,9 @@ export default function AboutSection() {
                 mission statement does not. */}
             <svg className="tt-label-print" viewBox="0 0 616 616">
               <defs>
-                {/* r=264: the text sits in the solid colour band OUTSIDE the
-                    swirl (which ends at 84% → r≈259), so ink never fights paint */}
+                {/* r=264: the ring rides near the rim of the painted disc,
+                    where the scan is brightest, so the dark ink always has
+                    paint to read against */}
                 <path
                   id="ttRimPath"
                   fill="none"
