@@ -1,504 +1,76 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   WHAT WE DO — the album book (Act 2.5)
+   WHAT WE DO — the Polaroid lens-portal (Act 2.5)
 
-   The disco frame that ends AboutSection fills the whole screen as the album's
-   front cover; scrolling ZOOMS OUT to reveal it was a book all along, then the
-   cover swings open on the spine and the book flips through one liner-notes
-   spread per thing GDG CRCE does. Pure DOM + CSS 3D — no WebGL, no scroll jump.
-
-   The page aspect equals the viewport aspect (set in JS), so the cover can fill
-   the viewport exactly at p=0 and the seam from About is a continuous zoom-out.
+   A ScrollTrigger-pinned host holding a full-viewport R3F <Canvas>. The 3D
+   camera starts inside the Polaroid's lens at the peak of a white shutter flash,
+   dollies back out to reveal the whole camera, then prints the sections as
+   physical photos. This stylesheet only owns the DOM chrome around the canvas —
+   the flash bloom, the exit fade into the Events street, and the loader.
 
    Layer stack inside .wwd-pin (low → high):
-     .wwd-warm        warm nightclub gradient (continues About's backdrop / the "table")
-     .wwd-cool        80s dark-blue wash that fades in for the Events handoff
-     .wwd-vignette    edge darkening once the book has pulled back
-     .wwd-stage       perspective box holding the book
-       .wwd-book        the leaves (cover + spreads + back), pivoting on the spine
-     .wwd-form-dim    brief warm bloom masking the frame→cover moment
-     .wwd-exit-dim    black that deepens into the Events street entrance
+     .wwd-canvas-wrap   the WebGL scene
+     .wwd-flash         the white bloom of the shutter firing
+     .wwd-exit-dim      black that deepens into the Events street entrance
    ══════════════════════════════════════════════════════════════════════════ */
 
 .whatwedo-section {
   position: relative;
   width: 100%;
-  background: #07060a;
+  background: #17141c;
 }
 
-/* The whole act is a FIXED overlay so it never scrolls with the page (no
-   scroll-up). Its host <section> owns the scroll length; JS toggles visibility
-   to the active scroll window. */
+/* Pinned full-viewport stage (GSAP pins this element across SCROLL_END px). */
 .wwd-pin {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  visibility: hidden;
-  z-index: 40;
-  /* page geometry — set precisely in JS to the viewport aspect; these are only
-     first-paint fallbacks before the effect runs. */
-  --pw: 46vw;
-  --ph: 29vw;
-  background: #07060a;
-}
-
-/* ── Backdrops ─────────────────────────────────────────────────────────── */
-.wwd-warm {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  /* identical to about.css .about-canvas so the seam is continuous */
-  background: radial-gradient(120% 90% at 75% 20%, #2a160a 0%, #170c10 46%, #07060a 100%);
-}
-.wwd-cool {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  opacity: 0;
-  will-change: opacity;
-  /* 80s palette (#12111A / #5A4FFF undertone) — the bridge toward the 90s Events street */
-  background: radial-gradient(120% 100% at 50% 30%, #1b1830 0%, #12111a 55%, #0a0912 100%);
-}
-.wwd-vignette {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  opacity: 0;
-  will-change: opacity;
-  background: radial-gradient(120% 100% at 50% 50%, transparent 42%, rgba(0, 0, 0, 0.66) 100%);
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   THE BOOK
-   ══════════════════════════════════════════════════════════════════════════ */
-.wwd-stage {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  perspective: 2600px;
-  perspective-origin: 50% 44%;
-}
-
-/* Single-page-wide book; leaves pivot on its LEFT edge (the spine). It fills the
-   viewport as the cover at p=0 (scaled up in JS), then pulls back and the leaves
-   fan open. The page block, spine and cast shadow give it real thickness. */
-.wwd-book {
   position: relative;
-  width: var(--pw);
-  height: var(--ph);
-  transform-style: preserve-3d;
-  transform-origin: center center;
-  will-change: transform;
-}
-
-/* cast shadow on the "table" — grows as the book pulls back and tilts */
-.wwd-book-shadow {
-  position: absolute;
-  left: -14%;
-  right: -14%;
-  bottom: -13%;
-  height: 26%;
-  z-index: 0;
-  opacity: 0;
-  will-change: opacity, transform;
-  background: radial-gradient(58% 100% at 50% 0%, rgba(0, 0, 0, 0.62), transparent 74%);
-  filter: blur(10px);
-  transform: translateZ(-24px);
-}
-
-/* right fore-edge + bottom page block — the visible thickness of a closed book.
-   Fades out as the cover opens (there is no block once you can see the pages). */
-.wwd-edges {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  will-change: opacity;
-}
-.wwd-edge {
-  position: absolute;
-  pointer-events: none;
-}
-.wwd-edge-right {
-  top: 3%;
-  bottom: 0;
-  right: -13px;
-  width: 13px;
-  border-radius: 0 3px 3px 0;
-  background:
-    repeating-linear-gradient(180deg, #efe4cd 0 2px, #cdbe9c 2px 3px),
-    linear-gradient(90deg, #d8c9a6, #b6a67f);
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
-  transform: skewY(-38deg);
-  transform-origin: left top;
-}
-.wwd-edge-bottom {
-  left: 0;
-  right: -13px;
-  bottom: -13px;
-  height: 13px;
-  border-radius: 0 0 4px 4px;
-  background:
-    repeating-linear-gradient(90deg, #e7dcc4 0 2px, #c7b892 2px 3px),
-    linear-gradient(180deg, #d3c4a1, #ab9b74);
-  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.42);
-  transform: skewX(-38deg);
-  transform-origin: left top;
-}
-
-.wwd-leaf {
-  position: absolute;
-  inset: 0;
-  transform-origin: left center;
-  transform-style: preserve-3d;
-  will-change: transform, filter;
-}
-
-.wwd-face {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  border-radius: 2px 8px 8px 2px; /* fore-edge rounded, spine squared */
-  box-shadow: inset 0 0 5cqw rgba(0, 0, 0, 0.26);
-  container-type: size;
-}
-.wwd-face.back {
-  transform: rotateY(180deg);
-  border-radius: 8px 2px 2px 8px;
-}
-
-/* spine-side gutter shadow + aged paper */
-.wwd-paper {
-  background:
-    linear-gradient(90deg, rgba(60, 40, 22, 0.34) 0%, rgba(60, 40, 22, 0) 11%),
-    linear-gradient(180deg, #f4ecda 0%, #ece0c7 52%, #e4d6b8 100%);
-  color: #2c241a;
-}
-.wwd-face.back.wwd-paper {
-  background:
-    linear-gradient(270deg, rgba(60, 40, 22, 0.34) 0%, rgba(60, 40, 22, 0) 11%),
-    linear-gradient(180deg, #efe4cd 0%, #e6d9be 60%, #ddcfb0 100%);
-}
-/* printed liner grain */
-.wwd-paper::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.55;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/></svg>");
-}
-
-/* binder punch-holes down the spine edge */
-.wwd-holes {
-  position: absolute;
-  top: 12%;
-  bottom: 12%;
-  left: 2.2cqw;
-  width: 2cqw;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  z-index: 3;
-}
-.wwd-face.back .wwd-holes {
-  left: auto;
-  right: 2.2cqw;
-}
-.wwd-holes span {
-  width: 2cqw;
-  height: 2cqw;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.2) 60%, rgba(255, 255, 255, 0.28) 100%);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55);
-}
-
-/* ── Page content (landscape) ──────────────────────────────────────────── */
-.wwd-page {
-  position: absolute;
-  inset: 0;
-  padding: 6cqh 6cqw 6cqh 8cqw; /* clear the punch holes on the left */
-  display: flex;
-  flex-direction: column;
-  z-index: 2;
-}
-.wwd-page .wwd-no {
-  font-family: var(--font-88s-display), sans-serif;
-  font-size: 15cqh;
-  line-height: 0.8;
-  letter-spacing: -0.02em;
-  color: var(--wwd-accent, #e8412a);
-  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.4);
-}
-.wwd-page .wwd-tag {
-  margin-top: 1.6cqh;
-  font-family: var(--font-90s-body), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.32em;
-  font-size: 2.6cqh;
-  color: #6d5c3f;
-}
-.wwd-page .wwd-rule {
-  height: 0.7cqh;
-  min-height: 2px;
-  width: 40%;
-  margin: 3cqh 0 3.4cqh;
-  background: var(--wwd-accent, #e8412a);
-  opacity: 0.82;
-}
-.wwd-page h3 {
-  margin: 0 0 2.6cqh;
-  font-family: var(--font-88s-display), sans-serif;
-  font-weight: 400;
-  font-size: 8.4cqh;
-  line-height: 1.02;
-  color: #241d14;
-  max-width: 78%;
-}
-.wwd-page p {
-  margin: 0;
-  max-width: 66%;
-  font-family: var(--font-88s-body), sans-serif;
-  font-size: 4cqh;
-  line-height: 1.55;
-  color: #4a3d2b;
-}
-.wwd-page .wwd-foot {
-  margin-top: auto;
-  font-family: var(--font-90s-body), monospace;
-  font-size: 2.3cqh;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #8a7757;
-}
-
-/* scrapbook prop pinned to the page, held by a strip of tape */
-.wwd-asset {
-  position: absolute;
-  right: 5cqw;
-  bottom: 7cqh;
-  width: 24cqh;
-  z-index: 1;
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.34));
-}
-.wwd-asset img {
   width: 100%;
-  height: auto;
+  height: 100vh;
+  overflow: hidden;
+  background: #17141c;
+}
+
+.wwd-canvas-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.wwd-canvas-wrap canvas {
   display: block;
 }
-.wwd-asset::before {
-  content: '';
-  position: absolute;
-  top: -1.6cqh;
-  left: 50%;
-  width: 40%;
-  height: 3.4cqh;
-  transform: translateX(-50%) rotate(-4deg);
-  background: rgba(226, 210, 150, 0.5);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
-}
 
-/* liner (page-back) — a quieter page with a printed quote */
-.wwd-liner {
+/* ── the shutter flash ─────────────────────────────────────────────────── */
+.wwd-flash {
   position: absolute;
   inset: 0;
-  padding: 8cqh 8cqw;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  z-index: 2;
-}
-.wwd-liner .wwd-side {
-  font-family: var(--font-90s-body), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.36em;
-  font-size: 2.6cqh;
-  color: #7a6845;
-  margin-bottom: 4cqh;
-}
-.wwd-liner q {
-  font-family: var(--font-88s-display), sans-serif;
-  font-size: 8cqh;
-  line-height: 1.2;
-  color: #3a2f20;
-  max-width: 88%;
-  quotes: '“' '”';
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   COVER FACE — the disco still becomes the album sleeve
-   ══════════════════════════════════════════════════════════════════════════ */
-.wwd-cover-face {
-  background: radial-gradient(120% 90% at 72% 22%, #2a160a 0%, #170c10 48%, #07060a 100%);
-  color: #f3e6c8;
-}
-.wwd-cover-face .wwd-cover-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 22%;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-.wwd-cover-face .wwd-cover-shade {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(7, 6, 10, 0.06) 0%, rgba(7, 6, 10, 0.02) 46%, rgba(7, 6, 10, 0.82) 100%),
-    radial-gradient(120% 100% at 50% 40%, transparent 54%, rgba(0, 0, 0, 0.5) 100%);
-}
-/* gold sleeve frame */
-.wwd-cover-face .wwd-cover-frame {
-  position: absolute;
-  inset: 2.4cqh;
-  border: 1px solid rgba(224, 165, 38, 0.5);
-  box-shadow: inset 0 0 0 0.6cqh rgba(0, 0, 0, 0.22);
-  border-radius: 2px;
-  pointer-events: none;
-}
-.wwd-cover-face .wwd-cover-copy {
-  position: absolute;
-  left: 6cqw;
-  right: 6cqw;
-  bottom: 8cqh;
-  z-index: 2;
-  will-change: opacity, transform;
-}
-.wwd-cover-face .wwd-cover-kicker {
-  font-family: var(--font-90s-body), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.4em;
-  font-size: 2.4cqh;
-  color: #e0a526;
-  margin-bottom: 2.4cqh;
-}
-.wwd-cover-face h2 {
-  margin: 0;
-  font-family: var(--font-88s-display), sans-serif;
-  font-weight: 400;
-  font-size: 15cqh;
-  line-height: 0.92;
-  letter-spacing: 0.01em;
-  color: #f6e7c4;
-  text-shadow: 0 2px 30px rgba(232, 165, 38, 0.42), 0 1px 0 rgba(0, 0, 0, 0.5);
-}
-.wwd-cover-face .wwd-cover-sub {
-  margin-top: 2.6cqh;
-  font-family: var(--font-88s-body), sans-serif;
-  font-size: 3.2cqh;
-  letter-spacing: 0.12em;
-  color: #d8c19a;
-}
-
-/* inside-front cover (leaf 0 back) — intro liner */
-.wwd-inside {
-  position: absolute;
-  inset: 0;
-  padding: 9cqh 8cqw;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  z-index: 2;
-}
-.wwd-inside .wwd-side {
-  font-family: var(--font-90s-body), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.36em;
-  font-size: 2.6cqh;
-  color: #7a6845;
-  margin-bottom: 4cqh;
-}
-.wwd-inside h3 {
-  margin: 0 0 3.4cqh;
-  font-family: var(--font-88s-display), sans-serif;
-  font-weight: 400;
-  font-size: 9cqh;
-  line-height: 1.05;
-  color: #2c241a;
-  max-width: 84%;
-}
-.wwd-inside p {
-  margin: 0;
-  max-width: 80%;
-  font-family: var(--font-88s-body), sans-serif;
-  font-size: 4cqh;
-  line-height: 1.55;
-  color: #4a3d2b;
-}
-
-/* ── Closing / back-cover leaf (CTA) — hands off to Events ─────────────── */
-.wwd-cta {
-  position: absolute;
-  inset: 0;
-  padding: 8cqh 8cqw;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  z-index: 2;
-}
-.wwd-cta .wwd-cta-kicker {
-  font-family: var(--font-90s-body), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.36em;
-  font-size: 2.6cqh;
-  color: #b06a2c;
-  margin-bottom: 3.4cqh;
-}
-.wwd-cta h3 {
-  margin: 0 0 4.6cqh;
-  font-family: var(--font-88s-display), sans-serif;
-  font-weight: 400;
-  font-size: 10cqh;
-  line-height: 1.02;
-  color: #241d14;
-}
-.wwd-cta h3 em {
-  font-style: italic;
-  color: #e8412a;
-}
-.wwd-cta .wwd-cta-hint {
-  font-family: var(--font-90s-body), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.26em;
-  font-size: 3cqh;
-  color: #6d5c3f;
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   TRANSITION MASKS
-   ══════════════════════════════════════════════════════════════════════════ */
-.wwd-form-dim {
-  position: absolute;
-  inset: 0;
-  z-index: 21;
+  z-index: 10;
   pointer-events: none;
   opacity: 0;
   will-change: opacity;
-  mix-blend-mode: screen;
-  background: radial-gradient(70% 60% at 50% 42%, rgba(255, 214, 150, 0.85) 0%, rgba(255, 150, 66, 0.28) 42%, rgba(255, 96, 42, 0) 74%);
+  background: radial-gradient(circle at 50% 46%, #ffffff 0%, rgba(255, 255, 255, 0.97) 46%,
+    rgba(255, 255, 255, 0.74) 72%, rgba(255, 255, 255, 0) 100%);
 }
+
+/* ── handoff to Events ─────────────────────────────────────────────────── */
 .wwd-exit-dim {
   position: absolute;
   inset: 0;
-  z-index: 22;
+  z-index: 11;
   pointer-events: none;
   opacity: 0;
   will-change: opacity;
   background: #050409;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .wwd-paper::before {
-    animation: none;
-  }
+/* ── loader (while the WebGL bundle + scene spin up) ───────────────────── */
+.wwd-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #17141c;
+  color: #d8c19a;
+  font-family: var(--font-candice), var(--font-88s-body), sans-serif;
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
+  letter-spacing: 0.14em;
 }

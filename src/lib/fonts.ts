@@ -11,6 +11,7 @@ import {
   Inter,
   IBM_Plex_Mono,
   Kaushan_Script,
+  Pacifico,
 } from 'next/font/google';
 
 // 1970s Typography: Groovy Serif + Warm Sans
@@ -92,6 +93,16 @@ export const kaushanScript = Kaushan_Script({
   weight: '400',
   display: 'swap',
   variable: '--font-brush',
+});
+
+// What We Do / polaroids — a chunky 70s-script header face standing in for
+// "Candice" (a licensed font not in the repo). Swap the import for a next/font
+// /local Candice later and this variable keeps working.
+export const pacifico = Pacifico({
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-candice',
 });
 
 // Y2K Archive Typography: technical monospaced archive feel (IE6 / TheFacebook era)
