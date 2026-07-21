@@ -432,7 +432,15 @@ export default function AboutSection() {
       <div ref={pinRef} className="tt-pin">
         {/* ── the turntable, in 1600×900 design space ── */}
         <div ref={stageRef} className="tt-stage">
+          {/* Dark backing — only shows through the knob that is masked out of the
+              base photo below; base.png covers everything else. */}
           <div className="tt-plinth" aria-hidden="true" />
+          {/* Photoreal turntable base: plinth, platter, spindle and the tonearm
+              MOUNT (no arm — our animated arm attaches at it). The record rides
+              on top of this, the arm above that. */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- large fixed
+              photographic plate; next/image adds no value inside the GSAP stage */}
+          <img className="tt-base" src="/record%20player/base.png" alt="" draggable={false} />
 
           {/* The record itself rotates — grooves, vinyl and all. The room
               light and the needle's groove highlight are NOT on the record, so
@@ -504,13 +512,6 @@ export default function AboutSection() {
             <div className="tt-label-rim" />
             <div className="tt-label-dim" />
           </div>
-
-          {/* volume knob on the plinth */}
-          <div className="tt-knob" aria-hidden="true">
-            <div className="tt-knob-face" />
-          </div>
-          <span className="tt-knob-mark tt-knob-minus" aria-hidden="true">–</span>
-          <span className="tt-knob-mark tt-knob-plus" aria-hidden="true">+</span>
 
           {/* ── tonearm ──
               Drawn pointing along +X from the pivot; the whole swing group is

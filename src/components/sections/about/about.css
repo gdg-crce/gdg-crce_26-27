@@ -53,17 +53,43 @@
   transform: translate(-50%, -50%);
 }
 
-/* ── the plinth: everything the record does not cover ──────────────────── */
+/* ── the plinth ─────────────────────────────────────────────────────────
+   The turntable base is now a photograph (.tt-base). This layer is just the
+   dark backing behind it: the only place it shows is through the knob that is
+   masked out of the photo, so it only has to read as more dark plinth there. */
 
 .tt-plinth {
   position: absolute;
   inset: -50%;
-  background:
-    /* light plinth wedge in the bottom-left, where the knob sits */
-    radial-gradient(30% 22% at 25.5% 78.5%,
-      #dcdcd7 0%, #b5b5ae 26%, #6e6e69 46%, #2b2b2b 66%, rgba(20, 20, 22, 0) 80%),
-    /* the platter mat the record sits on */
-    radial-gradient(60% 60% at 56% 50%, #1b1b1e 0%, #131316 46%, #0a0a0c 100%);
+  background: radial-gradient(58% 58% at 40% 84%, #262523 0%, #1a1a1c 55%, #0e0e10 100%);
+}
+
+/* Photoreal turntable base (public/record player/base.png): the plinth, the
+   platter, the spindle and the tonearm MOUNT — there is no arm in the file; our
+   animated tonearm attaches at that mount. It is placed so the spindle lands on
+   the record's centre (984,445), so the disc rides directly on the spindle with
+   the arm above it. */
+.tt-base {
+  position: absolute;
+  /* Aligned by the PANEL, not the spindle. The plinth/mount starts at 10.5% of
+     the file, so spindle-centring left a strip of the photo's own grey margin
+     down the left of the frame. This flushes the panel's left edge to the stage
+     edge (10.5% × 1620 ≈ 170, so left ≈ −175 seats it with a few px of bleed).
+     The spindle rides under the record regardless, so its exact x doesn't show.
+     EDGE KNOB: make more negative to push the panel further off the left edge. */
+  left: -175px;
+  top: -36px;
+  width: 1620px;
+  height: auto;   /* 3:2 file → 1080px */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  /* Hide the volume knob baked into the bottom-left of the plate — no knob is
+     wanted anywhere on the site. Soft-edged hole; the .tt-plinth backing shows
+     through and blends with the surrounding charcoal. KNOB-HIDE KNOBS: nudge the
+     centre (16% 85.5%) or grow the radius if any sliver of it still shows. */
+  -webkit-mask-image: radial-gradient(circle 185px at 16% 85.5%, transparent 0 138px, #000 185px);
+  mask-image: radial-gradient(circle 185px at 16% 85.5%, transparent 0 138px, #000 185px);
 }
 
 /* ── the record ────────────────────────────────────────────────────────── */
@@ -281,45 +307,6 @@
     rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.26) 74%, rgba(0, 0, 0, 0.58) 100%);
 }
 
-/* ── volume knob (bottom-left, on the lit part of the plinth) ──────────── */
-
-.tt-knob {
-  position: absolute;
-  left: 80px;   /* centre (132, 792), r 52 */
-  top: 740px;
-  width: 104px;
-  height: 104px;
-}
-
-.tt-knob-face {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  /* Brushed aluminium: a many-stop conic for the turned finish, with one soft
-     radial for the light coming in over the upper left. */
-  background:
-    radial-gradient(circle closest-side at 36% 28%,
-      rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 48%),
-    conic-gradient(from 0deg at 50% 50%,
-      #f2f3f2 0deg, #9a9c9c 38deg, #e9eae9 76deg, #8f9191 118deg,
-      #f4f5f4 160deg, #999b9b 206deg, #eceded 250deg, #8d8f8f 296deg, #f2f3f2 360deg);
-  box-shadow:
-    inset 0 0 0 5px rgba(255, 255, 255, 0.26),
-    inset 0 -6px 14px rgba(0, 0, 0, 0.42),
-    0 9px 22px rgba(0, 0, 0, 0.6);
-}
-
-.tt-knob-mark {
-  position: absolute;
-  top: 856px;
-  font-family: var(--font-editorial-display), Georgia, serif;
-  font-size: 40px;
-  line-height: 1;
-  color: #2a2a28;
-  opacity: 0.85;
-}
-.tt-knob-minus { left: 54px; }
-.tt-knob-plus  { left: 196px; }
 
 /* ── tonearm (one SVG over the whole design space) ──────────────────────── */
 
