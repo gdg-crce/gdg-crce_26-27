@@ -27,7 +27,7 @@
 .tt-section {
   position: relative;
   width: 100%;
-  background: #08080a;
+  background: #0a0908;
 }
 
 .tt-pin {
@@ -35,7 +35,7 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: #0b0b0d;
+  background: #0a0908;
   /* Sits over the fixed hero video, which fades out beneath it. */
   z-index: 9995;
   /* Driven by the approach ScrollTrigger as the section rises into view. */
@@ -61,7 +61,7 @@
 .tt-plinth {
   position: absolute;
   inset: -50%;
-  background: radial-gradient(58% 58% at 40% 84%, #262523 0%, #1a1a1c 55%, #0e0e10 100%);
+  background: radial-gradient(70% 70% at 50% 50%, #1f1c1a 0%, #110e0c 45%, #050403 100%);
 }
 
 /* Photoreal turntable base (public/record player/base.png): the plinth, the
@@ -88,8 +88,6 @@
      wanted anywhere on the site. Soft-edged hole; the .tt-plinth backing shows
      through and blends with the surrounding charcoal. KNOB-HIDE KNOBS: nudge the
      centre (16% 85.5%) or grow the radius if any sliver of it still shows. */
-  -webkit-mask-image: radial-gradient(circle 185px at 16% 85.5%, transparent 0 138px, #000 185px);
-  mask-image: radial-gradient(circle 185px at 16% 85.5%, transparent 0 138px, #000 185px);
 }
 
 /* ── the record ────────────────────────────────────────────────────────── */
@@ -322,7 +320,7 @@
 
 .tt-arm-swing {
   transform-box: view-box;
-  transform-origin: 146px 84px;
+  transform-origin: 166.5px 135.3px;
   will-change: transform, filter;
   /* transform + drop-shadow are both written from AboutSection's onUpdate —
      the shadow opening up as the arm lifts is what sells the descent. */
@@ -337,66 +335,7 @@
   color: #fdfcfa;
 }
 
-/* Side title — "Our" horizontal, the second word stacked one letter per line,
-   exactly as the reference sets it. */
-.tt-side {
-  position: absolute;
-  left: clamp(18px, 3.4vw, 74px);
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85), 0 0 3px rgba(0, 0, 0, 0.6);
 
-  /* One size drives the whole stack, capped against the VIEWPORT as well as
-     the label. The tallest title is "Our" + seven stacked letters (MISSION),
-     which measures ~11× this value; at 5.2vh that lands inside 21%–79% of the
-     frame, clearing the knob at 82% and the top edge.
-
-     The vh cap is the load-bearing half. Sizing off --label-r alone works only
-     while the cover scale is height-driven: past 16:9 it switches to
-     width-driven, so on a wide monitor the label (and with it the title) keeps
-     growing against a viewport height that does not — and MISSION walks
-     straight through the knob and off both ends of the frame. */
-  --side-fs: min(calc(var(--label-r, 260px) * 0.205), 5.2vh);
-}
-
-/* All three titles share one grid cell, so swapping one for the next never
-   shifts the layout. */
-.tt-side-stack {
-  display: grid;
-  place-items: center;
-}
-.tt-side-stack > .tt-side-title {
-  grid-area: 1 / 1;
-}
-
-.tt-side-title {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: var(--font-editorial-display), Georgia, serif;
-  font-variant: small-caps;
-  font-weight: 500;
-  line-height: 1;
-  opacity: 0;
-}
-
-/* Both sizes ride --side-fs at the ratios they already had (1.146× and
-   0.488×), so the proportions are unchanged — only the cap is new. */
-.tt-side-our {
-  font-size: calc(var(--side-fs) * 1.146);
-  letter-spacing: 0.03em;
-  margin-bottom: calc(var(--side-fs) * 0.488);
-}
-
-.tt-side-letter {
-  display: block;
-  font-size: var(--side-fs);
-  line-height: 1.34;
-  letter-spacing: 0.02em;
-}
 
 /* Centre copy — anchored to the label's projected screen position. */
 .tt-center {
@@ -451,34 +390,7 @@
 }
 
 /* ── narrow viewports ──────────────────────────────────────────────────── */
-/* Cover-scaling keeps the record full-bleed and AboutSection recentres the
-   stage so the label lands mid-screen. The side title cannot stay in the left
-   margin at that point — there isn't one — so it lays out along the top. */
 
-@media (max-aspect-ratio: 13 / 10) {
-  .tt-side {
-    left: 50%;
-    top: clamp(20px, 6vh, 74px);
-    transform: translateX(-50%);
-    flex-direction: row;
-    align-items: baseline;
-  }
-  .tt-side-title {
-    flex-direction: row;
-    align-items: baseline;
-  }
-  .tt-side-our {
-    margin-bottom: 0;
-    margin-right: calc(var(--label-r, 200px) * 0.10);
-  }
-  .tt-side-letter {
-    font-size: calc(var(--label-r, 200px) * 0.185);
-    letter-spacing: 0.16em;
-  }
-  .tt-center {
-    width: calc(var(--label-r, 200px) * 1.64);
-  }
-}
 
 /* ── reduced motion ────────────────────────────────────────────────────── */
 

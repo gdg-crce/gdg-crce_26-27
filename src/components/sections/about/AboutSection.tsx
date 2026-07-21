@@ -24,9 +24,22 @@ const REC_CX = 984;
 const REC_CY = 445;
 const REC_R = 830;
 const LABEL_R = 288;
-const PIVOT_X = 146;
-const PIVOT_Y = 84;
-const ARM_LEN = 625;
+const PIVOT_X = 166.5;
+const PIVOT_Y = 135.3;
+const ARM_LEN = 748;
+
+/** 
+ * Photoreal tonearm image calibration. 
+ * width: how large the image is drawn in the 1600x900 stage. 960px matches the base bearing perfectly.
+ * pivotX, pivotY: the exact pixel coordinates of the pivot bearing *within* the raw 1536x1024 image.
+ */
+const TONEARM_IMG_W = 960;
+const TONEARM_IMG_H = TONEARM_IMG_W * (1024 / 1536);
+const TONEARM_RAW_PIVOT_X = 319; 
+const TONEARM_RAW_PIVOT_Y = 460;
+const TONEARM_X = PIVOT_X - (TONEARM_RAW_PIVOT_X / 1536) * TONEARM_IMG_W;
+const TONEARM_Y = PIVOT_Y - (TONEARM_RAW_PIVOT_Y / 1024) * TONEARM_IMG_H;
+
 
 /** Groove radius, from the record centre, that the stylus rides in for each
  *  track — plus the parked position, which has to clear the disc entirely. */
@@ -517,64 +530,14 @@ export default function AboutSection() {
               Drawn pointing along +X from the pivot; the whole swing group is
               rotated about (146, 84) from the scroll callback. */}
           <svg className="tt-hardware" viewBox="0 0 1600 900" fill="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="ttChrome" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f6f8f9" />
-                <stop offset="22%" stopColor="#cfd5d8" />
-                <stop offset="46%" stopColor="#7c8388" />
-                <stop offset="64%" stopColor="#b9c0c4" />
-                <stop offset="84%" stopColor="#e8edef" />
-                <stop offset="100%" stopColor="#8f979b" />
-              </linearGradient>
-              <linearGradient id="ttChromeDark" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#cdd3d6" />
-                <stop offset="30%" stopColor="#8a9195" />
-                <stop offset="58%" stopColor="#4c5256" />
-                <stop offset="82%" stopColor="#98a0a4" />
-                <stop offset="100%" stopColor="#5c6367" />
-              </linearGradient>
-              <linearGradient id="ttShell" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#e6ebee" />
-                <stop offset="34%" stopColor="#a7aeb3" />
-                <stop offset="72%" stopColor="#565c61" />
-                <stop offset="100%" stopColor="#2f3438" />
-              </linearGradient>
-              <linearGradient id="ttBase" x1="0" y1="0" x2="0.35" y2="1">
-                <stop offset="0%" stopColor="#3b3e42" />
-                <stop offset="48%" stopColor="#212427" />
-                <stop offset="100%" stopColor="#121417" />
-              </linearGradient>
-            </defs>
-
-            {/* fixed pivot housing, bolted to the plinth */}
-            <g>
-              <rect x="86" y="8" width="122" height="140" rx="16" fill="url(#ttBase)" />
-              <rect
-                x="86" y="8" width="122" height="140" rx="16"
-                fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="1.5"
-              />
-              <circle cx="146" cy="84" r="37" fill="url(#ttChromeDark)" />
-              <circle cx="146" cy="84" r="28" fill="url(#ttChrome)" />
-            </g>
-
             <g ref={armRef} className="tt-arm-swing">
-              {/* counterweight, behind the pivot */}
-              <rect x="44" y="59" width="74" height="50" rx="25" fill="url(#ttChromeDark)" />
-              <rect x="112" y="72" width="34" height="24" rx="10" fill="url(#ttChrome)" />
-              {/* bearing */}
-              <circle cx="146" cy="84" r="24" fill="url(#ttChrome)" />
-              <circle cx="146" cy="84" r="11" fill="#23262a" />
-              {/* tube */}
-              <rect x="168" y="76.5" width="492" height="15" rx="7.5" fill="url(#ttChrome)" />
-              {/* collar */}
-              <rect x="650" y="70" width="22" height="28" rx="6" fill="url(#ttChromeDark)" />
-              {/* headshell */}
-              <path d="M668 64 L732 60 L764 78 L764 98 L732 108 L668 104 Z" fill="url(#ttShell)" />
-              {/* finger lift */}
-              <path d="M700 60 L718 34 L727 37 L710 62 Z" fill="url(#ttChrome)" />
-              {/* cartridge + stylus */}
-              <rect x="730" y="72" width="34" height="26" rx="4" fill="#191c1f" />
-              <path d="M762 92 L771 84" stroke="#e9f0f4" strokeWidth="3.4" strokeLinecap="round" />
+              <image 
+                href="/record%20player/toneram.png"
+                x={TONEARM_X.toFixed(1)}
+                y={TONEARM_Y.toFixed(1)}
+                width={TONEARM_IMG_W}
+                height={TONEARM_IMG_H}
+              />
             </g>
           </svg>
         </div>
@@ -585,22 +548,6 @@ export default function AboutSection() {
 
         {/* ── text, in viewport space (see about.css header) ── */}
         <div className="tt-hud">
-          <div className="tt-side">
-            <div className="tt-side-stack">
-              {TRACKS.map((t, i) => (
-                <div
-                  key={t.key}
-                  ref={(el) => { sideRefs.current[i] = el; }}
-                  className="tt-side-title"
-                >
-                  <span className="tt-side-our">Our</span>
-                  {t.word.toUpperCase().split('').map((ch, j) => (
-                    <span key={j} className="tt-side-letter">{ch}</span>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
 
           <div className="tt-center">
             {TRACKS.map((t, i) => (
