@@ -7,6 +7,7 @@ interface WindowsXPDesktopProps {
   onSelectTeam: (teamName: string) => void;
   isEventsMinimized: boolean;
   onToggleEventsMinimize: () => void;
+  showDesktopChrome?: boolean;
   children: React.ReactNode;
 }
 
@@ -15,6 +16,7 @@ export default function WindowsXPDesktop({
   onSelectTeam,
   isEventsMinimized,
   onToggleEventsMinimize,
+  showDesktopChrome = true,
   children,
 }: WindowsXPDesktopProps) {
   const [timeStr, setTimeStr] = useState('12:27 AM');
@@ -35,66 +37,32 @@ export default function WindowsXPDesktop({
     {
       label: 'My Computer',
       team: 'All Tracks',
-      svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <rect x="4" y="6" width="28" height="20" rx="2" fill="#d8e8f8" stroke="#316ac5" strokeWidth="2" />
-          <rect x="7" y="9" width="22" height="14" fill="#184b9e" />
-          <path d="M12 26h12v3H12z" fill="#8ca8d8" />
-          <rect x="8" y="29" width="20" height="2" fill="#316ac5" />
-        </svg>
-      ),
+      svg: <img src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" />,
     },
     {
       label: 'Core Council',
       team: 'Core Leadership',
-      svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <circle cx="18" cy="14" r="6" fill="#ffd700" stroke="#a07c00" strokeWidth="1.5" />
-          <path d="M8 30c0-6 5-10 10-10s10 4 10 10" fill="#316ac5" />
-        </svg>
-      ),
+      svg: <img src="/about.webp" className="xp-desktop-icon-svg" alt="About" />,
     },
     {
       label: 'Tech & Web',
       team: 'Tech & Web',
-      svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <rect x="5" y="8" width="26" height="20" rx="2" fill="#243048" stroke="#4880d8" strokeWidth="2" />
-          <path d="M11 18l3 3-3 3M17 24h6" stroke="#00ff66" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      ),
+      svg: <img src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" />,
     },
     {
       label: 'UI/UX Design',
       team: 'UI/UX & Design',
-      svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <circle cx="18" cy="18" r="13" fill="#ffffff" stroke="#e04070" strokeWidth="2" />
-          <circle cx="13" cy="14" r="2.5" fill="#e04070" />
-          <circle cx="23" cy="14" r="2.5" fill="#3880f0" />
-          <circle cx="18" cy="23" r="2.5" fill="#ffb800" />
-        </svg>
-      ),
+      svg: <img src="/about.webp" className="xp-desktop-icon-svg" alt="About" />,
     },
     {
       label: 'Events & Ops',
       team: 'Events & Ops',
-      svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <path d="M6 28L18 8l12 20H6z" fill="#ff9000" stroke="#b05000" strokeWidth="2" />
-          <circle cx="18" cy="22" r="3" fill="#ffffff" />
-        </svg>
-      ),
+      svg: <img src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" />,
     },
     {
       label: 'PR Outreach',
       team: 'PR & Outreach',
-      svg: (
-        <svg viewBox="0 0 36 36" className="xp-desktop-icon-svg" fill="none">
-          <path d="M6 14h6l10-7v22l-10-7H6V14z" fill="#2080e0" stroke="#104080" strokeWidth="1.5" />
-          <path d="M26 13c2 2 2 8 0 10" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      ),
+      svg: <img src="/about.webp" className="xp-desktop-icon-svg" alt="About" />,
     },
   ];
 
@@ -104,12 +72,20 @@ export default function WindowsXPDesktop({
       <div className="xp-bliss-clouds" />
       <div className="xp-bliss-hill" />
       <div className="xp-bliss-hill-secondary" />
-      {/* Carved/Embossed GDG CRCE on the hill inspired by Mitch Ivin Bliss hill */}
+      {/* 3D Excavated / Carved Grassy Trench Text across the hill slope */}
       <div className="xp-bliss-carving">GDG CRCE</div>
       <div className="xp-screen-texture" />
 
       {/* Top Left Desktop Shortcuts */}
-      <div className="xp-desktop-icons">
+      <div
+        className="xp-desktop-icons"
+        style={{
+          opacity: showDesktopChrome ? 1 : 0,
+          pointerEvents: showDesktopChrome ? 'auto' : 'none',
+          transition: 'opacity 0.4s ease, transform 0.4s ease',
+          transform: showDesktopChrome ? 'translateY(0)' : 'translateY(-15px)',
+        }}
+      >
         {desktopIcons.map((item, idx) => (
           <div
             key={idx}
@@ -127,7 +103,15 @@ export default function WindowsXPDesktop({
       {children}
 
       {/* Windows XP Taskbar */}
-      <div className="xp-taskbar">
+      <div
+        className="xp-taskbar"
+        style={{
+          opacity: showDesktopChrome ? 1 : 0,
+          pointerEvents: showDesktopChrome ? 'auto' : 'none',
+          transition: 'opacity 0.4s ease, transform 0.4s ease',
+          transform: showDesktopChrome ? 'translateY(0)' : 'translateY(100%)',
+        }}
+      >
         {/* Authentic Start Button with 4-Color Flag */}
         <div className="xp-start-button" title="Click to open GDG CRCE Start Menu">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -151,7 +135,7 @@ export default function WindowsXPDesktop({
 
           <div className="xp-taskbar-item active">
             <span style={{ fontSize: '13px' }}>💿</span>
-            <span>Student Council 2026-27 Player</span>
+            <span>GDG Council 2026-27 Player</span>
           </div>
 
           <div className="xp-taskbar-item">

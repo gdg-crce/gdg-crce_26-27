@@ -2204,15 +2204,58 @@ body {
 
 /* ── Film grain ── */
 
+/* The SVG had no background-size, so a 200x200 noise field was being stretched
+   across the whole viewport — a soft grey cloud, not grain. Tiling it at native
+   size gives actual 1px emulsion. This one line does more for the photographic
+   read than any new effect pass would, and costs nothing. */
 .events-grain {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 4;
-  opacity: 0.08;
+  opacity: 0.055;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  background-repeat: repeat;
   animation: events-grain-shift 0.4s steps(2, end) infinite;
+  will-change: transform;
+}
+
+/* ── Analog grade ──────────────────────────────────────────────────────────
+   Two cheap full-screen layers, no EffectComposer and no new dependency.
+
+   Deliberately NOT included: bloom (a multi-pass downsample the scene doesn't
+   need — the emissive neon and its point light already carry the glow), and
+   chromatic aberration (at this framing and 1.5 dpr it reads as a rendering
+   bug rather than as a lens). Restraint is the point: the brief is believable,
+   not processed.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Lifted blacks. Film stock cannot reach true black — its shadows sit slightly
+   above zero and drift cool. Digital black at #000 is the tell. */
+.events-lift {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: screen;
+  background: rgba(22, 28, 44, 0.052);
+}
+
+/* Vignette. Every real lens falls off at the corners; a perfectly even frame is
+   a renderer's signature. Kept subtle enough to read as optics, not as a mood. */
+.events-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  background: radial-gradient(
+    ellipse 78% 68% at 50% 48%,
+    rgba(0, 0, 0, 0) 40%,
+    rgba(6, 5, 8, 0.3) 78%,
+    rgba(4, 3, 5, 0.62) 100%
+  );
 }
 
 @keyframes events-grain-shift {

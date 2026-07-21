@@ -41,13 +41,22 @@ export default function EventsSection() {
       end: '+=3500',
       scrub: 1.0,
       onUpdate: (self) => {
-        progressRef.current = self.progress;
+        const s = self.progress;
 
         if (progressBarRef.current) {
-          progressBarRef.current.style.width = `${self.progress * 100}%`;
+          progressBarRef.current.style.width = `${s * 100}%`;
         }
 
-        const cameraX = THREE_MATH_LERP(-24, 23, self.progress);
+        // Walk to the final poster by s = WALK_END, then hold on it so the
+        // last poster (evt-9) is fully seen before the council takeover.
+        // LAST_POSTER_P centers evt-9 (x ≈ 21.5) within lerp(-24, 23).
+        const WALK_END = 0.82;
+        const LAST_POSTER_P = 0.968;
+        const camP =
+          s < WALK_END ? (s / WALK_END) * LAST_POSTER_P : LAST_POSTER_P;
+        progressRef.current = camP;
+
+        const cameraX = THREE_MATH_LERP(-24, 23, camP);
         let closest = 0;
         let minDist = Infinity;
         events.forEach((e, i) => {
@@ -67,7 +76,7 @@ export default function EventsSection() {
 
     const timeout = setTimeout(() => {
       ScrollTrigger.refresh();
-    }, 150);
+    }, 100);
 
     return () => {
       clearTimeout(timeout);
@@ -99,11 +108,17 @@ export default function EventsSection() {
         {/* 3D Wall Scene */}
         <WallScene progressRef={progressRef} />
 
+        {/* Lifted blacks — film shadows never reach zero (sits under the scene grain) */}
+        <div className="events-lift" />
+
         {/* Scanline overlay — VHS / MTV texture */}
         <div className="events-scanlines" />
 
         {/* Film grain overlay */}
         <div className="events-grain" />
+
+        {/* Lens falloff */}
+        <div className="events-vignette" />
 
         {/* Cinematic 90s Camcorder Viewfinder HUD */}
         <div className="events-hud">

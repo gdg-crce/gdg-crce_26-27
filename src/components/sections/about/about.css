@@ -1,0 +1,398 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   AboutSection — "the record that keeps playing"
+
+   A full-bleed 2D turntable shot from above. Everything geometric lives in a
+   fixed 1600×900 DESIGN SPACE (`.tt-stage`) that is cover-scaled to the
+   viewport, so the composition is identical at every screen size — the same
+   thing a photograph gets for free.
+
+   Text does NOT live in that scaled space. It sits in `.tt-hud`, a
+   viewport-space layer positioned from --label-cx / --label-cy / --label-r,
+   which AboutSection projects out of the stage transform on every resize.
+   Scaled text goes soft and scales clean past legibility on phones; projected
+   text stays crisp and is free to re-flow.
+
+   Design-space landmarks (keep in sync with AboutSection.tsx):
+     record centre (984, 445)   radius 760
+     label                      radius 288
+     tonearm pivot (146, 84)    arm length 625
+
+   THE RECORD TURNS ON SCROLL, not on a timer. --spin is a real angle in
+   degrees written from the scroll callback, and every layer that is physically
+   part of the record (the vinyl's surface marks, the label's printed swirl)
+   is rotated by it. .tt-sheen deliberately does NOT rotate: it is the room
+   light, which stays where it is while the record turns underneath it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tt-section {
+  position: relative;
+  width: 100%;
+  background: #0a0908;
+}
+
+.tt-pin {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #0a0908;
+  /* Sits over the fixed hero video, which fades out beneath it. */
+  z-index: 9995;
+  /* Driven by the approach ScrollTrigger as the section rises into view. */
+  opacity: 0;
+}
+
+.tt-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1600px;
+  height: 900px;
+  transform-origin: 50% 50%;
+  /* transform (cover scale + narrow-screen recentre) is written from JS. */
+  transform: translate(-50%, -50%);
+}
+
+/* ── the plinth ─────────────────────────────────────────────────────────
+   The turntable base is now a photograph (.tt-base). This layer is just the
+   dark backing behind it: the only place it shows is through the knob that is
+   masked out of the photo, so it only has to read as more dark plinth there. */
+
+.tt-plinth {
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(70% 70% at 50% 50%, #1f1c1a 0%, #110e0c 45%, #050403 100%);
+}
+
+/* Photoreal turntable base (public/record player/base.png): the plinth, the
+   platter, the spindle and the tonearm MOUNT — there is no arm in the file; our
+   animated tonearm attaches at that mount. It is placed so the spindle lands on
+   the record's centre (984,445), so the disc rides directly on the spindle with
+   the arm above it. */
+.tt-base {
+  position: absolute;
+  /* Aligned by the PANEL, not the spindle. The plinth/mount starts at 10.5% of
+     the file, so spindle-centring left a strip of the photo's own grey margin
+     down the left of the frame. This flushes the panel's left edge to the stage
+     edge (10.5% × 1620 ≈ 170, so left ≈ −175 seats it with a few px of bleed).
+     The spindle rides under the record regardless, so its exact x doesn't show.
+     EDGE KNOB: make more negative to push the panel further off the left edge. */
+  left: -175px;
+  top: -36px;
+  width: 1620px;
+  height: auto;   /* 3:2 file → 1080px */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  /* Hide the volume knob baked into the bottom-left of the plate — no knob is
+     wanted anywhere on the site. Soft-edged hole; the .tt-plinth backing shows
+     through and blends with the surrounding charcoal. KNOB-HIDE KNOBS: nudge the
+     centre (16% 85.5%) or grow the radius if any sliver of it still shows. */
+}
+
+/* ── the record ────────────────────────────────────────────────────────── */
+
+.tt-disc,
+.tt-disc-optics {
+  position: absolute;
+  /* Disc matches the tonearm's REC_R slot (830): 830 radius, so
+     the pressing reads correctly in frame. Kept centred on REC (984,445),
+     and the optics box tracks it 1:1 so the groove highlight never spills past
+     the vinyl onto the plinth. */
+  left: 154px;   /* 984 − 830 */
+  top: -385px;   /* 445 − 830 */
+  width: 1660px;
+  height: 1660px;
+  border-radius: 50%;
+}
+
+/* The record. A PHOTOGRAPH of a real pressing (public/record player/disc.png,
+   transparent PNG) — not a CSS synthesis. The grooves, the gloss, the soft
+   surface reflections and the rolled edge are all real, which is the whole
+   reason it reads as vinyl instead of as a render, and it is why ~600 lines of
+   painted gradients used to live here and no longer need to.
+
+   This element is the PIVOT: it rotates about its own centre (984,445 = the
+   spindle), and .tt-disc-img inside is positioned so the pressing's own centre
+   lands exactly there. That is the whole trick — spin the frame about the
+   spindle, park the photo's spindle on it, and the disc turns in place instead
+   of orbiting. Its baked reflections are soft and diffuse, so they read as
+   surface sheen turning, while the FIXED room light on .tt-disc-optics above
+   stays put — a disc spinning under a window. */
+.tt-disc {
+  transform: rotate(var(--spin, 0deg));
+  will-change: transform;
+}
+
+/* The pressing itself. Centred on the disc's rotation axis by cancelling the
+   file's own centring error, so it spins true. */
+.tt-disc-img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* SIZE KNOB: the photographed disc is 81.5% of the file, so ~123% perfectly
+     fills the frame with the photograph's own natural rolled edge. */
+  width: 123%;
+  height: auto;
+  /* CENTRE FIX: the pressing's centre was measured at 49.22%, 48.49% of the
+     file — up and to the left of the file centre. These two offsets push the
+     image back the other way so its centre sits on the pivot. translate() is
+     relative to the image, so they are the raw file-fractions and stay correct
+     at any width. Re-measure if the PNG is re-exported. */
+  transform: translate(calc(-50% + 0.78%), calc(-50% + 1.51%));
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+
+/* Optics layer — everything that is NOT on the record. Same circle, same
+   place, but it never rotates, because a room light that swept round with the
+   platter is precisely the fake this section is not allowed to use. */
+.tt-disc-optics {
+  pointer-events: none;
+}
+
+
+/* The groove band the stylus is currently in, lifted a hair. The radii are
+   lerped between detents by AboutSection so it tracks the needle. */
+.tt-band {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle closest-side at 50% 50%,
+    rgba(255, 255, 255, 0) 0 var(--b0, 60%),
+    rgba(255, 255, 255, 0.055) calc(var(--b0, 60%) + 0.6%) calc(var(--b1, 68%) - 0.6%),
+    rgba(255, 255, 255, 0) var(--b1, 68%) 100%);
+  mix-blend-mode: screen;
+}
+
+/* ── the label ─────────────────────────────────────────────────────────── */
+
+.tt-label {
+  position: absolute;
+  left: 696px;   /* 984 − 288 */
+  top: 157px;    /* 445 − 288 */
+  width: 576px;
+  height: 576px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #17171a;
+  /* A label is a paper disc GLUED to the vinyl, so it wants a cut edge, a
+     tight contact seam and its own catch of the window light — not a soft
+     glow, which just makes it hover. */
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 -6px 16px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(0, 0, 0, 0.75),
+    0 3px 8px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(0, 0, 0, 0.35);
+}
+
+/* One painted disc per track, stacked and revealed by a radial WIPE, not a
+   fade. Cross-fading orange into red by opacity passes through their average,
+   which is a muddy desaturated brown — visibly worse than either colour. A wipe
+   has no blended state at all: the new colour floods out from the spindle,
+   which is also the most record-like way for a label to change. --wipe is 0→60
+   (circle(60%) already covers the whole square box).
+
+   Each disc is a photographed swirl of paint (public/record player/*.png), and
+   the whole layer TURNS: the paint's spiral is the clearest spin cue on the
+   record, so it rotates by the same --spin as the printed ring above it. The
+   centred-circle clip is rotation-invariant, so the wipe still floods from the
+   spindle while the disc spins underneath it. */
+.tt-lab {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  clip-path: circle(calc(var(--wipe, 60) * 1%) at 50% 50%);
+  /* Zoomed ~16% past the label rim: the scans carry a ragged dark vinyl fringe
+     in their corners, and this pushes it outside the label circle so the paint
+     runs edge to edge. Bumping this crops the teal flecks near the rim — don't
+     raise it to chase a stray dark pixel the rim shadow already hides.
+     SINGLE value on purpose: the swirl files are ~0.96 aspect (not square), so
+     two values ('116% 116%') stretched them into the square label and pulled
+     the spiral eye off centre. One value preserves the aspect, so the eye stays
+     on the spindle as it spins. */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 116%;
+  transform: rotate(var(--spin, 0deg));
+  will-change: transform;
+}
+.tt-lab-theme   { background-image: url('/record%20player/Orange%20record.png'); }
+.tt-lab-vision  { background-image: url('/record%20player/Red%20record.png'); }
+.tt-lab-mission { background-image: url('/record%20player/Yellow%20record.png'); }
+
+/* Printed ring on the label — see the comment on the markup. It shares the
+   disc's rotation, so it must stay clearly legible: it sits above the painted
+   disc, and it is dark ink printed on the paint rather than a light film over
+   the vinyl. */
+.tt-label-print {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.tt-label-print-spin {
+  transform-box: view-box;
+  transform-origin: 308px 308px;
+  transform: rotate(var(--spin, 0deg));
+  will-change: transform;
+}
+
+.tt-label-print-text {
+  font-family: var(--font-editorial-display), Georgia, serif;
+  font-size: 30px;
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  fill: rgba(0, 0, 0, 0.42);
+}
+
+/* Rim shading so the label reads as pressed paper, not a flat CSS circle. */
+.tt-label-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle closest-side at 50% 50%,
+    rgba(0, 0, 0, 0) 0 80%,
+    rgba(0, 0, 0, 0.16) 92%,
+    rgba(0, 0, 0, 0.34) 100%);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.05);
+}
+
+/* Everything colour-bearing on the label sits under this until the needle
+   drops — the record is not playing yet. --lit is driven 0→1 at touchdown. */
+.tt-label-dim {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: #0d0d10;
+  opacity: calc(1 - var(--lit, 0));
+}
+
+/* ── photographic finish ───────────────────────────────────────────────────
+   Viewport-space, over the stage but under the text. Static — grain that
+   crawls reads as video noise, and this is meant to read as one exposure.
+   Cheap, and it does more for "photograph" than any single gradient here:
+   real camera output has a noise floor, and its absence is a large part of
+   why clean CSS renders look synthetic. */
+
+.tt-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.065;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='170' height='170'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Lens falloff. Corners of a real frame are always down on the centre. */
+.tt-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(126% 106% at 54% 46%,
+    rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.26) 74%, rgba(0, 0, 0, 0.58) 100%);
+}
+
+
+/* ── tonearm (one SVG over the whole design space) ──────────────────────── */
+
+.tt-hardware {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+  height: 900px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.tt-arm-swing {
+  transform-box: view-box;
+  transform-origin: 166.5px 135.3px;
+  will-change: transform, filter;
+  /* transform + drop-shadow are both written from AboutSection's onUpdate —
+     the shadow opening up as the arm lifts is what sells the descent. */
+}
+
+/* ── HUD: viewport-space text ──────────────────────────────────────────── */
+
+.tt-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: #fdfcfa;
+}
+
+
+
+/* Centre copy — anchored to the label's projected screen position. */
+.tt-center {
+  position: absolute;
+  left: var(--label-cx, 50%);
+  top: var(--label-cy, 50%);
+  width: calc(var(--label-r, 260px) * 1.58);
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+.tt-center > .tt-copy {
+  grid-area: 1 / 1;
+}
+
+.tt-copy {
+  width: 100%;
+  opacity: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.42);
+}
+
+.tt-copy-brush {
+  display: block;
+  font-family: var(--font-brush), cursive;
+  font-size: calc(var(--label-r, 260px) * 0.315);
+  line-height: 1.06;
+  margin-bottom: calc(var(--label-r, 260px) * 0.085);
+  /* Kaushan sits low in its box; nudge the optical centre back up. */
+  padding-top: calc(var(--label-r, 260px) * 0.03);
+}
+
+.tt-copy-line {
+  display: block;
+  /* Line breaks are authored (see TRACKS in AboutSection) because the copy has
+     to sit inside a circle. Wrapping would silently re-rag it — everything
+     scales off --label-r, so a line that fits at one size fits at all. */
+  white-space: nowrap;
+  font-family: var(--font-editorial-display), Georgia, serif;
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: calc(var(--label-r, 260px) * 0.150);
+  line-height: 1.30;
+  letter-spacing: 0.012em;
+}
+
+/* The long vision/mission paragraphs have to fit inside a circle, so they run
+   smaller and tighter than the two-line theme card. */
+.tt-copy-para .tt-copy-line {
+  font-size: calc(var(--label-r, 260px) * 0.116);
+  line-height: 1.34;
+}
+
+/* ── narrow viewports ──────────────────────────────────────────────────── */
+
+
+/* ── reduced motion ────────────────────────────────────────────────────── */
+
+/* Nothing here autoplays any more — the record only turns while the user is
+   actually scrolling — so there is no ambient motion left to opt out of. */

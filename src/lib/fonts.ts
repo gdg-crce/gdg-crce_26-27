@@ -1,5 +1,5 @@
 import {
-  Fraunces,
+  Shrikhand,
   Plus_Jakarta_Sans,
   Righteous,
   Space_Grotesk,
@@ -9,11 +9,14 @@ import {
   Outfit,
   Cormorant_Garamond,
   Inter,
+  IBM_Plex_Mono,
+  Kaushan_Script,
 } from 'next/font/google';
 
 // 1970s Typography: Groovy Serif + Warm Sans
-export const fraunces = Fraunces({
+export const shrikhand = Shrikhand({
   subsets: ['latin'],
+  weight: '400',
   display: 'swap',
   variable: '--font-70s-display',
 });
@@ -82,10 +85,27 @@ export const inter = Inter({
   variable: '--font-editorial-body',
 });
 
+// About Us / turntable — the brush-script signature the record label is set in
+// ("Sunékheia:"). Everything else on that label is Cormorant small-caps.
+export const kaushanScript = Kaushan_Script({
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-brush',
+});
+
+// Y2K Archive Typography: technical monospaced archive feel (IE6 / TheFacebook era)
+export const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-ibm-plex-mono',
+});
+
 // Map of era fonts to make it easy to apply dynamically based on current era
 export const eraFonts = {
   '1970s': {
-    display: fraunces.className,
+    display: shrikhand.className,
     body: jakarta.className,
   },
   '1980s': {

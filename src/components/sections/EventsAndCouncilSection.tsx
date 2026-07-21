@@ -4,29 +4,55 @@ import dynamic from 'next/dynamic';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { councilMembers, CouncilMember } from './councilData';
-import WindowsXPDesktop from './WindowsXPDesktop';
-import RetroMediaPlayerWindow from './RetroMediaPlayerWindow';
-import MSNContactListWindow from './MSNContactListWindow';
-import MSNChatWindow from './MSNChatWindow';
-import WindowsPictureViewer from './WindowsPictureViewer';
-import './council.css';
+import { events } from './events/eventData';
+import { councilMembers } from './council/councilData';
+import WindowsXPDesktop from './council/WindowsXPDesktop';
+import Y2KArchiveSystem from './council/Y2KArchiveSystem';
+import WindowsPictureViewer from './council/WindowsPictureViewer';
+import './council/council.css';
 
+/* Dynamically import the R3F scene — no SSR for WebGL */
 const WallScene = dynamic(() => import('@/components/three/WallScene'), {
   ssr: false,
+  loading: () => (
+    <div className="events-loading">
+      <span className="events-loading-text">LOADING THE STREET ARCHIVE</span>
+      <span className="events-loading-dots">...</span>
+    </div>
+  ),
 });
 
-/* CouncilSection — Upgraded with !important Bliss grid scanlines and 3D vector icons */
-export default function CouncilSection() {
+function THREE_MATH_LERP(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+/**
+ * EventsAndCouncilSection — Unified Master Choreography Section
+ * Upgraded with !important Bliss grid scanlines, 3D carved grass text, and the
+ * IE6 TheFacebook council archive window.
+ *
+ *
+ * Manages the single continuous ScrollTrigger across the entire experience:
+ * 1. 0.00 -> 0.26: Alleyway walk from poster #1 (CRCE HACK) to #9 (TECH TALKS).
+ * 2. 0.26 -> 0.32: Dwell on poster #9 (TECH TALKS) in 100% fullscreen.
+ * 3. 0.32 -> 0.42: Windowize (3D wall shrinks center-out into Windows Media Player frame, revealing XP Desktop).
+ * 4. 0.42 -> 0.50: Minimize (window genies down into bottom Windows XP taskbar).
+ * 5. 0.48 -> 0.55: Archive Reveal (IE6 TheFacebook council window fades in centered).
+ * 6. 0.55 -> 0.93: Council Archive holds centered (TheFacebook profile: pinned people + social grid).
+ * 7. 0.93 -> 0.96: Archive Minimize (IE6 window genies down into taskbar).
+ * 8. 0.96 -> 1.00: Grand Finale (Windows Picture and Fax Viewer pops up with group photo).
+ */
+export default function EventsAndCouncilSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<number>(0);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const eventsWindowRef = useRef<HTMLDivElement>(null);
   const playerWrapperRef = useRef<HTMLDivElement>(null);
   const pictureViewerRef = useRef<HTMLDivElement>(null);
-  // Lock the transition replica on the SAME final frame the events walk ends on
-  // (evt-9 centered) so the fullscreen → window handoff is pixel-seamless.
-  const eventsFinalProgressRef = useRef<number>(0.968);
+  const activeEventRef = useRef(0);
 
+  const [activeEvent, setActiveEvent] = useState(0);
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
@@ -36,33 +62,6 @@ export default function CouncilSection() {
     if (selectedTeam === 'All Tracks') return councilMembers;
     return councilMembers.filter((m) => m.team === selectedTeam);
   }, [selectedTeam]);
-
-  const currentMember =
-    filteredMembers[activeMemberIndex] || filteredMembers[0] || councilMembers[0];
-
-  const handleNext = useCallback(() => {
-    setActiveMemberIndex((prev) => (prev + 1) % filteredMembers.length);
-  }, [filteredMembers.length]);
-
-  const handlePrev = useCallback(() => {
-    setActiveMemberIndex((prev) =>
-      prev - 1 < 0 ? filteredMembers.length - 1 : prev - 1
-    );
-  }, [filteredMembers.length]);
-
-  const handleSelectMemberById = useCallback(
-    (id: number) => {
-      const idx = filteredMembers.findIndex((m) => m.id === id);
-      if (idx !== -1) {
-        setActiveMemberIndex(idx);
-      } else {
-        setSelectedTeam('All Tracks');
-        const globalIdx = councilMembers.findIndex((m) => m.id === id);
-        if (globalIdx !== -1) setActiveMemberIndex(globalIdx);
-      }
-    },
-    [filteredMembers]
-  );
 
   const handleSelectTeam = useCallback((team: string) => {
     setSelectedTeam(team);
@@ -77,49 +76,47 @@ export default function CouncilSection() {
     gsap.registerPlugin(ScrollTrigger);
 
     const trigger = ScrollTrigger.create({
-      trigger: '#events',
+      trigger: sectionRef.current,
       pin: containerRef.current,
-      start: 'bottom bottom',
-      end: '+=7500', // extended scroll distance to push the transition very late
+      start: 'top top',
+      end: '+=11000', // unified scroll distance across both sections
       scrub: 0.8,
-      onEnter: () => {
-        if (sectionRef.current) {
-          sectionRef.current.style.opacity = '1';
-          sectionRef.current.style.visibility = 'visible';
-          sectionRef.current.style.pointerEvents = 'auto';
-        }
-      },
-      onLeaveBack: () => {
-        if (sectionRef.current) {
-          sectionRef.current.style.opacity = '0';
-          sectionRef.current.style.visibility = 'hidden';
-          sectionRef.current.style.pointerEvents = 'none';
-        }
-      },
       onUpdate: (self) => {
         const p = self.progress;
         setScrollProgress(p);
-        if (p > 0 && sectionRef.current && sectionRef.current.style.opacity !== '1') {
-          sectionRef.current.style.opacity = '1';
-          sectionRef.current.style.visibility = 'visible';
-          sectionRef.current.style.pointerEvents = 'auto';
+
+        /* ── Phase 1: Alleyway Walk (0.00 -> 0.26) ───────────────────────── */
+        const WALK_END = 0.26;
+        const LAST_POSTER_P = 0.968;
+        const camP = p < WALK_END ? (p / WALK_END) * LAST_POSTER_P : LAST_POSTER_P;
+        progressRef.current = camP;
+
+        if (progressBarRef.current) {
+          const walkFraction = Math.min(1, p / WALK_END);
+          progressBarRef.current.style.width = `${walkFraction * 100}%`;
         }
 
-        /* ── Choreography timeline (scroll progress p) ────────────────────
-           DWELL     0.00 → 0.50  Fullscreen final frame holds STILL for several
-                                  wheel scrolls. Starts the transition very late.
-           WINDOWIZE 0.50 → 0.62  Frame shrinks in place (center-out) into a
-                                  media-player window — XP desktop + taskbar are
-                                  revealed around it. "It was a media player."
-           MINIMIZE  0.62 → 0.72  Window genies down/left into the taskbar and
-                                  fades out. Events frame leaves the screen.
-           PLAYER    0.68 → 0.75  Student Council player fades in, centered.
-           MEMBERS   0.75 → 0.98  Scroll steps through council members.
-           ──────────────────────────────────────────────────────────────── */
-        const DWELL_END = 0.50;
-        const WINDOW_END = 0.62;
-        const MINIMIZE_END = 0.72;
-        const WINDOW_SCALE = 0.66; // windowed size (fraction of viewport)
+        const cameraX = THREE_MATH_LERP(-24, 23, camP);
+        let closest = 0;
+        let minDist = Infinity;
+        events.forEach((e, i) => {
+          const dist = Math.abs(e.position[0] - cameraX);
+          if (dist < minDist) {
+            minDist = dist;
+            closest = i;
+          }
+        });
+
+        if (closest !== activeEventRef.current) {
+          activeEventRef.current = closest;
+          setActiveEvent(closest);
+        }
+
+        /* ── Phase 2 -> 4: Dwell, Windowize & Minimize (0.26 -> 0.50) ────── */
+        const DWELL_END = 0.32;
+        const WINDOW_END = 0.42;
+        const MINIMIZE_END = 0.50;
+        const WINDOW_SCALE = 0.66;
 
         if (eventsWindowRef.current) {
           const titlebar = eventsWindowRef.current.querySelector(
@@ -142,32 +139,28 @@ export default function CouncilSection() {
           };
 
           if (isEventsMinimized || p >= MINIMIZE_END) {
-            // Fully minimized / user-minimized — off screen.
             eventsWindowRef.current.style.opacity = '0';
             eventsWindowRef.current.style.pointerEvents = 'none';
           } else if (p < DWELL_END) {
-            // DWELL — hold the fullscreen frame perfectly still.
+            // Fullscreen alleyway walk & hold
             eventsWindowRef.current.style.transform = 'translate(0, 0) scale(1)';
             eventsWindowRef.current.style.opacity = '1';
             eventsWindowRef.current.style.pointerEvents = 'auto';
             showChrome(false);
           } else if (p < WINDOW_END) {
-            // WINDOWIZE — shrink center-out from fullscreen to a window.
+            // Shrink center-out from fullscreen to media player window
             const t = (p - DWELL_END) / (WINDOW_END - DWELL_END);
             const scale = 1.0 - t * (1.0 - WINDOW_SCALE);
             eventsWindowRef.current.style.transform = `translate(0, 0) scale(${scale})`;
             eventsWindowRef.current.style.opacity = '1';
             eventsWindowRef.current.style.pointerEvents = 'auto';
-            // Chrome fades in just after the shrink begins.
-            showChrome(t > 0.12);
+            showChrome(t > 0.10);
           } else {
-            // MINIMIZE — genie the window down/left into the taskbar.
+            // Genie window down/left into Windows XP taskbar
             const t = (p - WINDOW_END) / (MINIMIZE_END - WINDOW_END);
             const scale = WINDOW_SCALE * (1.0 - t * 0.9);
-            const translateY = t * 46; // vh downward toward taskbar
-            const translateX = t * -26; // vw leftward toward the .avi taskbar item
-            // translate() must precede scale() so the vw/vh offsets stay in
-            // screen space instead of being multiplied by the shrinking scale.
+            const translateY = t * 46; // vh down to taskbar
+            const translateX = t * -26; // vw left to .avi taskbar item
             eventsWindowRef.current.style.transform = `translate(${translateX}vw, ${translateY}vh) scale(${scale})`;
             eventsWindowRef.current.style.opacity = `${1.0 - t * 0.9}`;
             eventsWindowRef.current.style.pointerEvents = 'none';
@@ -175,38 +168,34 @@ export default function CouncilSection() {
           }
         }
 
-        // PLAYER -> PHASE 7: Student Council MSN Messenger window (0.68 -> 0.96)
-        const MEMBERS_START = 0.75;
+        /* ── Phase 5 -> Phase 7: Student Council TheFacebook Archive Window (0.48 -> 0.96) ── */
+        const MEMBERS_START = 0.55;
         const MEMBERS_END = 0.93;
-        const MSN_MIN_START = 0.93;
-        const MSN_MIN_END = 0.96;
+        const ARCHIVE_MIN_START = 0.93;
+        const ARCHIVE_MIN_END = 0.96;
 
         if (playerWrapperRef.current) {
-          if (p < 0.68) {
+          if (p < 0.48) {
             playerWrapperRef.current.style.opacity = '0';
             playerWrapperRef.current.style.pointerEvents = 'none';
-            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+            playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
           } else if (p < MEMBERS_START) {
-            const fadeT = Math.min(1, Math.max(0, (p - 0.68) / 0.07));
-            playerWrapperRef.current.style.opacity = `${fadeT}`;
-            playerWrapperRef.current.style.pointerEvents = fadeT > 0.5 ? 'auto' : 'none';
-            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+            const t = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
+            const scale = 0.1 + t * 0.9;
+            const translateY = (1 - t) * 46;
+            playerWrapperRef.current.style.opacity = '1';
+            playerWrapperRef.current.style.pointerEvents = t > 0.5 ? 'auto' : 'none';
+            playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
           } else if (p <= MEMBERS_END) {
+            // TheFacebook archive window holds centered through this scroll range.
             playerWrapperRef.current.style.opacity = '1';
             playerWrapperRef.current.style.pointerEvents = 'auto';
             playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
-
-            const memberProgress = (p - MEMBERS_START) / (MEMBERS_END - MEMBERS_START);
-            const targetIndex = Math.floor(memberProgress * filteredMembers.length);
-            const clampedIndex = Math.max(
-              0,
-              Math.min(filteredMembers.length - 1, targetIndex)
-            );
-            setActiveMemberIndex(clampedIndex);
-          } else if (p < MSN_MIN_END) {
-            const t = (p - MSN_MIN_START) / (MSN_MIN_END - MSN_MIN_START);
+          } else if (p < ARCHIVE_MIN_END) {
+            // Genie minimize animation down into bottom taskbar
+            const t = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
             const scale = 1.0 - t * 0.9;
-            const translateY = t * 46;
+            const translateY = t * 46; // vh down to taskbar
             playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
             playerWrapperRef.current.style.opacity = `${1.0 - t * 0.9}`;
             playerWrapperRef.current.style.pointerEvents = 'none';
@@ -217,7 +206,7 @@ export default function CouncilSection() {
           }
         }
 
-        // PHASE 8: Windows Picture and Fax Viewer Grand Finale Pop-up (0.96 -> 1.00)
+        /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
         const PV_START = 0.96;
         if (pictureViewerRef.current) {
           if (p < PV_START) {
@@ -238,38 +227,41 @@ export default function CouncilSection() {
 
     const timeout = setTimeout(() => {
       ScrollTrigger.refresh();
-    }, 250);
+    }, 150);
 
     return () => {
       clearTimeout(timeout);
       trigger.kill();
     };
-  }, [filteredMembers.length, isEventsMinimized]);
+  }, [isEventsMinimized]);
+
+  const current = events[activeEvent];
 
   return (
     <section
       ref={sectionRef}
-      id="council"
+      id="events"
       className="xp-council-section"
-      aria-label="GDG CRCE Student Council 2026-27 — Professional Windows XP Experience"
-      style={{
-        marginTop: '-100vh',
-        position: 'relative',
-        zIndex: 20,
-        opacity: 0,
-        visibility: 'hidden',
-        pointerEvents: 'none',
-      }}
+      aria-label="GDG CRCE Events & Student Council 2026-27"
+      style={{ position: 'relative', width: '100%' }}
     >
-      <div ref={containerRef} style={{ width: '100%', height: '100vh' }}>
+      <div
+        ref={containerRef}
+        style={{
+          width: '100%',
+          height: '100vh',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
         <WindowsXPDesktop
           activeTeamIndex={activeMemberIndex}
           onSelectTeam={handleSelectTeam}
-          isEventsMinimized={isEventsMinimized || scrollProgress >= 0.70}
+          isEventsMinimized={isEventsMinimized || scrollProgress >= 0.50}
           onToggleEventsMinimize={handleToggleEventsMinimize}
-          showDesktopChrome={isEventsMinimized || scrollProgress >= 0.50}
+          showDesktopChrome={isEventsMinimized || scrollProgress >= 0.32}
         >
-          {/* Layer 1: Events Transition Window (Starts Fullscreen -> Push Shrinks -> Minimizes) */}
+          {/* Layer 1: Events 3D Wall (Starts 100% Fullscreen, Walks, Dwells, then Shrinks into Media Player) */}
           <div className="xp-events-transition-wrapper">
             <div
               ref={eventsWindowRef}
@@ -279,7 +271,7 @@ export default function CouncilSection() {
                 pointerEvents: isEventsMinimized ? 'none' : 'auto',
               }}
             >
-              {/* Topbar of Windows XP Video Player */}
+              {/* Titlebar of Windows Media Player */}
               <div className="xp-titlebar">
                 <div className="xp-titlebar-left">
                   <span>🎬</span>
@@ -308,7 +300,7 @@ export default function CouncilSection() {
                 </div>
               </div>
 
-              {/* Video Frame Content — Exact 90s Alleyway Last Frame */}
+              {/* Video Frame Content — Exact 3D Alleyway Wall */}
               <div
                 className="xp-events-window-body"
                 style={{
@@ -319,18 +311,22 @@ export default function CouncilSection() {
                   background: '#161315',
                 }}
               >
-                {/* Render 3D Wall locked at final frame until it minimizes away */}
-                {(!isEventsMinimized && scrollProgress < 0.73) && (
-                  <WallScene progressRef={eventsFinalProgressRef} snapToTarget={true} />
-                )}
+                {/* 3D Wall Scene */}
+                <WallScene progressRef={progressRef} snapToTarget={scrollProgress >= 0.26} />
 
-                {/* Scanline overlay — VHS / MTV texture */}
+                {/* Lifted blacks — film shadows never reach zero (under the grain) */}
+                <div className="events-lift" />
+
+                {/* Scanline overlay */}
                 <div className="events-scanlines" />
 
                 {/* Film grain overlay */}
                 <div className="events-grain" />
 
-                {/* Cinematic 90s Camcorder Viewfinder HUD */}
+                {/* Lens falloff */}
+                <div className="events-vignette" />
+
+                {/* Camcorder Viewfinder HUD */}
                 <div className="events-hud">
                   <div className="events-hud-top">
                     <div className="events-era-badge">
@@ -348,19 +344,38 @@ export default function CouncilSection() {
                   <div className="events-hud-bottom">
                     <div className="events-event-info">
                       <div className="events-event-counter">
-                        <span className="events-event-number">09</span>
+                        <span className="events-event-number">
+                          {String(activeEvent + 1).padStart(2, '0')}
+                        </span>
                         <span className="events-event-divider">/</span>
-                        <span className="events-event-total">09</span>
+                        <span className="events-event-total">
+                          {String(events.length).padStart(2, '0')}
+                        </span>
                       </div>
                       <div className="events-event-meta">
-                        <span className="events-event-title">TECH TALKS</span>
-                        <span className="events-event-subtitle">Speaker Series</span>
+                        <span className="events-event-title">{current?.title}</span>
+                        <span className="events-event-subtitle">
+                          {current?.subtitle}
+                        </span>
                       </div>
                     </div>
                     <div className="events-scroll-hint">
-                      <span>MINIMIZING VIDEO ARCHIVE TO XP DESKTOP ↓</span>
+                      <span>
+                        {scrollProgress < 0.26
+                          ? 'SCROLL DOWN STREET →'
+                          : 'MINIMIZING VIDEO ARCHIVE TO XP DESKTOP ↓'}
+                      </span>
                     </div>
                   </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="events-progress-track">
+                  <div
+                    ref={progressBarRef}
+                    className="events-progress-fill"
+                    style={{ width: '0%' }}
+                  />
                 </div>
 
                 {/* Grunge vignette borders */}
@@ -370,24 +385,13 @@ export default function CouncilSection() {
             </div>
           </div>
 
-          {/* Layer 2: Student Council MSN Messenger Dual-Window */}
+          {/* Layer 2: Student Council TheFacebook Archive (IE6 window on the XP desktop) */}
           <div
             ref={playerWrapperRef}
             className="xp-player-window-wrapper"
             style={{ opacity: 0, pointerEvents: 'none' }}
           >
-            <div className="msn-dual-desktop-container">
-              <MSNContactListWindow
-                allMembers={filteredMembers}
-                activeMemberIndex={activeMemberIndex}
-                onSelectMemberById={handleSelectMemberById}
-              />
-              <MSNChatWindow
-                currentMember={currentMember}
-                onNext={handleNext}
-                onPrev={handlePrev}
-              />
-            </div>
+            <Y2KArchiveSystem embedded />
           </div>
 
           {/* Layer 3: Windows Picture and Fax Viewer Grand Finale */}

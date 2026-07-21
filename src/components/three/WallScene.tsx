@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo, Suspense } from 'react';
+import React, { useRef, useMemo, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
@@ -12,70 +12,54 @@ import {
   AlleyDepthLayers,
   UrbanStreetFloor,
 } from './AlleyProps3D';
+import {
+  WALL,
+  buildWallTextures,
+  applyMacroLayer,
+  buildAlleyEnvironment,
+  heightToNormalCanvas,
+  mulberry32,
+} from './wallMaterial';
 
 /* ═══════════════════════════════════════════════════
-   Height-map → Tangent-space Normal Map
-   Derives real per-pixel surface direction from the same
-   canvas used for relief, so raking light actually reads
-   mortar joints, cracks & peeling edges instead of a flat print.
+   Module-level Texture Cache
+   Enables instantaneous sharing of heavy procedural canvas
+   textures when WallScene mounts across multiple sections.
    ═══════════════════════════════════════════════════ */
-
-function heightCanvasToNormalMap(
-  source: HTMLCanvasElement,
-  size: number,
-  strength: number
-): HTMLCanvasElement {
-  const hCanvas = document.createElement('canvas');
-  hCanvas.width = size;
-  hCanvas.height = Math.round((size * source.height) / source.width);
-  const hCtx = hCanvas.getContext('2d')!;
-  hCtx.drawImage(source, 0, 0, hCanvas.width, hCanvas.height);
-
-  const w = hCanvas.width;
-  const h = hCanvas.height;
-  const heightData = hCtx.getImageData(0, 0, w, h).data;
-  const getH = (x: number, y: number) => {
-    const xi = (x + w) % w;
-    const yi = (y + h) % h;
-    return heightData[(yi * w + xi) * 4] / 255;
-  };
-
-  const nCanvas = document.createElement('canvas');
-  nCanvas.width = w;
-  nCanvas.height = h;
-  const nCtx = nCanvas.getContext('2d')!;
-  const out = nCtx.createImageData(w, h);
-
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const gx = (getH(x + 1, y) - getH(x - 1, y)) * strength;
-      const gy = (getH(x, y + 1) - getH(x, y - 1)) * strength;
-      const len = Math.sqrt(gx * gx + gy * gy + 1);
-      const idx = (y * w + x) * 4;
-      out.data[idx] = (-gx / len) * 0.5 * 255 + 127.5;
-      out.data[idx + 1] = (-gy / len) * 0.5 * 255 + 127.5;
-      out.data[idx + 2] = (1 / len) * 0.5 * 255 + 127.5;
-      out.data[idx + 3] = 255;
-    }
-  }
-  nCtx.putImageData(out, 0, 0);
-  return nCanvas;
-}
+let cachedSignTexture: THREE.CanvasTexture | null = null;
+const cachedGraffitiTextures = new Map<string, THREE.CanvasTexture>();
+let cachedSidewalkTextures: readonly [
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture,
+  THREE.CanvasTexture
+] | null = null;
 
 /* ═══════════════════════════════════════════════════
    Interactive Human Camera Rig — Stride + Mouse Look
    ═══════════════════════════════════════════════════ */
 
-function InteractiveCameraRig({ progressRef }: { progressRef: React.RefObject<number> }) {
+function InteractiveCameraRig({ progressRef, snapToTarget }: { progressRef: React.RefObject<number>; snapToTarget?: boolean }) {
   const { camera } = useThree();
   const lookTarget = useMemo(() => new THREE.Vector3(), []);
+  const initializedRef = useRef(false);
 
   useFrame((state, delta) => {
     const p = progressRef.current ?? 0;
     // Base walking X position along wall (-24 -> 23)
     const targetX = THREE.MathUtils.lerp(-24, 23, p);
 
-    const smoothing = 1 - Math.pow(0.0001, delta);
+    if (!initializedRef.current || snapToTarget) {
+      if (snapToTarget || p > 0.1) {
+        camera.position.x = targetX;
+      }
+      initializedRef.current = true;
+    }
+
+    const smoothing = snapToTarget ? 1.0 : (1 - Math.pow(0.0001, delta));
     camera.position.x += (targetX - camera.position.x) * smoothing;
 
     // Interactive First-Person Head Tilt based on mouse pointer
@@ -102,36 +86,66 @@ function InteractiveCameraRig({ progressRef }: { progressRef: React.RefObject<nu
 }
 
 /* ═══════════════════════════════════════════════════
-   Interactive Handheld Inspection Flashlight
-   Smoothly tracks cursor across wall & posters
+   Flickering Cyan Neon Tube (Aesthetic Top Light)
    ═══════════════════════════════════════════════════ */
 
-function HandheldFlashlight({ progressRef }: { progressRef: React.RefObject<number> }) {
-  const lightRef = useRef<THREE.PointLight>(null);
+function CyanNeonTube3D() {
+  const lightGroupRef = useRef<THREE.Group>(null);
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
 
-  useFrame((state, delta) => {
-    if (!lightRef.current) return;
-    const p = progressRef.current ?? 0;
-    const camX = THREE.MathUtils.lerp(-24, 23, p);
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const flicker = Math.random() > 0.93 ? 0.2 : 1.0;
+    const pulse = 0.9 + Math.sin(t * 2.5) * 0.1;
+    const intensity = flicker * pulse;
 
-    // Map pointer coords (-1..1) to wall surface position
-    const targetX = camX + state.pointer.x * 3.5;
-    const targetY = 2.3 + state.pointer.y * 2.2;
-
-    const smoothing = 1 - Math.pow(0.0002, delta);
-    lightRef.current.position.x += (targetX - lightRef.current.position.x) * smoothing;
-    lightRef.current.position.y += (targetY - lightRef.current.position.y) * smoothing;
+    if (matRef.current) matRef.current.emissiveIntensity = 2.5 * intensity;
+    if (lightGroupRef.current) {
+      lightGroupRef.current.children.forEach((child) => {
+        if ((child as THREE.PointLight).isLight) {
+          (child as THREE.PointLight).intensity = 3.0 * intensity;
+        }
+      });
+    }
   });
 
   return (
-    <pointLight
-      ref={lightRef}
-      position={[-24, 2.3, 2.8]}
-      color="#FFF4E0"
-      intensity={20}
-      distance={9}
-      decay={2}
-    />
+    <group position={[0, 7.6, 0.22]}>
+      {/* Long Neon Tube lying horizontally */}
+      <mesh rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.03, 0.03, 50, 8]} />
+        <meshStandardMaterial
+          ref={matRef}
+          color="#A0FFFF"
+          emissive="#00FFFF"
+          emissiveIntensity={2.5}
+          roughness={0.1}
+          metalness={0.1}
+        />
+      </mesh>
+      
+      {/* Tube Mounting Brackets */}
+      {[-24, -18, -12, -6, 0, 6, 12, 18, 24].map((x, i) => (
+        <mesh key={i} position={[x, 0.05, -0.06]} castShadow receiveShadow>
+          <boxGeometry args={[0.2, 0.12, 0.12]} />
+          <meshStandardMaterial color="#111" roughness={0.9} />
+        </mesh>
+      ))}
+
+      {/* Point lights distributed along the tube for an even neon glow on the wall */}
+      <group ref={lightGroupRef}>
+        {[-20, -10, 0, 10, 20].map((x, i) => (
+          <pointLight
+            key={i}
+            position={[x, -0.2, 0.8]}
+            color="#00FFFF"
+            intensity={3}
+            distance={15}
+            decay={2}
+          />
+        ))}
+      </group>
+    </group>
   );
 }
 
@@ -145,16 +159,23 @@ function NeonAlleySign3D() {
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    // Controlled neon electrical flicker (#3 in lighting hierarchy)
+    // Controlled neon electrical flicker
     const flicker = Math.random() > 0.94 ? 0.35 : 1.0;
     const pulse = 0.88 + Math.sin(t * 3.5) * 0.12;
     const intensity = flicker * pulse;
 
-    if (lightRef.current) lightRef.current.intensity = 110 * intensity;
-    if (matRef.current) matRef.current.emissiveIntensity = 1.2 * intensity;
+    // Daylight neon behaves backwards from night neon: the tubes have to glow
+    // HARDER to still read as lit against a bright sky, while throwing almost
+    // nothing onto the wall. At 14 this pooled magenta across the plaster —
+    // colour on the wall itself, which the palette reserves for graffiti and
+    // posters. 2.0 keeps a faint halo at the tubes and nothing beyond them.
+    if (lightRef.current) lightRef.current.intensity = 2.0 * intensity;
+    if (matRef.current) matRef.current.emissiveIntensity = 1.0 * intensity;
   });
 
   const signTexture = useMemo(() => {
+    if (cachedSignTexture) return cachedSignTexture;
+
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 128;
@@ -175,7 +196,8 @@ function NeonAlleySign3D() {
     ctx.fillStyle = '#FF2277';
     ctx.fillText('MTV // LIVE 90s', 256, 64);
 
-    return new THREE.CanvasTexture(canvas);
+    cachedSignTexture = new THREE.CanvasTexture(canvas);
+    return cachedSignTexture;
   }, []);
 
   return (
@@ -194,18 +216,21 @@ function NeonAlleySign3D() {
           map={signTexture}
           emissive="#FF0055"
           emissiveMap={signTexture}
-          emissiveIntensity={1.2}
+          emissiveIntensity={1.0}
           roughness={0.2}
         />
       </mesh>
 
-      {/* Controlled Neon Light (#3 in hierarchy) */}
+      {/* Declared value must match what useFrame settles on. It used to say 14
+          while the frame loop drove it to a different number, so the very first
+          frame — and any frame where the loop has not run yet — flooded the
+          plaster magenta. */}
       <pointLight
         ref={lightRef}
         position={[0, 0, 1.4]}
-        color="#FF0055"
-        intensity={110}
-        distance={11}
+        color="#FF2D6B"
+        intensity={2}
+        distance={7}
         decay={2}
       />
     </group>
@@ -213,317 +238,104 @@ function NeonAlleySign3D() {
 }
 
 /* ═══════════════════════════════════════════════════
-   Authentic Distressed Urban Concrete & Peeling Plaster Wall
-   Directly matching reference images: layered peeling stucco,
-   exposed aged concrete substrate, deep structural cracks & grime
+   Weathered Urban Masonry Wall
+
+   Base material is a photogrammetry scan (see ./wallMaterial for why the
+   procedural generator that used to live there was abandoned). The macro layer,
+   the runoff anchored to real pipes, and the poster-ghost decals still ride on
+   top of it — a scan gives a believable SURFACE, but it knows nothing about
+   this alley.
+
+   The mesh is dead flat. The old 0.3 displacementScale over 42cm quads produced
+   8cm-proud stucco and 9cm-deep "cracks" smeared into smooth valleys — lumpy
+   terrain that resolved no real feature while costing 6,400 verts. Real walls
+   ARE flat at metre scale; their story is at mm–cm scale, which is exactly what
+   a normal map is for. At 4m a 2cm lip subtends 0.3°, so there is no silhouette
+   to lose.
    ═══════════════════════════════════════════════════ */
 
 function WeatheredUrbanStreetWall() {
-  const [colorMap, normalMap, displacementMap] = useMemo(() => {
-    const W = 2048;
-    const H = 1024;
+  const loader = useMemo(() => new THREE.TextureLoader(), []);
+  const tex = useMemo(() => buildWallTextures(loader), [loader]);
+  /* The scan's normal is the ONLY thing carrying relief — the mesh is flat and
+     the albedo is deliberately flattened at bake time to kill the camo read. So
+     this map has to work harder than a default 1.0: at 1.1 the plaster's step
+     down to the brick barely shaded and the wall read papery.
 
-    const cCanvas = document.createElement('canvas');
-    cCanvas.width = W;
-    cCanvas.height = H;
-    const cCtx = cCanvas.getContext('2d')!;
+     Relief is not free under a dome: every texel this tilts away from the bright
+     zenith turns toward the dark ground half, so pushing the normal DARKENS the
+     wall (1.6 measured a drop from 144 to 110). That is paid for with
+     envMapIntensity below rather than by backing the relief off — the depth is
+     the point, and brightness is the cheaper thing to buy back. */
+  const normalScale = useMemo(() => new THREE.Vector2(1.6, 1.6), []);
 
-    /* 1. Base Foundation: Complete Red/Warm-Brown Brickwork across entire wall (as shown in reference image) */
-    cCtx.fillStyle = '#2A1A16'; // Dark mortar base
-    cCtx.fillRect(0, 0, W, H);
-
-    const brickW = 44;
-    const brickH = 20;
-    const cols = Math.ceil(W / (brickW + 4));
-    const rows = Math.ceil(H / (brickH + 4));
-    for (let r = 0; r < rows; r++) {
-      const offset = (r % 2) * ((brickW + 4) / 2);
-      for (let c = 0; c < cols; c++) {
-        const bx = c * (brickW + 4) + offset - (brickW + 4);
-        const by = r * (brickH + 4);
-        const tone = (r * 11 + c * 7) % 5;
-        const colors = ['#A84432', '#983A2A', '#8A3424', '#7C2C1E', '#62241A'];
-        cCtx.fillStyle = colors[tone];
-        cCtx.fillRect(bx, by, brickW, brickH);
-      }
-    }
-
-    /* 2. Topcoat Concrete & Stucco Layer ("the texture we currently have") drawn on a layer that cracks open */
-    const topCanvas = document.createElement('canvas');
-    topCanvas.width = W;
-    topCanvas.height = H;
-    const topCtx = topCanvas.getContext('2d')!;
-
-    // Earthy muddy taupe / grimy urban concrete
-    const baseGrad = topCtx.createLinearGradient(0, 0, 0, H);
-    baseGrad.addColorStop(0, '#4E4944');
-    baseGrad.addColorStop(0.6, '#46413C');
-    baseGrad.addColorStop(1, '#34302C');
-    topCtx.fillStyle = baseGrad;
-    topCtx.fillRect(0, 0, W, H);
-
-    // Peeling 90s Muddy Stucco & Bone/Putty Plaster Topcoat Layer
-    const peelingPatches = [
-      { cx: 300, cy: 350, rx: 280, ry: 240 },
-      { cx: 780, cy: 520, rx: 340, ry: 310 },
-      { cx: 1350, cy: 410, rx: 320, ry: 280 },
-      { cx: 1820, cy: 600, rx: 290, ry: 260 },
-      { cx: 520, cy: 820, rx: 260, ry: 180 },
-      { cx: 1100, cy: 220, rx: 280, ry: 190 },
-      { cx: 1650, cy: 250, rx: 260, ry: 210 },
-    ];
-
-    peelingPatches.forEach((p) => {
-      topCtx.save();
-      topCtx.beginPath();
-      const points = 24;
-      for (let i = 0; i <= points; i++) {
-        const angle = (i / points) * Math.PI * 2;
-        const radiusNoise = 1 + Math.sin(angle * 5) * 0.18 + Math.cos(angle * 9) * 0.12;
-        const x = p.cx + Math.cos(angle) * p.rx * radiusNoise;
-        const y = p.cy + Math.sin(angle) * p.ry * radiusNoise;
-        if (i === 0) topCtx.moveTo(x, y);
-        else topCtx.lineTo(x, y);
-      }
-      topCtx.closePath();
-
-      topCtx.shadowColor = 'rgba(12, 11, 10, 0.65)';
-      topCtx.shadowBlur = 10;
-      topCtx.shadowOffsetX = 3;
-      topCtx.shadowOffsetY = 4;
-
-      const grad = topCtx.createLinearGradient(p.cx - p.rx, p.cy - p.ry, p.cx + p.rx, p.cy + p.ry);
-      grad.addColorStop(0, '#8E867A');
-      grad.addColorStop(0.5, '#7F786D');
-      grad.addColorStop(1, '#6E675D');
-      topCtx.fillStyle = grad;
-      topCtx.fill();
-      topCtx.restore();
-
-      topCtx.strokeStyle = 'rgba(210, 202, 188, 0.45)';
-      topCtx.lineWidth = 2.0;
-      topCtx.stroke();
-    });
-
-    // Institutional Under-layer Paint Patches & Flaking Chips
-    for (let i = 0; i < 65; i++) {
-      const px = Math.random() * W;
-      const py = Math.random() * H;
-      const pr = 12 + Math.random() * 45;
-      topCtx.fillStyle = Math.random() > 0.5 ? 'rgba(68, 76, 72, 0.85)' : 'rgba(92, 86, 76, 0.88)';
-      topCtx.beginPath();
-      topCtx.arc(px, py, pr, 0, Math.PI * 2);
-      topCtx.fill();
-    }
-
-    /* 3. Cut out cracks & chipped openings right through topcoat to reveal the brick foundation below */
-    topCtx.save();
-    topCtx.globalCompositeOperation = 'destination-out';
-    topCtx.lineCap = 'round';
-    topCtx.lineJoin = 'round';
-
-    const cutoutCrack = (startX: number, startY: number, endY: number, branches: number) => {
-      let currX = startX;
-      let currY = startY;
-      const stepY = (endY - startY) / 32;
-
-      topCtx.beginPath();
-      topCtx.moveTo(currX, currY);
-      for (let i = 0; i < 32; i++) {
-        currX += (Math.random() - 0.5) * 24;
-        currY += stepY;
-        topCtx.lineTo(currX, currY);
-
-        if (branches > 0 && Math.random() > 0.75) {
-          const bx = currX + (Math.random() - 0.5) * 110;
-          const by = currY + 40 + Math.random() * 80;
-          topCtx.moveTo(currX, currY);
-          topCtx.lineTo(bx, by);
-          topCtx.moveTo(currX, currY);
-        }
-      }
-      topCtx.lineWidth = 6.5; // Wide enough to clearly see the red bricks through the crack
-      topCtx.stroke();
-
-      // Jagged spall breakout holes along the crack exposing red brick
-      if (branches > 0) {
-        topCtx.beginPath();
-        let bx = startX;
-        let by = startY + (endY - startY) * 0.4;
-        topCtx.moveTo(bx - 18, by);
-        for (let i = 0; i < 16; i++) {
-          bx += (Math.random() - 0.5) * 20;
-          by += stepY;
-          topCtx.lineTo(bx + (Math.random() - 0.5) * 15, by);
-        }
-        for (let i = 16; i >= 0; i--) {
-          bx -= (Math.random() - 0.5) * 20;
-          by -= stepY;
-          topCtx.lineTo(bx - 20 - Math.random() * 10, by);
-        }
-        topCtx.closePath();
-        topCtx.fill();
-      }
-    };
-
-    for (let i = 0; i < 11; i++) {
-      const sx = 90 + i * 175 + (Math.random() - 0.5) * 50;
-      cutoutCrack(sx, 20 + Math.random() * 80, H - 20, i % 2 === 0 ? 1 : 0);
-    }
-    topCtx.restore();
-
-    /* 4. Layer the topcoat with cracked cutouts right onto the red brick foundation */
-    cCtx.save();
-    cCtx.shadowColor = 'rgba(10, 8, 8, 0.85)';
-    cCtx.shadowBlur = 8;
-    cCtx.shadowOffsetX = 2;
-    cCtx.shadowOffsetY = 3;
-    cCtx.drawImage(topCanvas, 0, 0);
-    cCtx.restore();
-
-    /* 5. Muddy 90s Street Splash Zone along Bottom Wall Curb (Lower 25%) */
-    const splashGrad = cCtx.createLinearGradient(0, H * 0.72, 0, H);
-    splashGrad.addColorStop(0, 'rgba(28, 24, 20, 0.0)');
-    splashGrad.addColorStop(0.5, 'rgba(28, 24, 20, 0.55)');
-    splashGrad.addColorStop(1, 'rgba(22, 18, 15, 0.88)');
-    cCtx.fillStyle = splashGrad;
-    cCtx.fillRect(0, H * 0.72, W, H * 0.28);
-
-    // Muddy splatter droplets splashed up from street rain
-    cCtx.fillStyle = 'rgba(24, 20, 16, 0.82)';
-    for (let i = 0; i < 350; i++) {
-      const sx = Math.random() * W;
-      const sy = H * 0.68 + Math.random() * (H * 0.32);
-      const sr = 1.5 + Math.random() * 5.5;
-      cCtx.beginPath();
-      cCtx.arc(sx, sy, sr, 0, Math.PI * 2);
-      cCtx.fill();
-    }
-
-    /* 6. Rust Bleed Streaks & Efflorescence (Mineral Salt Bleed) */
-    for (let i = 0; i < 28; i++) {
-      const rx = Math.random() * W;
-      const ry = Math.random() * (H * 0.35);
-      const rw = 4 + Math.random() * 12;
-      const rh = 120 + Math.random() * 320;
-      const rGrad = cCtx.createLinearGradient(rx, ry, rx, ry + rh);
-      rGrad.addColorStop(0, 'rgba(118, 48, 28, 0.62)'); // Warm 90s rust iron bleed
-      rGrad.addColorStop(1, 'rgba(118, 48, 28, 0.0)');
-      cCtx.fillStyle = rGrad;
-      cCtx.fillRect(rx, ry, rw, rh);
-    }
-
-    /* 7. Staple Scars, Old Glue Residue & Torn Flyer Scraps */
-    cCtx.fillStyle = 'rgba(195, 178, 135, 0.22)';
-    for (let i = 0; i < 32; i++) {
-      cCtx.fillRect(Math.random() * W, Math.random() * H, 45 + Math.random() * 80, 60 + Math.random() * 100);
-    }
-
-    /* 8. High-Definition Concrete Aggregate Grain & Grunge Noise */
-    const imgData = cCtx.getImageData(0, 0, W, H);
-    for (let i = 0; i < imgData.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 26;
-      imgData.data[i] = Math.max(0, Math.min(255, imgData.data[i] + n));
-      imgData.data[i + 1] = Math.max(0, Math.min(255, imgData.data[i + 1] + n));
-      imgData.data[i + 2] = Math.max(0, Math.min(255, imgData.data[i + 2] + n));
-    }
-    cCtx.putImageData(imgData, 0, 0);
-
-    const cTex = new THREE.CanvasTexture(cCanvas);
-    cTex.wrapS = cTex.wrapT = THREE.RepeatWrapping;
-    cTex.repeat.set(4, 1.2);
-    cTex.colorSpace = THREE.SRGBColorSpace;
-
-    /* 9. Ultra-Tactile High-Relief Bump / Normal Map */
-    const bCanvas = document.createElement('canvas');
-    bCanvas.width = W;
-    bCanvas.height = H;
-    const bCtx = bCanvas.getContext('2d')!;
-    bCtx.fillStyle = '#606060'; // Deeper base relief level for brick foundation
-    bCtx.fillRect(0, 0, W, H);
-
-    // Elevated topcoat regions
-    bCtx.drawImage(topCanvas, 0, 0);
-    peelingPatches.forEach((p) => {
-      bCtx.beginPath();
-      const points = 24;
-      for (let i = 0; i <= points; i++) {
-        const angle = (i / points) * Math.PI * 2;
-        const radiusNoise = 1 + Math.sin(angle * 5) * 0.18 + Math.cos(angle * 9) * 0.12;
-        const x = p.cx + Math.cos(angle) * p.rx * radiusNoise;
-        const y = p.cy + Math.sin(angle) * p.ry * radiusNoise;
-        if (i === 0) bCtx.moveTo(x, y);
-        else bCtx.lineTo(x, y);
-      }
-      bCtx.closePath();
-      bCtx.fillStyle = '#A6A6A6';
-      bCtx.fill();
-    });
-
-    // Deep structural crack grooves
-    const drawBumpCrack = (startX: number, startY: number, endY: number) => {
-      let currX = startX;
-      let currY = startY;
-      const stepY = (endY - startY) / 32;
-      bCtx.beginPath();
-      bCtx.moveTo(currX, currY);
-      for (let i = 0; i < 32; i++) {
-        currX += (Math.random() - 0.5) * 22;
-        currY += stepY;
-        bCtx.lineTo(currX, currY);
-      }
-      bCtx.strokeStyle = '#111111';
-      bCtx.lineWidth = 3.8;
-      bCtx.stroke();
-    };
-
-    for (let i = 0; i < 11; i++) {
-      const sx = 90 + i * 175;
-      drawBumpCrack(sx, 20, H - 20);
-    }
-
-    /* 10. Fine per-pixel Normal Map — derived from the relief canvas above so
-       mortar joints, crack lips & peeling edges catch raking light correctly */
-    const normalCanvas = heightCanvasToNormalMap(bCanvas, 1024, 2.6);
-    const nTex = new THREE.CanvasTexture(normalCanvas);
-    nTex.wrapS = nTex.wrapT = THREE.RepeatWrapping;
-    nTex.repeat.set(4, 1.2);
-
-    /* 11. Coarse Displacement Map — same relief data downsampled so the
-       peeling patches physically bulge and cracks physically recess,
-       giving real parallax as the camera walks past instead of flat shading */
-    const dCanvas = document.createElement('canvas');
-    dCanvas.width = 512;
-    dCanvas.height = 256;
-    dCanvas.getContext('2d')!.drawImage(bCanvas, 0, 0, 512, 256);
-    const dTex = new THREE.CanvasTexture(dCanvas);
-    dTex.wrapS = dTex.wrapT = THREE.RepeatWrapping;
-    dTex.repeat.set(4, 1.2);
-
-    return [cTex, nTex, dTex] as const;
+  // aoMap samples the second UV channel; a plane only ships `uv`, so alias it.
+  const geometry = useMemo(() => {
+    const g = new THREE.PlaneGeometry(WALL.width, WALL.height);
+    g.setAttribute('uv1', g.attributes.uv);
+    return g;
   }, []);
 
-  const normalScale = useMemo(() => new THREE.Vector2(1.5, 1.5), []);
+  const material = useMemo(() => {
+    const m = new THREE.MeshStandardMaterial({
+      map: tex.map,
+      normalMap: tex.normalMap,
+      normalScale,
+      roughnessMap: tex.roughnessMap,
+      aoMap: tex.aoMap,
+      // AO only attenuates INDIRECT light — and here indirect light is nearly
+      // all the light, so aoMap bites far harder than it would under a sun rig.
+      // At 1.0 the scan's baked occlusion drove crevices toward black (measured
+      // darkest pixel 10/255), which is impossible under a dome and was a large
+      // part of what read as "dull". The cavity layer now carries the recesses
+      // deliberately, so this only needs to deepen true occlusion.
+      aoMapIntensity: 0.7,
+      // roughness/metalness are multipliers over the maps, so keep them at 1/0
+      // and let the maps do the talking. A scalar 0.92 across brick, paint,
+      // soot and damp is one material — and one material reads as CG.
+      roughness: 1.0,
+      metalness: 0.0,
+      // The sky dome is the key light now, so this is no longer a reflection
+      // trim — it is how much daylight the wall receives. At 0.5 the wall was
+      // being lit at half strength and then darkened again by the macro layer,
+      // which is most of why it read as a night wall in a daylit scene.
+      //
+      // Past 1.0 this is an art dial, but it is the RIGHT dial: it lifts only
+      // the wall, leaving the pavement and posters alone — both were already
+      // peaking near clipping (227 and 221), so buying wall brightness with
+      // toneMappingExposure or environmentIntensity would have blown them.
+      // Raised to pay for the relief: normalScale 1.6 plus the cavity layer
+      // cost the wall ~25% of its brightness, and this hands it back.
+      envMapIntensity: 1.75,
+    });
+    // roughnessMap doubles as the cavity source — cavity is packed in its .b
+    applyMacroLayer(m, tex.macroMap, tex.ghostMap, tex.roughnessMap, tex.detailNormal, tex.crackMap);
+    return m;
+  }, [tex, normalScale]);
+
+  useEffect(() => () => { geometry.dispose(); material.dispose(); }, [geometry, material]);
 
   return (
-    <mesh position={[0, 3.8, 0]} receiveShadow>
-      <planeGeometry args={[68, 9.6, 160, 40]} />
-      <meshStandardMaterial
-        map={colorMap}
-        normalMap={normalMap}
-        normalScale={normalScale}
-        displacementMap={displacementMap}
-        displacementScale={0.3}
-        displacementBias={-0.113}
-        roughness={0.92}
-        metalness={0.04}
-      />
-    </mesh>
+    <mesh
+      position={[0, WALL.centerY, 0]}
+      geometry={geometry}
+      material={material}
+      receiveShadow
+    />
   );
 }
 
 /* ═══════════════════════════════════════════════════
-   Authentic Layered Spray Paint Graffiti Tags
+   Aerosol Graffiti
+
+   The old tag was a Photoshop text layer: Impact + a crisp black stroke + a
+   hard drop shadow, floating 10cm off the wall with castShadow on. That is why
+   it read as a sticker hovering over the bricks rather than paint on them.
+
+   Real aerosol: no outline, a soft overspray halo (the cone always oversprays),
+   density that breaks up as paint skips the wall's pores, gravity drips from
+   the heaviest passes only, and colour that is never pure-screen saturated —
+   a can of cyan on a filthy 20-year-old wall is a dull teal.
    ═══════════════════════════════════════════════════ */
 
 interface GraffitiProps {
@@ -546,95 +358,137 @@ function GraffitiTag({
   tagScale = 1,
 }: GraffitiProps) {
   const texture = useMemo(() => {
+    const cacheKey = `${text}_${subtext || ''}_${color}_${accentColor}`;
+    if (cachedGraffitiTextures.has(cacheKey)) return cachedGraffitiTextures.get(cacheKey)!;
+
+    const W = 512;
+    const H = 256;
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 256;
+    canvas.width = W;
+    canvas.height = H;
     const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, W, H);
 
-    ctx.clearRect(0, 0, 512, 256);
+    const font = '900 italic 92px Impact, "Arial Black", sans-serif';
 
+    // 1. Overspray halo — the aerosol cone always lays down a soft mist well
+    //    beyond the stroke. This, not an outline, is what says "spray can".
     ctx.save();
-    ctx.font = '900 italic 92px Impact, "Arial Black", sans-serif';
+    ctx.filter = 'blur(9px)';
+    ctx.globalAlpha = 0.3;
+    ctx.font = font;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-
-    // 1. Dark stencil outline for crisp contrast against brick
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetX = 4;
-    ctx.shadowOffsetY = 4;
-    ctx.strokeStyle = '#0E0812';
-    ctx.lineWidth = 12;
-    ctx.strokeText(text, 256, 112);
-
-    // 2. Pure matte aerosol spray fill without glowing neon drop-shadow (#1 Everything glows fix)
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
     ctx.fillStyle = color;
     ctx.fillText(text, 256, 112);
+    ctx.restore();
 
-    // 4. Realistic spray paint drips running down the brick wall
+    // 2. Core pass, deliberately short of full opacity — thin aerosol lets the
+    //    wall's own colour through, which is how paint bonds to a surface
+    //    visually instead of sitting on top of it.
+    ctx.save();
+    ctx.filter = 'blur(1.1px)';
+    ctx.globalAlpha = 0.82;
+    ctx.font = font;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.fillText(text, 256, 112);
+    ctx.restore();
+
+    // 3. Absorption breakup — coherent blotches erased out of the paint so
+    //    density varies organically. Porous plaster drinks paint unevenly and
+    //    the aerosol skips the recesses entirely; uniform fill never does this.
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    const rnd = mulberry32(text.charCodeAt(0) * 7919 + text.length);
+    for (let i = 0; i < 190; i++) {
+      const bx = rnd() * W;
+      const by = 40 + rnd() * 150;
+      const br = 1.5 + rnd() * 9;
+      ctx.globalAlpha = rnd() * 0.5;
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // 4. Drips — only where paint pooled, i.e. under the heaviest strokes.
+    ctx.save();
     ctx.strokeStyle = color;
     ctx.lineCap = 'round';
-    for (let i = 0; i < 7; i++) {
-      const dx = 110 + i * 52 + (Math.random() - 0.5) * 20;
-      const startY = 145 + Math.random() * 10;
-      const dripLen = 25 + Math.random() * 55;
-      ctx.lineWidth = 2.5 + Math.random() * 2.5;
-
+    ctx.globalAlpha = 0.62;
+    for (let i = 0; i < 5; i++) {
+      const dx = 110 + i * 62 + (rnd() - 0.5) * 26;
+      const startY = 140 + rnd() * 12;
+      const dripLen = 18 + rnd() * 48;
+      ctx.lineWidth = 2 + rnd() * 2;
       ctx.beginPath();
       ctx.moveTo(dx, startY);
-      ctx.lineTo(dx, startY + dripLen);
+      ctx.lineTo(dx + (rnd() - 0.5) * 3, startY + dripLen);
       ctx.stroke();
-
-      // Drip bead at bottom
       ctx.beginPath();
-      ctx.arc(dx, startY + dripLen, ctx.lineWidth * 0.85, 0, Math.PI * 2);
+      ctx.arc(dx, startY + dripLen, ctx.lineWidth * 0.7, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
     }
+    ctx.restore();
 
-    // 5. Masonry texture absorption & aerosol speckles
-    for (let i = 0; i < 450; i++) {
-      const px = 60 + Math.random() * 390;
-      const py = 50 + Math.random() * 180;
-      ctx.fillStyle = Math.random() > 0.5 ? color : accentColor;
-      ctx.globalAlpha = Math.random() * 0.35;
-      ctx.fillRect(px, py, 2, 2);
+    // 5. Aerosol speckle — the fine spatter at the edge of the cone
+    ctx.save();
+    for (let i = 0; i < 420; i++) {
+      const px = 40 + rnd() * 430;
+      const py = 40 + rnd() * 190;
+      ctx.fillStyle = rnd() > 0.5 ? color : accentColor;
+      ctx.globalAlpha = rnd() * 0.26;
+      ctx.fillRect(px, py, 1 + Math.round(rnd()), 1 + Math.round(rnd()));
     }
     ctx.restore();
 
     if (subtext) {
+      // Stencil subtext: hard-edged because a stencil IS hard-edged — but faded
+      // and speckled, because it was sprayed years before the tag over it.
       ctx.save();
-      // Industrial stencil border stamp (#8 Typography upgrade)
-      ctx.strokeStyle = 'rgba(235, 228, 218, 0.42)';
-      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = 'rgba(228, 220, 208, 0.5)';
+      ctx.lineWidth = 1.5;
       ctx.strokeRect(48, 178, 416, 36);
-
-      // Authentic letterpress / stencil tracking
       ctx.font = 'bold 18px "Courier New", Impact, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#E8E2D6';
-      ctx.shadowBlur = 0; // Crisp matte stencil ink
+      ctx.fillStyle = 'rgba(226, 219, 206, 0.78)';
       ctx.fillText(subtext.toUpperCase(), 256, 196);
+      ctx.globalCompositeOperation = 'destination-out';
+      for (let i = 0; i < 90; i++) {
+        ctx.globalAlpha = rnd() * 0.6;
+        ctx.beginPath();
+        ctx.arc(40 + rnd() * 432, 176 + rnd() * 42, 0.8 + rnd() * 3.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.restore();
     }
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    cachedGraffitiTextures.set(cacheKey, tex);
     return tex;
   }, [text, subtext, color, accentColor]);
 
   return (
-    <mesh position={position} rotation={rotation} castShadow receiveShadow>
+    // No castShadow: paint has no thickness and casts nothing. z sits at 10mm
+    // — close enough to be part of the wall now that displacement is gone.
+    <mesh position={position} rotation={rotation} receiveShadow>
       <planeGeometry args={[4.2 * tagScale, 2.1 * tagScale]} />
       <meshStandardMaterial
         map={texture}
         transparent={true}
-        alphaTest={0.01}
-        roughness={0.94}
-        metalness={0.02}
+        opacity={0.9}
+        alphaTest={0.02}
+        roughness={0.88}
+        metalness={0}
+        envMapIntensity={0.4}
+        depthWrite={false}
         polygonOffset={true}
         polygonOffsetFactor={-4}
         polygonOffsetUnits={-4}
@@ -748,6 +602,8 @@ function WetSidewalkAndStreet() {
     asphaltRoughnessMap,
     curbTex,
   ] = useMemo(() => {
+    if (cachedSidewalkTextures) return cachedSidewalkTextures;
+
     /* ══════════════════════════════════════════════════════════════════
        1. Authentic 90s Grey Concrete Footwalk (Sidewalk against wall)
        Poured urban cement slab with saw-cut expansion joints, fine stone
@@ -825,7 +681,7 @@ function WetSidewalkAndStreet() {
       sBumpCtx.fillStyle = '#101010';
       sBumpCtx.fillRect(x - 3, 0, 6, sH);
     }
-    const sNormalCanvas = heightCanvasToNormalMap(sBump, sW, 3.2);
+    const sNormalCanvas = heightToNormalCanvas(sBump, sW, 3.2);
 
     // Sidewalk Roughness Map (Matte concrete ~0.82, damp grooves ~0.4)
     const sRough = document.createElement('canvas');
@@ -983,7 +839,7 @@ function WetSidewalkAndStreet() {
     // Raise white painted line slightly, recess tar cracks slightly
     aBumpCtx.fillStyle = '#A8A8A8';
     aBumpCtx.fillRect(0, 72, aW, 20);
-    const aNormalCanvas = heightCanvasToNormalMap(aBump, aW, 3.8);
+    const aNormalCanvas = heightToNormalCanvas(aBump, aW, 3.8);
 
     // Asphalt Roughness Map (Stony aggregate matte ~0.76, tar crack lines slightly shiny ~0.35)
     const aRough = document.createElement('canvas');
@@ -1034,7 +890,8 @@ function WetSidewalkAndStreet() {
     cTex.repeat.set(18, 1);
     cTex.colorSpace = THREE.SRGBColorSpace;
 
-    return [sTex, sNormTex, sRoughTex, aTex, aNormTex, aRoughTex, cTex] as const;
+    cachedSidewalkTextures = [sTex, sNormTex, sRoughTex, aTex, aNormTex, aRoughTex, cTex] as const;
+    return cachedSidewalkTextures;
   }, []);
 
   const normalScale = useMemo(() => new THREE.Vector2(1.6, 1.6), []);
@@ -1084,44 +941,99 @@ function WetSidewalkAndStreet() {
    Scene Assembly
    ═══════════════════════════════════════════════════ */
 
-function HeroCenterSpotlight() {
-  const targetRef = useRef<THREE.Object3D>(null);
+/**
+ * Procedural alley environment.
+ *
+ * The scene previously had no environment at all, which meant every metal in
+ * it — manholes at metalness 0.88, pipes at 0.75, puddles at 0.88 — was
+ * reflecting a void and resolving to a flat dark blob. Metal without an
+ * environment is not metal.
+ *
+ * Built from a 256x128 canvas gradient, so there is no network fetch and no
+ * HDR payload; PMREM runs once on mount.
+ */
+function AlleyEnvironment() {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
 
-  return (
-    <group position={[-1.0, 6.2, 3.2]}>
-      <object3D ref={targetRef} position={[-1.0, 2.45, 0]} />
-      {/* Hero #1 (Brightest Object): Center Poster Theater Halogen Spotlight */}
-      <spotLight
-        target={targetRef.current || undefined}
-        color="#FFF4DE"
-        intensity={360}
-        angle={0.65}
-        penumbra={0.42}
-        distance={14}
-        decay={2}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-near={1}
-        shadow-camera-far={14}
-        shadow-bias={-0.0015}
-      />
-      {/* Center hero pool reinforcement */}
-      <pointLight position={[-1.0, 2.5, 2.1]} color="#FFF2DB" intensity={180} distance={8} decay={2} />
-    </group>
-  );
+  useEffect(() => {
+    const env = buildAlleyEnvironment(gl);
+    scene.environment = env;
+    // Master exposure for the whole scene. With the sun, the spot and the five
+    // lamps gone, essentially all light now arrives from the dome, so this dial
+    // does what their intensities used to — turn it, not them.
+    scene.environmentIntensity = 1.7;
+    return () => {
+      scene.environment = null;
+      env.dispose();
+    };
+  }, [gl, scene]);
+
+  return null;
 }
 
-function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
+/**
+ * Dev-only handle on the renderer.
+ *
+ * The scene only draws inside requestAnimationFrame, which never fires while
+ * the tab is hidden — so an automated pane can never see a frame. Exposing gl,
+ * scene and camera allows a render to be driven synchronously and read back.
+ * Remove alongside __wallTex and /api/devshot before shipping.
+ */
+function DevRenderHandle() {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    (window as unknown as { __r3f?: unknown }).__r3f = { gl, scene, camera };
+  }, [gl, scene, camera]);
+
+  return null;
+}
+
+function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<number>; snapToTarget?: boolean }) {
   return (
     <>
-      <fog attach="fog" args={['#141113', 18, 48]} />
+      {/* Aerial perspective, neutral. Matches the horizon of the sky dome so
+          the far end of the alley dissolves into cloud instead of into a warm
+          haze that would reintroduce the golden cast through the back door. */}
+      <fog attach="fog" args={['#A6A8A9', 35, 70]} />
 
-      {/* Balanced atmospheric fill so masonry & details are beautifully defined and legible */}
-      <ambientLight intensity={0.42} color="#FAF0E6" />
+      {/* THE KEY LIGHT. Under overcast the sky dome is the source, so almost
+          all illumination arrives from here as image-based lighting rather than
+          from discrete lights. See buildAlleyEnvironment. */}
+      <AlleyEnvironment />
+      <DevRenderHandle />
+
+      {/* ── Overcast daylight rig ──────────────────────────────────────────
+          What this replaces: a 2.0-intensity #FFD060 "golden morning sun" at
+          y=5 raking long shadows, a warm sky fill, a 75 spotlight, and five
+          #FFD890 sodium lamps at 32–38. That rig was every single item on the
+          reference's avoid list at once — golden orange light, strong shadows,
+          an HDRI sunset look and dramatic highlights.
+
+          It also explains the cool bake we just undid. The albedo had been
+          graded blue to fight all this amber. Remove the amber and the
+          compensation has to come off too, or the wall goes cold. Light and
+          albedo were dragging each other in opposite directions; now neither
+          has to.                                                            */}
+
+      {/* Whisper of neutral fill. The env already lights everything, but deep
+          cavities receive almost nothing from a dome and would crush to black —
+          and crushed blacks are contrast, which the brief rules out. */}
+      <ambientLight intensity={0.46} color="#DFE2E2" />
+
+      {/* Not a sun. A weak, nearly-overhead neutral light that exists only so
+          solid props (bins, pipes, railings) drop a soft contact shadow and
+          stay attached to the ground. High angle keeps shadows short and
+          directly under things, the way they behave under a cloud deck; at 0.6
+          it grounds objects without ever reading as a light source. */}
       <directionalLight
-        position={[3, 12, 8]}
-        intensity={1.35}
-        color="#F5E4C3"
+        position={[8, 22, 10]}
+        intensity={0.6}
+        color="#E6E9E9"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-45}
@@ -1129,27 +1041,33 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
         shadow-camera-top={20}
         shadow-camera-bottom={-10}
         shadow-camera-near={1}
-        shadow-camera-far={40}
-        shadow-bias={-0.0012}
+        shadow-camera-far={50}
+        shadow-bias={-0.0008}
       />
 
-      {/* Hero #1: Center Poster Spotlight */}
-      <HeroCenterSpotlight />
+      {/* Dim sodium lamps for neon light effect with little brightness */}
+      {[-24, -13, -2, 9, 21].map((x, i) => (
+        <pointLight
+          key={`lamp-${i}`}
+          position={[x, 5.5, 2]}
+          color="#FFD890"
+          intensity={3}
+          distance={18}
+          decay={2}
+        />
+      ))}
 
-      {/* Controlled Overhead Streetlamp Pools */}
-      <pointLight position={[-22, 6.5, 3.5]} color="#FFB653" intensity={210} distance={22} decay={2} />
-      <pointLight position={[-11, 6.8, 3.5]} color="#FFB653" intensity={200} distance={22} decay={2} />
-      <pointLight position={[0, 6.5, 3.5]} color="#FFB653" intensity={230} distance={22} decay={2} />
-      <pointLight position={[11, 6.8, 3.5]} color="#FFB653" intensity={200} distance={22} decay={2} />
-      <pointLight position={[22, 6.5, 3.5]} color="#FFB653" intensity={210} distance={22} decay={2} />
-
-      {/* Interactive First-Person Human Camera + Handheld Flashlight */}
-      <InteractiveCameraRig progressRef={progressRef} />
-      <HandheldFlashlight progressRef={progressRef} />
+      {/* Camera rig. The cursor-tracked flashlight that used to live here is
+          gone: a torch pool chasing the mouse is the opposite of "naturally
+          photographed", and it was the brightest thing in a frame that is
+          supposed to be evenly lit. The sky dome's zenith-to-horizon ramp is
+          what reveals the surface now. */}
+      <InteractiveCameraRig progressRef={progressRef} snapToTarget={snapToTarget} />
 
       {/* Architectural Wall, Decals & Street Depth */}
       <WeatheredUrbanStreetWall />
       <WallDecalsAndGrime />
+      <CyanNeonTube3D />
       <NeonAlleySign3D />
       <AlleyIndustrialDetails />
       <AlleyDepthLayers />
@@ -1161,32 +1079,35 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
       <RightSideAlleyDetail />
 
       {/* Large Authentic Wheat-Pasted Posters */}
-      {events.map((event) => (
+      {events.map((event, i) => (
         <Suspense key={event.id} fallback={null}>
           <EventPoster3D
             posterImage={event.posterImage}
             position={event.position}
             rotation={event.rotation}
             scale={event.scale}
+            variant={i}
           />
         </Suspense>
       ))}
 
       {/* Authentic Spray Paint Graffiti with Archival Stencil Typography — positioned cleanly between posters */}
-      <GraffitiTag text="EVENTS" subtext="UNDERGROUND TECH ARCHIVE // EST. 1994" color="#00E5FF" accentColor="#00A8CC" position={[-26.0, 2.4, 0.105]} rotation={[0, 0, -0.02]} tagScale={0.86} />
-      <GraffitiTag text="GDG" subtext="CRCE // SUNÉKHEIA // ALL ERAS" color="#FF007F" accentColor="#990044" position={[-14.5, 2.45, 0.105]} rotation={[0, 0, 0.03]} tagScale={0.86} />
-      <GraffitiTag text="MTV" subtext="UNPLUGGED // ARCHIVE SER. 04" color="#00E5FF" accentColor="#006688" position={[-3.8, 2.4, 0.105]} rotation={[0, 0, -0.03]} tagScale={0.86} />
-      <GraffitiTag text="90s" subtext="CONTINUITY // EVOLUTION // LEGACY" color="#FFBB00" accentColor="#AA5500" position={[7.35, 2.45, 0.105]} rotation={[0, 0, 0.04]} tagScale={0.84} />
-      <GraffitiTag text="HACK" subtext="BYTE CLUB // OPEN SYNDICATE" color="#BF00FF" accentColor="#550088" position={[18.65, 2.4, 0.105]} rotation={[0, 0, -0.03]} tagScale={0.84} />
+      <GraffitiTag text="EVENTS" subtext="UNDERGROUND TECH ARCHIVE // EST. 1994" color="#4E9AA4" accentColor="#37727E" position={[-26.0, 2.4, 0.010]} rotation={[0, 0, -0.02]} tagScale={0.86} />
+      <GraffitiTag text="GDG" subtext="CRCE // SUNÉKHEIA // ALL ERAS" color="#B04A6B" accentColor="#6E2A42" position={[-14.5, 2.45, 0.010]} rotation={[0, 0, 0.03]} tagScale={0.86} />
+      <GraffitiTag text="MTV" subtext="UNPLUGGED // ARCHIVE SER. 04" color="#4E9AA4" accentColor="#2F5A68" position={[-3.8, 2.4, 0.010]} rotation={[0, 0, -0.03]} tagScale={0.86} />
+      <GraffitiTag text="90s" subtext="CONTINUITY // EVOLUTION // LEGACY" color="#C29A46" accentColor="#7E4E22" position={[7.35, 2.45, 0.010]} rotation={[0, 0, 0.04]} tagScale={0.84} />
+      <GraffitiTag text="HACK" subtext="BYTE CLUB // OPEN SYNDICATE" color="#7F519B" accentColor="#43265C" position={[18.65, 2.4, 0.010]} rotation={[0, 0, -0.03]} tagScale={0.84} />
 
-      {/* Rising Street Steam & Dust Motes */}
+      {/* Airborne dust. Was 75 motes at size 1.8 / opacity 0.25 in near-white —
+          which reads as fairy sparkles, an asset-store tell. Real dust is only
+          visible when it crosses a beam: tiny, dim, and warm-grey. */}
       <Sparkles
-        count={75}
-        scale={[65, 7, 8]}
-        size={1.8}
-        speed={0.2}
-        color="#EADDC7"
-        opacity={0.25}
+        count={40}
+        scale={[65, 6, 7]}
+        size={0.7}
+        speed={0.12}
+        color="#C9BCA6"
+        opacity={0.09}
       />
     </>
   );
@@ -1198,27 +1119,30 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
 
 interface WallSceneProps {
   progressRef: React.RefObject<number>;
+  snapToTarget?: boolean;
 }
 
-export default function WallScene({ progressRef }: WallSceneProps) {
+export default function WallScene({ progressRef, snapToTarget }: WallSceneProps) {
   return (
     <Canvas
       camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
       dpr={[1, 1.5]}
       shadows="soft"
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      gl={{ antialias: true, powerPreference: 'high-performance', toneMappingExposure: 1.15 }}
       style={{
         position: 'absolute',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        background: '#161315',
+        // Matches the fog and the sky dome's horizon. A dark warm brown here
+        // showed through as a night-alley edge around a daylit scene.
+        background: '#A6A8A9',
         cursor: 'crosshair',
       }}
     >
       <Suspense fallback={null}>
-        <Scene progressRef={progressRef} />
+        <Scene progressRef={progressRef} snapToTarget={snapToTarget} />
       </Suspense>
     </Canvas>
   );

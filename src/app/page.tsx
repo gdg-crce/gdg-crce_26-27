@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import Preloader from '@/components/sections/Preloader';
 import HeroVideoSection from '@/components/sections/hero-video/HeroVideoSection';
-import EventsSection from '@/components/sections/events/EventsSection';
-import CouncilSection from '@/components/sections/council';
-import ContactSection from '@/components/sections/ContactSection';
+import EventsAndCouncilSection from '@/components/sections/EventsAndCouncilSection';
+import AboutSection from '@/components/sections/about/AboutSection';
+import WhatWeDoSection from '@/components/sections/whatwedo/WhatWeDoSection';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -31,9 +31,13 @@ export default function Home() {
       )}
       <main className="relative z-0">
         <HeroVideoSection startPlaying={videoStarted} />
-        <EventsSection />
-        <CouncilSection />
-        <ContactSection />
+        {/* The hero is position:fixed and so contributes no page height. This
+            runway is the scroll the looping intro fades out across, while the
+            About turntable rises into view and fades up over it. */}
+        <div aria-hidden="true" className="h-[100vh]" />
+        <AboutSection />
+        <WhatWeDoSection />
+        <EventsAndCouncilSection />
       </main>
     </div>
   );
