@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 interface HeroVideoSectionProps {
   startPlaying?: boolean;
@@ -94,31 +96,44 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
   // Once it is fully hidden the element is paused — a looping full-screen video
   // decoding behind an opaque section is pure waste.
   useEffect(() => {
-    const onScroll = () => {
-      const el = containerRef.current;
-      const video = videoRef.current;
-      if (!el) return;
+    gsap.registerPlugin(ScrollTrigger);
 
-      const e = clamp01(window.scrollY / (window.innerHeight || 1));
-      const opacity = 1 - ramp(0.12, 0.8, e);
-      el.style.opacity = opacity.toFixed(3);
-      el.style.pointerEvents = opacity < 0.02 ? 'none' : '';
+    const el = containerRef.current;
+    const video = videoRef.current;
+    if (!el) return;
 
-      if (video) {
-        if (opacity < 0.02) {
-          if (!video.paused) video.pause();
-        } else if (video.paused && startPlaying) {
-          video.play().catch(() => {});
+    const st = ScrollTrigger.create({
+      trigger: document.body,
+      start: 0,
+      end: () => window.innerHeight, // 100vh runway
+      scrub: true,
+      onUpdate: (self) => {
+        const e = self.progress;
+        const opacity = 1 - ramp(0.1, 0.9, e);
+        
+        // Cinematic zoom-in and blur
+        const scale = 1 + (e * 0.15);
+        const blur = e * 8; // 0 to 8px blur
+        
+        el.style.opacity = opacity.toFixed(3);
+        el.style.transform = `scale(${scale.toFixed(3)})`;
+        el.style.filter = `blur(${blur.toFixed(1)}px)`;
+        el.style.pointerEvents = opacity < 0.02 ? 'none' : '';
+
+        if (video) {
+          if (opacity < 0.02) {
+            if (!video.paused) video.pause();
+          } else if (video.paused && startPlaying) {
+            video.play().catch(() => {});
+          }
         }
       }
-    };
+    });
 
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    st.refresh();
+
     return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      st.kill();
     };
   }, [startPlaying]);
 

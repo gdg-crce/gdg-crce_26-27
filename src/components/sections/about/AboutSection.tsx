@@ -104,13 +104,11 @@ const ANG_RUNOUT = angleForRadius(RUNOUT_RADIUS);
    cross-dissolve into mush on top of each other. */
 const SWAP_1 = { outA: 0.44, outB: 0.487, inA: 0.495, inB: 0.545 };
 const SWAP_2 = { outA: 0.69, outB: 0.737, inA: 0.745, inB: 0.795 };
-const TOUCHDOWN = { a: 0.25, b: 0.32 };
+const TOUCHDOWN = { a: -0.1, b: 0.0 };
 
 /** Arm angle keyframes. Sampled with smoothstep between neighbours. */
 const ARM_KEYS: [number, number][] = [
-  [0.0, ANG_PARK],
-  [0.15, ANG_PARK],
-  [0.27, ANG_TRACK[0]],
+  [0.0, ANG_TRACK[0]],
   [0.44, ANG_TRACK[0]],
   [0.53, ANG_TRACK[1]],
   [0.69, ANG_TRACK[1]],
@@ -120,9 +118,7 @@ const ARM_KEYS: [number, number][] = [
 
 /** How far the arm is raised off the platter. 1 = cued up, 0 = needle down. */
 const LIFT_KEYS: [number, number][] = [
-  [0.0, 1],
-  [0.15, 1],
-  [0.27, 0],
+  [0.0, 0],
   [1.0, 0],
 ];
 
@@ -270,14 +266,13 @@ export default function AboutSection() {
       // ── tonearm ──────────────────────────────────────────────────────
       const deg = sampleKeys(ARM_KEYS, p);
       const lift = sampleKeys(LIFT_KEYS, p);
-      // Entry: the arm falls in from above the top of the frame.
-      const entry = ramp(0.005, 0.095, p);
-      const armY = -230 * (1 - entry) + lift * -86;
+      // Entry: arm is already in place
+      const armY = lift * -86;
       const armX = lift * -24;
 
       const arm = armRef.current;
       if (arm) {
-        arm.style.opacity = entry.toFixed(3);
+        arm.style.opacity = '1.000';
         arm.style.transform =
           `translate(${armX.toFixed(1)}px, ${armY.toFixed(1)}px) ` +
           `rotate(${deg.toFixed(2)}deg) scale(${(1 + lift * 0.03).toFixed(3)})`;
@@ -333,18 +328,31 @@ export default function AboutSection() {
       }
     };
 
-    // The section fades up as it rises into view — the hero video is fading
-    // out underneath it over the same stretch of scroll.
+    // The section fades up as it rises into view. The hero video is zooming in 
+    // and fading out underneath it. We scale the turntable down slightly from 1.05 
+    // to 1.0 to complement the video's push forward, giving a deep 3D transition.
     const approach = ScrollTrigger.create({
       trigger: sectionRef.current,
       start: 'top bottom',
       end: 'top top',
       scrub: 1,
       onUpdate: (self) => {
-        if (pinRef.current) pinRef.current.style.opacity = ramp(0.18, 0.94, self.progress).toFixed(3);
+        if (pinRef.current) {
+          const p = self.progress;
+          const op = ramp(0.18, 0.94, p);
+          pinRef.current.style.opacity = op.toFixed(3);
+          pinRef.current.style.visibility = op < 0.01 ? 'hidden' : 'visible';
+          pinRef.current.style.transform = `scale(${(1.05 - p * 0.05).toFixed(3)})`;
+        }
       },
       onRefresh: (self) => {
-        if (pinRef.current) pinRef.current.style.opacity = ramp(0.18, 0.94, self.progress).toFixed(3);
+        if (pinRef.current) {
+          const p = self.progress;
+          const op = ramp(0.18, 0.94, p);
+          pinRef.current.style.opacity = op.toFixed(3);
+          pinRef.current.style.visibility = op < 0.01 ? 'hidden' : 'visible';
+          pinRef.current.style.transform = `scale(${(1.05 - p * 0.05).toFixed(3)})`;
+        }
       },
     });
 
