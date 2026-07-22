@@ -5,7 +5,7 @@ import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { whatWeDoItems } from './whatWeDoData';
-import { unlockPolaroidAudio, playShutter, playWhir } from './polaroidAudio';
+import { unlockPolaroidAudio, playShutter } from './polaroidAudio';
 import './whatwedo.css';
 
 /* The R3F lens-portal scene — no SSR for WebGL (same contract as WallScene). */
@@ -28,6 +28,10 @@ const ramp = (a: number, b: number, x: number) => {
  *  scroll per beat: flash, pan-out, three prints, handoff). */
 const SCROLL_END = 8000;
 
+/** Scroll distance, measured from the pin's start, over which the seam flash
+ *  clears back down to reveal the lens interior. */
+const REVEAL_PX = 1400;
+
 /** Print choreography — kept in sync with PolaroidScene. */
 const CONTENT_A = 0.42;
 const CONTENT_B = 0.9;
@@ -38,8 +42,16 @@ const CONTENT_B = 0.9;
  * A ScrollTrigger-pinned host that scrubs one 0→1 progress into a mutable
  * `progressRef`, read by the R3F scene's camera rig and printing photos (no
  * React state on the frame path — same contract as EventsAndCouncilSection).
- * The white flash + shutter fire on entry (masking the seam out of the About
- * turntable), then the camera dollies out of the lens and prints the sections.
+ *
+ * The About turntable and this section are two adjacent pinned sections, so the
+ * scrollbar has to hand off between them — a ~100vh window where About slides
+ * up and out while this section slides up and in. We never want that slide to
+ * be *seen*: a fixed, full-viewport white flash (`.wwd-seam-flash`, driven by
+ * its own trigger below) blankets the viewport across the seam, rising to solid
+ * white over the tail of About, holding white while the sections swap behind
+ * it, then clearing once we are pinned — so the lens is revealed *through* the
+ * flash rather than scrolling up. From there the camera dollies out of the lens
+ * to reveal the whole Polaroid and prints the sections.
  */
 export default function WhatWeDoSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -56,6 +68,15 @@ export default function WhatWeDoSection() {
     gsap.registerPlugin(ScrollTrigger);
     reducedRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Reduced motion swaps the bright flash for a gentle dark blink — same seam
+    // mask, no strobe — because a full-viewport white flash is exactly the kind
+    // of thing that setting asks us not to do.
+    if (flashRef.current) {
+      flashRef.current.style.background = reducedRef.current ? '#050409' : '#ffffff';
+    }
+
+    // ── MAIN PIN ────────────────────────────────────────────────────────────
+    // Scrubs 0→1 into progressRef, read by the R3F camera rig + printing photos.
     const trigger = ScrollTrigger.create({
       trigger: sectionRef.current,
       pin: containerRef.current,
@@ -66,29 +87,56 @@ export default function WhatWeDoSection() {
         const p = self.progress;
         progressRef.current = p;
 
-        // FLASH — full-white on entry, clearing to reveal the lens interior
-        if (flashRef.current) {
-          const peak = reducedRef.current ? 0.26 : 0.95;
-          const fall = 1 - ramp(0.02, 0.15, p);
-          flashRef.current.style.opacity = (fall * fall * peak).toFixed(3);
-        }
-
         // HANDOFF — darken into the Events street
         if (exitDimRef.current) {
           exitDimRef.current.style.opacity = (ramp(0.93, 1.0, p) * 0.85).toFixed(3);
         }
 
-        // SOUND — fired on forward crossings only (never on scrub-back)
+        // SOUND — print whir disabled as requested
         const prev = prevPRef.current;
         if (prev >= 0) {
-          if (prev < 0.03 && p >= 0.03) playShutter();
           const seg = (CONTENT_B - CONTENT_A) / N;
           for (let i = 0; i < N; i++) {
             const start = CONTENT_A + i * seg;
-            if (prev < start && p >= start) playWhir(0.9);
+            // if (prev < start && p >= start) playWhir(0.9);
           }
         }
         prevPRef.current = p;
+      },
+    });
+
+    // ── SEAM FLASH ──────────────────────────────────────────────────────────
+    // The fixed whiteout that masks the About→WhatWeDo hand-off. It lives
+    // OUTSIDE the pinned stage (position:fixed), so it blankets the viewport
+    // across the seam where the two pinned sections swap. Rises to solid white
+    // over the tail of the About turntable, HOLDS white while the sections slide
+    // behind it, then clears once we are pinned — so the lens is revealed
+    // through the flash and never visibly scrolls up.
+    //
+    // Not pinned, and its end is a pixel length, so it scrubs straight through
+    // the seam and on into the start of the pin without touching the pin's own
+    // scrub math. Function start/end re-resolve against innerHeight on refresh.
+    let flashPrev = -1;
+    const flash = ScrollTrigger.create({
+      trigger: sectionRef.current,
+      start: () => `top bottom+=${Math.round(window.innerHeight * 0.6)}`,
+      end: () => `+=${Math.round(window.innerHeight * 1.6 + REVEAL_PX)}`,
+      scrub: true,
+      onUpdate: (self) => {
+        const p = self.progress;
+        const vh = window.innerHeight;
+        const total = vh * 1.6 + REVEAL_PX;
+        const riseEnd = (vh * 0.6) / total; // solid white by the start of the seam
+        const holdEnd = (vh * 1.6) / total; // hold white until the pin engages
+        let op: number;
+        if (p <= riseEnd) op = ramp(0, riseEnd, p);
+        else if (p <= holdEnd) op = 1;
+        else op = 1 - ramp(holdEnd, 1, p);
+        if (flashRef.current) flashRef.current.style.opacity = op.toFixed(3);
+
+        // shutter click fires once, on the forward crossing into full white
+        if (flashPrev >= 0 && flashPrev < riseEnd && p >= riseEnd) playShutter();
+        flashPrev = p;
       },
     });
 
@@ -114,19 +162,24 @@ export default function WhatWeDoSection() {
       window.removeEventListener('wheel', unlock);
       window.removeEventListener('touchstart', unlock);
       trigger.kill();
+      flash.kill();
     };
   }, [N]);
 
   return (
     <section ref={sectionRef} id="what-we-do" className="whatwedo-section" aria-label="What GDG CRCE does">
+      {/* Seam flash — OUTSIDE the pinned stage, position:fixed, so it blankets
+          the whole viewport during the About→WhatWeDo hand-off and hides the
+          scroll seam. Driven by its own trigger (see the effect above). */}
+      <div ref={flashRef} className="wwd-seam-flash" aria-hidden="true" />
+
       <div ref={containerRef} className="wwd-pin">
         {/* the 3D lens-portal */}
         <div className="wwd-canvas-wrap">
           <PolaroidScene progressRef={progressRef} />
         </div>
 
-        {/* the shutter flash + the exit fade to Events */}
-        <div ref={flashRef} className="wwd-flash" />
+        {/* the exit fade to Events */}
         <div ref={exitDimRef} className="wwd-exit-dim" />
       </div>
     </section>

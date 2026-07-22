@@ -5,12 +5,15 @@
    camera starts inside the Polaroid's lens at the peak of a white shutter flash,
    dollies back out to reveal the whole camera, then prints the sections as
    physical photos. This stylesheet only owns the DOM chrome around the canvas —
-   the flash bloom, the exit fade into the Events street, and the loader.
+   the seam flash, the exit fade into the Events street, and the loader.
 
    Layer stack inside .wwd-pin (low → high):
      .wwd-canvas-wrap   the WebGL scene
-     .wwd-flash         the white bloom of the shutter firing
      .wwd-exit-dim      black that deepens into the Events street entrance
+
+   .wwd-seam-flash lives OUTSIDE .wwd-pin (position:fixed): it has to cover the
+   viewport during the About→WhatWeDo scroll hand-off, before this section is
+   pinned, so it cannot be a child of the pinned stage.
    ══════════════════════════════════════════════════════════════════════════ */
 
 .whatwedo-section {
@@ -37,16 +40,27 @@
   display: block;
 }
 
-/* ── the shutter flash ─────────────────────────────────────────────────── */
-.wwd-flash {
-  position: absolute;
+/* ── the seam flash ────────────────────────────────────────────────────────
+   Fixed to the viewport and above everything, so it masks the whole
+   About→WhatWeDo hand-off. Solid fill (not a soft radial) so the seam is fully
+   hidden at the peak — a radial that faded to transparent at the edges would
+   let the sliding scene leak past the corners. JS swaps the fill to a dark
+   blink under prefers-reduced-motion. Opacity is scrubbed from the effect.
+
+   z-index MUST clear the About turntable: `.tt-pin` sits at z-index 9995 (it
+   has to cover the fixed hero video — see about.css). At any lower value the
+   turntable paints straight over this flash while it scrolls up, which is the
+   hard top/bottom split the flash exists to prevent. 99990 keeps it above every
+   pinned section yet below the preloader (z 100000), which it never coexists
+   with anyway. */
+.wwd-seam-flash {
+  position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: 99990;
   pointer-events: none;
   opacity: 0;
   will-change: opacity;
-  background: radial-gradient(circle at 50% 46%, #ffffff 0%, rgba(255, 255, 255, 0.97) 46%,
-    rgba(255, 255, 255, 0.74) 72%, rgba(255, 255, 255, 0) 100%);
+  background: #ffffff;
 }
 
 /* ── handoff to Events ─────────────────────────────────────────────────── */

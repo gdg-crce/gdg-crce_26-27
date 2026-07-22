@@ -122,6 +122,51 @@ function buildStudioEnv(renderer: THREE.WebGLRenderer): THREE.Texture {
   return rt.texture;
 }
 
+/* ── the desk: the provided wood table ─────────────────────────────────────
+   The scanned wood_table_001 set (in public/textures/table/), optimised
+   off-line the same way as the wall: diffuse recompressed, roughness half-res,
+   and the normal DERIVED from the set's 16-bit displacement map (its .exr
+   normal can't be read by sharp; a height→normal sobel off the same scan is
+   equivalent). A deliberately different surface from the concrete wall. */
+function loadDeskWood(loader: THREE.TextureLoader) {
+  const setup = (url: string, srgb: boolean) => {
+    const t = loader.load(url);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(6, 6);
+    t.anisotropy = 8;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  return {
+    map: setup('/textures/table/table_color.jpg', true),
+    normalMap: setup('/textures/table/table_normal.jpg', false),
+    roughnessMap: setup('/textures/table/table_rough.jpg', false),
+  };
+}
+
+/* ── the backdrop: the provided concrete wall ──────────────────────────────
+   The scanned concrete_wall_001 set (in public/textures/poloroid/), optimised
+   off-line to ~145KB total: diffuse recompressed, roughness half-res, and the
+   normal DERIVED from the set's 16-bit displacement map (its .exr normal can't
+   be read by sharp; a height→normal sobel off the same scan is equivalent) —
+   see scripts note. Tiled and muted so it reads as a wall well behind the
+   subject. A deliberately different surface from the wood desk. */
+function loadStudioWall(loader: THREE.TextureLoader) {
+  const setup = (url: string, srgb: boolean) => {
+    const t = loader.load(url);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(3, 1.6);
+    t.anisotropy = 8;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  return {
+    map: setup('/textures/poloroid/wall_color.jpg', true),
+    normalMap: setup('/textures/poloroid/wall_normal.jpg', false),
+    roughnessMap: setup('/textures/poloroid/wall_rough.jpg', false),
+  };
+}
+
 /** One polaroid's full front face (photo window + Candice header + lorem). */
 function buildPolaroidFace(
   item: { no: string; title: string; body: string; accent: string },
@@ -375,6 +420,18 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
     };
   }, [gl, scene]);
 
+  // the set: a wood table + a concrete backdrop (two distinct scanned surfaces)
+  const wood = useMemo(() => loadDeskWood(new THREE.TextureLoader()), []);
+  const wall = useMemo(() => loadStudioWall(new THREE.TextureLoader()), []);
+  useEffect(
+    () => () => {
+      [wood.map, wood.normalMap, wood.roughnessMap, wall.map, wall.normalMap, wall.roughnessMap].forEach((t) =>
+        t.dispose()
+      );
+    },
+    [wood, wall]
+  );
+
   const N = whatWeDoItems.length;
 
   /* the single scene driver — camera + every print, from one scalar */
@@ -439,6 +496,13 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
 
   return (
     <>
+      {/* Contained depth — an even dark fog fades the far desk and the wall
+          edges into the void, so the set reads as a shallow, deliberate space
+          rather than an infinite plane receding into black. Near sits past the
+          subject at every camera keyframe, so the Polaroid is never fogged;
+          colour matches the canvas clear so the fade has no seam. */}
+      <fog attach="fog" args={[0x17141c, 8, 26]} />
+
       <ambientLight intensity={0.42} color="#fff0dc" />
       {/* warm amber key */}
       <directionalLight
@@ -464,10 +528,35 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
       {/* faint aperture fill so the inside-lens moment isn't pure black */}
       <pointLight position={[0, 0.34, 3.0]} intensity={2.2} distance={6} decay={2} color="#ffffff" />
 
-      {/* desk the camera + prints rest on */}
+      {/* the wooden desk the camera + prints rest on */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.66, 0]} receiveShadow>
         <planeGeometry args={[60, 60]} />
-        <meshStandardMaterial color="#211d29" roughness={0.92} metalness={0} envMapIntensity={0.4} />
+        <meshStandardMaterial
+          map={wood.map}
+          normalMap={wood.normalMap}
+          normalScale={[1, 1]}
+          roughnessMap={wood.roughnessMap}
+          roughness={1}
+          metalness={0}
+          envMapIntensity={0.55}
+        />
+      </mesh>
+
+      {/* aged plaster backdrop — closes the void behind the subject so the set
+          reads as a shallow, deliberate space. Its base sits below the desk
+          line, so the desk occludes the seam where they meet. */}
+      <mesh position={[0, 3.4, -4.6]} receiveShadow>
+        <planeGeometry args={[34, 13]} />
+        <meshStandardMaterial
+          map={wall.map}
+          normalMap={wall.normalMap}
+          normalScale={[1, 1]}
+          roughnessMap={wall.roughnessMap}
+          roughness={1}
+          metalness={0}
+          color="#a7a29a"
+          envMapIntensity={0.22}
+        />
       </mesh>
 
       <PolaroidModel />
