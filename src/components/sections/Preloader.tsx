@@ -219,16 +219,16 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
                 <div className="preloader-scanlines opacity-40" />
 
                 <div className="relative z-10 w-full max-w-md space-y-6 text-center font-mono">
-                  <div className="flex items-center justify-center gap-2 text-xs uppercase tracking-[0.3em] text-amber-400/90 font-semibold">
+                  <div className="flex items-center justify-center gap-2 text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-[0.3em] text-amber-400/90 font-semibold">
                     <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                     <span>GDG FRCRCE ARCHIVE SYSTEM</span>
                   </div>
 
                   <div className="space-y-1.5">
-                    <div className="text-sm tracking-widest text-neutral-300">
+                    <div className="text-xs sm:text-sm tracking-widest text-neutral-300">
                       SYNCING 35MM REEL &amp; PRE-BUFFERING CINEMA STREAM...
                     </div>
-                    <div className="text-2xl font-bold tracking-tight text-white">
+                    <div className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                       {Math.floor(bufferProgress)}%
                     </div>
                   </div>
@@ -241,7 +241,7 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1 text-[11px] text-neutral-400/75 tracking-wider">
+                  <div className="flex flex-col gap-1 text-[9px] sm:text-[11px] text-neutral-400/75 tracking-wider">
                     <div className="flex justify-between border-b border-white/5 pb-1">
                       <span>35MM CELL CONTINUITY</span>
                       <span className="text-emerald-400">[ READY ]</span>
@@ -262,7 +262,7 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
             )}
           </AnimatePresence>
 
-          <div ref={scrollTrackRef} className="relative h-screen w-full">
+          <div ref={scrollTrackRef} className="relative h-[100dvh] md:h-screen w-full">
             {/* Background layers — individually faded via bgOpacity so z-indices stay intact */}
             <div className="absolute inset-0 bg-[#080706]" style={{ opacity: visual.bgOpacity }} />
             <div className="loader-projector-beam" style={{ opacity: visual.bgOpacity }} />
@@ -279,15 +279,21 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
 
             <div
               className="loader-archive-hud pointer-events-none absolute inset-5 sm:inset-8 z-[15] flex flex-col justify-between"
-              style={{ opacity: 0.88 * visual.bgOpacity }}
+              style={{ 
+                opacity: 0.88 * visual.bgOpacity,
+                paddingTop: 'env(safe-area-inset-top)',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+                paddingLeft: 'env(safe-area-inset-left)',
+                paddingRight: 'env(safe-area-inset-right)'
+              }}
             >
-              <div className="flex items-center justify-between font-mono text-[10px] sm:text-xs uppercase tracking-[0.25em] text-neutral-400/65">
+              <div className="flex items-center justify-between font-mono text-[9px] sm:text-xs uppercase tracking-wider sm:tracking-[0.25em] text-neutral-400/65">
                 <div className="flex items-center gap-2.5">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500/85 animate-pulse" />
                   <span>GDG FRCRCE // &gt;&gt; REWIND ARCHIVE</span>
                 </div>
               </div>
-              <div className="flex items-center justify-between font-mono text-[10px] sm:text-xs uppercase tracking-[0.25em] text-neutral-400/65">
+              <div className="flex items-center justify-between font-mono text-[9px] sm:text-xs uppercase tracking-wider sm:tracking-[0.25em] text-neutral-400/65">
                 <div className="flex items-center gap-2 pl-11 sm:pl-0">
                   <span className="text-neutral-500">ACTIVE ERA:</span>
                   <span className="text-amber-400/90 font-semibold">{visual.activeFrame}</span>
@@ -300,7 +306,7 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
 
             {visual.showFilmTape && (
               <motion.div
-                className="absolute left-1/2 top-[47%] w-[min(3340px,282vw)] -translate-x-1/2 -translate-y-1/2 will-change-transform"
+                className="absolute left-1/2 top-[47%] w-[min(3340px,400vw)] md:w-[min(3340px,282vw)] -translate-x-1/2 -translate-y-1/2 will-change-transform"
                 style={{
                   x: `${visual.filmX}%`,
                   y: `${visual.filmY}vh`,
@@ -341,7 +347,13 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
               <div className="h-full rounded-full bg-neutral-300 shadow-[0_0_18px_rgba(255,255,255,0.45)]" style={{ width: `${visual.p * 100}%` }} />
             </div>
 
-            <div className="absolute top-6 right-6 z-[999999] pointer-events-auto flex items-center gap-2.5">
+            <div 
+              className="absolute z-[999999] pointer-events-auto flex items-center gap-2.5"
+              style={{ 
+                top: 'max(1.5rem, env(safe-area-inset-top))', 
+                right: 'max(1.5rem, env(safe-area-inset-right))' 
+              }}
+            >
               <button
                 type="button"
                 onClick={(e) => {

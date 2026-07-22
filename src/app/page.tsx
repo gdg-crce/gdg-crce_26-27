@@ -6,6 +6,7 @@ import HeroVideoSection from '@/components/sections/hero-video/HeroVideoSection'
 import EventsAndCouncilSection from '@/components/sections/EventsAndCouncilSection';
 import AboutSection from '@/components/sections/about/AboutSection';
 import WhatWeDoSection from '@/components/sections/whatwedo/WhatWeDoSection';
+import ContactSection from '@/components/sections/ContactSection';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -38,6 +39,7 @@ export default function Home() {
         <AboutSection />
         <WhatWeDoSection />
         <EventsAndCouncilSection />
+        <ContactSection />
       </main>
     </div>
   );

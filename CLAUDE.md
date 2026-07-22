@@ -201,28 +201,27 @@ Target: **60fps on a mid-range laptop**.
 - Textures pack multiple channels where the shader allows it (AO in R + roughness in G) — one request, one upload, half the VRAM
 
 ## Public Assets Layout
-
-```
-public/
-  elements/     # Era props (70s-vinyl-record.png, 80s-cassette.png, etc.) + poster-N.png
-  models/       # Compressed .glb files served at runtime
-  textures/
-    wall/       # Baked wall PBR set (ambientCG PaintedPlaster016, CC0) — see Wall Material
-  videos/       # intro.mp4 (pre-buffered in preloader before main sequence starts)
-  logo.png      # GDG logo used as VHS play button
-```
 ### Act 4 — Contact Us (`src/components/sections/contact/ContactSection.tsx`)
 
-The final act of the single-page cinematic experience. The layout under the animation layer is entirely static—all logos, social links, and text are immediately present with no fade-ins or scroll-triggered visibility states[cite: 2]. 
+The final act of the single-page cinematic experience, integrated directly into the global Windows XP desktop interface.
 
-- **Era Mapping:** Strictly locked to the **2000s Era** layout metrics[cite: 2]. Header text ("CONTACT US") and footer branding ("What continues, becomes greater") must use `--font-00s-display` (Orbitron) with a distinctive cyan arcade/cyberpunk neon glow text-shadow effect[cite: 2].
-- **Interactive Layer:** Contains a high-performance animation layer featuring two procedurally rendered hands (built via layered vector SVGs or Canvas elements mimicking the textured Pinterest reference)[cite: 2].
-- **Scroll Tracking:** The hands' movement (gliding from the horizontal screen margins to meet at the dead-center GDG logo) must be driven strictly via a GSAP ScrollTrigger mutable `progressRef` mapping[cite: 2]. Never hook this animation to React state variables, as it will violate the 60fps performance rule[cite: 2].
-- **Hardcoded Contact Data Matrix:**
-  * GitHub Container Target: `https://github.com/CRCE-GDSC`
-  * LinkedIn Container Target: `https://www.linkedin.com/company/gdsc-crce/`
-  * Instagram Container Target: `https://www.instagram.com/gdg_crce/`
-  * Email Contact Trigger: `mailto:crcegdsc@gmail.com`
-  * Physical Location Label (Fallback text if needed): "Fr. Conceicao Rodrigues College of Engineering, Bandstand, Bandra (W) Mumbai - 400050"
-- **Layout Grid:** Features the GDG logo container as the central focus point where the fingertips meet, flanked by the clickable social nodes listed above[cite: 2]. The official email sits pinned to the bottom-left viewport, and the quote text is pinned to the bottom-right[cite: 2].
-Third-party textures are **CC0** (ambientCG) — no attribution required, but keep the source asset ID recorded in `wallMaterial.ts` so the bake can be reproduced.
+- **Windows XP Desktop Integration:** The "Contact Us" tab already exists beside the "Student Council 2026-27 Player" tab on the bottom Windows XP taskbar. Do NOT re-create or duplicate the tab button.
+- **Synchronized Scroll Handoff:** As the user scrolls into Act 4, the existing active Student Council player window minimizes smoothly down into its taskbar button, while the existing Contact Us tab opens and maximizes smoothly right out from its location on the taskbar. The opened window retains identical border dimensions and frame styling as the Council tab window.
+- **Local Asset Directory (`public/Contact_us/`):**
+  * Background Image: `public/Contact_us/bgi.jpg`
+  * Left Hand Raster Asset: `public/Contact_us/left_hand.jpeg`
+  * Right Hand Raster Asset: `public/Contact_us/right_hand.jpeg`
+  * Hand Convergence Reference: `public/Contact_us/hands_meeting.jpg`
+  * Typography Reference: `public/Contact_us/font.jpg` (or `--font-00s-display`)
+  * GDG logo asset: `public/Contact_us/dowload.png`
+- **Interactive Layer & Performance:** Hand positional translations are driven via GSAP ScrollTrigger using a mutable `progressRef` (never React `useState`) to preserve the 60fps budget[cite: 2]. The hands scale aggressively to fill major screen area and minimize empty void space.
+- **Layout & Symmetry Matrix:**
+  * Top Header: **CONTACT US** (All Caps)[cite: 2]
+  * Central Symmetry Point: GDG logo container where hand fingertips converge[cite: 2].
+  * Google Maps Integration: Google Maps embed for Fr. Conceicao Rodrigues College of Engineering (Bandra, Mumbai) fades in and zooms out originating from the central GDG logo.
+  * Interactive Platform Nodes: Placed cleanly *below* the GDG logo without overlapping:
+    - GitHub: `https://github.com/CRCE-GDSC`[cite: 2]
+    - LinkedIn: `https://www.linkedin.com/company/gdsc-crce/`[cite: 2]
+    - Instagram: `https://www.instagram.com/gdg_crce/`[cite: 2]
+    - Email Anchor: `mailto:crcegdsc@gmail.com`[cite: 2]
+  * Bottom Right Footer Quote: **What Continues Becomes Greater** (Title Case)[cite: 2]

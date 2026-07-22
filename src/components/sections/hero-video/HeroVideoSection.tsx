@@ -140,7 +140,7 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
   return (
     <section
       ref={containerRef}
-      className="fixed inset-0 w-full h-screen overflow-hidden select-none z-[9990]"
+      className="fixed inset-0 w-full h-[100dvh] md:h-screen overflow-hidden select-none z-[9990]"
       aria-label="Storytelling Cinematic Intro"
     >
       {/* Dark aesthetic background while video initializes */}

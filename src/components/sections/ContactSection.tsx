@@ -8,15 +8,20 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 /**
  * ContactSection — Act 4: "CONTACT US" (2000s era)
  *
- * Opens as a Windows XP window that maximizes above its own taskbar while a
- * faux "previous app" window minimizes down into a taskbar tab — visual
- * continuity with the Council act without touching its code.
+ * Integrated into the global Windows XP desktop: the Council window minimizes
+ * into its taskbar button while the Contact window maximizes out of the
+ * existing "Contact Us" tab (the bar here is the same persistent taskbar
+ * carried across the pin — no new button is created).
+ *
+ * Hands are the raster Creation-of-Adam scans from public/Contact_us/,
+ * screen-blended over a darkened bgi.jpg so their black backgrounds vanish.
  *
  * Scroll phases (single progress scalar, mutable ref pattern):
- *   0.00–0.16  XP transition: prev window minimizes, Contact maximizes
- *   0.00–0.50  hands glide in from the margins (out-ease, moving from tick 0)
- *   0.55–0.85  map zooms out from center; logo rises; socials drop to base
- *   0.78–0.96  hands retract slightly and fade so the map stays readable
+ *   0.00–0.16  XP handoff: Council minimizes, Contact maximizes from its tab
+ *   0.00–0.55  hands translate in from the margins while scaling up
+ *   0.30–0.55  GDG logo materializes between the converging fingertips
+ *   0.58–0.85  map zooms outward from the logo; socials drop to the base
+ *   0.80–0.96  hands yield (retract + fade) so the map stays readable
  */
 
 const CONTACT = {
@@ -25,7 +30,7 @@ const CONTACT = {
     'Fr. Conceicao Rodrigues College of Engineering, Bandstand, Bandra (W) Mumbai - 400050',
   mapSrc:
     'https://maps.google.com/maps?q=Fr.%20Conceicao%20Rodrigues%20College%20of%20Engineering%2C%20Bandstand%2C%20Bandra%20West%2C%20Mumbai&z=16&output=embed',
-  socials: [
+  links: [
     {
       id: 'github',
       label: 'GitHub',
@@ -44,11 +49,17 @@ const CONTACT = {
       href: 'https://www.instagram.com/gdg_crce/',
       icon: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z',
     },
+    {
+      id: 'email',
+      label: 'Email',
+      href: 'mailto:crcegdsc@gmail.com',
+      icon: 'M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z',
+    },
   ] as const,
 };
 
 /* 2000s era palette (locked — see CLAUDE.md era table) */
-const ERA = { bg: '#141C2E', primary: '#00D4E8', secondary: '#B4E600' };
+const ERA = { primary: '#00D4E8' };
 
 const NEON_GLOW =
   '0 0 6px rgba(0,212,232,0.95), 0 0 18px rgba(0,212,232,0.55), 0 0 44px rgba(0,212,232,0.3)';
@@ -70,53 +81,6 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const phase = (p: number, from: number, to: number) =>
   easeInOutCubic(Math.min(Math.max((p - from) / (to - from), 0), 1));
 
-/* Low-poly hand, pointing right (fingertip near viewBox right edge). */
-function LowPolyHand() {
-  return (
-    <svg
-      viewBox="0 0 420 240"
-      style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}
-      aria-hidden
-    >
-      <defs>
-        <linearGradient id="ctHandArm" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#0c1424" />
-          <stop offset="1" stopColor="#1d2b4d" />
-        </linearGradient>
-        <radialGradient id="ctTipGlow">
-          <stop offset="0" stopColor="rgba(0,212,232,0.85)" />
-          <stop offset="1" stopColor="rgba(0,212,232,0)" />
-        </radialGradient>
-      </defs>
-
-      <g stroke="rgba(0,212,232,0.28)" strokeWidth="1" strokeLinejoin="round">
-        {/* forearm */}
-        <polygon points="0,84 150,92 150,150 0,166" fill="url(#ctHandArm)" />
-        <polygon points="0,84 150,92 0,166" fill="#121c33" opacity="0.55" />
-        {/* palm */}
-        <polygon points="148,88 236,80 258,96 262,140 240,158 150,152" fill="#1a2745" />
-        <polygon points="150,92 236,80 202,124" fill="#233459" opacity="0.7" />
-        {/* thumb */}
-        <polygon points="200,82 236,58 252,66 244,86" fill="#26395f" />
-        {/* index finger — three low-poly segments */}
-        <polygon points="256,96 310,88 312,104 258,112" fill="#223154" />
-        <polygon points="310,88 358,84 360,98 312,104" fill="#283a61" />
-        <polygon points="358,84 402,88 360,98" fill="#2f4570" />
-        {/* curled fingers */}
-        <polygon points="258,116 294,112 298,130 260,134" fill="#1c2949" />
-        <polygon points="258,136 290,134 292,150 258,152" fill="#182342" />
-      </g>
-
-      {/* cyan rim light along the top edges */}
-      <polygon points="0,84 150,92 150,96 0,88" fill="rgba(0,212,232,0.45)" />
-      <polygon points="256,96 402,87 402,90 256,100" fill="rgba(0,212,232,0.5)" />
-
-      {/* fingertip energy glow */}
-      <circle cx="400" cy="90" r="30" fill="url(#ctTipGlow)" />
-    </svg>
-  );
-}
-
 export default function ContactSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -136,21 +100,20 @@ export default function ContactSection() {
     gsap.registerPlugin(ScrollTrigger);
 
     const apply = (p: number) => {
-      const winT = phase(p, 0, 0.16); // XP maximize / minimize
-      /* Out-ease + short span: hands are visibly moving on the first pixel of
-         scroll and complete convergence by mid-pin. */
-      const handE = easeOutCubic(Math.min(p / 0.5, 1));
-      const mapE = phase(p, 0.55, 0.85); // map reveal + logo/social shift
-      const fadeE = phase(p, 0.78, 0.96); // hands yield to the map
+      const winT = phase(p, 0, 0.16);
+      /* Out-ease: hands are visibly moving on the first pixel of scroll. */
+      const handE = easeOutCubic(Math.min(p / 0.55, 1));
+      const logoE = phase(p, 0.3, 0.55);
+      const mapE = phase(p, 0.58, 0.85);
+      const fadeE = phase(p, 0.8, 0.96);
 
-      /* Contact window maximizes OUT of its taskbar tab (origin sits over the
-         "Contact Us" button, just above the bar). */
+      /* Contact window maximizes OUT of its existing taskbar tab. */
       if (contactWindowRef.current) {
         contactWindowRef.current.style.transform = `scale(${lerp(0.06, 1, winT)})`;
         contactWindowRef.current.style.opacity = `${Math.min(1, winT * 2.5)}`;
         contactWindowRef.current.style.borderRadius = `${lerp(10, 0, winT)}px`;
       }
-      /* Previous app window minimizes DOWN into its taskbar tab. */
+      /* Council window minimizes DOWN into its taskbar button. */
       if (prevWindowRef.current) {
         prevWindowRef.current.style.transform = `translate3d(${lerp(0, -34, winT)}vw, ${lerp(0, 44, winT)}vh, 0) scale(${lerp(1, 0.04, winT)})`;
         prevWindowRef.current.style.opacity = `${1 - winT}`;
@@ -170,18 +133,18 @@ export default function ContactSection() {
         contactTabRef.current.style.boxShadow = winT < 0.5 ? RAISED_SHADOW : PRESSED_SHADOW;
       }
 
+      /* Raster hands: glide in, scale up to fill the frame, then yield. */
+      const handScale = lerp(0.85, 1.12, handE);
       if (leftHandRef.current) {
-        const x = lerp(-72, -3.6, handE) - lerp(0, 7, fadeE);
-        const y = lerp(9, 0, handE);
-        const r = lerp(-9, -1, handE);
-        leftHandRef.current.style.transform = `translate3d(${x}vw, calc(-50% + ${y}vh), 0) rotate(${r}deg)`;
+        const x = lerp(-75, -1.5, handE) - lerp(0, 8, fadeE);
+        const y = lerp(7, 0, handE);
+        leftHandRef.current.style.transform = `translate3d(${x}vw, calc(-50% + ${y}vh), 0) scale(${handScale})`;
         leftHandRef.current.style.opacity = `${1 - fadeE}`;
       }
       if (rightHandRef.current) {
-        const x = lerp(72, 3.6, handE) + lerp(0, 7, fadeE);
-        const y = lerp(9, 0, handE);
-        const r = lerp(9, 1, handE);
-        rightHandRef.current.style.transform = `translate3d(${x}vw, calc(-50% + ${y}vh), 0) rotate(${r}deg)`;
+        const x = lerp(75, 1.5, handE) + lerp(0, 8, fadeE);
+        const y = lerp(-7, 0, handE);
+        rightHandRef.current.style.transform = `translate3d(${x}vw, calc(-50% + ${y}vh), 0) scale(${handScale})`;
         rightHandRef.current.style.opacity = `${1 - fadeE}`;
       }
       if (sparkRef.current) {
@@ -189,15 +152,19 @@ export default function ContactSection() {
         sparkRef.current.style.transform = `translate(-50%, -50%) scale(${0.6 + 0.6 * handE})`;
       }
 
+      /* Logo materializes between the fingertips, then rises above the map. */
+      if (logoRef.current) {
+        logoRef.current.style.opacity = `${logoE}`;
+        logoRef.current.style.transform = `translate3d(-50%, calc(-50% - ${lerp(0, 27, mapE)}vh), 0) scale(${lerp(0.8, 1, logoE) * lerp(1, 0.48, mapE)})`;
+      }
+
+      /* Map zooms outward from the logo's center point. */
       if (mapWrapRef.current) {
         mapWrapRef.current.style.opacity = `${mapE}`;
         mapWrapRef.current.style.transform = `translate(-50%, -50%) scale(${lerp(0.35, 1, mapE)})`;
         mapWrapRef.current.style.pointerEvents = mapE > 0.6 ? 'auto' : 'none';
       }
-      if (logoRef.current) {
-        logoRef.current.style.transform = `translate3d(-50%, calc(-50% - ${lerp(0, 27, mapE)}vh), 0) scale(${lerp(1, 0.48, mapE)})`;
-      }
-      /* Social row clearance = half the logo's clamped size + a vh gap, so it
+      /* Link row clearance = half the logo's clamped size + a vh gap, so it
          can never overlap the logo regardless of viewport proportions. */
       if (socialRowRef.current) {
         socialRowRef.current.style.transform = `translate3d(-50%, calc(clamp(70px, 9vw, 110px) + ${lerp(6, 20, mapE)}vh), 0)`;
@@ -230,7 +197,7 @@ export default function ContactSection() {
         className="relative h-screen w-full overflow-hidden"
         style={{ fontFamily: 'var(--font-00s-body), sans-serif', background: BLISS }}
       >
-        {/* ══ Contact window — maximizes to fill everything above the taskbar ══ */}
+        {/* ══ Contact window — maximizes to fill the workspace above the bar ══ */}
         <div
           ref={contactWindowRef}
           className="absolute left-0 right-0 top-0 flex flex-col overflow-hidden"
@@ -268,26 +235,21 @@ export default function ContactSection() {
             </span>
           </div>
 
-          {/* Window body */}
+          {/* Window body — crumpled-paper scan under a dark wash so the black
+              hand plates screen-blend away and the cyan type glows */}
           <div
             className="relative flex-1"
             style={{
-              background: `linear-gradient(180deg, #0a1020 0%, ${ERA.bg} 40%, #101828 100%)`,
+              backgroundImage: "url('/Contact_us/bgi.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
             }}
           >
-            {/* faint cyber grid */}
-            <div
-              className="pointer-events-none absolute inset-0 z-0"
-              style={{
-                backgroundImage:
-                  'linear-gradient(rgba(0,212,232,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,232,0.045) 1px, transparent 1px)',
-                backgroundSize: '56px 56px',
-              }}
-            />
+            <div className="absolute inset-0 z-0" style={{ background: 'rgba(5,7,12,0.82)' }} />
 
             {/* Top center: header */}
             <h2
-              className="absolute left-1/2 z-10 -translate-x-1/2 text-center uppercase"
+              className="absolute left-1/2 z-10 -translate-x-1/2 text-center"
               style={{
                 top: '5.5vh',
                 fontFamily: 'var(--font-00s-display), sans-serif',
@@ -298,7 +260,7 @@ export default function ContactSection() {
                 whiteSpace: 'nowrap',
               }}
             >
-              Contact Us
+              CONTACT US
             </h2>
 
             {/* convergence spark (yields to the map) */}
@@ -316,7 +278,7 @@ export default function ContactSection() {
               }}
             />
 
-            {/* Google Map — zooms out from dead center as the hands converge */}
+            {/* Google Map — zooms outward from the logo's center point */}
             <div
               ref={mapWrapRef}
               className="absolute left-1/2 top-1/2 z-10 overflow-hidden"
@@ -341,22 +303,23 @@ export default function ContactSection() {
               />
             </div>
 
-            {/* Center: GDG logo — rises above the map as it appears */}
+            {/* Center: GDG logo — appears as the hands converge */}
             <div
               ref={logoRef}
               className="absolute left-1/2 top-1/2 z-20 flex items-center justify-center rounded-full"
               style={{
                 width: 'clamp(140px, 18vw, 220px)',
                 height: 'clamp(140px, 18vw, 220px)',
-                transform: 'translate3d(-50%, -50%, 0)',
-                willChange: 'transform',
-                background: 'rgba(20,28,46,0.78)',
+                transform: 'translate3d(-50%, -50%, 0) scale(0.8)',
+                opacity: 0,
+                willChange: 'transform, opacity',
+                background: 'rgba(10,14,24,0.78)',
                 border: '1px solid rgba(0,212,232,0.45)',
                 boxShadow: '0 0 26px rgba(0,212,232,0.35), inset 0 0 30px rgba(0,212,232,0.12)',
               }}
             >
               <Image
-                src="/logo.png"
+                src="/Contact_us/download.png"
                 alt="GDG CRCE"
                 width={220}
                 height={220}
@@ -364,7 +327,7 @@ export default function ContactSection() {
               />
             </div>
 
-            {/* Social nodes — start well below the logo, glide to the base */}
+            {/* Links — always cleanly below the logo, glide to the base */}
             <div
               ref={socialRowRef}
               className="absolute left-1/2 top-1/2 z-20 flex items-center gap-10"
@@ -373,12 +336,11 @@ export default function ContactSection() {
                 willChange: 'transform',
               }}
             >
-              {CONTACT.socials.map((s) => (
+              {CONTACT.links.map((s) => (
                 <a
                   key={s.id}
                   href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  {...(s.id !== 'email' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                   aria-label={s.label}
                   title={s.label}
                   className="group flex flex-col items-center gap-2"
@@ -386,9 +348,9 @@ export default function ContactSection() {
                   <span
                     className="flex items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-110"
                     style={{
-                      width: 'clamp(56px, 5.6vw, 70px)',
-                      height: 'clamp(56px, 5.6vw, 70px)',
-                      background: 'rgba(13,20,38,0.85)',
+                      width: 'clamp(52px, 5.2vw, 64px)',
+                      height: 'clamp(52px, 5.2vw, 64px)',
+                      background: 'rgba(10,14,24,0.85)',
                       border: '1px solid rgba(0,212,232,0.35)',
                       boxShadow: '0 0 14px rgba(0,212,232,0.22)',
                     }}
@@ -407,28 +369,23 @@ export default function ContactSection() {
               ))}
             </div>
 
-            {/* Bottom left: email + location */}
-            <div className="absolute z-10" style={{ bottom: '4vh', left: '4vw', maxWidth: '36ch' }}>
-              <a
-                href={`mailto:${CONTACT.email}`}
-                className="transition-opacity hover:opacity-80"
-                style={{
-                  color: ERA.primary,
-                  fontSize: 'clamp(0.85rem, 1.4vw, 1.05rem)',
-                  letterSpacing: '0.08em',
-                  textShadow: '0 0 10px rgba(0,212,232,0.5)',
-                }}
-              >
-                {CONTACT.email}
-              </a>
-              <p className="mt-2 leading-relaxed" style={{ color: 'rgba(200,214,235,0.55)', fontSize: '0.72rem' }}>
-                {CONTACT.address}
-              </p>
-            </div>
+            {/* Bottom left: location line */}
+            <p
+              className="absolute z-10 leading-relaxed"
+              style={{
+                bottom: '4vh',
+                left: '4vw',
+                maxWidth: '36ch',
+                color: 'rgba(200,214,235,0.6)',
+                fontSize: '0.72rem',
+              }}
+            >
+              {CONTACT.address}
+            </p>
 
             {/* Bottom right: thematic sign-off */}
             <p
-              className="absolute z-10 text-right uppercase"
+              className="absolute z-10 text-right"
               style={{
                 bottom: '4vh',
                 right: '4vw',
@@ -439,23 +396,30 @@ export default function ContactSection() {
                 textShadow: NEON_GLOW,
               }}
             >
-              What continues, becomes greater
+              What Continues Becomes Greater
             </p>
 
-            {/* ── Animation layer: converging hands (non-interactive) ── */}
+            {/* ── Animation layer: raster hands, screen-blended, non-interactive ── */}
             <div
               ref={leftHandRef}
               className="pointer-events-none absolute z-30"
               style={{
                 top: '50%',
                 right: '50%',
-                width: 'min(46vw, 680px)',
+                width: 'min(46vw, 640px)',
                 minWidth: '260px',
                 willChange: 'transform, opacity',
-                transform: 'translate3d(-72vw, calc(-50% + 9vh), 0) rotate(-9deg)',
+                transform: 'translate3d(-75vw, calc(-50% + 7vh), 0) scale(0.85)',
+                mixBlendMode: 'screen',
               }}
             >
-              <LowPolyHand />
+              <Image
+                src="/Contact_us/left_hand.jpeg"
+                alt=""
+                width={1280}
+                height={1280}
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+              />
             </div>
             <div
               ref={rightHandRef}
@@ -463,20 +427,25 @@ export default function ContactSection() {
               style={{
                 top: '50%',
                 left: '50%',
-                width: 'min(46vw, 680px)',
+                width: 'min(46vw, 640px)',
                 minWidth: '260px',
                 willChange: 'transform, opacity',
-                transform: 'translate3d(72vw, calc(-50% + 9vh), 0) rotate(9deg)',
+                transform: 'translate3d(75vw, calc(-50% - 7vh), 0) scale(0.85)',
+                mixBlendMode: 'screen',
               }}
             >
-              <div style={{ transform: 'scaleX(-1)' }}>
-                <LowPolyHand />
-              </div>
+              <Image
+                src="/Contact_us/right_hand.jpeg"
+                alt=""
+                width={1280}
+                height={1280}
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+              />
             </div>
           </div>
         </div>
 
-        {/* ══ Faux "previous app" window — minimizes down into its taskbar tab ══ */}
+        {/* ══ Council window stand-in — minimizes down into its taskbar tab ══ */}
         <div
           ref={prevWindowRef}
           className="pointer-events-none absolute z-40 overflow-hidden"
@@ -503,7 +472,9 @@ export default function ContactSection() {
           </div>
         </div>
 
-        {/* ══ XP taskbar — Act 4's own chrome, styled to match the Council act ══ */}
+        {/* ══ The persistent XP taskbar, carried across the pin (same three
+            tabs as WindowsXPDesktop — the Contact Us button already exists
+            there; this is its continuation, not a duplicate) ══ */}
         <div
           className="absolute bottom-0 left-0 z-50 flex w-full items-center justify-between"
           style={{
