@@ -1,0 +1,117 @@
+.xp-boot-screen {
+  position: fixed;
+  inset: 0;
+  background-color: #000;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: Tahoma, 'Segoe UI', Arial, sans-serif;
+  color: white;
+  user-select: none;
+  cursor: wait;
+}
+
+.xp-center-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -10vh; /* slightly above center like real XP */
+}
+
+/* ── GDSC Logo ── */
+.xp-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 140px;
+  height: 140px;
+  margin-bottom: 2rem;
+  /* Very subtle drop shadow so it sits nicely on the black background without being gimmicky */
+  filter: drop-shadow(0px 5px 15px rgba(255, 255, 255, 0.15));
+}
+
+.xp-logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ── Typography ── */
+.xp-brand {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 0.2rem;
+}
+
+.xp-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.xp-subtitle {
+  font-size: 2.2rem;
+  font-weight: 400;
+  color: #ff6600; /* XP orange */
+  margin-left: 0.2rem;
+  position: relative;
+  top: -1.2rem;
+  letter-spacing: -0.05em;
+}
+
+.xp-role {
+  font-size: 1.1rem;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: #fff;
+  margin-bottom: 6rem;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+/* ── Loading Bar ── */
+.xp-loading-bar-container {
+  width: 160px;
+  height: 18px;
+  border: 2px solid #b3b3b3;
+  border-radius: 6px;
+  padding: 1px;
+  background-color: #000;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 3px rgba(255,255,255,0.2), 0 0 5px rgba(255,255,255,0.1);
+}
+
+.xp-loading-bar {
+  display: flex;
+  gap: 2px;
+  height: 100%;
+  width: fit-content;
+  animation: xp-scroll 1.5s infinite linear;
+}
+
+.xp-loading-segment {
+  width: 10px;
+  height: 100%;
+  background: linear-gradient(to bottom, #2b62d9 0%, #4681f2 30%, #5d98ff 50%, #2b62d9 80%, #1545ad 100%);
+  border-radius: 1px;
+  box-shadow: inset 0 0 2px rgba(255,255,255,0.4);
+}
+
+@keyframes xp-scroll {
+  0% { transform: translateX(-40px); }
+  100% { transform: translateX(160px); }
+}
+
+/* ── Bottom Text ── */
+.xp-bottom-text {
+  position: absolute;
+  bottom: 2rem;
+  left: 2rem;
+  font-size: 0.85rem;
+  color: #e0e0e0;
+  line-height: 1.4;
+}
