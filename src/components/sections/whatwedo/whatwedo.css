@@ -72,11 +72,11 @@
 
 .album-container-wrapper {
   position: relative;
-  /* Album is 32:9 aspect ratio so its half (the cover) is a perfect 16:9 landscape */
-  width: 90vw;
-  max-width: 1280px;
-  height: 25.3125vw;
-  max-height: 360px;
+  /* Top-bound Spiral Notebook is massive and centered. 16:9 landscape */
+  width: 75vw;
+  max-width: 1000px;
+  height: 42.1875vw; /* 75vw * (9/16) */
+  max-height: 562.5px;
 }
 
 .album-container {
@@ -95,11 +95,8 @@
 
 .album-back-cover, .album-page, .album-cover {
   position: absolute;
-  top: 0;
-  left: 50%;
-  width: 50%;
-  height: 100%;
-  transform-origin: left center;
+  inset: 0;
+  transform-origin: top center;
   transform-style: preserve-3d;
   will-change: transform;
 }
@@ -107,19 +104,18 @@
 .album-back-cover {
   background: #2a1f1a;
   box-shadow: 15px 15px 40px rgba(0,0,0,0.6), inset -5px 0 20px rgba(0,0,0,0.5);
-  border-radius: 4px 15px 15px 4px;
+  border-radius: 2px 2px 10px 10px;
 }
 
 .cover-front, .cover-back, .page-front, .page-back {
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
-  border-radius: 4px 15px 15px 4px;
+  border-radius: 2px 2px 10px 10px;
 }
 
 .cover-back, .page-back {
-  transform: rotateY(180deg);
-  border-radius: 15px 4px 4px 15px;
+  transform: rotateX(180deg);
 }
 
 .album-cover .cover-front {
@@ -130,7 +126,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-left: 5px solid #1a0f0b;
+  border-top: 5px solid #1a0f0b;
 }
 
 .cover-title, .cover-subtitle {
@@ -152,7 +148,7 @@
   background-size: 4px 4px;
   background-position: 0 0, 2px 2px;
   box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
-  border-left: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(255,255,255,0.05);
   overflow: hidden;
 }
 
@@ -188,10 +184,22 @@
   z-index: 20;
 }
 
+/* High Definition Spiral Binder SVG */
+.spiral-binder {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg width='30' height='40' viewBox='0 0 30 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='w' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%23777' /%3E%3Cstop offset='20%25' stop-color='%23fff' /%3E%3Cstop offset='50%25' stop-color='%23999' /%3E%3Cstop offset='80%25' stop-color='%23ddd' /%3E%3Cstop offset='100%25' stop-color='%23555' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cellipse cx='15' cy='32' rx='6' ry='3.5' fill='%23050403' /%3E%3Cellipse cx='15' cy='32' rx='4.5' ry='2.5' fill='%23000' /%3E%3Cpath d='M -2 15 Q 15 0 15 32' fill='none' stroke='%23444' stroke-width='3' /%3E%3Cpath d='M 15 32 Q 15 0 32 15' fill='none' stroke='url(%23w)' stroke-width='4.5' stroke-linecap='round' filter='drop-shadow(2px 5px 3px rgba(0,0,0,0.6))' /%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 30px 40px;
+  z-index: 50;
+  opacity: 0;
+}
+
 .polaroid-item {
   position: absolute;
-  width: 70%;
-  max-width: 250px;
   box-shadow: 5px 10px 25px rgba(0,0,0,0.6);
   border: 1px solid rgba(255,255,255,0.1);
   transition: transform 0.3s ease, filter 0.3s ease;
@@ -202,13 +210,15 @@
   z-index: 10;
 }
 
-.pol-1 { top: 8%; left: 15%; transform: rotate(-4deg); }
-.pol-2 { bottom: 8%; right: 10%; transform: rotate(3deg); }
+/* Polaroids layout inside the massive 16:9 pages */
+.pol-1 { top: 15%; left: 10%; transform: rotate(-4deg); width: 35%; max-width: 250px; }
+.pol-2 { top: 20%; right: 10%; transform: rotate(3deg); width: 35%; max-width: 250px; }
 
-.pol-3 { top: 12%; right: 12%; transform: rotate(4deg); }
-.pol-4 { bottom: 12%; left: 10%; transform: rotate(-5deg); }
+.pol-3 { top: 10%; left: 12%; transform: rotate(4deg); width: 35%; max-width: 250px; }
+.pol-4 { top: 25%; right: 12%; transform: rotate(-5deg); width: 35%; max-width: 250px; }
 
-.pol-5 { top: 25%; left: 10%; transform: rotate(-2deg); width: 80%; max-width: 300px; }
+.pol-5 { top: 15%; left: 32.5%; transform: rotate(-2deg); width: 35%; max-width: 300px; }
+
 
 .memory-text {
   position: absolute;
