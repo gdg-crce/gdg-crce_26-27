@@ -1,36 +1,105 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { orbitron, shareTechMono, specialElite } from '@/lib/fonts';
 
 export type FilmTapeFrame = '2020s' | '2000x' | '90s' | '80s' | '70s';
 
 interface FilmTapeProps {
-  activeFrame: FilmTapeFrame;
-  rewindIntensity: number;
+  activeFrame?: FilmTapeFrame;
+  rewindIntensity?: number;
+  revealZoom?: number;
 }
 
-const frames = [
-  { era: '2020s', label: '2026', suffix: 's', code: '▶ 24A', stock: 'KODAK 5219' },
-  { era: '2020s', label: '20s', code: '▶ 23A', stock: 'SAFETY FILM' },
-  { era: '2020s', label: 'NOW', code: '▶ 22A', stock: 'GDG FRCRCE' },
-  { era: '90s', label: '90s', code: '▶ 18A', stock: 'EASTMAN 5247' },
-  { era: '90s', label: 'www', code: '▶ 17A', stock: 'PANAVISION' },
-  { era: '90s', label: 'LINK', code: '▶ 16A', stock: '35MM COLOR' },
-  { era: '80s', label: '80s', code: '▶ 09A', stock: 'EASTMAN 5293' },
-  { era: '80s', label: 'CRT', code: '▶ 08A', stock: 'MAGNETIC' },
-  { era: '80s', label: 'BOOT', code: '▶ 07A', stock: 'ARCHIVE CH-1' },
-  { era: '70s', label: '70s', code: '▶ 03A', stock: 'KODACHROME' },
-  { era: '70s', label: 'IDEA', code: '▶ 02A', stock: 'REEL 01' },
-  { era: '70s', label: 'ROOT', code: '▶ 01A', stock: 'ORIGIN NEG' },
-  { era: '70s', label: 'START', code: '▶ 00A', stock: 'SYNC MASTER' },
-  { era: '70s', label: '1970', code: '■ REC', stock: 'EST. 1970' },
+const EVENT_IMAGES = [
+  { name: 'genesis', ext: 'jpg', alt: 'Genesis' },
+  { name: 'unplug', ext: 'png', alt: 'Unplug' },
+  { name: 'pitchperf', ext: 'png', alt: 'Pitch Perf' },
+  { name: 'bnb', ext: 'png', alt: 'Bits & Bytes' },
+  { name: 'whatif', ext: 'png', alt: 'What If' },
+  { name: 'ideacafe1', ext: 'png', alt: 'Idea Cafe' },
+  { name: 'futureforge', ext: 'png', alt: 'Future Forge' },
 ] as const;
 
-const FilmTape = React.memo(function FilmTape({ activeFrame, rewindIntensity }: FilmTapeProps) {
+export type TapeCell =
+  | { kind: 'image'; era: FilmTapeFrame; code: string; stock: string; src: string; alt: string }
+  | { kind: 'text'; era: FilmTapeFrame; label: string; suffix?: string; code: string; stock: string; isOpeningFrame?: boolean }
+  | { kind: 'reveal'; code: string }
+  | { kind: 'empty' };
+
+const TEXT_CELLS: Omit<Extract<TapeCell, { kind: 'text' }>, 'kind'>[] = [
+  { era: '2020s', label: '2026', suffix: 's', code: '▶ 24A', stock: 'GDG FRCRCE', isOpeningFrame: true },
+  { era: '2020s', label: 'NOW', code: '▶ 22A', stock: 'KODAK 5219' },
+  { era: '90s', label: '90s', code: '▶ 18A', stock: 'EASTMAN 5247' },
+  { era: '90s', label: 'LINK', code: '▶ 16A', stock: '35MM COLOR' },
+  { era: '80s', label: '80s', code: '▶ 09A', stock: 'EASTMAN 5293' },
+  { era: '80s', label: 'BOOT', code: '▶ 07A', stock: 'ARCHIVE CH-1' },
+  { era: '70s', label: '70s', code: '▶ 03A', stock: 'KODACHROME' },
+  { era: '70s', label: 'ARCHIVE', code: '▶ 02A', stock: 'CONTINUITY' },
+  { era: '70s', label: 'GDG', code: '▶ 01A', stock: 'FRCRCE 26-27' },
+];
+
+function buildFrames(): TapeCell[] {
+  const cells: TapeCell[] = [];
+
+  // 1. Initial 4 EMPTY film stock frames (Indices 0..3) so left edge is covered
+  for (let i = 0; i < 4; i++) {
+    cells.push({ kind: 'empty' });
+  }
+
+  // 2. First 5 Event images & alternating text cards (Indices 4..13)
+  for (let i = 0; i < 5; i++) {
+    const img = EVENT_IMAGES[i];
+    const textCell = TEXT_CELLS[i] ?? TEXT_CELLS[TEXT_CELLS.length - 1];
+    cells.push({
+      kind: 'image',
+      era: textCell.era,
+      code: `▶ IMG-${String(i + 1).padStart(2, '0')}`,
+      stock: img.name.toUpperCase(),
+      src: `/preloader/${img.name}.${img.ext}`,
+      alt: img.alt,
+    });
+    cells.push({ kind: 'text', ...textCell });
+  }
+
+  // 3. Index 14 (Reveal Frame): Transparent Reveal Window
+  cells.push({ kind: 'reveal', code: '■ GDG FRCRCE' });
+
+  // 4. Remaining Event images and text cards (Indices 15..18)
+  for (let i = 5; i < EVENT_IMAGES.length; i++) {
+    const img = EVENT_IMAGES[i];
+    const textCell = TEXT_CELLS[i] ?? TEXT_CELLS[TEXT_CELLS.length - 1];
+    cells.push({
+      kind: 'image',
+      era: textCell.era,
+      code: `▶ IMG-${String(i + 1).padStart(2, '0')}`,
+      stock: img.name.toUpperCase(),
+      src: `/preloader/${img.name}.${img.ext}`,
+      alt: img.alt,
+    });
+    cells.push({ kind: 'text', ...textCell });
+  }
+
+  // Extra filler text cards at the end of content (Indices 19..20)
+  cells.push({ kind: 'text', ...TEXT_CELLS[7] });
+  cells.push({ kind: 'text', ...TEXT_CELLS[8] });
+
+  // 5. Trailing 4 EMPTY film stock frames (Indices 21..24) so right edge is covered
+  for (let i = 0; i < 4; i++) {
+    cells.push({ kind: 'empty' });
+  }
+
+  return cells;
+}
+
+export const FRAMES = buildFrames();
+export const START_FRAME_INDEX = 4; // Index 4 = Genesis Image (dead-centered at start)
+export const REVEAL_FRAME_INDEX = 14; // Index 14 = Reveal Window (dead-centered at stop)
+export const TOTAL_FRAME_COUNT = FRAMES.length; // 25 total cells
+
+const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
   return (
-    <div className="loader-film-model" style={{ '--rewind': rewindIntensity } as React.CSSProperties}>
+    <div className="loader-film-model w-full h-full">
       <div className="loader-film-flex-shadow" />
       <div className="loader-film-thin-edge loader-film-thin-edge-back" />
       <div className="loader-film-body">
@@ -47,29 +116,96 @@ const FilmTape = React.memo(function FilmTape({ activeFrame, rewindIntensity }: 
           GDG FRCRCE ARCHIVE / REWINDING 2020s BACK TO 1970s / ANALOG HIGH SPEED
         </div>
 
-        <div className="loader-film-cells">
-          {frames.map((frame, index) => {
+        {/* Flexbox layout guarantees all 50 cells have exact equal width W/50 and stretch height without grid wrapping */}
+        <div
+          className="loader-film-cells"
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'stretch',
+            gap: '0.6%',
+            transform: 'none', // COMPLETELY DISABLE Independent translation from globals.css
+            zIndex: 15, // Ensure cells stack on top of body::after (z-index 8)
+            left: 0,
+            right: 0,
+            width: '100%',
+          }}
+        >
+          {FRAMES.map((frame, index) => {
+            if (frame.kind === 'reveal') {
+              return (
+                <div
+                  key="reveal-frame"
+                  className="loader-film-cell loader-film-cell-reveal relative flex-1 overflow-hidden"
+                  style={{ minWidth: 0, background: 'transparent', border: '2px solid rgba(251, 191, 36, 0.6)' }}
+                >
+                  <div className="loader-film-cell-reveal-frame pointer-events-none absolute inset-0" />
+                </div>
+              );
+            }
+
+            if (frame.kind === 'empty') {
+              return (
+                <div
+                  key={`empty-${index}`}
+                  className="loader-film-cell loader-film-cell-empty relative flex-1"
+                  style={{ minWidth: 0, background: '#090807' }}
+                >
+                  <div className="loader-film-gate-shadow" />
+                </div>
+              );
+            }
+
+            if (frame.kind === 'image') {
+              return (
+                <div
+                  key={`img-${index}`}
+                  className="loader-film-cell loader-film-cell-image relative flex-1 overflow-hidden"
+                  style={{ minWidth: 0, background: '#030303' }}
+                >
+                  <img
+                    src={frame.src}
+                    alt={frame.alt}
+                    loading="eager"
+                    decoding="async"
+                    draggable={false}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      zIndex: 10,
+                      display: 'block',
+                      border: '4px solid red', // DEBUG BORDER
+                    }}
+                  />
+                  <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-left`} style={{ zIndex: 20 }}>{frame.code}</div>
+                  <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-right`} style={{ zIndex: 20 }}>{frame.stock}</div>
+                  <div className="loader-film-gate-shadow pointer-events-none" style={{ zIndex: 20 }} />
+                </div>
+              );
+            }
+
             const isActive = frame.era === activeFrame;
-            const isOpeningFrame = index === 0;
 
             return (
-              <div key={`${frame.code}-${index}`} className={`loader-film-cell ${isActive ? 'is-active' : ''} ${isOpeningFrame ? 'is-opening-frame' : ''}`}>
+              <div
+                key={`txt-${index}`}
+                className={`loader-film-cell relative flex-1 ${isActive ? 'is-active' : ''} ${frame.isOpeningFrame ? 'is-opening-frame' : ''}`}
+                style={{ minWidth: 0 }}
+              >
                 <div className="loader-film-cell-exposure" />
                 <div className="loader-film-cell-halation" />
                 <div className="loader-film-cell-noise" />
                 <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-left`}>{frame.code}</div>
                 <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-right`}>{frame.stock}</div>
-                <motion.div
-                  animate={{
-                    opacity: isActive ? 1 : 0.72,
-                    filter: isActive ? 'blur(0px)' : 'blur(0.35px)',
-                  }}
-                  transition={{ duration: 0.12, ease: 'linear' }}
-                  className={`${isOpeningFrame ? orbitron.className : specialElite.className} loader-film-year ${isOpeningFrame ? 'loader-film-year-opening' : ''}`}
+                <div
+                  className={`${frame.isOpeningFrame ? orbitron.className : specialElite.className} loader-film-year ${frame.isOpeningFrame ? 'loader-film-year-opening' : ''}`}
                 >
                   <span>{frame.label}</span>
-                  {'suffix' in frame && frame.suffix && <span className={`${shareTechMono.className} loader-film-year-x`}>{frame.suffix}</span>}
-                </motion.div>
+                  {frame.suffix && <span className={`${shareTechMono.className} loader-film-year-x`}>{frame.suffix}</span>}
+                </div>
                 <div className="loader-film-gate-shadow" />
               </div>
             );
@@ -85,3 +221,6 @@ const FilmTape = React.memo(function FilmTape({ activeFrame, rewindIntensity }: 
 });
 
 export default FilmTape;
+
+
+
