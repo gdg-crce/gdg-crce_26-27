@@ -23,7 +23,7 @@ export default function TearTransition() {
       // End exactly when the bottom of this spacer leaves the top of the viewport
       // (which means the Events section is now perfectly at the top of the viewport)
       end: 'bottom top', 
-      scrub: true,
+      scrub: 1.5,
       onUpdate: (self) => {
         const p = self.progress;
         
@@ -39,21 +39,37 @@ export default function TearTransition() {
         }
         
         if (leftTearRef.current && rightTearRef.current) {
-           // Peeling sequence
-           // 0.00 to 0.10: Locked tight (no movement)
-           // 0.10 to 0.50: Left half peels off
-           // 0.50 to 0.90: Right half peels off
-           // 0.90 to 1.00: Locked on event background
-
-           const leftP = Math.max(0, Math.min(1, (p - 0.10) / 0.40));
-           const rightP = Math.max(0, Math.min(1, (p - 0.50) / 0.40));
+           // 1. Crack opens slowly horizontally (0.0 to 0.15)
+           const crackP = Math.min(1, p / 0.15);
            
-           // Left half peels away like a torn poster falling off
-           leftTearRef.current.style.transform = `translate(${-leftP * 40}vw, ${leftP * 20}vh) rotate(${-leftP * 15}deg)`;
+           // 2. Left half peels off towards the user and falls (0.15 to 0.55)
+           const leftP = Math.max(0, Math.min(1, (p - 0.15) / 0.40));
+           
+           // 3. Right half peels off towards the user and falls (0.55 to 0.95)
+           const rightP = Math.max(0, Math.min(1, (p - 0.55) / 0.40));
+           
+           // Apply transformations
+           // Crack expands up to 2vw on each side before falling.
+           // When falling, we translate Z massively towards the camera, drop it Y, and tumble it.
+           
+           leftTearRef.current.style.transform = `
+             translateX(${-crackP * 2 - leftP * 20}vw) 
+             translateY(${leftP * 100}vh) 
+             translateZ(${leftP * 800}px) 
+             rotateX(${-leftP * 45}deg) 
+             rotateY(${-leftP * 45}deg) 
+             rotateZ(${-leftP * 20}deg)
+           `;
            leftTearRef.current.style.opacity = `${1 - leftP}`;
 
-           // Right half peels away
-           rightTearRef.current.style.transform = `translate(${rightP * 40}vw, ${rightP * 20}vh) rotate(${rightP * 15}deg)`;
+           rightTearRef.current.style.transform = `
+             translateX(${crackP * 2 + rightP * 20}vw) 
+             translateY(${rightP * 100}vh) 
+             translateZ(${rightP * 800}px) 
+             rotateX(${-rightP * 45}deg) 
+             rotateY(${rightP * 45}deg) 
+             rotateZ(${rightP * 20}deg)
+           `;
            rightTearRef.current.style.opacity = `${1 - rightP}`;
         }
       }
@@ -65,7 +81,7 @@ export default function TearTransition() {
   return (
     <>
       {/* Spacer in DOM that we scroll past while the fixed overlay is active */}
-      <div ref={triggerRef} style={{ height: '2000px', width: '100%' }} />
+      <div ref={triggerRef} style={{ height: '1000px', width: '100%' }} />
 
       {/* Fixed overlay that sits above the scrolling DOM */}
       <div ref={overlayRef} className="tear-fixed-overlay" aria-hidden="true">

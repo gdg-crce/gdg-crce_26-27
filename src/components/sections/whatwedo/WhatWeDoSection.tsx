@@ -26,7 +26,7 @@ const ramp = (a: number, b: number, x: number) => {
 
 /** Pinned scroll length. Matches the Events act's density (~ one screen of
  *  scroll per beat: flash, pan-out, three prints, handoff). */
-const SCROLL_END = 8000;
+const SCROLL_END = 4000;
 
 /** Scroll distance, measured from the pin's start, over which the seam flash
  *  clears back down to reveal the scene behind it. */
@@ -75,7 +75,7 @@ export default function WhatWeDoSection() {
       pin: containerRef.current,
       start: 'top top',
       end: `+=${SCROLL_END}`,
-      scrub: 0.6,
+      scrub: 1.5,
       onUpdate: (self) => {
         const p = self.progress;
         progressRef.current = p;
@@ -100,7 +100,7 @@ export default function WhatWeDoSection() {
       trigger: sectionRef.current,
       start: () => `top bottom+=${Math.round(window.innerHeight * 0.6)}`,
       end: () => `+=${Math.round(window.innerHeight * 1.6 + REVEAL_PX)}`,
-      scrub: true,
+      scrub: 1.5,
       onUpdate: (self) => {
         const p = self.progress;
         const vh = window.innerHeight;
