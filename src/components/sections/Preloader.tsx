@@ -39,13 +39,13 @@ function frameForProgress(progress: number): FilmFrame {
  * With flex gaps at 0.6%, each cell consumes 3.424% of tape width, and each gap consumes 0.6%.
  * Exact center fraction of cell N (0-indexed) = N * 4.024% + 1.712%.
  * - Start Frame (Genesis image at Index 4) center fraction = 4 * 0.04024 + 0.01712 = 0.17808 (17.808%).
- * - Reveal Frame (Reveal Window at Index 14) center fraction = 14 * 0.04024 + 0.01712 = 0.58048 (58.048%).
+ * - Reveal Frame (Reveal Window at Index 18) center fraction = 18 * 0.04024 + 0.01712 = 0.74144 (74.144%).
  * When stripX = (0.50 - currentFraction) * 100 (% of strip width):
  * - At p=0 (currentFraction = 0.17808), Genesis sits DEAD CENTER on screen, with 4 empty lead-in cells covering the left edge.
- * - At TRANSLATE_END (currentFraction = 0.58048), Reveal sits DEAD CENTER on screen, with 4 empty lead-out cells covering the right edge!
+ * - At TRANSLATE_END (currentFraction = 0.74144), Reveal sits DEAD CENTER on screen, with 4 empty lead-out cells covering the right edge!
  */
 const fStart = 0.17808;
-const fReveal = 0.58048;
+const fReveal = 0.74144;
 
 // Timeline progress markers (0 -> 1):
 // 0.00 -> 0.35: Phase 1 — Initial Pause (Genesis Image dead-centered for 10.0s)
@@ -314,12 +314,12 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
               </div>
             </div>
 
-            {/* Infinite film strip container — vertically prominent at 62% top with 500vw width for exactly 5 visible cells on screen */}
+            {/* Infinite film strip container — vertically prominent at 55% top with 500vw width for exactly 5 visible cells on screen */}
             <div
               ref={filmWrapRef}
               className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 will-change-transform pointer-events-none flex items-center justify-center"
               style={{
-                top: '62%',
+                top: '55%',
                 width: 'max(4000px, 500vw)',
                 height: 'clamp(180px, 18vw, 350px)',
                 transformOrigin: '50% 50%',

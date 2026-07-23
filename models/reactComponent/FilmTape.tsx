@@ -46,9 +46,8 @@ function buildFrames(): TapeCell[] {
   for (let i = 0; i < 4; i++) {
     cells.push({ kind: 'empty' });
   }
-
-  // 2. First 5 Event images & alternating text cards (Indices 4..13)
-  for (let i = 0; i < 5; i++) {
+  // 2. All 7 Event images & alternating text cards (Indices 4..17)
+  for (let i = 0; i < EVENT_IMAGES.length; i++) {
     const img = EVENT_IMAGES[i];
     const textCell = TEXT_CELLS[i] ?? TEXT_CELLS[TEXT_CELLS.length - 1];
     cells.push({
@@ -62,29 +61,14 @@ function buildFrames(): TapeCell[] {
     cells.push({ kind: 'text', ...textCell });
   }
 
-  // 3. Index 14 (Reveal Frame): Transparent Reveal Window
+  // 3. Index 18 (Reveal Frame): Transparent Reveal Window
   cells.push({ kind: 'reveal', code: '■ GDG FRCRCE' });
-
-  // 4. Remaining Event images and text cards (Indices 15..18)
-  for (let i = 5; i < EVENT_IMAGES.length; i++) {
-    const img = EVENT_IMAGES[i];
-    const textCell = TEXT_CELLS[i] ?? TEXT_CELLS[TEXT_CELLS.length - 1];
-    cells.push({
-      kind: 'image',
-      era: textCell.era,
-      code: `▶ IMG-${String(i + 1).padStart(2, '0')}`,
-      stock: img.name.toUpperCase(),
-      src: `/preloader/${img.name}.${img.ext}`,
-      alt: img.alt,
-    });
-    cells.push({ kind: 'text', ...textCell });
-  }
 
   // Extra filler text cards at the end of content (Indices 19..20)
   cells.push({ kind: 'text', ...TEXT_CELLS[7] });
   cells.push({ kind: 'text', ...TEXT_CELLS[8] });
 
-  // 5. Trailing 4 EMPTY film stock frames (Indices 21..24) so right edge is covered
+  // 4. Trailing 4 EMPTY film stock frames (Indices 21..24) so right edge is covered
   for (let i = 0; i < 4; i++) {
     cells.push({ kind: 'empty' });
   }
@@ -94,7 +78,7 @@ function buildFrames(): TapeCell[] {
 
 export const FRAMES = buildFrames();
 export const START_FRAME_INDEX = 4; // Index 4 = Genesis Image (dead-centered at start)
-export const REVEAL_FRAME_INDEX = 14; // Index 14 = Reveal Window (dead-centered at stop)
+export const REVEAL_FRAME_INDEX = 18; // Index 18 = Reveal Window (dead-centered at stop)
 export const TOTAL_FRAME_COUNT = FRAMES.length; // 25 total cells
 
 const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
