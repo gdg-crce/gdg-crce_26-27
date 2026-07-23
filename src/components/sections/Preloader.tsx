@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import './xp-loader.css';
 
 const FilmTape = dynamic(() => import('../../../models/reactComponent/FilmTape'), {
   ssr: false,
@@ -210,53 +211,38 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
           <AnimatePresence>
             {!assetsReady && (
               <motion.div
-                key="asset-buffer-loader"
+                key="xp-asset-buffer-loader"
                 initial={{ opacity: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.4, ease: 'easeInOut' } }}
-                className="fixed inset-0 z-[100000] flex flex-col items-center justify-center bg-[#080706] text-neutral-200 p-6 select-none"
+                className="xp-boot-screen"
               >
-                <div className="loader-crt-green-wash" />
-                <div className="preloader-scanlines opacity-40" />
-
-                <div className="relative z-10 w-full max-w-md space-y-6 text-center font-mono">
-                  <div className="flex items-center justify-center gap-2 text-xs uppercase tracking-[0.3em] text-amber-400/90 font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                    <span>GDG FRCRCE ARCHIVE SYSTEM</span>
+                <div className="xp-center-content">
+                  {/* GDSC Logo */}
+                  <div className="xp-logo-container">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/logo.png" className="xp-logo-image" alt="GDG CRCE Logo" draggable={false} />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <div className="text-sm tracking-widest text-neutral-300">
-                      SYNCING 35MM REEL &amp; PRE-BUFFERING CINEMA STREAM...
-                    </div>
-                    <div className="text-2xl font-bold tracking-tight text-white">
-                      {Math.floor(bufferProgress)}%
-                    </div>
+                  {/* Typography */}
+                  <div className="xp-brand">
+                    <span className="xp-title">Sunékheia</span>
+                    <span className="xp-subtitle">xp</span>
                   </div>
+                  <div className="xp-role">GDG CRCE</div>
 
-                  <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
-                    <motion.div
-                      className="h-full rounded-full bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]"
-                      style={{ width: `${bufferProgress}%` }}
-                      transition={{ ease: 'linear' }}
-                    />
+                  {/* Blue Sliding Loading Bar */}
+                  <div className="xp-loading-bar-container">
+                    <div className="xp-loading-bar">
+                      <div className="xp-loading-segment" />
+                      <div className="xp-loading-segment" />
+                      <div className="xp-loading-segment" />
+                    </div>
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-1 text-[11px] text-neutral-400/75 tracking-wider">
-                    <div className="flex justify-between border-b border-white/5 pb-1">
-                      <span>35MM CELL CONTINUITY</span>
-                      <span className="text-emerald-400">[ READY ]</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-1">
-                      <span>VHS GLTF CASSETTE</span>
-                      <span className="text-emerald-400">[ READY ]</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>VIDEO BUFFER (10s LOCK)</span>
-                      <span className={bufferProgress > 60 ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}>
-                        {bufferProgress > 60 ? '[ STREAMING ]' : '[ SYNCING ]'}
-                      </span>
-                    </div>
-                  </div>
+                <div className="xp-bottom-text">
+                  For the best experience<br />
+                  Enter Full Screen (F11)
                 </div>
               </motion.div>
             )}
