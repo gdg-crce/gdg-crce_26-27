@@ -7,13 +7,13 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { unlockPolaroidAudio, playShutter } from './polaroidAudio';
 import './whatwedo.css';
 
-/* The flat (2D DOM) Polaroid wall — dynamically imported (ssr:false) so its
+/* The interactive Polaroid album — dynamically imported (ssr:false) so its
    IntersectionObserver + rAF frame loop only ever runs client-side. */
-const PolaroidScene2D = dynamic(() => import('./PolaroidScene2D'), {
+const PolaroidAlbumScene = dynamic(() => import('./PolaroidAlbumScene'), {
   ssr: false,
   loading: () => (
     <div className="wwd-loading">
-      <span>DEVELOPING…</span>
+      <span>REVISITING MEMORIES…</span>
     </div>
   ),
 });
@@ -59,68 +59,38 @@ export default function WhatWeDoSection() {
     gsap.registerPlugin(ScrollTrigger);
     reducedRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Reduced motion swaps the bright flash for a gentle dark blink — same seam
-    // mask, no strobe — because a full-viewport white flash is exactly the kind
-    // of thing that setting asks us not to do.
-    if (flashRef.current) {
-      flashRef.current.style.background = reducedRef.current ? '#050409' : '#ffffff';
-    }
+    // ── TRANSITION MASK ─────────────────────────────────────────────────────
+    // Instantly covers the screen at the exact moment the scroll-up begins.
+    // Maps the 100vh physical scroll-up directly to the first 15% of the book shrinking!
+    const transition = ScrollTrigger.create({
+      trigger: sectionRef.current,
+      start: 'top bottom',
+      end: 'top top',
+      scrub: true,
+      onUpdate: (self) => {
+        if (flashRef.current) {
+          flashRef.current.style.opacity = self.progress > 0 ? '1' : '0';
+          flashRef.current.style.pointerEvents = self.progress > 0.5 ? 'auto' : 'none';
+        }
+        // Drive the morph phase!
+        progressRef.current = self.progress * 0.15;
+      }
+    });
 
     // ── MAIN PIN ────────────────────────────────────────────────────────────
-    // Scrubs 0→1 into progressRef, read by the 2D scene (camera settle + the
-    // prints developing in). The print whir is fired from PolaroidScene2D, which
-    // owns the reveal schedule.
     const trigger = ScrollTrigger.create({
       trigger: sectionRef.current,
       pin: containerRef.current,
       start: 'top top',
       end: `+=${SCROLL_END}`,
-      scrub: 1.5,
+      scrub: true,
       onUpdate: (self) => {
-        const p = self.progress;
-        progressRef.current = p;
-
-        // HANDOFF removed for tear transition
+        // Drive the page flips!
+        progressRef.current = 0.15 + self.progress * 0.85;
       },
     });
 
-    // ── SEAM FLASH ──────────────────────────────────────────────────────────
-    // The fixed whiteout that masks the About→WhatWeDo hand-off. It lives
-    // OUTSIDE the pinned stage (position:fixed), so it blankets the viewport
-    // across the seam where the two pinned sections swap. Rises to solid white
-    // over the tail of the About turntable, HOLDS white while the sections slide
-    // behind it, then clears once we are pinned — so the lens is revealed
-    // through the flash and never visibly scrolls up.
-    //
-    // Not pinned, and its end is a pixel length, so it scrubs straight through
-    // the seam and on into the start of the pin without touching the pin's own
-    // scrub math. Function start/end re-resolve against innerHeight on refresh.
-    let flashPrev = -1;
-    const flash = ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: () => `top bottom+=${Math.round(window.innerHeight * 0.6)}`,
-      end: () => `+=${Math.round(window.innerHeight * 1.6 + REVEAL_PX)}`,
-      scrub: 1.5,
-      onUpdate: (self) => {
-        const p = self.progress;
-        const vh = window.innerHeight;
-        const total = vh * 1.6 + REVEAL_PX;
-        const riseEnd = (vh * 0.6) / total; // solid white by the start of the seam
-        const holdEnd = (vh * 1.6) / total; // hold white until the pin engages
-        let op: number;
-        if (p <= riseEnd) op = ramp(0, riseEnd, p);
-        else if (p <= holdEnd) op = 1;
-        else op = 1 - ramp(holdEnd, 1, p);
-        if (flashRef.current) flashRef.current.style.opacity = op.toFixed(3);
-
-        // shutter click fires once, on the forward crossing into full white
-        if (flashPrev >= 0 && flashPrev < riseEnd && p >= riseEnd) playShutter();
-        flashPrev = p;
-      },
-    });
-
-    // Unlock audio on the first real gesture (the visitor has already clicked
-    // the preloader and is scrolling to reach here).
+    // Unlock audio on the first real gesture
     const unlock = () => {
       unlockPolaroidAudio();
       window.removeEventListener('pointerdown', unlock);
@@ -141,24 +111,22 @@ export default function WhatWeDoSection() {
       window.removeEventListener('wheel', unlock);
       window.removeEventListener('touchstart', unlock);
       trigger.kill();
-      flash.kill();
+      transition.kill();
     };
   }, []);
 
   return (
-    <section ref={sectionRef} id="what-we-do" className="whatwedo-section" aria-label="What GDG CRCE does">
-      {/* Seam flash — OUTSIDE the pinned stage, position:fixed, so it blankets
-          the whole viewport during the About→WhatWeDo hand-off and hides the
-          scroll seam. Driven by its own trigger (see the effect above). */}
-      <div ref={flashRef} className="wwd-seam-flash" aria-hidden="true" />
-
-      <div ref={containerRef} className="wwd-pin">
-        {/* the flat Polaroid wall (table + camera + caption prints) */}
-        <div className="wwd-canvas-wrap">
-          <PolaroidScene2D progressRef={progressRef} />
-        </div>
-
+    <>
+      {/* The globally fixed wrapper that prevents the scroll-up and holds the 3D scene */}
+      <div ref={flashRef} className="fixed-album-wrapper">
+        <div className="wwd-solid-bg" />
+        <PolaroidAlbumScene progressRef={progressRef} />
       </div>
-    </section>
+
+      <section ref={sectionRef} id="what-we-do" className="whatwedo-section" aria-label="What GDG CRCE does">
+        {/* The pin spacer just dictates the physical scroll height */}
+        <div ref={containerRef} className="wwd-pin-spacer" />
+      </section>
+    </>
   );
 }

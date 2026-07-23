@@ -40,86 +40,215 @@
   display: block;
 }
 
-/* ── the 2D Polaroid wall ──────────────────────────────────────────────────
-   A flat DOM scene (no WebGL): a wooden table, the Polaroid camera dead-centre,
-   and the caption prints fanned to the four corners. Positions are centre-based
-   percentages of the stage; the camera + prints are placed with
-   translate(-50%,-50%) and animated on top of that from the scroll (see
-   PolaroidScene2D). Everything is pointer-events:none — the section scrolls. */
-.wwd2d-root {
+/* ── the 3D Photo Album ────────────────────────────────────────────────────
+   A fully interactive 3D CSS photo album. The scroll progress drives the
+   rotateY property of the pages to simulate a book opening. */
+.album-scene-root {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1a1512;
   overflow: hidden;
+  perspective: 2500px;
 }
-.wwd2d-table {
-  position: absolute;
-  inset: 0;
-  background: #17141c url('/whatwedo/table.webp') center / cover no-repeat;
-}
-/* soft corner falloff so the table recedes and the centre reads as lit */
-.wwd2d-vignette {
+
+.album-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 9;
-  background: radial-gradient(125% 105% at 50% 44%, transparent 42%, rgba(6, 4, 9, 0.34) 100%);
+  z-index: 100;
+  background: radial-gradient(circle, transparent 40%, rgba(30, 10, 0, 0.8) 120%);
 }
-.wwd2d-camera {
+
+.dust {
   position: absolute;
-  z-index: 10;
-  pointer-events: none;
-  height: clamp(400px, 80vh, 950px);
-  width: auto;
-  transform: translate(-50%, -50%);
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.04; /* Lowered grain opacity as requested */
+  mix-blend-mode: overlay;
+}
+
+.album-container-wrapper {
+  position: relative;
+  /* Album is 32:9 aspect ratio so its half (the cover) is a perfect 16:9 landscape */
+  width: 90vw;
+  max-width: 1280px;
+  height: 25.3125vw;
+  max-height: 360px;
+}
+
+.album-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: albumFloat 8s ease-in-out infinite;
+  transform: rotateX(5deg);
+}
+
+@keyframes albumFloat {
+  0%, 100% { transform: translateY(0) rotateX(8deg) rotateY(0deg); }
+  50% { transform: translateY(-15px) rotateX(12deg) rotateY(-3deg); }
+}
+
+.album-back-cover, .album-page, .album-cover {
+  position: absolute;
+  top: 0;
   left: 50%;
-  top: 24%;
-  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.5));
+  width: 50%;
+  height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
   will-change: transform;
 }
-.wwd2d-photo-wrapper {
+
+.album-back-cover {
+  background: #2a1f1a;
+  box-shadow: 15px 15px 40px rgba(0,0,0,0.6), inset -5px 0 20px rgba(0,0,0,0.5);
+  border-radius: 4px 15px 15px 4px;
+}
+
+.cover-front, .cover-back, .page-front, .page-back {
   position: absolute;
-  pointer-events: auto;
-  width: clamp(250px, 28vw, 420px);
-  height: auto;
-  transform: translate(-50%, -50%);
-  will-change: transform, opacity;
-}
-.wwd2d-photo-wrapper img {
-  display: block;
-  width: 100%;
-  height: auto;
-  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.42));
-  transition: transform 0.75s cubic-bezier(0.19, 1, 0.22, 1), filter 0.75s ease;
-}
-.wwd2d-photo-wrapper:hover {
-  z-index: 50 !important;
-}
-.wwd2d-photo-wrapper:hover img {
-  transform: scale(1.15);
-  filter: drop-shadow(0 25px 40px rgba(0, 0, 0, 0.6));
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 4px 15px 15px 4px;
 }
 
-/* ── the seam flash ────────────────────────────────────────────────────────
-   Fixed to the viewport and above everything, so it masks the whole
-   About→WhatWeDo hand-off. Solid fill (not a soft radial) so the seam is fully
-   hidden at the peak — a radial that faded to transparent at the edges would
-   let the sliding scene leak past the corners. JS swaps the fill to a dark
-   blink under prefers-reduced-motion. Opacity is scrubbed from the effect.
+.cover-back, .page-back {
+  transform: rotateY(180deg);
+  border-radius: 15px 4px 4px 15px;
+}
 
-   z-index MUST clear the About turntable: `.tt-pin` sits at z-index 9995 (it
-   has to cover the fixed hero video — see about.css). At any lower value the
-   turntable paints straight over this flash while it scrolls up, which is the
-   hard top/bottom split the flash exists to prevent. 99990 keeps it above every
-   pinned section yet below the preloader (z 100000), which it never coexists
-   with anyway. */
-.wwd-seam-flash {
+.album-cover .cover-front {
+  background-image: url('/whatwedo/image.png');
+  background-size: 100% 100%;
+  background-position: center;
+  box-shadow: inset -5px 0 20px rgba(0,0,0,0.6), inset 2px 0 5px rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-left: 5px solid #1a0f0b;
+}
+
+.cover-title, .cover-subtitle {
+  display: none; /* Hide old text */
+}
+
+.album-cover .cover-back {
+  background: #111;
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 4px);
+}
+
+/* Authentic Textured Pages with Plastic Gloss and Stitching */
+.page-front, .page-back {
+  background-color: #1a1a1a;
+  /* Carbon/woven fine texture */
+  background-image: 
+    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4)),
+    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4));
+  background-size: 4px 4px;
+  background-position: 0 0, 2px 2px;
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+  border-left: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+}
+
+/* Stitched pockets grid (2x2 layout like the reference) */
+.page-front::before, .page-back::before {
+  content: '';
+  position: absolute;
+  inset: 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: 
+    linear-gradient(to right, transparent calc(50% - 1px), rgba(255, 255, 255, 0.1) 50%, transparent calc(50% + 1px)),
+    linear-gradient(to bottom, transparent calc(50% - 1px), rgba(255, 255, 255, 0.1) 50%, transparent calc(50% + 1px));
+  background-size: 100% 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* High-gloss plastic reflection overlay */
+.page-front::after, .page-back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* Sharp gloss lines simulating light reflecting off plastic film */
+  background: linear-gradient(110deg, 
+    rgba(255,255,255,0) 30%, 
+    rgba(255,255,255,0.03) 35%, 
+    rgba(255,255,255,0.15) 40%, 
+    rgba(255,255,255,0) 45%, 
+    rgba(255,255,255,0) 65%, 
+    rgba(255,255,255,0.08) 70%, 
+    rgba(255,255,255,0) 75%);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.polaroid-item {
+  position: absolute;
+  width: 70%;
+  max-width: 250px;
+  box-shadow: 5px 10px 25px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.polaroid-item:hover {
+  filter: brightness(1.1) contrast(1.1);
+  z-index: 10;
+}
+
+.pol-1 { top: 8%; left: 15%; transform: rotate(-4deg); }
+.pol-2 { bottom: 8%; right: 10%; transform: rotate(3deg); }
+
+.pol-3 { top: 12%; right: 12%; transform: rotate(4deg); }
+.pol-4 { bottom: 12%; left: 10%; transform: rotate(-5deg); }
+
+.pol-5 { top: 25%; left: 10%; transform: rotate(-2deg); width: 80%; max-width: 300px; }
+
+.memory-text {
+  position: absolute;
+  top: 45%;
+  left: 10%;
+  right: 10%;
+  text-align: center;
+  color: #8c857b;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  transform: rotate(-2deg);
+  opacity: 0.5;
+}
+
+/* ── globally fixed album wrapper ─────────────────────────────────────────
+   The album is completely removed from document flow so it never physically
+   scrolls up. It just sits in the viewport, and GSAP controls its opacity
+   and internal 3D animations based on scroll. */
+.fixed-album-wrapper {
   position: fixed;
   inset: 0;
   z-index: 99990;
   pointer-events: none;
   opacity: 0;
   will-change: opacity;
-  background: #ffffff;
+}
+
+/* The solid background that hides the rotating About section */
+.wwd-solid-bg {
+  position: absolute;
+  inset: 0;
+  background: #0a0807; /* Perfectly matches the site body background */
+}
+
+/* Provides the 100vh physical block for GSAP to pin against in the DOM */
+.wwd-pin-spacer {
+  position: relative;
+  width: 100%;
+  height: 100vh;
 }
 
 /* ── loader (while the WebGL bundle + scene spin up) ───────────────────── */
