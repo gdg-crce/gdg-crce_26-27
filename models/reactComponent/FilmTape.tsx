@@ -121,9 +121,24 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
                 <div
                   key="reveal-frame"
                   className="loader-film-cell loader-film-cell-reveal relative flex-1 overflow-hidden"
-                  style={{ minWidth: 0, background: 'transparent', border: '2px solid rgba(251, 191, 36, 0.6)' }}
+                  style={{ minWidth: 0, background: '#000', border: '2px solid rgba(251, 191, 36, 0.6)' }}
                 >
-                  <div className="loader-film-cell-reveal-frame pointer-events-none absolute inset-0" />
+                  <video
+                    src="/videos/intro.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      zIndex: 10,
+                    }}
+                  />
+                  <div className="loader-film-cell-reveal-frame pointer-events-none absolute inset-0" style={{ zIndex: 20 }} />
                 </div>
               );
             }

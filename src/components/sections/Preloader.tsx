@@ -314,12 +314,12 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
               </div>
             </div>
 
-            {/* Infinite film strip container — vertically prominent at 55% top with 500vw width for exactly 5 visible cells on screen */}
+            {/* Infinite film strip container — vertically prominent at 50% top with 500vw width for exactly 5 visible cells on screen */}
             <div
               ref={filmWrapRef}
               className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 will-change-transform pointer-events-none flex items-center justify-center"
               style={{
-                top: '55%',
+                top: '50%',
                 width: 'max(4000px, 500vw)',
                 height: 'clamp(180px, 18vw, 350px)',
                 transformOrigin: '50% 50%',
