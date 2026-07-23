@@ -2,10 +2,10 @@
 
 import React, { useMemo, useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { whatWeDoItems } from '@/components/sections/whatwedo/whatWeDoData';
 import { pacifico, spaceGrotesk } from '@/lib/fonts';
+import PolaroidOneStep from '../../../models/reactComponent/PolaroidOneStep';
 
 /* ══════════════════════════════════════════════════════════════════════════
    PolaroidScene — the lens-portal (Act 2.5)
@@ -55,22 +55,23 @@ function sampleVec(keys: [number, [number, number, number]][], p: number, out: T
 const POS_KEYS: [number, [number, number, number]][] = [
   [0.0, [0, 0.3, 1.0]],
   [0.14, [0, 0.45, 2.6]],
-  [0.4, [0, 0.7, 6.7]],
-  [0.75, [0.15, 0.4, 7.7]],
-  [1.0, [0.15, 0.2, 8.4]],
+  [0.42, [0, 0.8, 6.8]],
+  [0.85, [0, 1.2, 7.5]],
+  [1.0, [0, 4.5, 8.5]],
 ];
 const LOOK_KEYS: [number, [number, number, number]][] = [
   [0.0, [0, 0.3, 0.3]],
   [0.14, [0, 0.35, 1.0]],
-  [0.4, [0, -0.15, 0.5]],
-  [0.75, [0, -1.05, 1.4]],
-  [1.0, [0, -1.25, 1.4]],
+  [0.42, [0, -0.2, 0.5]],
+  [0.85, [0, -0.5, 1.5]],
+  [1.0, [0, -1.5, 2.9]],
 ];
 const FOV_KEYS: [number, number][] = [
   [0.0, 72],
   [0.14, 58],
-  [0.4, 44],
-  [1.0, 46],
+  [0.42, 44],
+  [0.85, 46],
+  [1.0, 50],
 ];
 
 /* ── printed-photo choreography ─────────────────────────────────────────── */
@@ -80,9 +81,9 @@ const SLOT = new THREE.Vector3(0, -1.15, 1.35); // the model's film slot
 /** Resting pose per print — laid FLAT on the table (rotX ≈ -90°, face up),
  *  fanned with a curated random rotation, forming a physical archive. */
 const STACK: { pos: [number, number, number]; rot: [number, number, number] }[] = [
-  { pos: [-0.9, -1.61, 2.7], rot: [-1.5, 0.05, 0.36] },
-  { pos: [0.15, -1.57, 3.15], rot: [-1.53, -0.03, -0.2] },
-  { pos: [1.0, -1.6, 2.6], rot: [-1.47, 0.02, 0.55] },
+  { pos: [-1.35, -1.61, 2.4], rot: [-1.5, 0.08, 0.36] },
+  { pos: [0.1, -1.57, 3.4], rot: [-1.53, -0.03, -0.2] },
+  { pos: [1.45, -1.6, 2.3], rot: [-1.47, 0.02, 0.55] },
 ];
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -359,37 +360,41 @@ function PhotoBody({
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   The real Meshy-generated Polaroid (compressed GLB, meshopt + webp)
+   The Polaroid model — "Polaroid One Step Camera" (CC-BY-4.0, riotboy /
+   Sketchfab), compressed to ~285KB (meshopt + webp). Component + attribution
+   live in models/reactComponent/PolaroidOneStep.tsx.
    ══════════════════════════════════════════════════════════════════════════ */
-/** Wrapper transform that normalises the model into scene space (front → +Z,
- *  sized + centred to the rig). Tuned to the asset below. */
-const MODEL_SCALE = 1.7;
-const MODEL_POS: [number, number, number] = [0, 0, 0];
+/** Fit transform. The model is ~4.1 × 4.9 × 4.7 units, centred near its own
+ *  origin; this scales it to ~3.3u tall, sits it on the desk (y ≈ -1.66) and
+ *  centres it in x/z. The lens ("glass") faces +Z, toward the camera.
+ *
+ *  NOTE: the camera path (POS_KEYS / LOOK_KEYS) and the film SLOT were tuned to
+ *  the PREVIOUS polaroid's lens geometry. This model's lens sits up-and-right of
+ *  centre, so the "start inside the lens" moment and the print-eject origin will
+ *  need re-tuning to match — adjust these three constants together with the
+ *  camera keys and SLOT once you can see it. */
+const MODEL_SCALE = 0.67;
+const MODEL_POS: [number, number, number] = [0.08, -0.08, 0.01];
 const MODEL_ROT: [number, number, number] = [0, 0, 0];
 
 function PolaroidModel() {
-  // meshopt is auto-configured by drei; draco disabled (asset uses neither)
-  const { scene } = useGLTF('/models/polaroid.glb', false);
-  const model = useMemo(() => {
-    const c = scene.clone(true);
-    c.traverse((o) => {
+  const ref = useRef<THREE.Group>(null);
+  // the model ships its own materials; match them to the scene's env exposure
+  useEffect(() => {
+    ref.current?.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.isMesh) {
-        m.castShadow = true;
-        m.receiveShadow = true;
         const mat = m.material as THREE.MeshStandardMaterial;
         if (mat) mat.envMapIntensity = 0.9;
       }
     });
-    return c;
-  }, [scene]);
+  }, []);
   return (
-    <group position={MODEL_POS} rotation={MODEL_ROT} scale={MODEL_SCALE}>
-      <primitive object={model} />
+    <group ref={ref} position={MODEL_POS} rotation={MODEL_ROT} scale={MODEL_SCALE}>
+      <PolaroidOneStep />
     </group>
   );
 }
-useGLTF.preload('/models/polaroid.glb');
 
 /* ══════════════════════════════════════════════════════════════════════════
    Scene — env, lights, camera, and the single pose() driver
@@ -442,7 +447,6 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
       sampleVec(LOOK_KEYS, p, tmpLook);
       // pointer parallax, only once we've pulled back out of the lens
       const par = smooth(0.34, 0.55, p) * 0.5;
-      tmpPos.x += px * par;
       tmpPos.y += py * par;
       cam.position.copy(tmpPos);
       cam.lookAt(tmpLook);
@@ -474,7 +478,7 @@ function Scene({ progressRef }: { progressRef: React.RefObject<number> }) {
         // rotation: upright at the slot → laid-back stack pose
         h.group.rotation.set(st.rot[0] * emerge, st.rot[1] * emerge, st.rot[2] * emerge);
         // scale: a touch small as it clears the slot, to sell the eject
-        const s = lerp(0.86, 1, emerge);
+        const s = lerp(0.86, 1.25, emerge);
         h.group.scale.setScalar(s);
         h.develop.opacity = 1 - develop;
       }

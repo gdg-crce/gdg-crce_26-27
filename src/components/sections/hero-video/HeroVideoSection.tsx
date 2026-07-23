@@ -106,7 +106,7 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       trigger: document.body,
       start: 0,
       end: () => window.innerHeight, // 100vh runway
-      scrub: true,
+      scrub: 1.5,
       onUpdate: (self) => {
         const e = self.progress;
         const opacity = 1 - ramp(0.1, 0.9, e);

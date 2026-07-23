@@ -604,6 +604,8 @@ function WetSidewalkAndStreet() {
   ] = useMemo(() => {
     if (cachedSidewalkTextures) return cachedSidewalkTextures;
 
+    const rnd = mulberry32(0x5723);
+
     /* ══════════════════════════════════════════════════════════════════
        1. Authentic 90s Grey Concrete Footwalk (Sidewalk against wall)
        Poured urban cement slab with saw-cut expansion joints, fine stone
@@ -622,11 +624,11 @@ function WetSidewalkAndStreet() {
 
     // Subtle cloudiness / moisture variation across sidewalk slabs
     for (let i = 0; i < 45; i++) {
-      const px = Math.random() * sW;
-      const py = Math.random() * sH;
-      const pr = 40 + Math.random() * 140;
+      const px = rnd() * sW;
+      const py = rnd() * sH;
+      const pr = 40 + rnd() * 140;
       const grad = sCtx.createRadialGradient(px, py, 10, px, py, pr);
-      grad.addColorStop(0, Math.random() > 0.5 ? 'rgba(122, 127, 136, 0.18)' : 'rgba(92, 96, 103, 0.22)');
+      grad.addColorStop(0, rnd() > 0.5 ? 'rgba(122, 127, 136, 0.18)' : 'rgba(92, 96, 103, 0.22)');
       grad.addColorStop(1, 'rgba(108, 113, 120, 0.0)');
       sCtx.fillStyle = grad;
       sCtx.beginPath();
@@ -637,7 +639,7 @@ function WetSidewalkAndStreet() {
     // High-definition concrete aggregate grain
     const sData = sCtx.getImageData(0, 0, sW, sH);
     for (let i = 0; i < sData.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 28;
+      const n = (rnd() - 0.5) * 28;
       sData.data[i] = Math.max(0, Math.min(255, sData.data[i] + n));
       sData.data[i + 1] = Math.max(0, Math.min(255, sData.data[i + 1] + n));
       sData.data[i + 2] = Math.max(0, Math.min(255, sData.data[i + 2] + n));
@@ -659,10 +661,10 @@ function WetSidewalkAndStreet() {
 
     // Footwalk chewing gum spots & sidewalk stains
     for (let i = 0; i < 45; i++) {
-      const gx = Math.random() * sW;
-      const gy = Math.random() * sH;
-      const gr = 3 + Math.random() * 8;
-      sCtx.fillStyle = Math.random() > 0.4 ? '#2E3136' : '#8B8F96';
+      const gx = rnd() * sW;
+      const gy = rnd() * sH;
+      const gr = 3 + rnd() * 8;
+      sCtx.fillStyle = rnd() > 0.4 ? '#2E3136' : '#8B8F96';
       sCtx.beginPath();
       sCtx.arc(gx, gy, gr, 0, Math.PI * 2);
       sCtx.fill();
@@ -738,11 +740,11 @@ function WetSidewalkAndStreet() {
 
     // Organic patch variations & road weathering
     for (let i = 0; i < 65; i++) {
-      const px = Math.random() * aW;
-      const py = Math.random() * aH;
-      const pr = 60 + Math.random() * 220;
+      const px = rnd() * aW;
+      const py = rnd() * aH;
+      const pr = 60 + rnd() * 220;
       const grad = aCtx.createRadialGradient(px, py, 10, px, py, pr);
-      grad.addColorStop(0, Math.random() > 0.5 ? 'rgba(120, 125, 134, 0.22)' : 'rgba(78, 82, 88, 0.24)');
+      grad.addColorStop(0, rnd() > 0.5 ? 'rgba(120, 125, 134, 0.22)' : 'rgba(78, 82, 88, 0.24)');
       grad.addColorStop(1, 'rgba(98, 102, 109, 0.0)');
       aCtx.fillStyle = grad;
       aCtx.beginPath();
@@ -753,7 +755,7 @@ function WetSidewalkAndStreet() {
     // High-definition stony aggregate texture (white granite specks & dark basalt grains)
     const aData = aCtx.getImageData(0, 0, aW, aH);
     for (let i = 0; i < aData.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 32;
+      const n = (rnd() - 0.5) * 32;
       aData.data[i] = Math.max(0, Math.min(255, aData.data[i] + n));
       aData.data[i + 1] = Math.max(0, Math.min(255, aData.data[i + 1] + n));
       aData.data[i + 2] = Math.max(0, Math.min(255, aData.data[i + 2] + n));
@@ -762,10 +764,10 @@ function WetSidewalkAndStreet() {
 
     // Coarse macro pebbles embedded in asphalt surface
     for (let i = 0; i < 1200; i++) {
-      const bx = Math.random() * aW;
-      const by = Math.random() * aH;
-      const br = 1 + Math.random() * 2.5;
-      aCtx.fillStyle = Math.random() > 0.45 ? '#80858E' : '#3E4147';
+      const bx = rnd() * aW;
+      const by = rnd() * aH;
+      const br = 1 + rnd() * 2.5;
+      aCtx.fillStyle = rnd() > 0.45 ? '#80858E' : '#3E4147';
       aCtx.beginPath();
       aCtx.arc(bx, by, br, 0, Math.PI * 2);
       aCtx.fill();
@@ -780,10 +782,10 @@ function WetSidewalkAndStreet() {
     // Distressed scuffs & road wear cutting into the white painted line
     aCtx.globalCompositeOperation = 'destination-out';
     for (let i = 0; i < 350; i++) {
-      const sx = Math.random() * aW;
-      const sy = 68 + Math.random() * 28;
-      const sw = 4 + Math.random() * 26;
-      const sh = 2 + Math.random() * 10;
+      const sx = rnd() * aW;
+      const sy = 68 + rnd() * 28;
+      const sw = 4 + rnd() * 26;
+      const sh = 2 + rnd() * 10;
       aCtx.fillRect(sx, sy, sw, sh);
     }
     aCtx.restore();
@@ -797,19 +799,19 @@ function WetSidewalkAndStreet() {
     aCtx.lineCap = 'round';
     aCtx.lineJoin = 'round';
     for (let i = 0; i < 8; i++) {
-      let currX = (i / 8) * aW + (Math.random() - 0.5) * 150;
-      let currY = 40 + Math.random() * 120;
-      const endY = aH - 40 - Math.random() * 100;
+      let currX = (i / 8) * aW + (rnd() - 0.5) * 150;
+      let currY = 40 + rnd() * 120;
+      const endY = aH - 40 - rnd() * 100;
       const stepY = (endY - currY) / 28;
 
       aCtx.beginPath();
       aCtx.moveTo(currX, currY);
       for (let j = 0; j < 28; j++) {
-        currX += (Math.random() - 0.5) * 45;
+        currX += (rnd() - 0.5) * 45;
         currY += stepY;
         aCtx.lineTo(currX, currY);
       }
-      aCtx.lineWidth = 6 + Math.random() * 4;
+      aCtx.lineWidth = 6 + rnd() * 4;
       aCtx.stroke();
 
       // Inner tar gloss bead
@@ -820,10 +822,10 @@ function WetSidewalkAndStreet() {
 
     // Subtle dark tire track scuffs & rubber wear along lanes
     for (let i = 0; i < 35; i++) {
-      const tx = Math.random() * aW;
-      const ty = 260 + Math.random() * 180;
-      const tw = 80 + Math.random() * 240;
-      const th = 12 + Math.random() * 25;
+      const tx = rnd() * aW;
+      const ty = 260 + rnd() * 180;
+      const tw = 80 + rnd() * 240;
+      const th = 12 + rnd() * 25;
       aCtx.fillStyle = 'rgba(42, 45, 50, 0.32)';
       aCtx.fillRect(tx, ty, tw, th);
     }
@@ -879,7 +881,7 @@ function WetSidewalkAndStreet() {
     cCtx.fillRect(0, 0, 512, 64);
     const cData = cCtx.getImageData(0, 0, 512, 64);
     for (let i = 0; i < cData.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 24;
+      const n = (rnd() - 0.5) * 24;
       cData.data[i] = Math.max(0, Math.min(255, cData.data[i] + n));
       cData.data[i + 1] = Math.max(0, Math.min(255, cData.data[i + 1] + n));
       cData.data[i + 2] = Math.max(0, Math.min(255, cData.data[i + 2] + n));
@@ -890,8 +892,9 @@ function WetSidewalkAndStreet() {
     cTex.repeat.set(18, 1);
     cTex.colorSpace = THREE.SRGBColorSpace;
 
-    cachedSidewalkTextures = [sTex, sNormTex, sRoughTex, aTex, aNormTex, aRoughTex, cTex] as const;
-    return cachedSidewalkTextures;
+    const res = [sTex, sNormTex, sRoughTex, aTex, aNormTex, aRoughTex, cTex] as const;
+    cachedSidewalkTextures = res;
+    return res;
   }, []);
 
   const normalScale = useMemo(() => new THREE.Vector2(1.6, 1.6), []);
@@ -943,14 +946,6 @@ function WetSidewalkAndStreet() {
 
 /**
  * Procedural alley environment.
- *
- * The scene previously had no environment at all, which meant every metal in
- * it — manholes at metalness 0.88, pipes at 0.75, puddles at 0.88 — was
- * reflecting a void and resolving to a flat dark blob. Metal without an
- * environment is not metal.
- *
- * Built from a 256x128 canvas gradient, so there is no network fetch and no
- * HDR payload; PMREM runs once on mount.
  */
 function AlleyEnvironment() {
   const gl = useThree((s) => s.gl);
@@ -959,9 +954,6 @@ function AlleyEnvironment() {
   useEffect(() => {
     const env = buildAlleyEnvironment(gl);
     scene.environment = env;
-    // Master exposure for the whole scene. With the sun, the spot and the five
-    // lamps gone, essentially all light now arrives from the dome, so this dial
-    // does what their intensities used to — turn it, not them.
     scene.environmentIntensity = 1.7;
     return () => {
       scene.environment = null;

@@ -8,6 +8,8 @@ import AboutSection from '@/components/sections/about/AboutSection';
 import WhatWeDoSection from '@/components/sections/whatwedo/WhatWeDoSection';
 import ContactSection from '@/components/sections/ContactSection';
 
+import TearTransition from '@/components/sections/TearTransition';
+
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [videoStarted, setVideoStarted] = useState(false);
@@ -38,6 +40,7 @@ export default function Home() {
         <div aria-hidden="true" className="h-[100vh]" />
         <AboutSection />
         <WhatWeDoSection />
+        <TearTransition />
         <EventsAndCouncilSection />
         <ContactSection />
       </main>

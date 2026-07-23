@@ -1,0 +1,67 @@
+.tear-fixed-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99995; /* Keep it above everything except preloader */
+  visibility: hidden;
+  pointer-events: none;
+  overflow: hidden;
+  perspective: 1500px; /* Add 3D perspective for the flying peel effect */
+}
+
+.tear-bg-event {
+  position: absolute;
+  inset: 0;
+  background: url('/transition/event.png') center/cover no-repeat;
+}
+
+.tear-half {
+  position: absolute;
+  inset: 0;
+  background: url('/transition/whatwedo.png') center/cover no-repeat;
+  will-change: transform, opacity;
+  transform-style: preserve-3d; /* Ensure 3D transforms work */
+}
+
+/* 
+  Broader, more realistic jagged edge for the left half. 
+*/
+.tear-left {
+  clip-path: polygon(
+    0% 0%, 
+    50% 0%, 
+    51% 8%, 
+    49% 15%, 
+    52% 25%, 
+    48% 35%, 
+    50% 45%, 
+    47% 55%, 
+    52% 65%, 
+    49% 78%, 
+    51% 88%, 
+    50% 100%, 
+    0% 100%
+  );
+  filter: drop-shadow(4px 0 10px rgba(0,0,0,0.6));
+}
+
+/* 
+  The right half meshes perfectly with the left half.
+*/
+.tear-right {
+  clip-path: polygon(
+    50% 0%, 
+    100% 0%, 
+    100% 100%, 
+    50% 100%,
+    51% 88%, 
+    49% 78%, 
+    52% 65%, 
+    47% 55%, 
+    50% 45%, 
+    48% 35%, 
+    52% 25%, 
+    49% 15%, 
+    51% 8%
+  );
+  filter: drop-shadow(-4px 0 10px rgba(0,0,0,0.6));
+}

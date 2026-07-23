@@ -292,10 +292,10 @@ body {
   --rewind: 0;
   --reel: 0;
   position: relative;
-  aspect-ratio: 5.2 / 1;
   width: 100%;
+  height: 100%;
   transform-style: preserve-3d;
-  transform: perspective(1300px) rotateX(8deg) rotateY(calc(var(--rewind) * -4deg));
+  transform: perspective(1300px) rotateX(4deg) rotateY(calc(var(--rewind) * -3deg));
   filter: drop-shadow(0 34px 48px rgba(0, 0, 0, 0.82));
 }
 
@@ -409,7 +409,6 @@ body {
   inset: 23% 2.2% 23%;
   z-index: 2;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: clamp(7px, 1vw, 14px);
 }
 
@@ -838,8 +837,9 @@ body {
 
 /* Film tape refinement: full-strip realistic stock, not a single-cell gimmick. */
 .loader-film-model {
-  aspect-ratio: 7.35 / 1;
-  transform: perspective(1500px) rotateX(7deg) rotateY(calc(var(--rewind) * -5deg));
+  width: 100%;
+  height: 100%;
+  transform: perspective(1500px) rotateX(4deg) rotateY(calc(var(--rewind) * -3deg));
   filter: drop-shadow(0 42px 58px rgba(0, 0, 0, 0.9));
 }
 
@@ -929,9 +929,7 @@ body {
 
 .loader-film-cells {
   inset: 23.5% 1.75% 23.5%;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: clamp(6px, 0.8vw, 12px);
-  transform: translateX(calc(var(--rewind) * -3.5%));
 }
 
 .loader-film-cell {

@@ -52,14 +52,14 @@ const RUNOUT_RADIUS = 470; // slow inward creep through the last track
 /** Revolutions the record makes across the whole pinned scroll. At 6500px of
  *  scroll this is ~930px per turn — fast enough to feel driven by the wheel,
  *  slow enough that a flick doesn't blur it. */
-const SPIN_TURNS = 7;
+const SPIN_TURNS = 2;
 
 /** Free-spin: the deck's own motor, which takes over the moment the wheel stops.
  *  33⅓ RPM is 200°/s — the speed printed on the label, so the two agree.
  *  The platter never snaps between the two drives: `FREE_TAU` is the seconds-ish
  *  constant the motor spins up and down over, which is what a belt drive does
  *  and what stops a flick of the wheel from reading as a jump-cut. */
-const FREE_DEG_PER_SEC = 200;
+const FREE_DEG_PER_SEC = 50;
 const FREE_TAU = 0.42;
 /** Wheel input counts as "still scrolling" for this long after the last tick.
  *  Below ~150ms the motor stutters between wheel notches. */
@@ -118,10 +118,16 @@ const ARM_KEYS: [number, number][] = [
   [1.0, ANG_RUNOUT],
 ];
 
-/** How far the arm is raised off the platter. 1 = cued up, 0 = needle down. */
 const LIFT_KEYS: [number, number][] = [
-  [0.0, 0],
-  [1.0, 0],
+  [0.0, 1.0],   // Starts fully lifted
+  [0.15, 0.0],  // Drops smoothly onto the first track
+  [0.44, 0.0],  // Starts moving to track 2
+  [0.485, 0.5], // Lifts halfway up during transit
+  [0.53, 0.0],  // Drops onto track 2
+  [0.69, 0.0],  // Starts moving to track 3
+  [0.735, 0.5], // Lifts halfway up during transit
+  [0.78, 0.0],  // Drops onto track 3
+  [1.0, 0.0],
 ];
 
 function sampleKeys(keys: [number, number][], p: number) {
@@ -130,7 +136,10 @@ function sampleKeys(keys: [number, number][], p: number) {
     const [x1, v1] = keys[i];
     if (p <= x1) {
       const [x0, v0] = keys[i - 1];
-      return lerp(v0, v1, ramp(x0, x1, p));
+      // Use an even smoother cubic ease in-out for the arm movement
+      const t = clamp01((p - x0) / (x1 - x0));
+      const smoothT = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      return lerp(v0, v1, smoothT);
     }
   }
   return keys[keys.length - 1][1];
@@ -226,15 +235,11 @@ export default function AboutSection() {
       // ── tonearm ──────────────────────────────────────────────────────
       const deg = sampleKeys(ARM_KEYS, p);
       const lift = sampleKeys(LIFT_KEYS, p);
-      // Entry: arm is already in place
-      const armY = lift * -86;
-      const armX = lift * -24;
 
       const arm = armRef.current;
       if (arm) {
         arm.style.opacity = '1.000';
         arm.style.transform =
-          `translate(${armX.toFixed(1)}px, ${armY.toFixed(1)}px) ` +
           `rotate(${deg.toFixed(2)}deg) scale(${(1 + lift * 0.03).toFixed(3)})`;
         // A shadow that opens up as the arm rises is what actually sells the
         // descent — the rotation alone reads as a swing, not a drop.
@@ -295,7 +300,7 @@ export default function AboutSection() {
       trigger: sectionRef.current,
       start: 'top bottom',
       end: 'top top',
-      scrub: 1,
+      scrub: 1.5,
       onUpdate: (self) => {
         if (pinRef.current) {
           const p = self.progress;
@@ -330,8 +335,8 @@ export default function AboutSection() {
       trigger: sectionRef.current,
       pin: pinRef.current,
       start: 'top top',
-      end: '+=6500',
-      scrub: 1.2,
+      end: '+=3250',
+      scrub: 1.5,
       onUpdate: (self) => onUpdate(self.progress),
       onRefresh: (self) => onUpdate(self.progress),
     });

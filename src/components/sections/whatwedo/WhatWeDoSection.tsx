@@ -4,12 +4,12 @@ import dynamic from 'next/dynamic';
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { whatWeDoItems } from './whatWeDoData';
 import { unlockPolaroidAudio, playShutter } from './polaroidAudio';
 import './whatwedo.css';
 
-/* The R3F lens-portal scene — no SSR for WebGL (same contract as WallScene). */
-const PolaroidScene = dynamic(() => import('@/components/three/PolaroidScene'), {
+/* The flat (2D DOM) Polaroid wall — dynamically imported (ssr:false) so its
+   IntersectionObserver + rAF frame loop only ever runs client-side. */
+const PolaroidScene2D = dynamic(() => import('./PolaroidScene2D'), {
   ssr: false,
   loading: () => (
     <div className="wwd-loading">
@@ -26,22 +26,18 @@ const ramp = (a: number, b: number, x: number) => {
 
 /** Pinned scroll length. Matches the Events act's density (~ one screen of
  *  scroll per beat: flash, pan-out, three prints, handoff). */
-const SCROLL_END = 8000;
+const SCROLL_END = 4000;
 
 /** Scroll distance, measured from the pin's start, over which the seam flash
- *  clears back down to reveal the lens interior. */
+ *  clears back down to reveal the scene behind it. */
 const REVEAL_PX = 1400;
 
-/** Print choreography — kept in sync with PolaroidScene. */
-const CONTENT_A = 0.42;
-const CONTENT_B = 0.9;
-
 /**
- * WhatWeDoSection — the Polaroid lens-portal (Act 2.5).
+ * WhatWeDoSection — the Polaroid wall (Act 2.5).
  *
  * A ScrollTrigger-pinned host that scrubs one 0→1 progress into a mutable
- * `progressRef`, read by the R3F scene's camera rig and printing photos (no
- * React state on the frame path — same contract as EventsAndCouncilSection).
+ * `progressRef`, read by the 2D scene to develop its prints (no React state on
+ * the frame path — same contract as EventsAndCouncilSection).
  *
  * The About turntable and this section are two adjacent pinned sections, so the
  * scrollbar has to hand off between them — a ~100vh window where About slides
@@ -49,20 +45,15 @@ const CONTENT_B = 0.9;
  * be *seen*: a fixed, full-viewport white flash (`.wwd-seam-flash`, driven by
  * its own trigger below) blankets the viewport across the seam, rising to solid
  * white over the tail of About, holding white while the sections swap behind
- * it, then clearing once we are pinned — so the lens is revealed *through* the
- * flash rather than scrolling up. From there the camera dollies out of the lens
- * to reveal the whole Polaroid and prints the sections.
+ * it, then clearing once we are pinned — so the scene is revealed *through* the
+ * flash rather than scrolling up. From there the prints develop in one by one.
  */
 export default function WhatWeDoSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<number>(0);
   const flashRef = useRef<HTMLDivElement>(null);
-  const exitDimRef = useRef<HTMLDivElement>(null);
-  const prevPRef = useRef<number>(-1);
   const reducedRef = useRef(false);
-
-  const N = whatWeDoItems.length;
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -76,32 +67,20 @@ export default function WhatWeDoSection() {
     }
 
     // ── MAIN PIN ────────────────────────────────────────────────────────────
-    // Scrubs 0→1 into progressRef, read by the R3F camera rig + printing photos.
+    // Scrubs 0→1 into progressRef, read by the 2D scene (camera settle + the
+    // prints developing in). The print whir is fired from PolaroidScene2D, which
+    // owns the reveal schedule.
     const trigger = ScrollTrigger.create({
       trigger: sectionRef.current,
       pin: containerRef.current,
       start: 'top top',
       end: `+=${SCROLL_END}`,
-      scrub: 0.6,
+      scrub: 1.5,
       onUpdate: (self) => {
         const p = self.progress;
         progressRef.current = p;
 
-        // HANDOFF — darken into the Events street
-        if (exitDimRef.current) {
-          exitDimRef.current.style.opacity = (ramp(0.93, 1.0, p) * 0.85).toFixed(3);
-        }
-
-        // SOUND — print whir disabled as requested
-        const prev = prevPRef.current;
-        if (prev >= 0) {
-          const seg = (CONTENT_B - CONTENT_A) / N;
-          for (let i = 0; i < N; i++) {
-            const start = CONTENT_A + i * seg;
-            // if (prev < start && p >= start) playWhir(0.9);
-          }
-        }
-        prevPRef.current = p;
+        // HANDOFF removed for tear transition
       },
     });
 
@@ -121,7 +100,7 @@ export default function WhatWeDoSection() {
       trigger: sectionRef.current,
       start: () => `top bottom+=${Math.round(window.innerHeight * 0.6)}`,
       end: () => `+=${Math.round(window.innerHeight * 1.6 + REVEAL_PX)}`,
-      scrub: true,
+      scrub: 1.5,
       onUpdate: (self) => {
         const p = self.progress;
         const vh = window.innerHeight;
@@ -164,7 +143,7 @@ export default function WhatWeDoSection() {
       trigger.kill();
       flash.kill();
     };
-  }, [N]);
+  }, []);
 
   return (
     <section ref={sectionRef} id="what-we-do" className="whatwedo-section" aria-label="What GDG CRCE does">
@@ -174,13 +153,11 @@ export default function WhatWeDoSection() {
       <div ref={flashRef} className="wwd-seam-flash" aria-hidden="true" />
 
       <div ref={containerRef} className="wwd-pin">
-        {/* the 3D lens-portal */}
+        {/* the flat Polaroid wall (table + camera + caption prints) */}
         <div className="wwd-canvas-wrap">
-          <PolaroidScene progressRef={progressRef} />
+          <PolaroidScene2D progressRef={progressRef} />
         </div>
 
-        {/* the exit fade to Events */}
-        <div ref={exitDimRef} className="wwd-exit-dim" />
       </div>
     </section>
   );
