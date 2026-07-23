@@ -3,6 +3,8 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { TRACKS } from './aboutData';
+import MobileAboutSection from './MobileAboutSection';
 import './about.css';
 
 /* ── scalar helpers (same idiom as WhatWeDoSection) ─────────────────────── */
@@ -134,52 +136,7 @@ function sampleKeys(keys: [number, number][], p: number) {
   return keys[keys.length - 1][1];
 }
 
-/* ── copy ───────────────────────────────────────────────────────────────
-   Line breaks are authored, not wrapped: the copy has to sit inside a circle,
-   so the rag is part of the layout. */
-type Track = {
-  key: string;
-  /** Stacked one letter per line under the horizontal "Our". */
-  word: string;
-  /** Brush-script line, theme card only. */
-  brush?: string;
-  lines: string[];
-};
 
-const TRACKS: Track[] = [
-  {
-    key: 'theme',
-    word: 'Theme',
-    brush: 'Sunékheia:',
-    lines: ['What continues,', 'becomes greater.'],
-  },
-  {
-    key: 'vision',
-    word: 'Vision',
-    lines: [
-      'To carry forward the',
-      'foundation built by',
-      'those before us,',
-      'transforming their legacy',
-      'into collective momentum',
-      'as we learn, build, and',
-      'shape what comes next.',
-    ],
-  },
-  {
-    key: 'mission',
-    word: 'Mission',
-    lines: [
-      'To build in the open,',
-      'to teach what we learn,',
-      'and to leave this',
-      'community further along',
-      'than we found it — so',
-      'every batch begins where',
-      'the last one reached.',
-    ],
-  },
-];
 
 /**
  * AboutSection — a full-bleed turntable, played by the scrollbar.
@@ -254,7 +211,10 @@ export default function AboutSection() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    const draw = (p: number) => {
+    let mm = gsap.matchMedia();
+
+    mm.add("(min-width: 768px)", () => {
+      const draw = (p: number) => {
       // ── the platter turns ────────────────────────────────────────────
       // A real angle, inherited by every layer that is part of the record.
       // ScrollTrigger's scrub eases it, so a flick of the wheel spins the
@@ -437,19 +397,16 @@ export default function AboutSection() {
     stage?.style.setProperty('--spin', '0deg');
     if (presence.isActive) startLoop();
 
-    const to = setTimeout(() => ScrollTrigger.refresh(), 180);
+    }); // end of mm.add
+
     return () => {
-      clearTimeout(to);
-      stopLoop();
-      document.removeEventListener('visibilitychange', onVisibility);
-      approach.kill();
-      play.kill();
-      presence.kill();
+      mm.revert();
     };
   }, []);
 
   return (
-    <section ref={sectionRef} id="about" className="tt-section" aria-label="About GDG CRCE">
+    <div id="about">
+      <section ref={sectionRef} className="tt-section hidden md:block" aria-label="About GDG CRCE">
       <div ref={pinRef} className="tt-pin">
         {/* ── the turntable, in 1600×900 design space ── */}
         <div ref={stageRef} className="tt-stage">
@@ -573,6 +530,9 @@ export default function AboutSection() {
           </div>
         </div>
       </div>
-    </section>
+      </section>
+
+      <MobileAboutSection />
+    </div>
   );
 }
