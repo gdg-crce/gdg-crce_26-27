@@ -40,6 +40,65 @@
   display: block;
 }
 
+/* ── the 2D Polaroid wall ──────────────────────────────────────────────────
+   A flat DOM scene (no WebGL): a wooden table, the Polaroid camera dead-centre,
+   and the caption prints fanned to the four corners. Positions are centre-based
+   percentages of the stage; the camera + prints are placed with
+   translate(-50%,-50%) and animated on top of that from the scroll (see
+   PolaroidScene2D). Everything is pointer-events:none — the section scrolls. */
+.wwd2d-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.wwd2d-table {
+  position: absolute;
+  inset: 0;
+  background: #17141c url('/whatwedo/table.webp') center / cover no-repeat;
+}
+/* soft corner falloff so the table recedes and the centre reads as lit */
+.wwd2d-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9;
+  background: radial-gradient(125% 105% at 50% 44%, transparent 42%, rgba(6, 4, 9, 0.34) 100%);
+}
+.wwd2d-camera {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  height: clamp(400px, 80vh, 950px);
+  width: auto;
+  transform: translate(-50%, -50%);
+  left: 50%;
+  top: 24%;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.5));
+  will-change: transform;
+}
+.wwd2d-photo-wrapper {
+  position: absolute;
+  pointer-events: auto;
+  width: clamp(250px, 28vw, 420px);
+  height: auto;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+}
+.wwd2d-photo-wrapper img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.42));
+  transition: transform 0.75s cubic-bezier(0.19, 1, 0.22, 1), filter 0.75s ease;
+}
+.wwd2d-photo-wrapper:hover {
+  z-index: 50 !important;
+}
+.wwd2d-photo-wrapper:hover img {
+  transform: scale(1.15);
+  filter: drop-shadow(0 25px 40px rgba(0, 0, 0, 0.6));
+}
+
 /* ── the seam flash ────────────────────────────────────────────────────────
    Fixed to the viewport and above everything, so it masks the whole
    About→WhatWeDo hand-off. Solid fill (not a soft radial) so the seam is fully

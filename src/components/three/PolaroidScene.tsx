@@ -2,10 +2,10 @@
 
 import React, { useMemo, useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { whatWeDoItems } from '@/components/sections/whatwedo/whatWeDoData';
 import { pacifico, spaceGrotesk } from '@/lib/fonts';
+import PolaroidOneStep from '../../../models/reactComponent/PolaroidOneStep';
 
 /* ══════════════════════════════════════════════════════════════════════════
    PolaroidScene — the lens-portal (Act 2.5)
@@ -360,37 +360,41 @@ function PhotoBody({
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   The real Meshy-generated Polaroid (compressed GLB, meshopt + webp)
+   The Polaroid model — "Polaroid One Step Camera" (CC-BY-4.0, riotboy /
+   Sketchfab), compressed to ~285KB (meshopt + webp). Component + attribution
+   live in models/reactComponent/PolaroidOneStep.tsx.
    ══════════════════════════════════════════════════════════════════════════ */
-/** Wrapper transform that normalises the model into scene space (front → +Z,
- *  sized + centred to the rig). Tuned to the asset below. */
-const MODEL_SCALE = 1.7;
-const MODEL_POS: [number, number, number] = [0, 0, 0];
+/** Fit transform. The model is ~4.1 × 4.9 × 4.7 units, centred near its own
+ *  origin; this scales it to ~3.3u tall, sits it on the desk (y ≈ -1.66) and
+ *  centres it in x/z. The lens ("glass") faces +Z, toward the camera.
+ *
+ *  NOTE: the camera path (POS_KEYS / LOOK_KEYS) and the film SLOT were tuned to
+ *  the PREVIOUS polaroid's lens geometry. This model's lens sits up-and-right of
+ *  centre, so the "start inside the lens" moment and the print-eject origin will
+ *  need re-tuning to match — adjust these three constants together with the
+ *  camera keys and SLOT once you can see it. */
+const MODEL_SCALE = 0.67;
+const MODEL_POS: [number, number, number] = [0.08, -0.08, 0.01];
 const MODEL_ROT: [number, number, number] = [0, 0, 0];
 
 function PolaroidModel() {
-  // meshopt is auto-configured by drei; draco disabled (asset uses neither)
-  const { scene } = useGLTF('/models/polaroid.glb', false);
-  const model = useMemo(() => {
-    const c = scene.clone(true);
-    c.traverse((o) => {
+  const ref = useRef<THREE.Group>(null);
+  // the model ships its own materials; match them to the scene's env exposure
+  useEffect(() => {
+    ref.current?.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.isMesh) {
-        m.castShadow = true;
-        m.receiveShadow = true;
         const mat = m.material as THREE.MeshStandardMaterial;
         if (mat) mat.envMapIntensity = 0.9;
       }
     });
-    return c;
-  }, [scene]);
+  }, []);
   return (
-    <group position={MODEL_POS} rotation={MODEL_ROT} scale={MODEL_SCALE}>
-      <primitive object={model} />
+    <group ref={ref} position={MODEL_POS} rotation={MODEL_ROT} scale={MODEL_SCALE}>
+      <PolaroidOneStep />
     </group>
   );
 }
-useGLTF.preload('/models/polaroid.glb');
 
 /* ══════════════════════════════════════════════════════════════════════════
    Scene — env, lights, camera, and the single pose() driver
