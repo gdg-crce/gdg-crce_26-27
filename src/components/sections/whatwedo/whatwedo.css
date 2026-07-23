@@ -122,17 +122,6 @@
   background: #ffffff;
 }
 
-/* ── handoff to Events ─────────────────────────────────────────────────── */
-.wwd-exit-dim {
-  position: absolute;
-  inset: 0;
-  z-index: 11;
-  pointer-events: none;
-  opacity: 0;
-  will-change: opacity;
-  background: #050409;
-}
-
 /* ── loader (while the WebGL bundle + scene spin up) ───────────────────── */
 .wwd-loading {
   position: absolute;

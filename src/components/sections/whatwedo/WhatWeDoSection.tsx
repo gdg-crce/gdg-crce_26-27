@@ -53,7 +53,6 @@ export default function WhatWeDoSection() {
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<number>(0);
   const flashRef = useRef<HTMLDivElement>(null);
-  const exitDimRef = useRef<HTMLDivElement>(null);
   const reducedRef = useRef(false);
 
   useEffect(() => {
@@ -81,10 +80,7 @@ export default function WhatWeDoSection() {
         const p = self.progress;
         progressRef.current = p;
 
-        // HANDOFF — darken into the Events street
-        if (exitDimRef.current) {
-          exitDimRef.current.style.opacity = (ramp(0.93, 1.0, p) * 0.85).toFixed(3);
-        }
+        // HANDOFF removed for tear transition
       },
     });
 
@@ -162,8 +158,6 @@ export default function WhatWeDoSection() {
           <PolaroidScene2D progressRef={progressRef} />
         </div>
 
-        {/* the exit fade to Events */}
-        <div ref={exitDimRef} className="wwd-exit-dim" />
       </div>
     </section>
   );
