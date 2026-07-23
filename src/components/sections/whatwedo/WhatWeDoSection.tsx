@@ -28,25 +28,12 @@ const ramp = (a: number, b: number, x: number) => {
  *  scroll per beat: flash, pan-out, three prints, handoff). */
 const SCROLL_END = 4000;
 
-/** Scroll distance, measured from the pin's start, over which the seam flash
- *  clears back down to reveal the scene behind it. */
-const REVEAL_PX = 1400;
-
 /**
  * WhatWeDoSection — the Polaroid wall (Act 2.5).
  *
- * A ScrollTrigger-pinned host that scrubs one 0→1 progress into a mutable
- * `progressRef`, read by the 2D scene to develop its prints (no React state on
- * the frame path — same contract as EventsAndCouncilSection).
- *
- * The About turntable and this section are two adjacent pinned sections, so the
- * scrollbar has to hand off between them — a ~100vh window where About slides
- * up and out while this section slides up and in. We never want that slide to
- * be *seen*: a fixed, full-viewport white flash (`.wwd-seam-flash`, driven by
- * its own trigger below) blankets the viewport across the seam, rising to solid
- * white over the tail of About, holding white while the sections swap behind
- * it, then clearing once we are pinned — so the scene is revealed *through* the
- * flash rather than scrolling up. From there the prints develop in one by one.
+ * This section perfectly freezes the turntable exactly where it is by pinning at 'top bottom'.
+ * The globally fixed wrapper then flawlessly morphs the screenshot into a 3D book,
+ * stretched over 4000px of scrolling for an incredibly smooth and deliberate unraveling experience!
  */
 export default function WhatWeDoSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -59,35 +46,26 @@ export default function WhatWeDoSection() {
     gsap.registerPlugin(ScrollTrigger);
     reducedRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // ── TRANSITION MASK ─────────────────────────────────────────────────────
-    // Instantly covers the screen at the exact moment the scroll-up begins.
-    // Maps the 100vh physical scroll-up directly to the first 15% of the book shrinking!
-    const transition = ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: 'top bottom',
-      end: 'top top',
-      scrub: true,
-      onUpdate: (self) => {
-        if (flashRef.current) {
-          flashRef.current.style.opacity = self.progress > 0 ? '1' : '0';
-          flashRef.current.style.pointerEvents = self.progress > 0.5 ? 'auto' : 'none';
-        }
-        // Drive the morph phase!
-        progressRef.current = self.progress * 0.15;
-      }
-    });
-
-    // ── MAIN PIN ────────────────────────────────────────────────────────────
+    // ── MAIN PIN & TRANSITION ───────────────────────────────────────────────
+    // By starting at 'top bottom', we instantly take over the screen the moment
+    // AboutSection finishes. The entire 4000px scroll is now dedicated to the animation,
+    // giving us a beautifully slow, controlled unraveling experience without scroll gaps!
     const trigger = ScrollTrigger.create({
       trigger: sectionRef.current,
       pin: containerRef.current,
-      start: 'top top',
+      start: 'top bottom', // INSTANT handoff from AboutSection
       end: `+=${SCROLL_END}`,
       scrub: true,
       onUpdate: (self) => {
-        // Drive the page flips!
-        progressRef.current = 0.15 + self.progress * 0.85;
-      },
+        progressRef.current = self.progress;
+        if (flashRef.current) {
+          // Keep it perfectly visible during the section
+          flashRef.current.style.opacity = self.progress > 0 ? '1' : '0';
+          // Enable pointer events ONLY after the morph is mostly done, 
+          // to ensure scroll isn't hijacked during the critical morph phase
+          flashRef.current.style.pointerEvents = self.progress > 0.15 ? 'auto' : 'none';
+        }
+      }
     });
 
     // Unlock audio on the first real gesture
@@ -111,7 +89,6 @@ export default function WhatWeDoSection() {
       window.removeEventListener('wheel', unlock);
       window.removeEventListener('touchstart', unlock);
       trigger.kill();
-      transition.kill();
     };
   }, []);
 
@@ -124,8 +101,8 @@ export default function WhatWeDoSection() {
       </div>
 
       <section ref={sectionRef} id="what-we-do" className="whatwedo-section" aria-label="What GDG CRCE does">
-        {/* The pin spacer just dictates the physical scroll height */}
-        <div ref={containerRef} className="wwd-pin-spacer" />
+        {/* Height 0 prevents empty scroll gap after unpinning */}
+        <div ref={containerRef} style={{ height: 0 }} />
       </section>
     </>
   );

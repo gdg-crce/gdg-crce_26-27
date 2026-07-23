@@ -123,10 +123,9 @@
 }
 
 .album-cover .cover-front {
-  background-image: url('/whatwedo/image.png');
+  background-image: url('/whatwedo/image copy.png');
   background-size: 100% 100%;
   background-position: center;
-  box-shadow: inset -5px 0 20px rgba(0,0,0,0.6), inset 2px 0 5px rgba(255,255,255,0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -241,7 +240,8 @@
 .wwd-solid-bg {
   position: absolute;
   inset: 0;
-  background: #0a0807; /* Perfectly matches the site body background */
+  /* Cinematic moody lighting: a soft warm spotlight in the center, dropping to pitch black */
+  background: radial-gradient(circle at 50% 45%, #2a1f1a 0%, #0a0807 50%, #000000 100%);
 }
 
 /* Provides the 100vh physical block for GSAP to pin against in the DOM */
