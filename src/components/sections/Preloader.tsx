@@ -91,7 +91,7 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
       const pct = Math.min(100, Math.floor((loaded / totalItems) * 100));
       setBufferProgress(pct);
       if (loaded >= totalItems) {
-        setTimeout(() => setAssetsReady(true), 100);
+        setTimeout(() => setAssetsReady(true), 1600);
       }
     }
 
@@ -143,31 +143,31 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
       },
     });
 
-    // 1. Initial pause removed (Genesis image dead-centered in viewport)
+    // 1. Initial pause (Genesis image dead-centered in viewport) for 0.8s
     tl.to(animObj, {
       val: HOLD_END,
-      duration: 0,
+      duration: 0.8,
       ease: 'none',
     });
 
-    // 2. Smooth rewind translation from Genesis to Reveal Window over 3.5s
+    // 2. Smooth rewind translation from Genesis to Reveal Window over 5.0s
     tl.to(animObj, {
       val: TRANSLATE_END,
-      duration: 3.5,
+      duration: 5.0,
       ease: 'power1.inOut',
     });
 
-    // 3. HARD STOP & HOLD on the Reveal Window dead-centered for 3.0s
+    // 3. HARD STOP & HOLD on the Reveal Window dead-centered for 1.5s
     tl.to(animObj, {
       val: HOLD_FRAME21_END,
-      duration: 3.0,
+      duration: 1.5,
       ease: 'none',
     });
 
-    // 4. Zoom dead-centered Reveal Window outwards over 1.6s to reveal hero video
+    // 4. Zoom dead-centered Reveal Window outwards over 0.7s to reveal hero video
     tl.to(animObj, {
       val: REVEAL_END,
-      duration: 1.6,
+      duration: 0.7,
       ease: 'power2.inOut',
     });
 
@@ -198,11 +198,11 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
 
       if (filmWrapRef.current) {
         filmWrapRef.current.style.transform = `translate3d(-50%, -50%, 0) scale(${zoomScale})`;
-        filmWrapRef.current.style.opacity = String(1 - clamp((easedZoom - 0.2) / 0.8));
+        filmWrapRef.current.style.opacity = String(1 - clamp(easedZoom / 0.45));
       }
 
       if (bgLayersRef.current) {
-        bgLayersRef.current.style.opacity = String(1 - easedZoom);
+        bgLayersRef.current.style.opacity = String(1 - clamp(easedZoom / 0.45));
       }
 
       if (progressBarRef.current) {

@@ -26,6 +26,17 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
   const [isLoaded, setIsLoaded] = useState(false);
   const [fadeInDone, setFadeInDone] = useState(false);
 
+  // Pre-load the video on mount to ensure it is ready when the preloader transition completes
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      if (video.readyState >= 2) {
+        setIsLoaded(true);
+      }
+      video.load();
+    }
+  }, []);
+
   // Sync video start explicitly when startPlaying turns true (when the VHS tape
   // transition completes).
   useEffect(() => {
@@ -159,7 +170,7 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
         disableRemotePlayback
         onLoadedData={() => setIsLoaded(true)}
         onCanPlay={() => setIsLoaded(true)}
-        className={`absolute inset-0 w-full h-full object-cover z-10 transform-gpu will-change-transform transition-opacity duration-1000 ease-in-out ${
+        className={`absolute inset-0 w-full h-full object-cover z-10 transform-gpu will-change-transform transition-opacity duration-300 ease-in-out ${
           isLoaded && (fadeInDone || startPlaying) ? 'opacity-100' : 'opacity-0'
         }`}
       />
