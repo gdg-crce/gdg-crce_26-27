@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 /* ==========================================================================
    COUNCIL SECTION — AUTHENTIC 2000s WINDOWS XP DESKTOP & RETRO MEDIA PLAYER
    Hyper-professional aesthetic inspired by authentic Windows XP & Reference Images
@@ -1897,4 +1899,547 @@
   color: #333333 !important;
   min-width: 54px !important;
   text-align: center !important;
+}
+
+/* --------------------------------------------------------------------------
+   MOBILE RESPONSIVE RETRO FACEBOOK ACC PROFILE DESIGN
+   -------------------------------------------------------------------------- */
+.mobile-council-section {
+  width: 100% !important;
+  min-height: 100vh !important;
+  background-color: #e9ebee !important; /* Classic Facebook Light Grey */
+  color: #1c1e21 !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+/* Sticky Header styling */
+.mobile-header-sticky {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  width: 100% !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+
+
+/* Cover Photo */
+.fb-cover-photo-wrapper {
+  width: 100% !important;
+  height: 140px !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.fb-cover-photo {
+  width: 100% !important;
+  height: 100% !important;
+  background-size: cover !important;
+  background-position: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important; /* Right aligned */
+}
+
+.fb-cover-content {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important; /* Align children right */
+  padding-right: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.fb-cover-text {
+  font-family: 'Sugo Display', 'Arial Black', Impact, sans-serif !important;
+  font-size: 26px !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6) !important;
+  text-align: right !important;
+}
+
+.fb-cover-subtext {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  margin-top: 4px !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6) !important;
+  text-align: right !important;
+}
+
+.fb-profile-header-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  margin-left: 106px !important; /* Pushed right of the 90px wide avatar */
+  justify-content: flex-start !important; /* Align to the top of the avatar row */
+  height: 100% !important;
+  margin-top: -55px !important; /* Nudge text even further vertically upwards */
+  flex: 1 !important;
+}
+
+/* Profile Details Card */
+.fb-profile-header {
+  background-color: #ffffff !important;
+  padding: 16px 16px 8px 16px !important; /* Reduced bottom padding */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.fb-avatar-row {
+  display: flex !important;
+  justify-content: flex-start !important; /* Align to start */
+  align-items: flex-end !important;
+  width: 100% !important;
+  position: relative !important;
+  height: 60px !important; /* Sized to align next-to-logo text */
+}
+
+.fb-profile-avatar-container {
+  width: 90px !important;
+  height: 90px !important;
+  border: 4px solid #ffffff !important; /* Thick white overlay border */
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  bottom: 28px !important; /* Moved logo further vertically upwards */
+  left: 0 !important;
+  z-index: 10 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+.fb-profile-logo {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+.fb-profile-action-buttons {
+  display: flex !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+}
+
+.fb-btn {
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.fb-btn-primary {
+  background-color: #1877f2 !important; /* Facebook modern active blue */
+  color: #ffffff !important;
+}
+
+.fb-btn-secondary {
+  background-color: #e4e6eb !important; /* Soft gray buttons */
+  color: #050505 !important;
+}
+
+/* Name Section */
+.fb-profile-name-section {
+  margin-top: 14px !important;
+}
+
+.fb-profile-name {
+  font-family: 'Sugo Display', 'Arial Black', Impact, sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  color: #050505 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* Classic blue verified checkmark badge */
+.fb-verified-badge {
+  background-color: #1877f2 !important;
+  color: #ffffff !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+  font-size: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+
+.fb-profile-category {
+  font-size: 13px !important;
+  color: #65676b !important;
+  margin: 2px 0 0 0 !important;
+  font-weight: 500 !important;
+}
+
+/* Profile Navigation Tabs (integrated into the light mode design) */
+.fb-profile-tabs-menu {
+  display: flex !important;
+  background-color: #ffffff !important; /* Integrated white background */
+  border-top: 1px solid #e5e6e9 !important; /* Soft grey borders */
+  border-bottom: 1px solid #e5e6e9 !important;
+  width: 100% !important;
+  margin-top: 4px !important; /* Moved tabs more upwards */
+  padding: 0 !important;
+}
+
+.fb-tab-item {
+  flex: 1 !important;
+  text-align: center !important;
+  padding: 12px 0 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #65676b !important; /* Native grey for inactive tabs */
+  cursor: pointer !important;
+  position: relative !important;
+  user-select: none !important;
+}
+
+.fb-tab-item.active {
+  color: #1877f2 !important; /* Active blue tab link */
+}
+
+.fb-tab-item.active::after {
+  content: "" !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 3px !important;
+  background-color: #1877f2 !important;
+}
+
+.fb-avatar-logo {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  padding: 1px !important;
+  box-sizing: border-box !important;
+}
+
+.fb-verified-badge-small {
+  background-color: #1877f2 !important;
+  color: #ffffff !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  font-size: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  margin-left: 5px !important;
+  vertical-align: middle !important;
+}
+
+.fb-link {
+  color: #385898 !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+}
+
+.fb-header-divider {
+  height: 4px !important; /* Reduced divider whitespace */
+  background-color: #dcdde1 !important;
+  border-bottom: 1px solid #c8cbd0 !important;
+}
+
+/* Feed Container */
+.fb-feed-container {
+  flex: 1 !important;
+  padding: 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+/* Post Cards */
+.fb-post-card {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e6e9 !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.fb-post-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.fb-post-avatar {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  flex-shrink: 0 !important;
+  border: 1px solid #e5e6e9 !important;
+  color: #ffffff !important;
+}
+
+.fb-post-avatar.mascot-avatar {
+  background-color: #f0f2f5 !important;
+  border: 1px solid #ccd0d5 !important;
+}
+
+.fb-post-author-info {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.fb-post-author-name {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #050505 !important;
+  cursor: pointer !important;
+}
+
+.fb-post-meta {
+  font-size: 11px !important;
+  color: #65676b !important;
+  margin-top: 1px !important;
+}
+
+/* Post Text Content */
+.fb-post-content {
+  margin-top: 10px !important;
+}
+
+.fb-post-text {
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
+  color: #050505 !important;
+  margin: 0 !important;
+  font-weight: 400 !important;
+}
+
+/* Attached Media */
+.fb-post-media-container {
+  margin-top: 10px !important;
+  border: 1px solid #e5e6e9 !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  background-color: #f0f2f5 !important;
+  width: 100% !important;
+}
+
+.fb-post-img {
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  object-fit: cover !important;
+}
+
+.fb-post-member-card {
+  width: 100% !important;
+  aspect-ratio: 16 / 10 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.fb-post-member-glyph {
+  font-size: 72px !important;
+  user-select: none !important;
+}
+
+/* Reactions Summary Bar */
+.fb-post-reactions-bar {
+  margin-top: 10px !important;
+  padding-bottom: 8px !important;
+  border-bottom: 1px solid #e5e6e9 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.fb-reaction-icons {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.fb-reaction-icons .reaction-bubble {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 10px !important;
+  border: 1.5px solid #ffffff !important;
+  margin-right: -4px !important;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1) !important;
+}
+
+.blue-bubble {
+  background-color: #1877f2 !important;
+}
+
+.red-bubble {
+  background-color: #f02849 !important;
+}
+
+.yellow-bubble {
+  background-color: #f7b928 !important;
+}
+
+.fb-reaction-text {
+  font-size: 12px !important;
+  color: #65676b !important;
+  margin-left: 2px !important;
+}
+
+/* Action buttons (Like / Comment / Share) */
+.fb-post-actions {
+  display: flex !important;
+  border-bottom: 1px solid #e5e6e9 !important;
+  padding: 4px 0 !important;
+}
+
+.fb-action-btn {
+  flex: 1 !important;
+  background: transparent !important;
+  border: none !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #65676b !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 8px 0 !important;
+  outline: none !important;
+  border-radius: 4px !important;
+}
+
+.fb-action-btn:active {
+  background-color: #f0f2f5 !important;
+}
+
+.fb-action-btn .btn-icon {
+  font-size: 15px !important;
+}
+
+/* Comments Feed */
+.fb-comments-section {
+  background-color: #f0f2f5 !important; /* Soft gray comments region */
+  margin: 10px -12px -12px -12px !important;
+  padding: 12px 12px 6px 12px !important; /* Reduced bottom padding */
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.fb-comment-item {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: flex-start !important;
+}
+
+.fb-comment-item .comment-avatar {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background-color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 15px !important;
+  flex-shrink: 0 !important;
+  border: 1px solid #ccd0d5 !important;
+}
+
+.fb-comment-item .comment-bubble {
+  background-color: #ffffff !important;
+  border-radius: 14px !important;
+  padding: 6px 12px !important;
+  max-width: 82% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05) !important;
+}
+
+.fb-comment-item .comment-author {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #050505 !important;
+  margin-bottom: 2px !important;
+}
+
+.fb-comment-item .comment-text {
+  font-size: 12.5px !important;
+  color: #050505 !important;
+  line-height: 1.35 !important;
+}
+
+/* Comment input bar */
+.fb-comment-input-row {
+  display: flex !important;
+  align-items: center !important;
+  background-color: #ffffff !important;
+  border: 1px solid #ccd0d5 !important;
+  border-radius: 20px !important;
+  padding: 5px 12px !important;
+  gap: 8px !important;
+  margin-top: 2px !important;
+}
+
+.fb-comment-input {
+  flex: 1 !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 12.5px !important;
+  color: #050505 !important;
+}
+
+.fb-comment-input::placeholder {
+  color: #8d949e !important;
+}
+
+.comment-camera-icon {
+  font-size: 14px !important;
+  color: #8d949e !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.mobile-event-section-wrapper {
+  width: 100% !important;
+  position: relative !important;
 }

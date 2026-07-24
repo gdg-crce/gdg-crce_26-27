@@ -51,12 +51,23 @@ export default function EventsAndCouncilSection() {
   const playerWrapperRef = useRef<HTMLDivElement>(null);
   const pictureViewerRef = useRef<HTMLDivElement>(null);
   const activeEventRef = useRef(0);
-
   const [activeEvent, setActiveEvent] = useState(0);
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const filteredMembers = useMemo(() => {
     if (selectedTeam === 'All Tracks') return councilMembers;
@@ -73,169 +84,468 @@ export default function EventsAndCouncilSection() {
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+
     gsap.registerPlugin(ScrollTrigger);
 
-    const trigger = ScrollTrigger.create({
-      trigger: sectionRef.current,
-      pin: containerRef.current,
-      start: 'top top',
-      end: '+=11000', // unified scroll distance across both sections
-      scrub: 0.8,
-      onUpdate: (self) => {
-        const p = self.progress;
-        setScrollProgress(p);
+    if (isMobile) {
+      // Mobile ScrollTrigger for Events Wall Walk ONLY
+      const trigger = ScrollTrigger.create({
+        trigger: sectionRef.current,
+        pin: containerRef.current,
+        start: 'top top',
+        end: '+=4000',
+        scrub: 0.8,
+        onUpdate: (self) => {
+          const p = self.progress;
+          setScrollProgress(p);
 
-        /* ── Phase 1: Alleyway Walk (0.00 -> 0.26) ───────────────────────── */
-        const WALK_END = 0.26;
-        const LAST_POSTER_P = 0.968;
-        const camP = p < WALK_END ? (p / WALK_END) * LAST_POSTER_P : LAST_POSTER_P;
-        progressRef.current = camP;
+          const LAST_POSTER_P = 0.968;
+          progressRef.current = p * LAST_POSTER_P;
 
-        if (progressBarRef.current) {
-          const walkFraction = Math.min(1, p / WALK_END);
-          progressBarRef.current.style.width = `${walkFraction * 100}%`;
-        }
-
-        const cameraX = THREE_MATH_LERP(-24, 23, camP);
-        let closest = 0;
-        let minDist = Infinity;
-        events.forEach((e, i) => {
-          const dist = Math.abs(e.position[0] - cameraX);
-          if (dist < minDist) {
-            minDist = dist;
-            closest = i;
+          if (progressBarRef.current) {
+            progressBarRef.current.style.width = `${p * 100}%`;
           }
-        });
 
-        if (closest !== activeEventRef.current) {
-          activeEventRef.current = closest;
-          setActiveEvent(closest);
-        }
-
-        /* ── Phase 2 -> 4: Dwell, Windowize & Minimize (0.26 -> 0.50) ────── */
-        const DWELL_END = 0.32;
-        const WINDOW_END = 0.42;
-        const MINIMIZE_END = 0.50;
-        const WINDOW_SCALE = 0.66;
-
-        if (eventsWindowRef.current) {
-          const titlebar = eventsWindowRef.current.querySelector(
-            '.xp-titlebar'
-          ) as HTMLElement | null;
-          const showChrome = (on: boolean) => {
-            if (on) {
-              eventsWindowRef.current!.classList.add('is-windowed');
-              if (titlebar) {
-                titlebar.style.opacity = '1';
-                titlebar.style.height = '30px';
-              }
-            } else {
-              eventsWindowRef.current!.classList.remove('is-windowed');
-              if (titlebar) {
-                titlebar.style.opacity = '0';
-                titlebar.style.height = '0px';
-              }
+          const cameraX = THREE_MATH_LERP(-24, 23, p * LAST_POSTER_P);
+          let closest = 0;
+          let minDist = Infinity;
+          events.forEach((e, i) => {
+            const dist = Math.abs(e.position[0] - cameraX);
+            if (dist < minDist) {
+              minDist = dist;
+              closest = i;
             }
-          };
+          });
 
-          if (isEventsMinimized || p >= MINIMIZE_END) {
-            eventsWindowRef.current.style.opacity = '0';
-            eventsWindowRef.current.style.pointerEvents = 'none';
-          } else if (p < DWELL_END) {
-            // Fullscreen alleyway walk & hold
-            eventsWindowRef.current.style.transform = 'translate(0, 0) scale(1)';
-            eventsWindowRef.current.style.opacity = '1';
-            eventsWindowRef.current.style.pointerEvents = 'auto';
-            showChrome(false);
-          } else if (p < WINDOW_END) {
-            // Shrink center-out from fullscreen to media player window
-            const t = (p - DWELL_END) / (WINDOW_END - DWELL_END);
-            const scale = 1.0 - t * (1.0 - WINDOW_SCALE);
-            eventsWindowRef.current.style.transform = `translate(0, 0) scale(${scale})`;
-            eventsWindowRef.current.style.opacity = '1';
-            eventsWindowRef.current.style.pointerEvents = 'auto';
-            showChrome(t > 0.10);
-          } else {
-            // Genie window down/left into Windows XP taskbar
-            const t = (p - WINDOW_END) / (MINIMIZE_END - WINDOW_END);
-            const scale = WINDOW_SCALE * (1.0 - t * 0.9);
-            const translateY = t * 46; // vh down to taskbar
-            const translateX = t * -26; // vw left to .avi taskbar item
-            eventsWindowRef.current.style.transform = `translate(${translateX}vw, ${translateY}vh) scale(${scale})`;
-            eventsWindowRef.current.style.opacity = `${1.0 - t * 0.9}`;
-            eventsWindowRef.current.style.pointerEvents = 'none';
-            showChrome(true);
+          if (closest !== activeEventRef.current) {
+            activeEventRef.current = closest;
+            setActiveEvent(closest);
           }
         }
+      });
 
-        /* ── Phase 5 -> Phase 7: Student Council TheFacebook Archive Window (0.48 -> 0.96) ── */
-        const MEMBERS_START = 0.55;
-        const MEMBERS_END = 0.93;
-        const ARCHIVE_MIN_START = 0.93;
-        const ARCHIVE_MIN_END = 0.96;
+      return () => {
+        trigger.kill();
+      };
+    } else {
+      // Desktop ScrollTrigger (identically preserved)
+      const trigger = ScrollTrigger.create({
+        trigger: sectionRef.current,
+        pin: containerRef.current,
+        start: 'top top',
+        end: '+=11000',
+        scrub: 0.8,
+        onUpdate: (self) => {
+          const p = self.progress;
+          setScrollProgress(p);
 
-        if (playerWrapperRef.current) {
-          if (p < 0.48) {
-            playerWrapperRef.current.style.opacity = '0';
-            playerWrapperRef.current.style.pointerEvents = 'none';
-            playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
-          } else if (p < MEMBERS_START) {
-            const t = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
-            const scale = 0.1 + t * 0.9;
-            const translateY = (1 - t) * 46;
-            playerWrapperRef.current.style.opacity = '1';
-            playerWrapperRef.current.style.pointerEvents = t > 0.5 ? 'auto' : 'none';
-            playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
-          } else if (p <= MEMBERS_END) {
-            // TheFacebook archive window holds centered through this scroll range.
-            playerWrapperRef.current.style.opacity = '1';
-            playerWrapperRef.current.style.pointerEvents = 'auto';
-            playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
-          } else if (p < ARCHIVE_MIN_END) {
-            // Genie minimize animation down into bottom taskbar
-            const t = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
-            const scale = 1.0 - t * 0.9;
-            const translateY = t * 46; // vh down to taskbar
-            playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
-            playerWrapperRef.current.style.opacity = `${1.0 - t * 0.9}`;
-            playerWrapperRef.current.style.pointerEvents = 'none';
-          } else {
-            playerWrapperRef.current.style.opacity = '0';
-            playerWrapperRef.current.style.pointerEvents = 'none';
-            playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
+          /* ── Phase 1: Alleyway Walk (0.00 -> 0.26) ───────────────────────── */
+          const WALK_END = 0.26;
+          const LAST_POSTER_P = 0.968;
+          const camP = p < WALK_END ? (p / WALK_END) * LAST_POSTER_P : LAST_POSTER_P;
+          progressRef.current = camP;
+
+          if (progressBarRef.current) {
+            const walkFraction = Math.min(1, p / WALK_END);
+            progressBarRef.current.style.width = `${walkFraction * 100}%`;
           }
-        }
 
-        /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
-        const PV_START = 0.96;
-        if (pictureViewerRef.current) {
-          if (p < PV_START) {
-            pictureViewerRef.current.style.opacity = '0';
-            pictureViewerRef.current.style.pointerEvents = 'none';
-            pictureViewerRef.current.style.transform = 'scale(0.85) translateY(25px)';
-          } else {
-            const pvT = Math.min(1, (p - PV_START) / 0.03);
-            const scale = 0.85 + pvT * 0.15;
-            const translateY = (1 - pvT) * 25;
-            pictureViewerRef.current.style.opacity = `${pvT}`;
-            pictureViewerRef.current.style.pointerEvents = pvT > 0.4 ? 'auto' : 'none';
-            pictureViewerRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+          const cameraX = THREE_MATH_LERP(-24, 23, camP);
+          let closest = 0;
+          let minDist = Infinity;
+          events.forEach((e, i) => {
+            const dist = Math.abs(e.position[0] - cameraX);
+            if (dist < minDist) {
+              minDist = dist;
+              closest = i;
+            }
+          });
+
+          if (closest !== activeEventRef.current) {
+            activeEventRef.current = closest;
+            setActiveEvent(closest);
           }
-        }
-      },
-    });
 
-    const timeout = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 150);
+          /* ── Phase 2 -> 4: Dwell, Windowize & Minimize (0.26 -> 0.50) ────── */
+          const DWELL_END = 0.32;
+          const WINDOW_END = 0.42;
+          const MINIMIZE_END = 0.50;
+          const WINDOW_SCALE = 0.66;
 
-    return () => {
-      clearTimeout(timeout);
-      trigger.kill();
-    };
-  }, [isEventsMinimized]);
+          if (eventsWindowRef.current) {
+            const titlebar = eventsWindowRef.current.querySelector(
+              '.xp-titlebar'
+            ) as HTMLElement | null;
+            const showChrome = (on: boolean) => {
+              if (on) {
+                eventsWindowRef.current!.classList.add('is-windowed');
+                if (titlebar) {
+                  titlebar.style.opacity = '1';
+                  titlebar.style.height = '30px';
+                }
+              } else {
+                eventsWindowRef.current!.classList.remove('is-windowed');
+                if (titlebar) {
+                  titlebar.style.opacity = '0';
+                  titlebar.style.height = '0px';
+                }
+              }
+            };
+
+            if (isEventsMinimized || p >= MINIMIZE_END) {
+              eventsWindowRef.current.style.opacity = '0';
+              eventsWindowRef.current.style.pointerEvents = 'none';
+            } else if (p < DWELL_END) {
+              // Fullscreen alleyway walk & hold
+              eventsWindowRef.current.style.transform = 'translate(0, 0) scale(1)';
+              eventsWindowRef.current.style.opacity = '1';
+              eventsWindowRef.current.style.pointerEvents = 'auto';
+              showChrome(false);
+            } else if (p < WINDOW_END) {
+              // Shrink center-out from fullscreen to media player window
+              const t = (p - DWELL_END) / (WINDOW_END - DWELL_END);
+              const scale = 1.0 - t * (1.0 - WINDOW_SCALE);
+              eventsWindowRef.current.style.transform = `translate(0, 0) scale(${scale})`;
+              eventsWindowRef.current.style.opacity = '1';
+              eventsWindowRef.current.style.pointerEvents = 'auto';
+              showChrome(t > 0.10);
+            } else {
+              // Genie window down/left into Windows XP taskbar
+              const t = (p - WINDOW_END) / (MINIMIZE_END - WINDOW_END);
+              const scale = WINDOW_SCALE * (1.0 - t * 0.9);
+              const translateY = t * 46; // vh down to taskbar
+              const translateX = t * -26; // vw left to .avi taskbar item
+              eventsWindowRef.current.style.transform = `translate(${translateX}vw, ${translateY}vh) scale(${scale})`;
+              eventsWindowRef.current.style.opacity = `${1.0 - t * 0.9}`;
+              eventsWindowRef.current.style.pointerEvents = 'none';
+              showChrome(true);
+            }
+          }
+
+          /* ── Phase 5 -> Phase 7: Student Council TheFacebook Archive Window (0.48 -> 0.96) ── */
+          const MEMBERS_START = 0.55;
+          const MEMBERS_END = 0.93;
+          const ARCHIVE_MIN_START = 0.93;
+          const ARCHIVE_MIN_END = 0.96;
+
+          if (playerWrapperRef.current) {
+            if (p < 0.48) {
+              playerWrapperRef.current.style.opacity = '0';
+              playerWrapperRef.current.style.pointerEvents = 'none';
+              playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
+            } else if (p < MEMBERS_START) {
+              const t = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
+              const scale = 0.1 + t * 0.9;
+              const translateY = (1 - t) * 46;
+              playerWrapperRef.current.style.opacity = '1';
+              playerWrapperRef.current.style.pointerEvents = t > 0.5 ? 'auto' : 'none';
+              playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
+            } else if (p <= MEMBERS_END) {
+              // TheFacebook archive window holds centered through this scroll range.
+              playerWrapperRef.current.style.opacity = '1';
+              playerWrapperRef.current.style.pointerEvents = 'auto';
+              playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+            } else if (p < ARCHIVE_MIN_END) {
+              // Genie minimize animation down into bottom taskbar
+              const t = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
+              const scale = 1.0 - t * 0.9;
+              const translateY = t * 46; // vh down to taskbar
+              playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
+              playerWrapperRef.current.style.opacity = `${1.0 - t * 0.9}`;
+              playerWrapperRef.current.style.pointerEvents = 'none';
+            } else {
+              playerWrapperRef.current.style.opacity = '0';
+              playerWrapperRef.current.style.pointerEvents = 'none';
+              playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
+            }
+          }
+
+          /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
+          const PV_START = 0.96;
+          if (pictureViewerRef.current) {
+            if (p < PV_START) {
+              pictureViewerRef.current.style.opacity = '0';
+              pictureViewerRef.current.style.pointerEvents = 'none';
+              pictureViewerRef.current.style.transform = 'scale(0.85) translateY(25px)';
+            } else {
+              const pvT = Math.min(1, (p - PV_START) / 0.03);
+              const scale = 0.85 + pvT * 0.15;
+              const translateY = (1 - pvT) * 25;
+              pictureViewerRef.current.style.opacity = `${pvT}`;
+              pictureViewerRef.current.style.pointerEvents = pvT > 0.4 ? 'auto' : 'none';
+              pictureViewerRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+            }
+          }
+        },
+      });
+
+      const timeout = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 150);
+
+      return () => {
+        clearTimeout(timeout);
+        trigger.kill();
+      };
+    }
+  }, [isEventsMinimized, isMobile, mounted]);
 
   const current = events[activeEvent];
+
+  if (mounted && isMobile) {
+    return (
+      <div className="mobile-unified-container">
+        {/* Mobile Event Section (WebGL 3D Wall Walk) */}
+        <section
+          ref={sectionRef}
+          id="events"
+          className="mobile-event-section-wrapper"
+          style={{ position: 'relative', width: '100%' }}
+        >
+          <div
+            ref={containerRef}
+            style={{
+              width: '100%',
+              height: '100vh',
+              position: 'relative',
+              overflow: 'hidden',
+              background: '#161315',
+            }}
+          >
+            {/* 3D Wall Scene */}
+            <WallScene progressRef={progressRef} snapToTarget={scrollProgress >= 0.95} />
+
+            {/* Film overlays */}
+            <div className="events-lift" />
+            <div className="events-scanlines" />
+            <div className="events-grain" />
+            <div className="events-vignette" />
+
+            {/* Camcorder Viewfinder HUD */}
+            <div className="events-hud">
+              <div className="events-hud-top">
+                <div className="events-era-badge">
+                  <span className="events-era-dot" />
+                  <span>CAM-01 // ALLEYWAY WALL</span>
+                </div>
+                <div className="events-hud-gdg">
+                  <span>REC [•] SP 00:94:26</span>
+                  <span style={{ marginLeft: '1.5rem', opacity: 0.6 }}>
+                    GDG CRCE // STREET ARCHIVE
+                  </span>
+                </div>
+              </div>
+
+              <div className="events-hud-bottom">
+                <div className="events-event-info">
+                  <div className="events-event-counter">
+                    <span className="events-event-number">
+                      {String(activeEvent + 1).padStart(2, '0')}
+                    </span>
+                    <span className="events-event-divider">/</span>
+                    <span className="events-event-total">
+                      {String(events.length).padStart(2, '0')}
+                    </span>
+                  </div>
+                  <div className="events-event-meta">
+                    <span className="events-event-title">{current?.title}</span>
+                    <span className="events-event-subtitle">
+                      {current?.subtitle}
+                    </span>
+                  </div>
+                </div>
+                <div className="events-scroll-hint">
+                  <span>SCROLL DOWN STREET →</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="events-progress-track">
+              <div
+                ref={progressBarRef}
+                className="events-progress-fill"
+                style={{ width: '0%' }}
+              />
+            </div>
+
+            {/* Grunge vignette borders */}
+            <div className="events-grunge-top" />
+            <div className="events-grunge-bottom" />
+          </div>
+        </section>
+
+        {/* Mobile Council Section (HTML list feed layout below events) */}
+        <section
+          id="mobile-council"
+          className="mobile-council-section"
+          aria-label="GDG CRCE Student Council 2026-27 — Mobile Experience"
+        >
+        {/* Sticky Mobile Header (Facebook style) */}
+        <div className="mobile-header-sticky">
+          {/* Cover Photo / Banner */}
+          <div className="fb-cover-photo-wrapper">
+            <div className="fb-cover-photo" style={{ backgroundColor: '#161f47' }}>
+              <div className="fb-cover-content">
+                <span className="fb-cover-text">GDG CRCE 26-27</span>
+                <span className="fb-cover-subtext">Google Developers Group</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Profile Header Block */}
+          <div className="fb-profile-header">
+            <div className="fb-avatar-row">
+              <div className="fb-profile-avatar-container">
+                <img src="/logo.png" className="fb-profile-logo" alt="GDG Logo" />
+              </div>
+              <div className="fb-profile-header-meta">
+                <h1 className="fb-profile-name">
+                  GDG FRCRCE
+                  <span className="fb-verified-badge" title="Verified Group">✓</span>
+                </h1>
+              </div>
+            </div>
+
+            {/* Profile Navigation Tabs (Posts, About, Videos, Photos) */}
+            <div className="fb-profile-tabs-menu">
+              <span className="fb-tab-item active">Posts</span>
+              <span className="fb-tab-item">About</span>
+              <span className="fb-tab-item">Videos</span>
+              <span className="fb-tab-item">Photos</span>
+            </div>
+          </div>
+          <div className="fb-header-divider" />
+        </div>
+
+        {/* Scrollable post feed */}
+        <div className="fb-feed-container">
+          {/* Post 1: Welcome post from GDG CRCE */}
+          <div className="fb-post-card pinned-post">
+            {/* Post Header */}
+            <div className="fb-post-header">
+              <div className="fb-post-avatar page-avatar">
+                <img src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" />
+              </div>
+              <div className="fb-post-author-info">
+                <span className="fb-post-author-name">
+                  GDG CRCE
+                  <span className="fb-verified-badge-small">✓</span>
+                </span>
+                <span className="fb-post-meta">Posted by Sir Harvey York • Pinned Post • 🌐</span>
+              </div>
+            </div>
+
+            {/* Post content */}
+            <div className="fb-post-content">
+              <p className="fb-post-text">
+                Zoomies before duties. Paws-ing for a group photo before we start building! 🐾
+              </p>
+            </div>
+
+            {/* Attached Photo */}
+            <div className="fb-post-media-container">
+              <img src="/preloader/genesis.jpg" className="fb-post-img" alt="Genesis Welcome" />
+            </div>
+
+            {/* Reactions summary */}
+            <div className="fb-post-reactions-bar">
+              <div className="fb-reaction-icons">
+                <span className="reaction-bubble blue-bubble">👍</span>
+                <span className="reaction-bubble red-bubble">❤️</span>
+              </div>
+              <span className="fb-reaction-text">You, Movin and 87 others</span>
+            </div>
+
+            {/* Post Action Buttons */}
+            <div className="fb-post-actions">
+              <button type="button" className="fb-action-btn"><span className="btn-icon">👍</span> Like</button>
+              <button type="button" className="fb-action-btn"><span className="btn-icon">💬</span> Comment</button>
+              <button type="button" className="fb-action-btn"><span className="btn-icon">↪️</span> Share</button>
+            </div>
+
+            {/* Comments block */}
+            <div className="fb-comments-section">
+              <div className="fb-comment-item">
+                <span className="comment-avatar">💻</span>
+                <div className="comment-bubble">
+                  <span className="comment-author">Movin</span>
+                  <span className="comment-text">Barkend Developer looks good! 🐶</span>
+                </div>
+              </div>
+              <div className="fb-comment-item">
+                <span className="comment-avatar">🐶</span>
+                <div className="comment-bubble">
+                  <span className="comment-author">Sir Harvey York</span>
+                  <span className="comment-text">Woof! 🐾</span>
+                </div>
+              </div>
+              
+              {/* Comment Input Box */}
+              <div className="fb-comment-input-row">
+                <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
+                <span className="comment-camera-icon">📷</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Loop over actual council members */}
+          {councilMembers.map((member) => (
+            <div key={member.id} className="fb-post-card">
+              {/* Post Header */}
+              <div className="fb-post-header">
+                <div className="fb-post-avatar" style={{ background: member.avatarBg }}>
+                  {member.avatarIcon}
+                </div>
+                <div className="fb-post-author-info">
+                  <span className="fb-post-author-name">{member.name}</span>
+                  <span className="fb-post-meta">{member.role} • 2 hrs ago • 👥</span>
+                </div>
+              </div>
+
+              {/* Post content */}
+              <div className="fb-post-content">
+                <p className="fb-post-text">{member.quote}</p>
+              </div>
+
+              {/* Attached Member Photo Card */}
+              <div className="fb-post-media-container">
+                <div className="fb-post-member-card" style={{ background: member.avatarBg }}>
+                  <span className="fb-post-member-glyph">{member.avatarIcon}</span>
+                </div>
+              </div>
+
+              {/* Reactions summary */}
+              <div className="fb-post-reactions-bar">
+                <div className="fb-reaction-icons">
+                  <span className="reaction-bubble blue-bubble">👍</span>
+                  <span className="reaction-bubble yellow-bubble">😊</span>
+                </div>
+                <span className="fb-reaction-text">Liked by Sir Harvey York and 42 others</span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="fb-post-actions">
+                <button type="button" className="fb-action-btn"><span className="btn-icon">👍</span> Like</button>
+                <button type="button" className="fb-action-btn"><span className="btn-icon">💬</span> Comment</button>
+                <button type="button" className="fb-action-btn"><span className="btn-icon">↪️</span> Share</button>
+              </div>
+
+              {/* Comments Input */}
+              <div className="fb-comments-section">
+                <div className="fb-comment-input-row">
+                  <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
+                  <span className="comment-camera-icon">📷</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <section
@@ -394,7 +704,7 @@ export default function EventsAndCouncilSection() {
             <Y2KArchiveSystem embedded />
           </div>
 
-          {/* Layer 3: Windows Picture and Fax Viewer Grand Finale */}
+          {/* Layer 3: Windows Picture and Fax Viewer */}
           <div
             ref={pictureViewerRef}
             className="xp-picture-viewer-wrapper"
