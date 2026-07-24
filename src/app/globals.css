@@ -1085,6 +1085,8 @@ body {
     rotateZ(calc(var(--rewind) * -0.7deg));
   transform-style: preserve-3d;
   filter: drop-shadow(0 34px 46px rgba(0, 0, 0, 0.92));
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .loader-film-flex-shadow {
@@ -1098,6 +1100,7 @@ body {
   filter: blur(18px);
   transform: translateZ(-70px) scaleY(calc(0.75 + var(--rewind) * 0.32));
   pointer-events: none;
+  will-change: transform;
 }
 
 .loader-film-thin-edge {
@@ -1115,11 +1118,13 @@ body {
 .loader-film-thin-edge-back {
   top: 17.8%;
   transform: translateZ(-16px) translateY(calc(var(--rewind) * -2px));
+  will-change: transform;
 }
 
 .loader-film-thin-edge-front {
   bottom: 17.8%;
   transform: translateZ(28px) translateY(calc(var(--rewind) * 2px));
+  will-change: transform;
 }
 
 .loader-film-body {
@@ -1135,21 +1140,22 @@ body {
     inset 0 14px 24px rgba(255, 255, 255, 0.03),
     0 0 0 1px rgba(255, 255, 255, 0.06);
   transform: translateZ(6px) rotateX(calc(var(--rewind) * 1.6deg));
+  will-change: transform;
   clip-path: polygon(
     0 9%,
-    8% calc(8% + var(--rewind) * 1%),
+    8% 8.5%,
     20% 10%,
-    34% calc(8% - var(--rewind) * 1.2%),
+    34% 7.4%,
     51% 9%,
-    67% calc(10% + var(--rewind) * 1.4%),
+    67% 10.7%,
     82% 8%,
     100% 9%,
     100% 91%,
-    86% calc(92% - var(--rewind) * 1.2%),
+    86% 91.4%,
     70% 90%,
-    55% calc(92% + var(--rewind) * 1%),
+    55% 92.5%,
     38% 91%,
-    20% calc(90% - var(--rewind) * 1.2%),
+    20% 89.4%,
     0 91%
   );
 }
@@ -1196,6 +1202,7 @@ body {
   grid-template-columns: repeat(14, minmax(0, 1fr));
   gap: clamp(5px, 0.48vw, 9px);
   transform: translateX(calc(var(--rewind) * -7.5%));
+  will-change: transform;
 }
 
 .loader-film-cell {
@@ -1331,6 +1338,7 @@ body {
     linear-gradient(90deg, transparent 0 10%, rgba(255, 255, 255, 0.18) 16%, transparent 22% 38%, rgba(255, 255, 255, 0.12) 43%, transparent 49% 64%, rgba(255, 255, 255, 0.16) 70%, transparent 78%),
     repeating-linear-gradient(0deg, transparent 0 7px, rgba(255, 255, 255, 0.08) 8px, transparent 10px);
   transform: translateX(calc(var(--rewind) * -12%));
+  will-change: transform, opacity;
 }
 
 @keyframes loader-pull-tear {
@@ -1399,6 +1407,7 @@ body {
   background:
     linear-gradient(90deg, transparent 0 14%, rgba(255, 255, 255, 0.06) 19%, transparent 25% 48%, rgba(255, 255, 255, 0.04) 54%, transparent 62% 76%, rgba(255, 255, 255, 0.045) 80%, transparent 86%),
     repeating-linear-gradient(0deg, transparent 0 14px, rgba(255, 255, 255, 0.018) 15px, transparent 17px);
+  will-change: transform, opacity;
 }
 
 /* Loader visual normalizer: centered film read with constant, low-noise texture. */
@@ -1427,6 +1436,7 @@ body {
     linear-gradient(90deg, transparent 0 18%, rgba(255, 255, 255, 0.016) 28%, transparent 42% 67%, rgba(255, 255, 255, 0.012) 74%, transparent 88%),
     repeating-linear-gradient(0deg, transparent 0 28px, rgba(255, 255, 255, 0.006) 29px, transparent 31px);
   filter: blur(2.4px) contrast(0.68) brightness(0.62);
+  will-change: transform;
 }
 
 .loader-rewind-pull {
@@ -1435,6 +1445,7 @@ body {
     linear-gradient(90deg, transparent 0 30%, rgba(255, 255, 255, 0.02) 43%, transparent 58%, rgba(255, 255, 255, 0.018) 74%, transparent 90%),
     repeating-linear-gradient(0deg, transparent 0 26px, rgba(255, 255, 255, 0.006) 27px, transparent 29px);
   filter: blur(3.2px) contrast(0.7) brightness(0.58);
+  will-change: transform, opacity;
 }
 
 .loader-rewind-pull::before {

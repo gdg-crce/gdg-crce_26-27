@@ -25,6 +25,7 @@ export type TapeCell =
   | { kind: 'image'; era: FilmTapeFrame; code: string; stock: string; src: string; alt: string }
   | { kind: 'text'; era: FilmTapeFrame; label: string; suffix?: string; code: string; stock: string; isOpeningFrame?: boolean }
   | { kind: 'reveal'; code: string }
+  | { kind: 'logo'; code: string; stock: string }
   | { kind: 'empty' };
 
 const TEXT_CELLS: Omit<Extract<TapeCell, { kind: 'text' }>, 'kind'>[] = [
@@ -42,14 +43,40 @@ const TEXT_CELLS: Omit<Extract<TapeCell, { kind: 'text' }>, 'kind'>[] = [
 function buildFrames(): TapeCell[] {
   const cells: TapeCell[] = [];
 
-  // 1. Initial 4 EMPTY film stock frames (Indices 0..3) so left edge is covered
-  for (let i = 0; i < 4; i++) {
-    cells.push({ kind: 'empty' });
-  }
+  // 1. Initial frames: 2 empty, 1 logo, 1 2026 text (Indices 0..3)
+  cells.push({ kind: 'empty' });
+  cells.push({ kind: 'empty' });
+  cells.push({
+    kind: 'logo',
+    code: '▶ LOGO',
+    stock: 'GDG FRCRCE',
+  });
+  cells.push({
+    era: '2020s',
+    label: '2026',
+    suffix: 's',
+    code: '▶ 24A',
+    stock: 'GDG FRCRCE',
+    isOpeningFrame: true,
+    kind: 'text',
+  });
+
   // 2. All 7 Event images & alternating text cards (Indices 4..17)
   for (let i = 0; i < EVENT_IMAGES.length; i++) {
     const img = EVENT_IMAGES[i];
-    const textCell = TEXT_CELLS[i] ?? TEXT_CELLS[TEXT_CELLS.length - 1];
+    let textCell = TEXT_CELLS[i] ?? TEXT_CELLS[TEXT_CELLS.length - 1];
+    
+    // The text cell right after the first image (Genesis) is at Index 5, should say "GDG CRCE"
+    if (i === 0) {
+      textCell = {
+        era: '2020s',
+        label: 'GDG CRCE',
+        code: '▶ 22A',
+        stock: 'KODAK 5219',
+        isOpeningFrame: false,
+      };
+    }
+
     cells.push({
       kind: 'image',
       era: textCell.era,
@@ -121,7 +148,7 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
                 <div
                   key="reveal-frame"
                   className="loader-film-cell loader-film-cell-reveal relative flex-1 overflow-hidden"
-                  style={{ minWidth: 0, background: '#000', border: '2px solid rgba(251, 191, 36, 0.6)' }}
+                  style={{ minWidth: 0, background: '#000' }}
                 >
                   <video
                     src="/videos/intro.mp4"
@@ -139,6 +166,39 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
                     }}
                   />
                   <div className="loader-film-cell-reveal-frame pointer-events-none absolute inset-0" style={{ zIndex: 20 }} />
+                </div>
+              );
+            }
+
+            if (frame.kind === 'logo') {
+              return (
+                <div
+                  key={`logo-${index}`}
+                  className="loader-film-cell relative flex-1 overflow-hidden"
+                  style={{
+                    minWidth: 0,
+                    background: '#090807',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/logo.png"
+                    alt="GDG Logo"
+                    draggable={false}
+                    style={{
+                      width: '65%',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      opacity: 0.85,
+                      zIndex: 10,
+                    }}
+                  />
+                  <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-left`} style={{ zIndex: 20 }}>{frame.code}</div>
+                  <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-right`} style={{ zIndex: 20 }}>{frame.stock}</div>
+                  <div className="loader-film-gate-shadow pointer-events-none" style={{ zIndex: 20 }} />
                 </div>
               );
             }
@@ -176,7 +236,6 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
                       objectFit: 'cover',
                       zIndex: 10,
                       display: 'block',
-                      border: '4px solid red', // DEBUG BORDER
                     }}
                   />
                   <div className={`${shareTechMono.className} loader-film-frame-code loader-film-frame-code-left`} style={{ zIndex: 20 }}>{frame.code}</div>

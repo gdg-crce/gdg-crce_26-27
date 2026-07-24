@@ -143,17 +143,17 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
       },
     });
 
-    // 1. Initial 2.0s pause on Genesis image dead-centered in viewport
+    // 1. Initial pause removed (Genesis image dead-centered in viewport)
     tl.to(animObj, {
       val: HOLD_END,
-      duration: 2.0,
+      duration: 0,
       ease: 'none',
     });
 
-    // 2. Slow, smooth rewind translation from Genesis (Index 10) to Reveal Window (Index 20) over 9.0s
+    // 2. Smooth rewind translation from Genesis to Reveal Window over 3.5s
     tl.to(animObj, {
       val: TRANSLATE_END,
-      duration: 9.0,
+      duration: 3.5,
       ease: 'power1.inOut',
     });
 
@@ -197,11 +197,7 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
       }
 
       if (filmWrapRef.current) {
-        if (zoomScale > 1.001) {
-          filmWrapRef.current.style.transform = `translate3d(-50%, -50%, 0) scale(${zoomScale})`;
-        } else {
-          filmWrapRef.current.style.transform = '';
-        }
+        filmWrapRef.current.style.transform = `translate3d(-50%, -50%, 0) scale(${zoomScale})`;
         filmWrapRef.current.style.opacity = String(1 - clamp((easedZoom - 0.2) / 0.8));
       }
 
@@ -213,13 +209,7 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
         progressBarRef.current.style.width = `${p * 100}%`;
       }
 
-      const debugEl = document.getElementById('preloader-debug');
-      if (debugEl) {
-        const wrapW = filmWrapRef.current ? filmWrapRef.current.clientWidth : 0;
-        const innerW = filmTapeInnerRef.current ? filmTapeInnerRef.current.clientWidth : 0;
-        const transformStr = filmTapeInnerRef.current ? filmTapeInnerRef.current.style.transform : '';
-        debugEl.textContent = `P:${p.toFixed(3)} | SX:${stripX.toFixed(1)}% | T:${transformStr} | wW:${wrapW}px | wI:${innerW}px | FS:${fStart.toFixed(3)} | FR:${fReveal.toFixed(3)}`;
-      }
+
 
       if (!heroWoken && p > TRANSLATE_END) {
         heroWoken = true;
@@ -310,19 +300,20 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
                   <span className="text-neutral-500">ACTIVE ERA:</span>
                   <span ref={hudEraRef} className="text-amber-400/90 font-semibold">2020s</span>
                 </div>
-                <div id="preloader-debug" className="text-amber-500/90 font-semibold" style={{ marginLeft: '12px' }} />
               </div>
             </div>
 
             {/* Infinite film strip container — vertically prominent at 50% top with 500vw width for exactly 5 visible cells on screen */}
             <div
               ref={filmWrapRef}
-              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 will-change-transform pointer-events-none flex items-center justify-center"
+              className="absolute left-1/2 pointer-events-none flex items-center justify-center"
               style={{
                 top: '50%',
                 width: 'max(4000px, 500vw)',
                 height: 'clamp(180px, 18vw, 350px)',
                 transformOrigin: '50% 50%',
+                transform: 'translate3d(-50%, -50%, 0) scale(1)',
+                willChange: 'transform, opacity',
               }}
             >
               <div
