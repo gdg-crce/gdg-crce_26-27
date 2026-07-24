@@ -1,107 +1,163 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
 import { TRACKS } from './aboutData';
 
 export default function MobileAboutSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end end'],
+  });
+
+  // Wipes for Sticky Note Text
+  // Phase 1: 0.15 to 0.4 (Section 1 -> Section 2)
+  const wipe1 = useTransform(scrollYProgress, [0.15, 0.4], [0, 100]);
+  // Phase 2: 0.6 to 0.85 (Section 2 -> Section 3)
+  const wipe2 = useTransform(scrollYProgress, [0.6, 0.85], [0, 100]);
+
+  const decOpacity = useTransform(scrollYProgress, [0.15, 0.3], [1, 0]);
+
+  // Derived clip-paths
+  // Track 0 (Section 1): Hides from left as wipe1 increases
+  const clip0 = useMotionTemplate`inset(0 0 0 ${wipe1}%)`;
+  
+  // Track 1 (Section 2): Reveals from left as wipe1 increases, hides from left as wipe2 increases
+  const right1 = useTransform(wipe1, (v) => 100 - v);
+  const clip1 = useMotionTemplate`inset(0 ${right1}% 0 ${wipe2}%)`;
+
+  // Track 2 (Section 3): Reveals from left as wipe2 increases
+  const right2 = useTransform(wipe2, (v) => 100 - v);
+  const clip2 = useMotionTemplate`inset(0 ${right2}% 0 0%)`;
+
+  const clips = [clip0, clip1, clip2];
+
+  // Vinyl transitions
+  // Vinyl 1 & 2 is Theme (static base). Vinyl 3 is Vision (overlay).
+  // Vision overlay reveals during wipe2.
+  const visionVinylClip = useMotionTemplate`inset(0 ${right2}% 0 0%)`;
+
   return (
-    <section className="md:hidden w-full bg-[#f4ebd9] text-[#1A1A1A] py-12 px-6 overflow-hidden relative font-sans">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-10">
-        <span className="text-[#E8412A] text-2xl font-bold">→</span>
-        <h2 className="text-[2.5rem] font-bold tracking-wide" style={{ fontFamily: 'var(--font-brush), cursive' }}>about us</h2>
-      </div>
-
-      {/* Vinyl Player (Static) */}
-      <div className="relative w-full aspect-[4/5] max-w-[340px] mx-auto border-2 border-[#1A1A1A] rounded-2xl bg-transparent mb-16 flex flex-col items-center justify-center pt-8">
+    <section ref={containerRef} className="md:hidden w-full h-[400vh] relative bg-[#111]">
+      <div className="sticky top-0 w-full h-[100svh] overflow-hidden font-sans">
         
-        <div className="relative w-[85%] aspect-square">
-          {/* Vinyl Disc */}
-          <img 
-            src="/record%20player/actual.png" 
-            alt="Vinyl Record" 
-            className="w-full h-full object-cover rounded-full shadow-[0_15px_35px_rgba(0,0,0,0.5)] border-[3px] border-[#0a0a0a]"
-            draggable={false}
-          />
-          
-          {/* Label */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32%] aspect-square bg-[#f4ebd9] rounded-full flex flex-col items-center justify-center border-2 border-[#1A1A1A] shadow-inner">
-            <span className="text-[10px] font-black tracking-widest text-[#1A1A1A]">GDG CRCE</span>
-            <div className="w-2.5 h-2.5 bg-[#1A1A1A] rounded-full my-1.5 border border-white/50 shadow-inner" />
-            <span className="text-[9px] font-bold font-mono">'26</span>
-          </div>
-        </div>
-
-        {/* Stitched Box Decoration from mockup (Functionia style) */}
-        <div className="mt-8 mb-6 w-[85%] border-2 border-dashed border-[#1A1A1A] rounded-lg p-4 flex flex-col gap-3">
-            <span className="text-3xl text-[#d05c2a]" style={{ fontFamily: 'var(--font-brush), cursive' }}>legacy</span>
-            <div className="w-[80%] h-[3px] bg-[#d05c2a] rounded-full opacity-80" />
-            <div className="w-[90%] h-[3px] bg-[#d05c2a] rounded-full opacity-80" />
-            <div className="w-[70%] h-[3px] bg-[#d05c2a] rounded-full opacity-80" />
-        </div>
-
-        {/* Tonearm */}
+        {/* Full background image, fixed to viewport */}
         <div 
-          className="absolute top-[-25px] left-[-35px] w-[58%] pointer-events-none drop-shadow-2xl" 
-          style={{ filter: 'drop-shadow(6px 12px 16px rgba(0,0,0,0.6))' }}
+          className="absolute inset-0 w-full h-full bg-cover bg-center pointer-events-none"
+          style={{ backgroundImage: 'url("/record player/bg.jpeg")' }}
         >
-          <img 
-            src="/record%20player/toneram.png" 
-            alt="Tonearm" 
-            className="w-full h-auto transform -rotate-[15deg]"
-            draggable={false}
-          />
+          {/* Subtle overlay to ensure text contrast if needed */}
+          <div className="absolute inset-0 bg-black/10 mix-blend-multiply" />
         </div>
-        
-        {/* Side decorative bolts */}
-        <div className="absolute top-[40%] -left-5 -translate-y-1/2 w-10 h-10 rounded-full border-2 border-[#1A1A1A] bg-[#f4ebd9] flex items-center justify-center shadow-md">
-           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        </div>
-        <div className="absolute top-[40%] -right-5 -translate-y-1/2 w-10 h-10 rounded-full border-2 border-[#1A1A1A] bg-[#f4ebd9] flex items-center justify-center shadow-md">
-           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        </div>
-      </div>
 
-      {/* Background card container for carousel */}
-      <div className="w-[calc(100%+3rem)] -ml-6 bg-[#ecd8b6] pt-10 pb-8 px-6 rounded-t-3xl relative">
-        {/* Cards Carousel */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {TRACKS.map((t, idx) => (
-            <div key={t.key} className="snap-center min-w-[92%] sm:min-w-[85%] mr-4 flex-shrink-0 relative">
-              <h3 className="text-[2.2rem] text-[#1E4D8C] mb-5 tracking-wide" style={{ fontFamily: 'var(--font-brush), cursive' }}>
-                {t.word.toLowerCase()} ?
-              </h3>
+        {/* Sticky Container for Content */}
+        <div className="absolute inset-0 w-full h-full flex flex-col items-center pt-8 pb-8 z-10">
+          
+          {/* Header Label */}
+          <div className="w-full px-6 flex items-center gap-2 pointer-events-none mb-4 mt-2">
+            <span className="text-[#E8412A] text-xl font-bold">→</span>
+            <h2 className="text-2xl text-white font-bold tracking-wide" style={{ fontFamily: 'var(--font-brush), cursive' }}>about us</h2>
+          </div>
+
+          {/* Top Half: Vinyl Player */}
+          <div className="w-full flex-1 flex flex-col justify-center items-center relative z-10 min-h-0">
+            <div className="relative w-[85%] max-w-[280px] aspect-square">
               
-              {t.brush && <div className="text-xl text-[#E8412A] mb-3 font-bold" style={{ fontFamily: 'var(--font-brush), cursive' }}>{t.brush}</div>}
+              {/* Base Static Vinyl (7.png - Our Theme) */}
+              <div className="absolute inset-0 w-full h-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.8)]">
+                <img 
+                  src="/record player/7.PNG" 
+                  alt="Our Theme Vinyl" 
+                  className="w-full h-full object-cover"
+                  draggable={false}
+                />
+              </div>
               
-              <p className="text-[#2a2a2a] text-[16px] leading-relaxed font-medium" style={{ fontFamily: 'var(--font-editorial-display), Georgia, serif' }}>
-                {t.lines.join(' ')}
-              </p>
-              
-              <div className="mt-8 pt-2">
-                <span className="text-[#D35A24] text-xl cursor-pointer block w-fit" style={{ fontFamily: 'var(--font-brush), cursive' }}>
-                  know more →
-                  <div className="h-[2px] bg-[#D35A24] w-full mt-1 opacity-60 rounded-full" />
-                </span>
+              {/* Wiping overlay (2.png - Our Vision) */}
+              <div 
+                className="absolute inset-0 w-full h-full"
+                style={{ 
+                  // Only expose the inner text and label, completely hiding outer edges
+                  maskImage: 'radial-gradient(circle at 50% 50%, black 0%, black 50%, transparent 54%)', 
+                  WebkitMaskImage: 'radial-gradient(circle at 50% 50%, black 0%, black 50%, transparent 54%)' 
+                }}
+              >
+                <motion.img 
+                  src="/record player/2.PNG" 
+                  alt="Our Vision Overlay" 
+                  style={{ clipPath: visionVinylClip }}
+                  className="w-full h-full object-cover"
+                  draggable={false}
+                />
+              </div>
+
+              {/* Tonearm */}
+              <div className="absolute top-[-10%] right-[-10%] w-[45%] pointer-events-none drop-shadow-2xl opacity-95 z-30">
+                <img 
+                  src="/record player/toneram.png" 
+                  alt="Tonearm" 
+                  className="w-full h-auto transform rotate-[15deg]"
+                  draggable={false}
+                />
               </div>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Pagination Dots (Static visual matching mockup) */}
-        <div className="flex justify-center gap-3 mt-4">
-          <div className="w-3 h-3 rounded-full bg-[#1E4D8C]" />
-          <div className="w-3 h-3 rounded-full bg-black/20" />
-          <div className="w-3 h-3 rounded-full bg-black/20" />
-        </div>
+          {/* Bottom Half: Sticky Note */}
+          <div className="w-full flex-[1.2] flex flex-col items-center justify-start relative z-20 mt-4 min-h-0">
+            <div className="relative w-[85%] max-w-[320px] aspect-[1/1.05] drop-shadow-2xl">
+              
+              {/* Base Sticky Note Paper (Static) */}
+              <img 
+                src="/record player/11.png" 
+                alt="Sticky Note Base" 
+                className="absolute inset-0 w-full h-full object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.6)]" 
+                draggable={false}
+              />
 
-        {/* Swipe Indicator */}
-        <div className="text-center mt-8 text-[#1E4D8C] text-[1.4rem] flex flex-col items-center justify-center gap-1" style={{ fontFamily: 'var(--font-brush), cursive' }}>
-          <span>← swipe left to explore more</span>
-          <div className="w-[75%] h-[2px] bg-[#1E4D8C]/80 rounded-full" />
+              {/* Decoration for Section 1 */}
+              <motion.img 
+                src="/record player/12.png" 
+                alt="Sticky Note Decoration" 
+                style={{ opacity: decOpacity }}
+                className="absolute inset-0 w-full h-full object-contain z-10" 
+                draggable={false}
+              />
+
+              {/* Container for HTML text */}
+              <div className="absolute inset-0 pt-[22%] px-[12%] pb-[10%]">
+                {TRACKS.map((track, i) => (
+                  <motion.div 
+                    key={`text-${i}`}
+                    style={{ clipPath: clips[i] }}
+                    className="absolute inset-0 pt-[20%] px-[12%] pb-[10%] flex flex-col items-center justify-center text-center bg-transparent z-20"
+                  >
+                    {track.brush && (
+                      <h4 className="text-[2.2rem] leading-none text-[#d05c2a] font-bold pb-3 transform -rotate-2" style={{ fontFamily: 'var(--font-brush), cursive' }}>
+                        {track.brush}
+                      </h4>
+                    )}
+                    <p 
+                      className={`text-[#5c3a21] uppercase ${track.brush ? 'text-[0.75rem]' : 'text-[0.7rem] sm:text-[0.75rem]'} leading-[1.6] font-bold tracking-[0.1em] transform -rotate-1 px-2`} 
+                      style={{ fontFamily: 'var(--font-editorial-display), Georgia, serif', textShadow: '0px 0px 1px rgba(140,74,33,0.1)' }}
+                    >
+                      {track.lines.join(' ')}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Scroll Indicator */}
+          <div className="w-full flex justify-center items-center gap-2 text-white/60 animate-pulse pointer-events-none z-30 pb-4 mt-auto mb-4">
+             <span className="text-xs font-mono tracking-widest uppercase drop-shadow-md">Scroll</span>
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="drop-shadow-md"><path d="M12 4v16m0 0l-4-4m4 4l4-4"/></svg>
+          </div>
+
         </div>
       </div>
-
     </section>
   );
 }

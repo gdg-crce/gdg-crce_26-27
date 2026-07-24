@@ -5,6 +5,7 @@ import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { unlockPolaroidAudio, playShutter } from './polaroidAudio';
+import MobileWhatWeDoSection from './MobileWhatWeDoSection';
 import './whatwedo.css';
 
 /* The flat (2D DOM) Polaroid wall — dynamically imported (ssr:false) so its
@@ -146,19 +147,23 @@ export default function WhatWeDoSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="what-we-do" className="whatwedo-section" aria-label="What GDG CRCE does">
-      {/* Seam flash — OUTSIDE the pinned stage, position:fixed, so it blankets
-          the whole viewport during the About→WhatWeDo hand-off and hides the
-          scroll seam. Driven by its own trigger (see the effect above). */}
-      <div ref={flashRef} className="wwd-seam-flash" aria-hidden="true" />
+    <div id="what-we-do">
+      <section ref={sectionRef} className="whatwedo-section hidden md:block" aria-label="What GDG CRCE does">
+        {/* Seam flash — OUTSIDE the pinned stage, position:fixed, so it blankets
+            the whole viewport during the About→WhatWeDo hand-off and hides the
+            scroll seam. Driven by its own trigger (see the effect above). */}
+        <div ref={flashRef} className="wwd-seam-flash" aria-hidden="true" />
 
-      <div ref={containerRef} className="wwd-pin">
-        {/* the flat Polaroid wall (table + camera + caption prints) */}
-        <div className="wwd-canvas-wrap">
-          <PolaroidScene2D progressRef={progressRef} />
+        <div ref={containerRef} className="wwd-pin">
+          {/* the flat Polaroid wall (table + camera + caption prints) */}
+          <div className="wwd-canvas-wrap">
+            <PolaroidScene2D progressRef={progressRef} />
+          </div>
+
         </div>
+      </section>
 
-      </div>
-    </section>
+      <MobileWhatWeDoSection />
+    </div>
   );
 }
