@@ -49,7 +49,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #1a1512;
+  background-color: transparent; /* Changed from solid color to transparent so the table beneath is visible */
   overflow: hidden;
   perspective: 2500px;
 }
@@ -72,11 +72,11 @@
 
 .album-container-wrapper {
   position: relative;
-  /* Top-bound Spiral Notebook is massive and centered. 16:9 landscape */
-  width: 75vw;
-  max-width: 1000px;
-  height: 42.1875vw; /* 75vw * (9/16) */
-  max-height: 562.5px;
+  /* Top-bound Spiral Notebook is centered. 16:9 landscape */
+  width: 80vw;
+  max-width: 1200px;
+  height: 45vw; /* 80vw * (9/16) */
+  max-height: 675px;
 }
 
 .album-container {
@@ -103,7 +103,11 @@
 
 .album-back-cover {
   background: #2a1f1a;
-  box-shadow: 15px 15px 40px rgba(0,0,0,0.6), inset -5px 0 20px rgba(0,0,0,0.5);
+  /* Deep, physically grounded contact shadow on the table */
+  box-shadow: 
+    0 10px 15px rgba(0,0,0,0.8), 
+    0 40px 80px rgba(0,0,0,0.6),
+    inset -5px 0 20px rgba(0,0,0,0.5);
   border-radius: 2px 2px 10px 10px;
 }
 
@@ -152,19 +156,7 @@
   overflow: hidden;
 }
 
-/* Stitched pockets grid (2x2 layout like the reference) */
-.page-front::before, .page-back::before {
-  content: '';
-  position: absolute;
-  inset: 20px;
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  background: 
-    linear-gradient(to right, transparent calc(50% - 1px), rgba(255, 255, 255, 0.1) 50%, transparent calc(50% + 1px)),
-    linear-gradient(to bottom, transparent calc(50% - 1px), rgba(255, 255, 255, 0.1) 50%, transparent calc(50% + 1px));
-  background-size: 100% 100%;
-  pointer-events: none;
-  z-index: 1;
-}
+
 
 /* High-gloss plastic reflection overlay */
 .page-front::after, .page-back::after {
@@ -198,26 +190,76 @@
   opacity: 0;
 }
 
-.polaroid-item {
+/* The wrapper that creates the vintage photo corners illusion */
+.scrap-photo {
   position: absolute;
-  box-shadow: 5px 10px 25px rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.1);
+  /* Space for the black triangular corners */
+  padding: 12px;
+  /* 4 separate linear gradients to draw 4 black triangles at the corners */
+  background-image: 
+    linear-gradient(135deg, #111 16px, transparent 17px),
+    linear-gradient(-135deg, #111 16px, transparent 17px),
+    linear-gradient(45deg, #111 16px, transparent 17px),
+    linear-gradient(-45deg, #111 16px, transparent 17px);
+  background-position: top left, top right, bottom left, bottom right;
+  background-size: 50% 50%;
+  background-repeat: no-repeat;
+  filter: drop-shadow(3px 8px 15px rgba(0,0,0,0.6));
   transition: transform 0.3s ease, filter 0.3s ease;
+  z-index: 5;
 }
 
-.polaroid-item:hover {
-  filter: brightness(1.1) contrast(1.1);
+.scrap-photo:hover {
+  filter: drop-shadow(5px 12px 25px rgba(0,0,0,0.8)) brightness(1.1);
   z-index: 10;
 }
 
-/* Polaroids layout inside the massive 16:9 pages */
-.pol-1 { top: 15%; left: 10%; transform: rotate(-4deg); width: 35%; max-width: 250px; }
-.pol-2 { top: 20%; right: 10%; transform: rotate(3deg); width: 35%; max-width: 250px; }
+/* Native Polaroids (images that already have baked-in frames) */
+.native-polaroid-container {
+  position: absolute;
+  filter: drop-shadow(5px 15px 25px rgba(0,0,0,0.7));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
 
-.pol-3 { top: 10%; left: 12%; transform: rotate(4deg); width: 35%; max-width: 250px; }
-.pol-4 { top: 25%; right: 12%; transform: rotate(-5deg); width: 35%; max-width: 250px; }
+.native-polaroid-container:hover {
+  filter: drop-shadow(8px 20px 35px rgba(0,0,0,0.9)) brightness(1.1);
+  z-index: 10;
+}
 
-.pol-5 { top: 15%; left: 32.5%; transform: rotate(-2deg); width: 35%; max-width: 300px; }
+.native-polaroid-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Standard photo print with a thin white border */
+.print-style {
+  background: #fff;
+  padding: 3%; /* Even thin border */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+  display: block;
+}
+
+/* --- Organic Scrapbook Layouts (SPACED OUT & MAXIMIZED) --- */
+
+/* Page 3: 3 images */
+.p3-1 { top: 10%; left: 2%; width: 46%; transform: rotate(-3deg); z-index: 2; }
+.p3-2 { top: 8%; right: 2%; width: 46%; transform: rotate(4deg); z-index: 1; }
+.p3-3 { bottom: 3%; left: 30%; width: 40%; transform: rotate(-2deg); z-index: 3; }
+
+/* Page 2: 3 images */
+.p2-1 { top: 10%; right: 3%; width: 48%; transform: rotate(3deg); z-index: 2; }
+.p2-2 { top: 8%; left: 3%; width: 40%; transform: rotate(-4deg); z-index: 1; }
+.p2-3 { bottom: 5%; left: 10%; width: 42%; transform: rotate(2deg); z-index: 3; }
+
+/* Page 1: 3 images */
+.p1-1 { top: 8%; left: 2%; width: 48%; transform: rotate(-4deg); z-index: 2; }
+.p1-2 { top: 6%; right: 4%; width: 40%; transform: rotate(5deg); z-index: 1; }
+.p1-3 { bottom: 3%; right: 15%; width: 42%; transform: rotate(-2deg); z-index: 3; }
 
 
 .memory-text {
@@ -250,8 +292,10 @@
 .wwd-solid-bg {
   position: absolute;
   inset: 0;
-  /* Cinematic moody lighting: a soft warm spotlight in the center, dropping to pitch black */
-  background: radial-gradient(circle at 50% 45%, #2a1f1a 0%, #0a0807 50%, #000000 100%);
+  /* Cinematic moody lighting: Grounding the scene on a physical table */
+  /* Using table.png as requested. No dark overlays so the beautiful wood is 100% visible! */
+  background: url('/whatwedo/table.png') no-repeat center center;
+  background-size: cover;
 }
 
 /* Provides the 100vh physical block for GSAP to pin against in the DOM */

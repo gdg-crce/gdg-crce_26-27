@@ -33,8 +33,8 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       lastP = p; lastVw = vw; lastVh = vh;
 
       // Phase 1: The Morph (Extended to 0.20 for a luxurious, slow unraveling)
-      const coverW = Math.min(vw * 0.75, 1000); // Massive 75vw wide centered book!
-      const coverH = Math.min(vw * 0.421875, 562.5); // 16:9 ratio
+      const coverW = Math.min(vw * 0.80, 1200); // Slightly increased 80vw wide centered book
+      const coverH = Math.min(vw * 0.45, 675); // 16:9 ratio
       
       const maxStartScale = Math.max(vw / coverW, vh / coverH);
       
@@ -202,8 +202,18 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
             {/* Page 3 */}
             <div ref={page3Ref} className="album-page album-page-3">
               <div className="page-front">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/whatwedo/techinical.PNG" alt="Technical" className="polaroid-item pol-5" draggable={false} />
+                <div className="native-polaroid-container p3-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/whatwedo/techinical.PNG" alt="Technical" className="native-polaroid-img" draggable={false} />
+                </div>
+                <div className="native-polaroid-container p3-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/whatwedo/context-poloriod.png" alt="Context" className="native-polaroid-img" draggable={false} />
+                </div>
+                <div className="scrap-photo p3-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.58.11%20PM.jpeg" alt="Memory" className="print-style" draggable={false} />
+                </div>
               </div>
               <div className="page-back"></div>
             </div>
@@ -211,10 +221,18 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
             {/* Page 2 */}
             <div ref={page2Ref} className="album-page album-page-2">
               <div className="page-front">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/whatwedo/ml-android.webp" alt="ML & Android" className="polaroid-item pol-3" draggable={false} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/whatwedo/design.webp" alt="Design" className="polaroid-item pol-4" draggable={false} />
+                <div className="native-polaroid-container p2-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/whatwedo/design.webp" alt="Design" className="native-polaroid-img" draggable={false} />
+                </div>
+                <div className="scrap-photo p2-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.53.05%20PM.jpeg" alt="Memory" className="print-style" draggable={false} />
+                </div>
+                <div className="scrap-photo p2-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.58.10%20PM%20(1).jpeg" alt="Memory" className="print-style" draggable={false} />
+                </div>
               </div>
               <div className="page-back"></div>
             </div>
@@ -222,10 +240,18 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
             {/* Page 1 */}
             <div ref={page1Ref} className="album-page album-page-1">
               <div className="page-front">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/whatwedo/content.webp" alt="Content" className="polaroid-item pol-1" draggable={false} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/whatwedo/community.webp" alt="Community" className="polaroid-item pol-2" draggable={false} />
+                <div className="native-polaroid-container p1-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/whatwedo/community.webp" alt="Community" className="native-polaroid-img" draggable={false} />
+                </div>
+                <div className="scrap-photo p1-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.53.05%20PM%20(2).jpeg" alt="Memory" className="print-style" draggable={false} />
+                </div>
+                <div className="scrap-photo p1-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.53.05%20PM%20(3).jpeg" alt="Memory" className="print-style" draggable={false} />
+                </div>
               </div>
               <div className="page-back">
                 <div className="memory-text">revisiting our memories...</div>
