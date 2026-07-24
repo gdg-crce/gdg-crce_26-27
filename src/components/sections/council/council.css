@@ -2330,6 +2330,14 @@
   padding: 4px 0 !important;
 }
 
+.fb-action-separator {
+  width: 1px !important;
+  height: 16px !important;
+  background-color: #ccd0d5 !important;
+  align-self: center !important;
+  flex-shrink: 0 !important;
+}
+
 .fb-action-btn {
   flex: 1 !important;
   background: transparent !important;

@@ -460,9 +460,32 @@ export default function EventsAndCouncilSection() {
 
             {/* Post Action Buttons */}
             <div className="fb-post-actions">
-              <button type="button" className="fb-action-btn"><span className="btn-icon">👍</span> Like</button>
-              <button type="button" className="fb-action-btn"><span className="btn-icon">💬</span> Comment</button>
-              <button type="button" className="fb-action-btn"><span className="btn-icon">↪️</span> Share</button>
+              <button type="button" className="fb-action-btn">
+                <span className="btn-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
+                  </svg>
+                </span>
+                Like
+              </button>
+              <div className="fb-action-separator" />
+              <button type="button" className="fb-action-btn">
+                <span className="btn-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </span>
+                Comment
+              </button>
+              <div className="fb-action-separator" />
+              <button type="button" className="fb-action-btn">
+                <span className="btn-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
+                    <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
+                  </svg>
+                </span>
+                Share
+              </button>
             </div>
 
             {/* Comments block */}
@@ -527,9 +550,32 @@ export default function EventsAndCouncilSection() {
 
               {/* Action Buttons */}
               <div className="fb-post-actions">
-                <button type="button" className="fb-action-btn"><span className="btn-icon">👍</span> Like</button>
-                <button type="button" className="fb-action-btn"><span className="btn-icon">💬</span> Comment</button>
-                <button type="button" className="fb-action-btn"><span className="btn-icon">↪️</span> Share</button>
+                <button type="button" className="fb-action-btn">
+                  <span className="btn-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
+                    </svg>
+                  </span>
+                  Like
+                </button>
+                <div className="fb-action-separator" />
+                <button type="button" className="fb-action-btn">
+                  <span className="btn-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                  </span>
+                  Comment
+                </button>
+                <div className="fb-action-separator" />
+                <button type="button" className="fb-action-btn">
+                  <span className="btn-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
+                      <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
+                    </svg>
+                  </span>
+                  Share
+                </button>
               </div>
 
               {/* Comments Input */}
