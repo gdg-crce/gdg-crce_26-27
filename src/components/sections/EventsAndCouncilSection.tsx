@@ -26,6 +26,33 @@ function THREE_MATH_LERP(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
+export const mobileEvents = [
+  {
+    id: 'mobile-evt-1',
+    title: 'CRCE HACK 2026',
+    subtitle: 'Retro Tech Hackathon',
+    posterImage: '/events/1.png',
+  },
+  {
+    id: 'mobile-evt-2',
+    title: 'AGENT SESSIONS',
+    subtitle: 'AI Workshop Series',
+    posterImage: '/events/2.png',
+  },
+  {
+    id: 'mobile-evt-3',
+    title: 'DEVFEST 2026',
+    subtitle: 'Build the Future',
+    posterImage: '/events/3.png',
+  },
+  {
+    id: 'mobile-evt-4',
+    title: 'BYTE CLUB',
+    subtitle: 'Weekly Code Jams',
+    posterImage: '/events/4.png',
+  },
+];
+
 /**
  * EventsAndCouncilSection — Unified Master Choreography Section
  * Upgraded with !important Bliss grid scanlines, 3D carved grass text, and the
@@ -51,6 +78,7 @@ export default function EventsAndCouncilSection() {
   const playerWrapperRef = useRef<HTMLDivElement>(null);
   const pictureViewerRef = useRef<HTMLDivElement>(null);
   const activeEventRef = useRef(0);
+  const carouselTrackRef = useRef<HTMLDivElement>(null);
   const [activeEvent, setActiveEvent] = useState(0);
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
@@ -89,44 +117,64 @@ export default function EventsAndCouncilSection() {
     gsap.registerPlugin(ScrollTrigger);
 
     if (isMobile) {
-      // Mobile ScrollTrigger for Events Wall Walk ONLY
-      const trigger = ScrollTrigger.create({
-        trigger: sectionRef.current,
-        pin: containerRef.current,
-        start: 'top top',
-        end: '+=4000',
-        scrub: 0.8,
-        onUpdate: (self) => {
-          const p = self.progress;
-          setScrollProgress(p);
+      const track = carouselTrackRef.current;
+      if (!track) return;
 
-          const LAST_POSTER_P = 0.968;
-          progressRef.current = p * LAST_POSTER_P;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let scrollTriggerInstance: any;
 
-          if (progressBarRef.current) {
-            progressBarRef.current.style.width = `${p * 100}%`;
-          }
+      const initScrollTrigger = () => {
+        const anim = gsap.to(track, {
+          x: () => -((mobileEvents.length - 1) * window.innerWidth),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            pin: containerRef.current,
+            start: 'top top',
+            end: () => `+=${(mobileEvents.length - 1) * window.innerHeight * 0.8}`,
+            scrub: 0.5,
+            snap: {
+              snapTo: 1 / (mobileEvents.length - 1),
+              duration: { min: 0.2, max: 0.4 },
+              delay: 0.05,
+              ease: 'power1.inOut',
+            },
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              const p = self.progress;
 
-          const cameraX = THREE_MATH_LERP(-24, 23, p * LAST_POSTER_P);
-          let closest = 0;
-          let minDist = Infinity;
-          events.forEach((e, i) => {
-            const dist = Math.abs(e.position[0] - cameraX);
-            if (dist < minDist) {
-              minDist = dist;
-              closest = i;
-            }
-          });
+              if (progressBarRef.current) {
+                progressBarRef.current.style.width = `${p * 100}%`;
+              }
 
-          if (closest !== activeEventRef.current) {
-            activeEventRef.current = closest;
-            setActiveEvent(closest);
-          }
-        }
-      });
+              const totalCards = mobileEvents.length;
+              const closest = Math.min(
+                totalCards - 1,
+                Math.round(p * (totalCards - 1))
+              );
+              if (closest !== activeEventRef.current) {
+                activeEventRef.current = closest;
+                setActiveEvent(closest);
+              }
+            },
+          },
+        });
+        scrollTriggerInstance = anim;
+      };
+
+      const timeoutId = setTimeout(() => {
+        initScrollTrigger();
+        ScrollTrigger.refresh();
+      }, 100);
 
       return () => {
-        trigger.kill();
+        clearTimeout(timeoutId);
+        if (scrollTriggerInstance) {
+          if (scrollTriggerInstance.scrollTrigger) {
+            scrollTriggerInstance.scrollTrigger.kill();
+          }
+          scrollTriggerInstance.kill();
+        }
       };
     } else {
       // Desktop ScrollTrigger (identically preserved)
@@ -291,12 +339,12 @@ export default function EventsAndCouncilSection() {
     }
   }, [isEventsMinimized, isMobile, mounted]);
 
-  const current = events[activeEvent];
+  const current = isMobile ? mobileEvents[activeEvent] : events[activeEvent];
 
   if (mounted && isMobile) {
     return (
       <div className="mobile-unified-container">
-        {/* Mobile Event Section (WebGL 3D Wall Walk) */}
+        {/* Mobile Event Section (2D HTML/CSS Smooth Carousel) */}
         <section
           ref={sectionRef}
           id="events"
@@ -310,11 +358,33 @@ export default function EventsAndCouncilSection() {
               height: '100vh',
               position: 'relative',
               overflow: 'hidden',
-              background: '#161315',
+              backgroundImage: 'url(/events/eventsmobbg.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
             }}
           >
-            {/* 3D Wall Scene */}
-            <WallScene progressRef={progressRef} snapToTarget={scrollProgress >= 0.95} />
+            {/* Events Title on Top */}
+            <div className="mobile-events-header">
+              <h2 className="mobile-events-section-title">OUR EVENTS</h2>
+            </div>
+
+            {/* 2D HTML/CSS Carousel Track */}
+            <div
+              ref={carouselTrackRef}
+              className="mobile-events-track"
+            >
+              {mobileEvents.map((evt) => (
+                <div key={evt.id} className="mobile-event-card-wrapper-raw">
+                  <img
+                    src={evt.posterImage}
+                    alt={evt.title}
+                    className="mobile-event-image-raw"
+                    decoding="async"
+                  />
+                </div>
+              ))}
+            </div>
 
             {/* Film overlays */}
             <div className="events-lift" />
@@ -322,53 +392,7 @@ export default function EventsAndCouncilSection() {
             <div className="events-grain" />
             <div className="events-vignette" />
 
-            {/* Camcorder Viewfinder HUD */}
-            <div className="events-hud">
-              <div className="events-hud-top">
-                <div className="events-era-badge">
-                  <span className="events-era-dot" />
-                  <span>CAM-01 // ALLEYWAY WALL</span>
-                </div>
-                <div className="events-hud-gdg">
-                  <span>REC [•] SP 00:94:26</span>
-                  <span style={{ marginLeft: '1.5rem', opacity: 0.6 }}>
-                    GDG CRCE // STREET ARCHIVE
-                  </span>
-                </div>
-              </div>
 
-              <div className="events-hud-bottom">
-                <div className="events-event-info">
-                  <div className="events-event-counter">
-                    <span className="events-event-number">
-                      {String(activeEvent + 1).padStart(2, '0')}
-                    </span>
-                    <span className="events-event-divider">/</span>
-                    <span className="events-event-total">
-                      {String(events.length).padStart(2, '0')}
-                    </span>
-                  </div>
-                  <div className="events-event-meta">
-                    <span className="events-event-title">{current?.title}</span>
-                    <span className="events-event-subtitle">
-                      {current?.subtitle}
-                    </span>
-                  </div>
-                </div>
-                <div className="events-scroll-hint">
-                  <span>SCROLL DOWN STREET →</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div className="events-progress-track">
-              <div
-                ref={progressBarRef}
-                className="events-progress-fill"
-                style={{ width: '0%' }}
-              />
-            </div>
 
             {/* Grunge vignette borders */}
             <div className="events-grunge-top" />

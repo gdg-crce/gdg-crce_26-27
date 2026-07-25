@@ -240,13 +240,20 @@ export default function AboutSection() {
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const s = Math.max(vw / STAGE_W, vh / STAGE_H);
+      
+      let s;
+      let ox;
 
-      // On wide screens the reference framing is used as-authored. As the
-      // viewport approaches square, cover-scaling would push the label off to
-      // the right, so slide the stage until the record is centred instead.
-      const recentre = 1 - clamp01((vw / vh - 1.05) / 0.55);
-      const ox = -(REC_CX - STAGE_W / 2) * recentre;
+      if (vw < vh) {
+        // Portrait / Mobile: Scale based on viewport width to fit the 576px label with margin
+        s = (0.85 * vw) / (LABEL_R * 2);
+        ox = -(REC_CX - STAGE_W / 2);
+      } else {
+        // Desktop / Landscape: Cover-scale as-authored
+        s = Math.max(vw / STAGE_W, vh / STAGE_H);
+        const recentre = 1 - clamp01((vw / vh - 1.05) / 0.55);
+        ox = -(REC_CX - STAGE_W / 2) * recentre;
+      }
 
       stage.style.transform = `translate(-50%, -50%) scale(${s.toFixed(4)}) translate(${ox.toFixed(1)}px, 0px)`;
 

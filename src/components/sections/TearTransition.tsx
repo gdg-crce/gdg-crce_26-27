@@ -10,8 +10,21 @@ export default function TearTransition() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const leftTearRef = useRef<HTMLDivElement>(null);
   const rightTearRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) return;
     gsap.registerPlugin(ScrollTrigger);
     
     // The trigger is a 2000px tall invisible div in the normal document flow.
@@ -75,8 +88,14 @@ export default function TearTransition() {
       }
     });
 
-    return () => st.kill();
-  }, []);
+    return () => {
+      if (st) st.kill();
+    };
+  }, [isMobile]);
+
+  if (mounted && isMobile) {
+    return null;
+  }
 
   return (
     <>

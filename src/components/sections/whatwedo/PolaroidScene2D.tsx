@@ -177,8 +177,8 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const cameraWidth = Math.min(0.85 * containerWidth, 320);
           const cameraHeight = cameraWidth * 1.5015;
 
-          // Camera top in CSS is 2%
-          const cameraTop = containerHeight * 0.02;
+          // Camera top in CSS is 9%
+          const cameraTop = containerHeight * 0.09;
 
           // Slot Y relative to container top (79.1% from the top of the camera)
           const slotY = cameraTop + cameraHeight * 0.791;

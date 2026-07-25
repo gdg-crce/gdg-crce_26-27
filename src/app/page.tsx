@@ -6,6 +6,7 @@ import HeroVideoSection from '@/components/sections/hero-video/HeroVideoSection'
 import EventsAndCouncilSection from '@/components/sections/EventsAndCouncilSection';
 import AboutSection from '@/components/sections/about/AboutSection';
 import WhatWeDoSection from '@/components/sections/whatwedo/WhatWeDoSection';
+import ContactSection from '@/components/sections/contact/ContactSection';
 
 import TearTransition from '@/components/sections/TearTransition';
 
@@ -41,6 +42,7 @@ export default function Home() {
         <WhatWeDoSection />
         <TearTransition />
         <EventsAndCouncilSection />
+        <ContactSection />
       </main>
     </div>
   );

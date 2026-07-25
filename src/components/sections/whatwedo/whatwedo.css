@@ -74,7 +74,7 @@
     width: 100%;
     height: 100%;
     position: relative;
-    background: #17141c;
+    background: #17141c url('/whatwedo/mobile/watwedomobbg.png') center / cover no-repeat;
   }
 }
 
@@ -134,7 +134,7 @@
   pointer-events: none;
   width: min(85vw, 320px);
   left: 50%;
-  top: 2%;
+  top: 9%;
   transform: translateX(-50%);
 }
 
@@ -159,7 +159,7 @@
   width: min(85vw, 320px);
   height: auto;
   left: 50%;
-  top: 2%;
+  top: 9%;
   transform: translateX(-50%);
 }
 
@@ -185,7 +185,7 @@
 /* ── Mobile Title ───────────────────────────────────────────────────────── */
 .wwd2d-mobile-title {
   position: absolute;
-  top: 5%;
+  top: 4.5%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 35;
