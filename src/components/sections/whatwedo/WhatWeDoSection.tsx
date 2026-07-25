@@ -84,6 +84,8 @@ export default function WhatWeDoSection() {
       },
     });
 
+    const getRevealPx = () => (window.innerWidth < 768 ? 500 : REVEAL_PX);
+
     // ── SEAM FLASH ──────────────────────────────────────────────────────────
     // The fixed whiteout that masks the About→WhatWeDo hand-off. It lives
     // OUTSIDE the pinned stage (position:fixed), so it blankets the viewport
@@ -99,12 +101,13 @@ export default function WhatWeDoSection() {
     const flash = ScrollTrigger.create({
       trigger: sectionRef.current,
       start: () => `top bottom+=${Math.round(window.innerHeight * 0.6)}`,
-      end: () => `+=${Math.round(window.innerHeight * 1.6 + REVEAL_PX)}`,
+      end: () => `+=${Math.round(window.innerHeight * 1.6 + getRevealPx())}`,
       scrub: 1.5,
       onUpdate: (self) => {
         const p = self.progress;
         const vh = window.innerHeight;
-        const total = vh * 1.6 + REVEAL_PX;
+        const revealPx = getRevealPx();
+        const total = vh * 1.6 + revealPx;
         const riseEnd = (vh * 0.6) / total; // solid white by the start of the seam
         const holdEnd = (vh * 1.6) / total; // hold white until the pin engages
         let op: number;

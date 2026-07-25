@@ -88,10 +88,72 @@ const PHOTOS: Photo[] = [
 
 const REVEAL_DUR = 0.16;
 
+type MobilePhoto = {
+  src: string;
+  alt: string;
+  z: number;
+  start: number;
+  rot: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+const MOBILE_PHOTOS: MobilePhoto[] = [
+  {
+    src: '/whatwedo/mobile/technical.png',
+    alt: 'Technical — Scalable web, mobile, and cloud solutions built with React, Node.js, Flutter, and modern DevOps, engineered for performance and digital transformation.',
+    z: 16,
+    start: 0.22,
+    rot: -1.5,
+    offsetX: -5,
+    offsetY: 3,
+  },
+  {
+    src: '/whatwedo/mobile/content.png',
+    alt: 'Content — engaging technical content and educational resources, from blog posts to video tutorials, making complex topics accessible for everyone.',
+    z: 17,
+    start: 0.38,
+    rot: 3,
+    offsetX: 6,
+    offsetY: -3,
+  },
+  {
+    src: '/whatwedo/mobile/coomunity.png',
+    alt: 'Community — organizing workshops, hackathons, and tech talks that foster innovation and collaboration among tech enthusiasts.',
+    z: 18,
+    start: 0.54,
+    rot: -3.5,
+    offsetX: -6,
+    offsetY: -6,
+  },
+  {
+    src: '/whatwedo/mobile/ml&andro.png',
+    alt: 'ML & Android — smart Android apps powered by machine learning, built with TensorFlow, Kotlin, and Google ML Kit to learn and adapt to user behavior.',
+    z: 19,
+    start: 0.70,
+    rot: 2,
+    offsetX: 4,
+    offsetY: 3,
+  },
+  {
+    src: '/whatwedo/mobile/design.png',
+    alt: 'Design — intuitive interfaces, compelling visuals, designed with Figma, Adobe Creative Suite, and design thinking to create experiences users love.',
+    z: 20,
+    start: 0.86,
+    rot: -2,
+    offsetX: -3,
+    offsetY: 1,
+  },
+];
+
+const REVEAL_DUR_MOBILE = 0.12;
+
 export default function PolaroidScene2D({ progressRef }: { progressRef: React.RefObject<number> }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<HTMLImageElement>(null);
   const photoRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const mobileCameraRef = useRef<HTMLImageElement>(null);
+  const mobilePhotoRefs = useRef<(HTMLDivElement | null)[]>([]);
   const prevPRef = useRef<number>(-1);
 
   useEffect(() => {
@@ -100,31 +162,78 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
 
     const draw = () => {
       const p = progressRef.current ?? 0;
+      const isMobile = window.innerWidth < 768;
 
-      // camera: revealed in place by the flash, with a gentle settle
-      if (cameraRef.current) {
-        const s = lerp(1.05, 1, smooth(0, 0.22, p));
-        cameraRef.current.style.transform = `translate(-50%, -50%) scale(${s.toFixed(3)})`;
+      if (isMobile) {
+        // camera: no transform animation — must stay identical size to cameratop overlay
+
+        const container = rootRef.current;
+        if (container) {
+          const containerRect = container.getBoundingClientRect();
+          const containerHeight = containerRect.height;
+          const containerWidth = containerRect.width;
+
+          // Camera width is min(85vw, 320px)
+          const cameraWidth = Math.min(0.85 * containerWidth, 320);
+          const cameraHeight = cameraWidth * 1.5015;
+
+          // Camera top in CSS is 2%
+          const cameraTop = containerHeight * 0.02;
+
+          // Slot Y relative to container top (79.1% from the top of the camera)
+          const slotY = cameraTop + cameraHeight * 0.791;
+
+          // Photo height is width * 2.168
+          const photoWidth = Math.min(0.85 * containerWidth, 320);
+          const photoHeight = photoWidth * 2.168;
+
+          // Resting center Y is 60% of container height (matching CSS top: 60%)
+          const restingCenterY = containerHeight * 0.60;
+
+          // At t = 0, photo starts with bottom edge at slotY:
+          // scale at start is 0.4, so scaled height is 0.4 * photoHeight.
+          // Center Y is slotY - (0.4 * photoHeight) / 2 = slotY - 0.2 * photoHeight.
+          const startCenterY = slotY - 0.2 * photoHeight;
+
+          // photos: stack on top of each other in the bottom half
+          for (let i = 0; i < MOBILE_PHOTOS.length; i++) {
+            const el = mobilePhotoRefs.current[i];
+            if (!el) continue;
+            const ph = MOBILE_PHOTOS[i];
+
+            const t = easeOut(smooth(ph.start, ph.start + REVEAL_DUR_MOBILE, p));
+            const opacity = smooth(ph.start, ph.start + 0.05, p);
+            el.style.opacity = opacity.toFixed(3);
+
+            const currentCenterY = lerp(startCenterY, restingCenterY, t);
+            const translateY = currentCenterY - restingCenterY;
+
+            const sc = lerp(0.4, 1.0, t);
+            const rot = lerp(-10, ph.rot, t);
+            el.style.transform = `translate(-50%, -50%) translate(${ph.offsetX}px, calc(${translateY.toFixed(1)}px + ${ph.offsetY}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
+          }
+        }
+      } else {
+        // camera: revealed in place by the flash, with a gentle settle
+        if (cameraRef.current) {
+          const s = lerp(1.05, 1, smooth(0, 0.22, p));
+          cameraRef.current.style.transform = `translate(-50%, -50%) scale(${s.toFixed(3)})`;
+        }
+
+        // photos: each develops + rises + un-spins into its resting pose
+        for (let i = 0; i < PHOTOS.length; i++) {
+          const el = photoRefs.current[i];
+          if (!el) continue;
+          const ph = PHOTOS[i];
+          const t = easeOut(smooth(ph.start, ph.start + REVEAL_DUR, p));
+          el.style.opacity = smooth(ph.start, ph.start + 0.06, p).toFixed(3);
+          const ty = (1 - t) * 36;
+          const sc = lerp(0.84, 1, t);
+          const rot = (1 - t) * ph.spin;
+          el.style.transform = `translate(-50%, -50%) translateY(${ty.toFixed(1)}px) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
+        }
       }
 
-      // photos: each develops + rises + un-spins into its resting pose
-      for (let i = 0; i < PHOTOS.length; i++) {
-        const el = photoRefs.current[i];
-        if (!el) continue;
-        const ph = PHOTOS[i];
-        const t = easeOut(smooth(ph.start, ph.start + REVEAL_DUR, p));
-        el.style.opacity = smooth(ph.start, ph.start + 0.06, p).toFixed(3);
-        const ty = (1 - t) * 36;
-        const sc = lerp(0.84, 1, t);
-        const rot = (1 - t) * ph.spin;
-        el.style.transform = `translate(-50%, -50%) translateY(${ty.toFixed(1)}px) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
-      }
-
-      // shutter whir on each forward crossing (never on scrub-back)
-      const prev = prevPRef.current;
-      if (prev >= 0) {
-        // for (const ph of PHOTOS) if (prev < ph.start && p >= ph.start) playWhir(0.85);
-      }
       prevPRef.current = p;
     };
 
@@ -167,29 +276,80 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
 
   return (
     <div ref={rootRef} className="wwd2d-root">
-      <div className="wwd2d-table" />
-      <div className="wwd2d-vignette" />
+      {/* --- DESKTOP VIEW --- */}
+      <div className="wwd2d-desktop">
+        <div className="wwd2d-table" />
+        <div className="wwd2d-vignette" />
 
-      {PHOTOS.map((ph, i) => (
-        <div
-          key={ph.src}
-          ref={(el) => {
-            photoRefs.current[i] = el;
-          }}
-          className="wwd2d-photo-wrapper"
-          style={{ left: `${ph.left}%`, top: `${ph.top}%`, zIndex: ph.z, opacity: 0 }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element -- decorative pre-rendered polaroid inside a GSAP stage; next/image adds no value */}
+        {PHOTOS.map((ph, i) => (
+          <div
+            key={ph.src}
+            ref={(el) => {
+              photoRefs.current[i] = el;
+            }}
+            className="wwd2d-photo-wrapper"
+            style={{ left: `${ph.left}%`, top: `${ph.top}%`, zIndex: ph.z, opacity: 0 }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- decorative pre-rendered polaroid inside a GSAP stage; next/image adds no value */}
+            <img
+              src={ph.src}
+              alt={ph.alt}
+              draggable={false}
+            />
+          </div>
+        ))}
+
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative camera cutout */}
+        <img ref={cameraRef} src="/whatwedo/camera.webp" alt="A Polaroid One Step camera" className="wwd2d-camera" draggable={false} />
+      </div>
+
+      {/* --- MOBILE VIEW --- */}
+      <div className="wwd2d-mobile">
+        <h2 className="wwd2d-mobile-title">What We Do</h2>
+        <div className="wwd2d-vignette" />
+
+        {/* Camera body wrapper — z:15, sits BEHIND the polaroids */}
+        <div className="wwd2d-mobile-camera-wrapper">
+          {/* eslint-disable-next-line @next/next/no-img-element -- decorative camera cutout */}
           <img
-            src={ph.src}
-            alt={ph.alt}
+            ref={mobileCameraRef}
+            src="/whatwedo/mobile/camera.png"
+            alt="A Polaroid One Step camera"
+            className="wwd2d-mobile-camera"
             draggable={false}
           />
         </div>
-      ))}
 
-      {/* eslint-disable-next-line @next/next/no-img-element -- decorative camera cutout */}
-      <img ref={cameraRef} src="/whatwedo/camera.webp" alt="A Polaroid One Step camera" className="wwd2d-camera" draggable={false} />
+        {/* Polaroids — z-index 16-20, between camera body (15) and cameratop (30) */}
+        {MOBILE_PHOTOS.map((ph, i) => (
+          <div
+            key={ph.src}
+            ref={(el) => {
+              mobilePhotoRefs.current[i] = el;
+            }}
+            className="wwd2d-mobile-photo-wrapper"
+            style={{ zIndex: ph.z, opacity: 0 }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- decorative pre-rendered polaroid inside a GSAP stage */}
+            <img
+              src={ph.src}
+              alt={ph.alt}
+              draggable={false}
+            />
+          </div>
+        ))}
+
+        {/* Camera top overlay — z:30, sits ON TOP of polaroids.
+            Positioned identically to the wrapper so it overlaps camera.png perfectly. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative overlay */}
+        <img
+          src="/whatwedo/mobile/cameratop.png"
+          alt=""
+          className="wwd2d-mobile-cameratop"
+          draggable={false}
+          aria-hidden="true"
+        />
+      </div>
     </div>
   );
 }
