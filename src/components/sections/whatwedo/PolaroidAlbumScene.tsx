@@ -196,7 +196,12 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
             <div className="spiral-binder" />
 
             {/* Back Cover (static base) */}
-            <div className="album-back-cover" />
+            <div className="album-back-cover">
+              <div className="polaroid-frame final-event-photo">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/transition/event.png" alt="Event" className="polaroid-image" draggable={false} />
+              </div>
+            </div>
 
             {/* Page 3 */}
             <div ref={page3Ref} className="album-page album-page-3">
