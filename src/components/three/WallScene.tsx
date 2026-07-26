@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useRef, useMemo, useEffect, Suspense } from 'react';
+import React, { useRef, useMemo, useEffect, useState, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Sparkles } from '@react-three/drei';
+import { Sparkles, PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 import EventPoster3D from './EventPoster3D';
 import { events } from '@/components/sections/events/eventData';
@@ -1115,27 +1115,59 @@ interface WallSceneProps {
 }
 
 export default function WallScene({ progressRef, snapToTarget }: WallSceneProps) {
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  // Ceiling DPR = the previously-tuned max, but never oversample a 1x display
+  // (the old dpr={[1,1.5]} let R3F pick this; a fixed 1.5 would render 1.5x on a
+  // plain 1080p panel for nothing). Adaptive quality only ever steps DOWN from here.
+  const maxDpr = useRef(typeof window !== 'undefined' ? Math.min(1.5, window.devicePixelRatio || 1) : 1.5);
+  const [dpr, setDpr] = useState(maxDpr.current);
+
+  // Pause the whole WebGL frame loop while the Events act is off screen. The
+  // Canvas otherwise renders continuously from page load — burning GPU through
+  // Hero/About/WhatWeDo where it isn't even visible. rootMargin activates it
+  // just before it scrolls in, so the fullscreen-wall entrance is never blank.
+  const [active, setActive] = useState(true);
+  useEffect(() => {
+    const el = hostRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setActive(e.isIntersecting), {
+      rootMargin: '600px 0px',
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <Canvas
-      camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
-      dpr={[1, 1.5]}
-      shadows="soft"
-      gl={{ antialias: true, powerPreference: 'high-performance', toneMappingExposure: 1.15 }}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        // Matches the fog and the sky dome's horizon. A dark warm brown here
-        // showed through as a night-alley edge around a daylit scene.
-        background: '#A6A8A9',
-        cursor: 'crosshair',
-      }}
-    >
-      <Suspense fallback={null}>
-        <Scene progressRef={progressRef} snapToTarget={snapToTarget} />
-      </Suspense>
-    </Canvas>
+    <div ref={hostRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+      <Canvas
+        frameloop={active ? 'always' : 'never'}
+        camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
+        dpr={dpr}
+        shadows="soft"
+        gl={{ antialias: true, powerPreference: 'high-performance', toneMappingExposure: 1.15 }}
+        style={{
+          width: '100%',
+          height: '100%',
+          // Matches the fog and the sky dome's horizon. A dark warm brown here
+          // showed through as a night-alley edge around a daylit scene.
+          background: '#A6A8A9',
+          cursor: 'crosshair',
+        }}
+      >
+        {/* Adaptive quality: hold the tuned look as the ceiling and only drop
+            resolution on sustained frame-rate decline, recovering when headroom
+            returns. flipflops settles at the floor instead of oscillating. */}
+        <PerformanceMonitor
+          flipflops={3}
+          onDecline={() => setDpr((d) => Math.max(0.75, Math.round((d - 0.25) * 100) / 100))}
+          onIncline={() => setDpr((d) => Math.min(maxDpr.current, Math.round((d + 0.25) * 100) / 100))}
+          onFallback={() => setDpr(0.75)}
+        />
+        <Suspense fallback={null}>
+          <Scene progressRef={progressRef} snapToTarget={snapToTarget} />
+        </Suspense>
+      </Canvas>
+    </div>
   );
 }

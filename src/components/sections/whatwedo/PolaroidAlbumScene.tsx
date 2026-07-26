@@ -26,6 +26,17 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
     let lastVw = -1;
     let lastVh = -1;
 
+    // Cache the animated DOM nodes ONCE. They were re-queried 5×/frame before —
+    // pure waste on the scroll hot path. They are static for the scene's life.
+    const root = rootRef.current;
+    const container = root?.querySelector('.album-container') as HTMLElement | null;
+    const overlay = root?.querySelector('.album-overlay') as HTMLElement | null;
+    const binder = root?.querySelector('.spiral-binder') as HTMLElement | null;
+    const coverFront = coverRef.current?.querySelector('.cover-front') as HTMLElement | null;
+    const glare = coverFront?.querySelector('.cover-glare') as HTMLElement | null;
+    // Only touch container.style.animation when the phase actually changes.
+    let animState = '';
+
     const draw = () => {
       const rawP = progressRef.current ?? 0;
       const vw = window.innerWidth;
@@ -68,19 +79,18 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
         scalerRef.current.style.transform = `scale(${finalScale.toFixed(3)})`;
       }
       
-      const container = rootRef.current?.querySelector('.album-container') as HTMLElement;
       if (container) {
         if (p < 0.20) {
-          container.style.animation = 'none';
+          if (animState !== 'none') { container.style.animation = 'none'; animState = 'none'; }
           // Add a subtle Y-axis tilt and Z-axis drop as it pulls away from the screen
-          container.style.transform = `rotateX(${cinematicMorph * 8}deg) rotateY(${cinematicMorph * -3}deg) translateZ(${cinematicMorph * -60}px)`; 
+          container.style.transform = `rotateX(${cinematicMorph * 8}deg) rotateY(${cinematicMorph * -3}deg) translateZ(${cinematicMorph * -60}px)`;
         } else if (zoomP > 0) {
-          container.style.animation = 'none';
+          if (animState !== 'none') { container.style.animation = 'none'; animState = 'none'; }
           // Flatten out the default 5deg tilt during zoom so the polaroid is perfectly parallel to the screen
           container.style.transform = `rotateX(${(1 - zoomP) * 5}deg)`;
         } else {
-          container.style.animation = ''; 
-          container.style.transform = ''; 
+          if (animState !== '') { container.style.animation = ''; animState = ''; }
+          container.style.transform = '';
         }
       }
 
@@ -103,14 +113,11 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       }
 
       // Dynamically fade in the dust, vignette, and the new spiral binder!
-      const overlay = rootRef.current?.querySelector('.album-overlay') as HTMLElement;
       if (overlay) overlay.style.opacity = (cinematicMorph * (1 - zoomP)).toString();
-      
-      const binder = rootRef.current?.querySelector('.spiral-binder') as HTMLElement;
+
       if (binder) binder.style.opacity = (cinematicMorph * (1 - zoomP)).toString();
 
       // Dynamic background sizing to ensure a seamless pixel-perfect transition!
-      const coverFront = coverRef.current?.querySelector('.cover-front') as HTMLElement;
       if (coverFront) {
         coverFront.style.filter = 'none';
         
@@ -133,7 +140,6 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
         coverFront.style.backgroundRepeat = 'no-repeat';
 
         // Animate the dramatic light flare sweeping across the plastic cover
-        const glare = coverFront.querySelector('.cover-glare') as HTMLElement;
         if (glare) {
           const glarePos = 200 - (cinematicMorph * 300); // Sweeps from 200% down to -100%
           glare.style.backgroundPosition = `${glarePos}% 0`;

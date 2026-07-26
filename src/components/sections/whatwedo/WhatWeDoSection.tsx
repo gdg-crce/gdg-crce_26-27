@@ -1,15 +1,28 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { unlockPolaroidAudio, playShutter } from './polaroidAudio';
 import './whatwedo.css';
 
 /* The interactive Polaroid album — dynamically imported (ssr:false) so its
-   IntersectionObserver + rAF frame loop only ever runs client-side. */
+   IntersectionObserver + rAF frame loop only ever runs client-side. Desktop. */
 const PolaroidAlbumScene = dynamic(() => import('./PolaroidAlbumScene'), {
+  ssr: false,
+  loading: () => (
+    <div className="wwd-loading">
+      <span>REVISITING MEMORIES…</span>
+    </div>
+  ),
+});
+
+/* The lighter 2D Polaroid camera scene (camera body + prints developing out) —
+   the intended MOBILE experience. Kept off desktop; also far cheaper than the
+   3D album, which is why mobile must not run the album. Same progressRef
+   contract, so it drops into the same overlay. */
+const PolaroidScene2D = dynamic(() => import('./PolaroidScene2D'), {
   ssr: false,
   loading: () => (
     <div className="wwd-loading">
@@ -46,6 +59,21 @@ export default function WhatWeDoSection() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
   const REVEAL_PX = 800;
+
+  // Which scene to mount. `mounted` gates the ssr:false scenes until we know the
+  // real viewport (no hydration mismatch); `isMobile` picks the 2D camera scene
+  // on phones and the 3D album on desktop. Re-evaluated on breakpoint change.
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -171,7 +199,12 @@ export default function WhatWeDoSection() {
       {/* ── Fixed overlay: sits above the entire DOM, invisible until activated ── */}
       <div ref={overlayRef} className="fixed-album-wrapper">
         <div className="wwd-solid-bg" />
-        <PolaroidAlbumScene progressRef={progressRef} />
+        {mounted &&
+          (isMobile ? (
+            <PolaroidScene2D progressRef={progressRef} />
+          ) : (
+            <PolaroidAlbumScene progressRef={progressRef} />
+          ))}
       </div>
 
       {/* ── Normal-flow spacer: gives GSAP 4000px of scroll to scrub against ── */}
