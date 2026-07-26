@@ -114,6 +114,11 @@ export default function WhatWeDoSection() {
       end: () => `+=${Math.round(window.innerHeight * 1.6 + getRevealPx())}`,
       scrub: 1.5,
       onUpdate: (self) => {
+        if (window.innerWidth >= 768) {
+          if (flashRef.current) flashRef.current.style.opacity = '0';
+          return;
+        }
+
         const p = self.progress;
         const vh = window.innerHeight;
         const revealPx = getRevealPx();
