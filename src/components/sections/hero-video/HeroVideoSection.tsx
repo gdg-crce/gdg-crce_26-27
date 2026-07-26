@@ -28,11 +28,11 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
   const [isLoaded, setIsLoaded] = useState(false);
   const [fadeInDone, setFadeInDone] = useState(false);
 
-  // Source is owned by the HLS hook: it streams intro.mp4 as adaptive-bitrate
+  // Source is owned by the HLS hook: it streams the new intro as adaptive-bitrate
   // HLS (buffered segments) and falls back to the progressive MP4 if HLS is
   // unavailable or the manifest is still building. It also calls video.load(),
   // so nothing here touches .src or .load().
-  useHlsVideo(videoRef, ikVideoHls('/videos/intro.mp4'), ikVideo('/videos/intro.mp4'));
+  useHlsVideo(videoRef, ikVideoHls('/videos/Video Project 1 (1).mp4'), ikVideo('/videos/Video Project 1 (1).mp4'));
 
   // If the element is already buffered by the time we mount, reflect that.
   useEffect(() => {

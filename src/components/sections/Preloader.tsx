@@ -108,7 +108,7 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
     // Warm the progressive fallback (transform-free -> instant 200, no 202
     // transcode stall). The hero streams HLS on top of this warmed connection.
     const vid = document.createElement('video');
-    vid.src = ikVideo('/videos/intro.mp4');
+    vid.src = ikVideo('/videos/Video Project 1 (1).mp4');
     vid.preload = 'auto';
     vid.muted = true;
     vid.onloadeddata = vid.oncanplay = checkReady;
