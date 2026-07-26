@@ -286,7 +286,7 @@
   width: min(85vw, 320px);
   height: auto;
   left: 50%;
-  top: 60%;
+  top: 0%;
   transform: translate(-50%, -50%);
   will-change: transform, opacity;
 }

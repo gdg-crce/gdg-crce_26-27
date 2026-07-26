@@ -175,7 +175,9 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const containerWidth = containerRect.width;
 
           // Camera width is min(85vw, 320px)
+          // Camera width is min(85vw, 320px)
           const cameraWidth = Math.min(0.85 * containerWidth, 320);
+          // Camera height is roughly 1.5015x width
           const cameraHeight = cameraWidth * 1.5015;
 
           // Camera top in CSS is 9%
@@ -184,17 +186,21 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           // Slot Y relative to container top (79.1% from the top of the camera)
           const slotY = cameraTop + cameraHeight * 0.791;
 
-          // Photo height is width * 2.168
+          // Photo dimensions
           const photoWidth = Math.min(0.85 * containerWidth, 320);
-          const photoHeight = photoWidth * 2.168;
+          // Standard polaroid aspect ratio is roughly 1 : 1.2
+          const photoHeight = photoWidth * 1.2;
 
-          // Resting center Y is 60% of container height (matching CSS top: 60%)
-          const restingCenterY = containerHeight * 0.60;
+          // At t = 0, photo is hidden inside the camera.
+          // This means its BOTTOM edge should be at the slot.
+          // Scaled height is 0.4 * photoHeight.
+          const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
-          // At t = 0, photo starts with bottom edge at slotY:
-          // scale at start is 0.4, so scaled height is 0.4 * photoHeight.
-          // Center Y is slotY - (0.4 * photoHeight) / 2 = slotY - 0.2 * photoHeight.
-          const startCenterY = slotY - 0.2 * photoHeight;
+          // At t = 1, photo has popped out DOWNWARDS but remains anchored in the slot.
+          // We want the TOP edge of the photo to remain hidden inside the camera.
+          // By setting the center to slotY + 15% of the height, 
+          // 35% of the photo remains hidden above the slot, and 65% hangs below it.
+          const restingCenterY = slotY + (photoHeight * 0.15);
 
           // photos: stack on top of each other in the bottom half
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {
@@ -206,12 +212,15 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             const opacity = smooth(ph.start, ph.start + 0.05, p);
             el.style.opacity = opacity.toFixed(3);
 
+            // Interpolate the actual center Y position
             const currentCenterY = lerp(startCenterY, restingCenterY, t);
-            const translateY = currentCenterY - restingCenterY;
 
             const sc = lerp(0.4, 1.0, t);
             const rot = lerp(-10, ph.rot, t);
-            el.style.transform = `translate(-50%, -50%) translate(${ph.offsetX}px, calc(${translateY.toFixed(1)}px + ${ph.offsetY}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
+            
+            // We apply translate(left, top) relative to the container.
+            // Left is always 50% (center). Top is currentCenterY.
+            el.style.transform = `translate(-50%, -50%) translate(${ph.offsetX}px, calc(${currentCenterY.toFixed(1)}px + ${ph.offsetY}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
           }
         }
       } else {
