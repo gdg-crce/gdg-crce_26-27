@@ -341,37 +341,9 @@ export default function AboutSection() {
       }
     };
 
-    // The section fades up as it rises into view. The hero video is zooming in 
-    // and fading out underneath it. We scale the turntable down slightly from 1.05 
-    // to 1.0 to complement the video's push forward, giving a deep 3D transition.
-    const approach = ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: 'top bottom',
-      end: 'top top',
-      scrub: 1.5,
-      onUpdate: (self) => {
-        if (pinRef.current) {
-          const p = self.progress;
-          const op = ramp(0.18, 0.94, p);
-          pinRef.current.style.opacity = op.toFixed(3);
-          pinRef.current.style.visibility = op < 0.01 ? 'hidden' : 'visible';
-          pinRef.current.style.transform = `scale(${(1.05 - p * 0.05).toFixed(3)})`;
-        }
-      },
-      onRefresh: (self) => {
-        if (pinRef.current) {
-          const p = self.progress;
-          const op = ramp(0.18, 0.94, p);
-          pinRef.current.style.opacity = op.toFixed(3);
-          pinRef.current.style.visibility = op < 0.01 ? 'hidden' : 'visible';
-          pinRef.current.style.transform = `scale(${(1.05 - p * 0.05).toFixed(3)})`;
-        }
-      },
-    });
-
-    // The wheel is only "driving" while the angle it asks for is actually
-    // changing. Scrub keeps firing onUpdate as it eases out, so testing the
-    // delta — not the event — is what lets the motor pick up on the way down.
+    // We use a single ScrollTrigger to pin the turntable from scroll 0.
+    // The first phase of this scroll is the 3D zoom push-in from the hero video.
+    // The second phase plays the turntable animations.
     let lastP = -1;
     const onUpdate = (p: number) => {
       if (Math.abs(p - lastP) > 1e-5) lastScrollRef.current = performance.now();
@@ -380,13 +352,46 @@ export default function AboutSection() {
     };
 
     const play = ScrollTrigger.create({
-      trigger: sectionRef.current,
+      trigger: document.body,
       pin: pinRef.current,
-      start: 'top top',
-      end: '+=3250',
+      start: 0,
+      end: () => `+=${window.innerHeight * 1.5 + 3250}`,
       scrub: 1.5,
-      onUpdate: (self) => onUpdate(self.progress),
-      onRefresh: (self) => onUpdate(self.progress),
+      onUpdate: (self) => {
+        const zoomDist = window.innerHeight * 1.5;
+        const totalDist = zoomDist + 3250;
+        const scrollPx = self.progress * totalDist;
+        
+        // Phase 1: Zoom Reveal
+        const zoomP = clamp01(scrollPx / zoomDist);
+        if (pinRef.current) {
+          const op = ramp(0.3, 0.9, zoomP);
+          pinRef.current.style.opacity = op.toFixed(3);
+          pinRef.current.style.visibility = op < 0.01 ? 'hidden' : 'visible';
+          // Keep scale at 1 so it perfectly fills the screen and never exposes edges
+          pinRef.current.style.transform = 'scale(1)';
+        }
+
+        // Phase 2: Turntable Playback
+        const playP = clamp01((scrollPx - zoomDist) / 3250);
+        onUpdate(playP);
+      },
+      onRefresh: (self) => {
+        const zoomDist = window.innerHeight * 1.5;
+        const totalDist = zoomDist + 3250;
+        const scrollPx = self.progress * totalDist;
+        
+        const zoomP = clamp01(scrollPx / zoomDist);
+        if (pinRef.current) {
+          const op = ramp(0.3, 0.9, zoomP);
+          pinRef.current.style.opacity = op.toFixed(3);
+          pinRef.current.style.visibility = op < 0.01 ? 'hidden' : 'visible';
+          pinRef.current.style.transform = 'scale(1)';
+        }
+        
+        const playP = clamp01((scrollPx - zoomDist) / 3250);
+        onUpdate(playP);
+      },
     });
 
     // ── the motor ────────────────────────────────────────────────────────
@@ -455,7 +460,6 @@ export default function AboutSection() {
       clearTimeout(to);
       stopLoop();
       document.removeEventListener('visibilitychange', onVisibility);
-      approach.kill();
       play.kill();
       presence.kill();
     };

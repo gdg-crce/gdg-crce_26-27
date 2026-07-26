@@ -32,10 +32,7 @@ export default function Home() {
       )}
       <main className="relative z-0">
         <HeroVideoSection startPlaying={videoStarted} />
-        {/* The hero is position:fixed and so contributes no page height. This
-            runway is the scroll the looping intro fades out across, while the
-            About turntable rises into view and fades up over it. */}
-        <div aria-hidden="true" className="h-[100vh]" />
+        {/* Zero spacer: About turntable sits directly under the hero at top:0 to prevent scroller up artifacts. */}
         <AboutSection />
         <WhatWeDoSection />
         <EventsAndCouncilSection />

@@ -6,6 +6,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ikVideo, ikVideoHls } from '@/lib/imagekit';
 import { useHlsVideo } from './useHlsVideo';
 
+import Image from 'next/image';
+
 interface HeroVideoSectionProps {
   startPlaying?: boolean;
 }
@@ -27,6 +29,7 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [fadeInDone, setFadeInDone] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
 
   // Source is owned by the HLS hook: it streams the new intro as adaptive-bitrate
   // HLS (buffered segments) and falls back to the progressive MP4 if HLS is
@@ -71,9 +74,7 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
     }
   }, [startPlaying]);
 
-  // The intro LOOPS now, so `ended` never fires. Release the scroll lock once
-  // the first play-through has wrapped instead — the loop then just keeps
-  // running underneath the About section as it fades in over the top.
+  // The intro NO LONGER LOOPS. Freeze on last frame and hand over to screenshot.
   useEffect(() => {
     if (!startPlaying) return;
     const video = videoRef.current;
@@ -84,63 +85,49 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       if (released) return;
       released = true;
       document.body.style.overflow = '';
+      setVideoEnded(true);
     };
 
-    let last = 0;
-    const onTime = () => {
-      // currentTime jumping backwards means the loop wrapped: one pass done.
-      if (video.currentTime < last - 0.25) unlock();
-      last = video.currentTime;
-    };
-    video.addEventListener('timeupdate', onTime);
+    // Rely entirely on the native 'ended' event to ensure it is EXACTLY the last frame
+    video.addEventListener('ended', unlock);
 
-    // Safety net for an unknown/absent duration or throttled timeupdate.
+    // Fallback if ended doesn't fire for some reason
     const fallback = Math.min(((video.duration || 12) + 0.5) * 1000, MAX_LOCK_MS);
     const timer = setTimeout(unlock, fallback);
 
     return () => {
-      video.removeEventListener('timeupdate', onTime);
+      video.removeEventListener('ended', unlock);
       clearTimeout(timer);
       document.body.style.overflow = '';
     };
   }, [startPlaying]);
 
-  // Scroll hands the screen over to the About section: the video fades out
-  // across the first viewport of scroll while the turntable fades up over it.
-  // Once it is fully hidden the element is paused — a looping full-screen video
-  // decoding behind an opaque section is pure waste.
+  // Scroll hands the screen over to the About section via a deep 3D Zoom
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
     const el = containerRef.current;
-    const video = videoRef.current;
     if (!el) return;
 
     const st = ScrollTrigger.create({
       trigger: document.body,
       start: 0,
-      end: () => window.innerHeight, // 100vh runway
+      end: () => window.innerHeight * 1.5, // 1.5vh runway for deep zoom
       scrub: 1.5,
       onUpdate: (self) => {
         const e = self.progress;
-        const opacity = 1 - ramp(0.1, 0.9, e);
         
-        // Cinematic zoom-in and blur
-        const scale = 1 + (e * 0.15);
-        const blur = e * 8; // 0 to 8px blur
+        // Softer zoom scale so we don't go too deep into the red circle
+        const scale = 1 + Math.pow(e, 3) * 12; 
+        
+        // Start fading out much earlier for a longer, more subtle crossfade
+        const opacity = 1 - ramp(0.3, 0.9, e);
         
         el.style.opacity = opacity.toFixed(3);
+        // Assuming mathematical center as requested
+        el.style.transformOrigin = '50% 50%';
         el.style.transform = `scale(${scale.toFixed(3)})`;
-        el.style.filter = `blur(${blur.toFixed(1)}px)`;
         el.style.pointerEvents = opacity < 0.02 ? 'none' : '';
-
-        if (video) {
-          if (opacity < 0.02) {
-            if (!video.paused) video.pause();
-          } else if (video.paused && startPlaying) {
-            video.play().catch(() => {});
-          }
-        }
       }
     });
 
@@ -160,12 +147,23 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       {/* Dark aesthetic background while video initializes */}
       <div className="absolute inset-0 bg-[#080706] z-0" />
 
-      {/* Full screen storytelling video on an endless loop. */}
+      {/* Seamless Screenshot Overlay */}
+      <div className={`absolute inset-0 z-20 w-full h-full transition-opacity duration-1000 ease-in-out pointer-events-none ${videoEnded ? 'opacity-100' : 'opacity-0'}`}>
+        <Image 
+          src="https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/Screenshot%202026-07-27%20010718.png?tr=f-auto,q-auto"
+          alt="Transition"
+          fill
+          className="object-cover object-center"
+          priority
+          unoptimized
+        />
+      </div>
+
+      {/* Full screen storytelling video. */}
       <video
         ref={videoRef}
         preload="auto"
         muted
-        loop
         playsInline
         controls={false}
         disablePictureInPicture
@@ -178,7 +176,7 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       />
 
       {/* Subtle bottom vignette gradient blending smoothly into the next section */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#0a0807] via-[#0a0807]/40 to-transparent z-20" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#0a0807] via-[#0a0807]/40 to-transparent z-30 opacity-0" />
     </section>
   );
 }
