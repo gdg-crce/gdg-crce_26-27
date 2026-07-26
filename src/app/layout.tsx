@@ -14,6 +14,7 @@ import {
   kaushanScript,
   pacifico,
 } from '@/lib/fonts';
+import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
 
 export const metadata: Metadata = {
   title: 'GDG CRCE — Google Developer Group',
@@ -29,10 +30,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${shrikhand.variable} ${jakarta.variable} ${righteous.variable} ${spaceGrotesk.variable} ${specialElite.variable} ${shareTechMono.variable} ${orbitron.variable} ${outfit.variable} ${ibmPlexMono.variable} ${cormorantGaramond.variable} ${kaushanScript.variable} ${pacifico.variable} h-full scroll-smooth antialiased`}
+      className={`${shrikhand.variable} ${jakarta.variable} ${righteous.variable} ${spaceGrotesk.variable} ${specialElite.variable} ${shareTechMono.variable} ${orbitron.variable} ${outfit.variable} ${ibmPlexMono.variable} ${cormorantGaramond.variable} ${kaushanScript.variable} ${pacifico.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#23252C] selection:bg-red-800 selection:text-white">
-        {children}
+        <SmoothScrollProvider>
+          {children}
+        </SmoothScrollProvider>
       </body>
     </html>
   );

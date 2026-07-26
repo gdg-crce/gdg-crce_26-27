@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { unlockPolaroidAudio } from './polaroidAudio';
+import { unlockPolaroidAudio, playShutter } from './polaroidAudio';
 import './whatwedo.css';
 
 /* The interactive Polaroid album — dynamically imported (ssr:false) so its
@@ -136,7 +136,7 @@ export default function WhatWeDoSection() {
         if (flashRef.current) flashRef.current.style.opacity = op.toFixed(3);
 
         // shutter click fires once, on the forward crossing into full white
-        // if (flashPrev >= 0 && flashPrev < riseEnd && p >= riseEnd) playShutter();
+        if (flashPrev >= 0 && flashPrev < riseEnd && p >= riseEnd) playShutter();
         flashPrev = p;
       },
     });
