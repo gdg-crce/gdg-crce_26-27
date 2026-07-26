@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { ik } from '@/lib/imagekit';
 
 /* ══════════════════════════════════════════════════════════════════════════
    PolaroidScene2D — the flat (DOM) Polaroid wall (Act 2.5)
@@ -40,7 +41,7 @@ type Photo = {
  *  drop it in and add one row here to place it, e.g. centre-bottom.) */
 const PHOTOS: Photo[] = [
   {
-    src: '/whatwedo/content.webp',
+    src: ik('/whatwedo/content.webp'),
     alt: 'Content — engaging technical content and educational resources, from blog posts to video tutorials, making complex topics accessible for everyone.',
     left: 17,
     top: 20,
@@ -49,7 +50,7 @@ const PHOTOS: Photo[] = [
     spin: -12,
   },
   {
-    src: '/whatwedo/community.webp',
+    src: ik('/whatwedo/community.webp'),
     alt: 'Community — organizing workshops, hackathons, and tech talks that foster innovation and collaboration among tech enthusiasts.',
     left: 83,
     top: 25,
@@ -58,7 +59,7 @@ const PHOTOS: Photo[] = [
     spin: 11,
   },
   {
-    src: '/whatwedo/ml-android.webp',
+    src: ik('/whatwedo/ml-android.webp'),
     alt: 'ML & Android — smart Android apps powered by machine learning, built with TensorFlow, Kotlin, and Google ML Kit to learn and adapt to user behavior.',
     left: 18,
     top: 75,
@@ -67,7 +68,7 @@ const PHOTOS: Photo[] = [
     spin: -9,
   },
   {
-    src: '/whatwedo/design.webp',
+    src: ik('/whatwedo/design.webp'),
     alt: 'Design — intuitive interfaces, compelling visuals, designed with Figma, Adobe Creative Suite, and design thinking to create experiences users love.',
     left: 82,
     top: 78,
@@ -76,7 +77,7 @@ const PHOTOS: Photo[] = [
     spin: 12,
   },
   {
-    src: '/whatwedo/techinical.PNG',
+    src: ik('/whatwedo/techinical.PNG'),
     alt: 'Technical — Scalable web, mobile, and cloud solutions built with React, Node.js, Flutter, and modern DevOps, engineered for performance and digital transformation.',
     left: 50,
     top: 77,
@@ -100,7 +101,7 @@ type MobilePhoto = {
 
 const MOBILE_PHOTOS: MobilePhoto[] = [
   {
-    src: '/whatwedo/mobile/technical.png',
+    src: ik('/whatwedo/mobile/technical.png'),
     alt: 'Technical — Scalable web, mobile, and cloud solutions built with React, Node.js, Flutter, and modern DevOps, engineered for performance and digital transformation.',
     z: 16,
     start: 0.22,
@@ -109,7 +110,7 @@ const MOBILE_PHOTOS: MobilePhoto[] = [
     offsetY: 3,
   },
   {
-    src: '/whatwedo/mobile/content.png',
+    src: ik('/whatwedo/mobile/content.png'),
     alt: 'Content — engaging technical content and educational resources, from blog posts to video tutorials, making complex topics accessible for everyone.',
     z: 17,
     start: 0.38,
@@ -118,7 +119,7 @@ const MOBILE_PHOTOS: MobilePhoto[] = [
     offsetY: -3,
   },
   {
-    src: '/whatwedo/mobile/coomunity.png',
+    src: ik('/whatwedo/mobile/coomunity.png'),
     alt: 'Community — organizing workshops, hackathons, and tech talks that foster innovation and collaboration among tech enthusiasts.',
     z: 18,
     start: 0.54,
@@ -127,7 +128,7 @@ const MOBILE_PHOTOS: MobilePhoto[] = [
     offsetY: -6,
   },
   {
-    src: '/whatwedo/mobile/ml&andro.png',
+    src: ik('/whatwedo/mobile/ml&andro.png'),
     alt: 'ML & Android — smart Android apps powered by machine learning, built with TensorFlow, Kotlin, and Google ML Kit to learn and adapt to user behavior.',
     z: 19,
     start: 0.70,
@@ -136,7 +137,7 @@ const MOBILE_PHOTOS: MobilePhoto[] = [
     offsetY: 3,
   },
   {
-    src: '/whatwedo/mobile/design.png',
+    src: ik('/whatwedo/mobile/design.png'),
     alt: 'Design — intuitive interfaces, compelling visuals, designed with Figma, Adobe Creative Suite, and design thinking to create experiences users love.',
     z: 20,
     start: 0.86,
@@ -300,7 +301,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
         ))}
 
         {/* eslint-disable-next-line @next/next/no-img-element -- decorative camera cutout */}
-        <img ref={cameraRef} src="/whatwedo/camera.webp" alt="A Polaroid One Step camera" className="wwd2d-camera" draggable={false} />
+        <img ref={cameraRef} src={ik('/whatwedo/camera.webp')} alt="A Polaroid One Step camera" className="wwd2d-camera" draggable={false} />
       </div>
 
       {/* --- MOBILE VIEW --- */}
@@ -313,7 +314,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           {/* eslint-disable-next-line @next/next/no-img-element -- decorative camera cutout */}
           <img
             ref={mobileCameraRef}
-            src="/whatwedo/mobile/camera.png"
+            src={ik('/whatwedo/mobile/camera.png')}
             alt="A Polaroid One Step camera"
             className="wwd2d-mobile-camera"
             draggable={false}
@@ -343,7 +344,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             Positioned identically to the wrapper so it overlaps camera.png perfectly. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- decorative overlay */}
         <img
-          src="/whatwedo/mobile/cameratop.png"
+          src={ik('/whatwedo/mobile/cameratop.png')}
           alt=""
           className="wwd2d-mobile-cameratop"
           draggable={false}

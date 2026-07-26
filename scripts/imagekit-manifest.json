@@ -1,0 +1,73 @@
+{
+  "_comment": "Assets served from ImageKit, mirrored under /gdg-crce. Paths are relative to public/. Verified against src/ by grep — everything here is actually referenced. Three.js textures (textures/**) and .glb models are deliberately excluded: they are art/performance-tuned and remote loading risks CORS and load-timing regressions.",
+  "_comment_names": "ImageKit sanitises names and rejects folders containing spaces, so remote paths are not always identical to local ones: 'image copy.png' -> image_copy.png, 'ml&andro.png' -> ml_andro.png, and 'record player/' -> record-player/ via remoteDir. scripts/imagekit-uploaded.json is the authority on the real remote path for every file.",
+  "files": [
+    "videos/intro.mp4",
+
+    "transition/event.png",
+    "transition/whatwedo.png",
+
+    "events/1.png",
+    "events/2.png",
+    "events/3.png",
+    "events/4.png",
+    "events/eventsmobbg.png",
+
+    "elements/poster-1.png",
+    "elements/poster-2.png",
+    "elements/poster-3.png",
+    "elements/poster-4.png",
+    "elements/poster-5.png",
+    "elements/poster-6.png",
+
+    "logo.png",
+    "walpaper.png",
+    "about.webp",
+    "contact.webp",
+
+    "contact/left.png",
+    "contact/right.png",
+
+    "preloader/genesis.jpg",
+    "preloader/unplug.png",
+    "preloader/pitchperf.png",
+    "preloader/bnb.png",
+    "preloader/whatif.png",
+    "preloader/ideacafe1.png",
+    "preloader/futureforge.png",
+
+    "whatwedo/content.webp",
+    "whatwedo/community.webp",
+    "whatwedo/ml-android.webp",
+    "whatwedo/design.webp",
+    "whatwedo/camera.webp",
+    "whatwedo/table.webp",
+    "whatwedo/techinical.PNG",
+    "whatwedo/context-poloriod.png",
+    "whatwedo/image copy.png",
+
+    "whatwedo/mobile/watwedomobbg.png",
+    "whatwedo/mobile/camera.png",
+    "whatwedo/mobile/cameratop.png",
+    "whatwedo/mobile/technical.png",
+    "whatwedo/mobile/content.png",
+    "whatwedo/mobile/coomunity.png",
+    "whatwedo/mobile/ml&andro.png",
+    "whatwedo/mobile/design.png",
+
+    "whatwedo/memories/memory-1.jpeg",
+    "whatwedo/memories/memory-2.jpeg",
+    "whatwedo/memories/memory-3.jpeg",
+    "whatwedo/memories/memory-5.jpeg",
+    "whatwedo/memories/memory-6.jpeg",
+
+    { "local": "record player/base.png", "remoteDir": "record-player" },
+    { "local": "record player/disc.png", "remoteDir": "record-player" },
+    { "local": "record player/toneram.png", "remoteDir": "record-player" },
+    { "local": "record player/Orange record.png", "remoteDir": "record-player" },
+    { "local": "record player/Red record.png", "remoteDir": "record-player" },
+    { "local": "record player/Yellow record.png", "remoteDir": "record-player" },
+
+    "audio/polaroid-shutter.mp3"
+  ]
+}

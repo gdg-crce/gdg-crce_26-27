@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -9,6 +10,7 @@ import { councilMembers } from './council/councilData';
 import WindowsXPDesktop from './council/WindowsXPDesktop';
 import Y2KArchiveSystem from './council/Y2KArchiveSystem';
 import WindowsPictureViewer from './council/WindowsPictureViewer';
+import { ikUrl } from '@/lib/imagekit';
 import './council/council.css';
 
 /* Dynamically import the R3F scene — no SSR for WebGL */
@@ -31,6 +33,7 @@ export const mobileEvents = [
     id: 'mobile-evt-1',
     title: 'CRCE HACK 2026',
     subtitle: 'Retro Tech Hackathon',
+    // Raw public path — next/image's ImageKit loader adds f-auto/q-auto/w-<size>.
     posterImage: '/events/1.png',
   },
   {
@@ -358,7 +361,7 @@ export default function EventsAndCouncilSection() {
               height: '100vh',
               position: 'relative',
               overflow: 'hidden',
-              backgroundImage: 'url(/events/eventsmobbg.png)',
+              backgroundImage: ikUrl('/events/eventsmobbg.png'),
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -376,11 +379,14 @@ export default function EventsAndCouncilSection() {
             >
               {mobileEvents.map((evt) => (
                 <div key={evt.id} className="mobile-event-card-wrapper-raw">
-                  <img
+                  <Image
                     src={evt.posterImage}
                     alt={evt.title}
                     className="mobile-event-image-raw"
-                    decoding="async"
+                    width={1179}
+                    height={1579}
+                    sizes="(max-width: 400px) 82vw, 320px"
+                    draggable={false}
                   />
                 </div>
               ))}
@@ -422,7 +428,7 @@ export default function EventsAndCouncilSection() {
           <div className="fb-profile-header">
             <div className="fb-avatar-row">
               <div className="fb-profile-avatar-container">
-                <img src="/logo.png" className="fb-profile-logo" alt="GDG Logo" />
+                <Image src="/logo.png" className="fb-profile-logo" alt="GDG Logo" width={612} height={408} sizes="72px" />
               </div>
               <div className="fb-profile-header-meta">
                 <h1 className="fb-profile-name">
@@ -450,7 +456,7 @@ export default function EventsAndCouncilSection() {
             {/* Post Header */}
             <div className="fb-post-header">
               <div className="fb-post-avatar page-avatar">
-                <img src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" />
+                <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
               </div>
               <div className="fb-post-author-info">
                 <span className="fb-post-author-name">
@@ -470,7 +476,7 @@ export default function EventsAndCouncilSection() {
 
             {/* Attached Photo */}
             <div className="fb-post-media-container">
-              <img src="/preloader/genesis.jpg" className="fb-post-img" alt="Genesis Welcome" />
+              <Image src="/preloader/genesis.jpg" className="fb-post-img" alt="Genesis Welcome" width={1280} height={960} sizes="(max-width: 600px) 100vw, 500px" />
             </div>
 
             {/* Reactions summary */}

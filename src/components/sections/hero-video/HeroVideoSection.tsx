@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ikVideo, ikVideoHls } from '@/lib/imagekit';
+import { useHlsVideo } from './useHlsVideo';
 
 interface HeroVideoSectionProps {
   startPlaying?: boolean;
@@ -26,15 +28,16 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
   const [isLoaded, setIsLoaded] = useState(false);
   const [fadeInDone, setFadeInDone] = useState(false);
 
-  // Pre-load the video on mount to ensure it is ready when the preloader transition completes
+  // Source is owned by the HLS hook: it streams intro.mp4 as adaptive-bitrate
+  // HLS (buffered segments) and falls back to the progressive MP4 if HLS is
+  // unavailable or the manifest is still building. It also calls video.load(),
+  // so nothing here touches .src or .load().
+  useHlsVideo(videoRef, ikVideoHls('/videos/intro.mp4'), ikVideo('/videos/intro.mp4'));
+
+  // If the element is already buffered by the time we mount, reflect that.
   useEffect(() => {
     const video = videoRef.current;
-    if (video) {
-      if (video.readyState >= 2) {
-        setIsLoaded(true);
-      }
-      video.load();
-    }
+    if (video && video.readyState >= 2) setIsLoaded(true);
   }, []);
 
   // Sync video start explicitly when startPlaying turns true (when the VHS tape
@@ -160,7 +163,6 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       {/* Full screen storytelling video on an endless loop. */}
       <video
         ref={videoRef}
-        src="/videos/intro.mp4"
         preload="auto"
         muted
         loop

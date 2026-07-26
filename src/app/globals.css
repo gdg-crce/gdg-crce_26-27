@@ -56,7 +56,7 @@ body {
 .film-grain {
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAP//////////////////////AAAA8P3mHAAAACHRSTlMAMwIu8Z4AAAB5SURBVDjL7c8xDQAwEASwU8E9/5Q0M+QdIDQ+wL9r0H816L8a9F8N+q8G/VeD/qtB/9Wg/2rQfzXovxr0Xw36rwb9V4P+q0H/1aD/atB/Nei/GvRfDfqvBv1Xg/6rQf/VoP9q0H816L8a9F8N+q8G/VeD/qtB/9Wg/woP5gMHgQ3RDAAAAABJRU5ErkJggg==");
   opacity: 0.045;
   pointer-events: none;
   mix-blend-mode: overlay;
@@ -271,7 +271,7 @@ body {
   pointer-events: none;
   opacity: 0.44;
   mix-blend-mode: screen;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='0.8'/%3E%3C/svg%3E");
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAP//////////////////////AAAA8P3mHAAAACHRSTlMAMwIu8Z4AAAB5SURBVDjL7c8xDQAwEASwU8E9/5Q0M+QdIDQ+wL9r0H816L8a9F8N+q8G/VeD/qtB/9Wg/2rQfzXovxr0Xw36rwb9V4P+q0H/1aD/atB/Nei/GvRfDfqvBv1Xg/6rQf/VoP9q0H816L8a9F8N+q8G/VeD/qtB/9Wg/woP5gMHgQ3RDAAAAABJRU5ErkJggg==");
   animation: loader-grain-shift 0.34s steps(2, end) infinite;
 }
 
@@ -557,7 +557,7 @@ body {
   position: absolute;
   inset: 0;
   opacity: 0.15;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAP//////////////////////AAAA8P3mHAAAACHRSTlMAMwIu8Z4AAAB5SURBVDjL7c8xDQAwEASwU8E9/5Q0M+QdIDQ+wL9r0H816L8a9F8N+q8G/VeD/qtB/9Wg/2rQfzXovxr0Xw36rwb9V4P+q0H/1aD/atB/Nei/GvRfDfqvBv1Xg/6rQf/VoP9q0H816L8a9F8N+q8G/VeD/qtB/9Wg/woP5gMHgQ3RDAAAAABJRU5ErkJggg==");
   mix-blend-mode: overlay;
   pointer-events: none;
 }
@@ -673,7 +673,7 @@ body {
     0 0 1px rgba(0,0,0,0.8);
   padding: clamp(12px, 1.8vw, 24px);
   color: #1a1a1a;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAP//////////////////////AAAA8P3mHAAAACHRSTlMAMwIu8Z4AAAB5SURBVDjL7c8xDQAwEASwU8E9/5Q0M+QdIDQ+wL9r0H816L8a9F8N+q8G/VeD/qtB/9Wg/2rQfzXovxr0Xw36rwb9V4P+q0H/1aD/atB/Nei/GvRfDfqvBv1Xg/6rQf/VoP9q0H816L8a9F8N+q8G/VeD/qtB/9Wg/woP5gMHgQ3RDAAAAABJRU5ErkJggg==");
 }
 
 .loader-vhs-label::before {
@@ -1557,7 +1557,7 @@ body {
   opacity: 0.075;
   mix-blend-mode: normal;
   background-image:
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 .42'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' fill='%23888888'/%3E%3C/svg%3E");
+    url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAP//////////////////////AAAA8P3mHAAAACHRSTlMAMwIu8Z4AAAB5SURBVDjL7c8xDQAwEASwU8E9/5Q0M+QdIDQ+wL9r0H816L8a9F8N+q8G/VeD/qtB/9Wg/2rQfzXovxr0Xw36rwb9V4P+q0H/1aD/atB/Nei/GvRfDfqvBv1Xg/6rQf/VoP9q0H816L8a9F8N+q8G/VeD/qtB/9Wg/woP5gMHgQ3RDAAAAABJRU5ErkJggg==");
   background-size: 220px 220px;
   filter: contrast(0.42) brightness(0.72);
 }
@@ -1607,7 +1607,7 @@ body {
 .loader-black-grain {
   opacity: 0.2;
   mix-blend-mode: screen;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain-restore'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain-restore)' opacity='0.72'/%3E%3C/svg%3E");
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAP//////////////////////AAAA8P3mHAAAACHRSTlMAMwIu8Z4AAAB5SURBVDjL7c8xDQAwEASwU8E9/5Q0M+QdIDQ+wL9r0H816L8a9F8N+q8G/VeD/qtB/9Wg/2rQfzXovxr0Xw36rwb9V4P+q0H/1aD/atB/Nei/GvRfDfqvBv1Xg/6rQf/VoP9q0H816L8a9F8N+q8G/VeD/qtB/9Wg/woP5gMHgQ3RDAAAAABJRU5ErkJggg==");
   background-size: 180px 180px;
   filter: contrast(0.82) brightness(0.78);
 }
@@ -2224,7 +2224,7 @@ body {
   z-index: 4;
   opacity: 0.055;
   mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAP//////////////////////AAAA8P3mHAAAACHRSTlMAMwIu8Z4AAAB5SURBVDjL7c8xDQAwEASwU8E9/5Q0M+QdIDQ+wL9r0H816L8a9F8N+q8G/VeD/qtB/9Wg/2rQfzXovxr0Xw36rwb9V4P+q0H/1aD/atB/Nei/GvRfDfqvBv1Xg/6rQf/VoP9q0H816L8a9F8N+q8G/VeD/qtB/9Wg/woP5gMHgQ3RDAAAAABJRU5ErkJggg==");
   background-size: 180px 180px;
   background-repeat: repeat;
   animation: events-grain-shift 0.4s steps(2, end) infinite;
@@ -2554,3 +2554,4 @@ html.lenis, html.lenis body {
 .lenis.lenis-scrolling iframe {
   pointer-events: none;
 }
+

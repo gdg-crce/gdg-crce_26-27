@@ -1,7 +1,8 @@
 /**
  * polaroidAudio — the camera's voice.
  *
- * The shutter is the user-supplied clip at /audio/polaroid-shutter.mp3, decoded
+ * The shutter is the user-supplied clip public/audio/polaroid-shutter.mp3 (served
+ * via ImageKit — see src/lib/imagekit.ts), decoded
  * once into an AudioBuffer for low-latency, scrub-friendly playback. The
  * film-advance whir (played as each print ejects) is synthesised, so no extra
  * asset is needed for it.
@@ -14,7 +15,9 @@
  * off the shutter fetch. If anything is still blocked, every call no-ops.
  */
 
-const SHUTTER_URL = '/audio/polaroid-shutter.mp3';
+import { ik } from '@/lib/imagekit';
+
+const SHUTTER_URL = ik('/audio/polaroid-shutter.mp3');
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;

@@ -1,10 +1,14 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+// Aliased: this module also uses the browser's global `new Image()` for
+// preloading, which a bare `Image` import from next/image would shadow.
+import NextImage from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ik, ikVideo } from '@/lib/imagekit';
 import './xp-loader.css';
 
 const FilmTape = dynamic(() => import('../../../models/reactComponent/FilmTape'), {
@@ -76,13 +80,13 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
   useEffect(() => {
     let loaded = 0;
     const preloaderImages = [
-      '/preloader/genesis.jpg',
-      '/preloader/unplug.png',
-      '/preloader/pitchperf.png',
-      '/preloader/bnb.png',
-      '/preloader/whatif.png',
-      '/preloader/ideacafe1.png',
-      '/preloader/futureforge.png',
+      ik('/preloader/genesis.jpg'),
+      ik('/preloader/unplug.png'),
+      ik('/preloader/pitchperf.png'),
+      ik('/preloader/bnb.png'),
+      ik('/preloader/whatif.png'),
+      ik('/preloader/ideacafe1.png'),
+      ik('/preloader/futureforge.png'),
     ];
     const totalItems = preloaderImages.length + 1; // +1 for hero video
 
@@ -101,8 +105,10 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
       img.onload = img.onerror = checkReady;
     });
 
+    // Warm the progressive fallback (transform-free -> instant 200, no 202
+    // transcode stall). The hero streams HLS on top of this warmed connection.
     const vid = document.createElement('video');
-    vid.src = '/videos/intro.mp4';
+    vid.src = ikVideo('/videos/intro.mp4');
     vid.preload = 'auto';
     vid.muted = true;
     vid.onloadeddata = vid.oncanplay = checkReady;
@@ -247,8 +253,7 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
                 <div className="xp-center-content">
                   {/* GDSC Logo */}
                   <div className="xp-logo-container">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/logo.png" className="xp-logo-image" alt="GDG CRCE Logo" draggable={false} />
+                    <NextImage src="/logo.png" className="xp-logo-image" alt="GDG CRCE Logo" width={612} height={408} sizes="140px" priority draggable={false} />
                   </div>
 
                   {/* Typography */}

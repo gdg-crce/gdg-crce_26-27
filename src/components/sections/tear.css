@@ -11,13 +11,15 @@
 .tear-bg-event {
   position: absolute;
   inset: 0;
-  background: url('/transition/event.png') center/cover no-repeat;
+  /* ImageKit (see src/lib/imagekit.ts) — CSS cannot read the env var, so the
+     delivery URL is spelled out. Update alongside NEXT_PUBLIC_IMAGEKIT_URL. */
+  background: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/event.png?tr=f-auto,q-auto') center/cover no-repeat;
 }
 
 .tear-half {
   position: absolute;
   inset: 0;
-  background: url('/transition/whatwedo.png') center/cover no-repeat;
+  background: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/whatwedo.png?tr=f-auto,q-auto') center/cover no-repeat;
   will-change: transform, opacity;
   transform-style: preserve-3d; /* Ensure 3D transforms work */
 }
@@ -65,3 +67,4 @@
   );
   filter: drop-shadow(-4px 0 10px rgba(0,0,0,0.6));
 }
+

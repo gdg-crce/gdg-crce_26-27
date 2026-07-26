@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import Image from 'next/image';
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const smooth = (a: number, b: number, x: number) => {
@@ -12,6 +13,7 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
   const rootRef = useRef<HTMLDivElement>(null);
   const scalerRef = useRef<HTMLDivElement>(null);
   const rotatorRef = useRef<HTMLDivElement>(null);
+  const shadowRef = useRef<HTMLDivElement>(null);
   const coverRef = useRef<HTMLDivElement>(null);
   const page1Ref = useRef<HTMLDivElement>(null);
   const page2Ref = useRef<HTMLDivElement>(null);
@@ -72,18 +74,26 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
           container.style.animation = 'none';
           // Add a subtle Y-axis tilt and Z-axis drop as it pulls away from the screen
           container.style.transform = `rotateX(${cinematicMorph * 8}deg) rotateY(${cinematicMorph * -3}deg) translateZ(${cinematicMorph * -60}px)`; 
-          // Cast a massive, dramatic shadow onto the dark floor as it floats
-          container.style.filter = `drop-shadow(0px ${cinematicMorph * 50}px ${cinematicMorph * 80}px rgba(0,0,0,${cinematicMorph * 0.9}))`;
         } else if (zoomP > 0) {
           container.style.animation = 'none';
           // Flatten out the default 5deg tilt during zoom so the polaroid is perfectly parallel to the screen
           container.style.transform = `rotateX(${(1 - zoomP) * 5}deg)`;
-          // Fade out the shadow
-          container.style.filter = `drop-shadow(0px 50px 80px rgba(0,0,0,${0.9 * (1 - zoomP)}))`;
         } else {
           container.style.animation = ''; 
           container.style.transform = ''; 
-          container.style.filter = 'drop-shadow(0px 50px 80px rgba(0,0,0,0.9))';
+        }
+      }
+
+      // Simulate the heavy drop-shadow via a hardware accelerated pseudo layer
+      if (shadowRef.current) {
+        if (p < 0.20) {
+          const shadowScale = 1 - (cinematicMorph * 0.15);
+          shadowRef.current.style.opacity = (cinematicMorph * 0.8).toString();
+          shadowRef.current.style.transform = `translateY(10%) scale(${shadowScale})`;
+        } else if (zoomP > 0) {
+          shadowRef.current.style.opacity = (0.8 * (1 - zoomP)).toString();
+        } else {
+          shadowRef.current.style.opacity = '0.8';
         }
       }
 
@@ -138,12 +148,12 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       const zCover = 6 - (flipCover / 180) * 12; // Interpolates from 6 to -6
       if (coverRef.current) {
         coverRef.current.style.transform = `translateZ(${zCover}px) rotateX(${flipCover}deg)`;
-        coverRef.current.style.opacity = '1'; // Removed fade out to keep top half visible
+        coverRef.current.style.opacity = '1'; 
         coverRef.current.style.pointerEvents = flipCover > 90 ? 'none' : 'auto';
       }
 
       const flipP1 = smooth(0.55, 0.70, p) * 180;
-      const zP1 = 4 - (flipP1 / 180) * 8; // Interpolates from 4 to -4
+      const zP1 = 4 - (flipP1 / 180) * 8; 
       if (page1Ref.current) {
         page1Ref.current.style.transform = `translateZ(${zP1}px) rotateX(${flipP1}deg)`;
         page1Ref.current.style.opacity = '1';
@@ -151,7 +161,7 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       }
 
       const flipP2 = smooth(0.75, 0.90, p) * 180;
-      const zP2 = 2 - (flipP2 / 180) * 4; // Interpolates from 2 to -2
+      const zP2 = 2 - (flipP2 / 180) * 4; 
       if (page2Ref.current) {
         page2Ref.current.style.transform = `translateZ(${zP2}px) rotateX(${flipP2}deg)`;
         page2Ref.current.style.opacity = '1';
@@ -211,6 +221,20 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       
       {/* The 3D Book Container wrapped in scaler and rotator */}
       <div ref={scalerRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', willChange: 'transform' }}>
+        
+        {/* Hardware-accelerated fake shadow that doesn't trigger layout repaints */}
+        <div ref={shadowRef} style={{
+          position: 'absolute',
+          width: '75%', height: '42%',
+          background: 'rgba(0, 0, 0, 1)',
+          borderRadius: '40px',
+          filter: 'blur(50px)',
+          opacity: 0,
+          pointerEvents: 'none',
+          transform: 'translateY(10%)',
+          willChange: 'opacity, transform'
+        }}></div>
+
         <div ref={rotatorRef} className="album-container-wrapper" style={{ transformStyle: 'preserve-3d', willChange: 'transform' }}>
           <div className="album-container">
             
@@ -220,8 +244,7 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
             {/* Back Cover (static base) */}
             <div className="album-back-cover">
               <div className="polaroid-frame final-event-photo">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/transition/event.png" alt="Event" className="polaroid-image" draggable={false} />
+                <Image src="/transition/event.png" alt="Event" width={1000} height={562} className="polaroid-image" draggable={false} priority />
               </div>
             </div>
 
@@ -229,16 +252,13 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
             <div ref={page3Ref} className="album-page album-page-3">
               <div className="page-front">
                 <div className="native-polaroid-container p3-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/whatwedo/techinical.PNG" alt="Technical" className="native-polaroid-img" draggable={false} />
+                  <Image src="/whatwedo/techinical.PNG" alt="Technical" width={800} height={800} className="native-polaroid-img" draggable={false} />
                 </div>
                 <div className="native-polaroid-container p3-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/whatwedo/context-poloriod.png" alt="Context" className="native-polaroid-img" draggable={false} />
+                  <Image src="/whatwedo/context-poloriod.png" alt="Context" width={800} height={800} className="native-polaroid-img" draggable={false} />
                 </div>
                 <div className="scrap-photo p3-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.58.11%20PM.jpeg" alt="Memory" className="print-style" draggable={false} />
+                  <Image src="/whatwedo/memories/memory-6.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
                 </div>
               </div>
               <div className="page-back"></div>
@@ -248,16 +268,13 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
             <div ref={page2Ref} className="album-page album-page-2">
               <div className="page-front">
                 <div className="native-polaroid-container p2-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/whatwedo/design.webp" alt="Design" className="native-polaroid-img" draggable={false} />
+                  <Image src="/whatwedo/design.webp" alt="Design" width={800} height={800} className="native-polaroid-img" draggable={false} />
                 </div>
                 <div className="scrap-photo p2-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.53.05%20PM.jpeg" alt="Memory" className="print-style" draggable={false} />
+                  <Image src="/whatwedo/memories/memory-3.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
                 </div>
                 <div className="scrap-photo p2-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.58.10%20PM%20(1).jpeg" alt="Memory" className="print-style" draggable={false} />
+                  <Image src="/whatwedo/memories/memory-5.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
                 </div>
               </div>
               <div className="page-back"></div>
@@ -267,16 +284,13 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
             <div ref={page1Ref} className="album-page album-page-1">
               <div className="page-front">
                 <div className="native-polaroid-container p1-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/whatwedo/community.webp" alt="Community" className="native-polaroid-img" draggable={false} />
+                  <Image src="/whatwedo/community.webp" alt="Community" width={800} height={800} className="native-polaroid-img" draggable={false} priority />
                 </div>
                 <div className="scrap-photo p1-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.53.05%20PM%20(2).jpeg" alt="Memory" className="print-style" draggable={false} />
+                  <Image src="/whatwedo/memories/memory-1.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
                 </div>
                 <div className="scrap-photo p1-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/whatwedo/memories/WhatsApp%20Image%202026-07-23%20at%2011.53.05%20PM%20(3).jpeg" alt="Memory" className="print-style" draggable={false} />
+                  <Image src="/whatwedo/memories/memory-2.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
                 </div>
               </div>
               <div className="page-back">

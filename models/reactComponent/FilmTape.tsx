@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { orbitron, shareTechMono, specialElite } from '@/lib/fonts';
+import { ik, ikVideo } from '@/lib/imagekit';
 
 export type FilmTapeFrame = '2020s' | '2000x' | '90s' | '80s' | '70s';
 
@@ -82,7 +83,7 @@ function buildFrames(): TapeCell[] {
       era: textCell.era,
       code: `▶ IMG-${String(i + 1).padStart(2, '0')}`,
       stock: img.name.toUpperCase(),
-      src: `/preloader/${img.name}.${img.ext}`,
+      src: ik(`/preloader/${img.name}.${img.ext}`),
       alt: img.alt,
     });
     cells.push({ kind: 'text', ...textCell });
@@ -151,7 +152,10 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
                   style={{ minWidth: 0, background: '#000' }}
                 >
                   <video
-                    src="/videos/intro.mp4"
+                    // Progressive, transform-free URL: instant 200, no ImageKit
+                    // transcode stall. Warmed by the Preloader's preload of the
+                    // same file. (HLS would be overkill for this tiny cell.)
+                    src={ikVideo('/videos/intro.mp4')}
                     autoPlay
                     muted
                     loop
@@ -185,7 +189,7 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/logo.png"
+                    src={ik('/logo.png')}
                     alt="GDG Logo"
                     draggable={false}
                     style={{

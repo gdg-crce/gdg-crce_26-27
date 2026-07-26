@@ -223,9 +223,12 @@
   transform: rotate(var(--spin, 0deg));
   will-change: transform;
 }
-.tt-lab-theme   { background-image: url('/record%20player/Orange%20record.png'); }
-.tt-lab-vision  { background-image: url('/record%20player/Red%20record.png'); }
-.tt-lab-mission { background-image: url('/record%20player/Yellow%20record.png'); }
+/* ImageKit (see src/lib/imagekit.ts). It rewrote the spaces in both the folder
+   and the filenames on upload, so these paths are not a literal mirror of
+   public/record player/. */
+.tt-lab-theme   { background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Orange_record.png?tr=f-auto,q-auto'); }
+.tt-lab-vision  { background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Red_record.png?tr=f-auto,q-auto'); }
+.tt-lab-mission { background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Yellow_record.png?tr=f-auto,q-auto'); }
 
 /* Printed ring on the label — see the comment on the markup. It shares the
    disc's rotation, so it must stay clearly legible: it sits above the painted
@@ -396,3 +399,4 @@
 
 /* Nothing here autoplays any more — the record only turns while the user is
    actually scrolling — so there is no ambient motion left to opt out of. */
+

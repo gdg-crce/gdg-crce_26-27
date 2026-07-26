@@ -77,14 +77,14 @@
     width: 100%;
     height: 100%;
     position: relative;
-    background: #17141c url('/whatwedo/mobile/watwedomobbg.png') center / cover no-repeat;
+    background: #17141c url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/mobile/watwedomobbg.png?tr=f-auto,q-auto') center / cover no-repeat;
   }
 }
 
 .wwd2d-table {
   position: absolute;
   inset: 0;
-  background: #17141c url('/whatwedo/table.webp') center / cover no-repeat;
+  background: #17141c url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/table.webp?tr=f-auto,q-auto') center / cover no-repeat;
 }
 /* soft corner falloff so the table recedes and the centre reads as lit */
 .wwd2d-vignette {
@@ -106,7 +106,7 @@
 .dust {
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAAAAP//////////////////////AAAA8P3mHAAAACHRSTlMAMwIu8Z4AAAB5SURBVDjL7c8xDQAwEASwU8E9/5Q0M+QdIDQ+wL9r0H816L8a9F8N+q8G/VeD/qtB/9Wg/2rQfzXovxr0Xw36rwb9V4P+q0H/1aD/atB/Nei/GvRfDfqvBv1Xg/6rQf/VoP9q0H816L8a9F8N+q8G/VeD/qtB/9Wg/woP5gMHgQ3RDAAAAABJRU5ErkJggg==");
   opacity: 0.04; /* Lowered grain opacity as requested */
   mix-blend-mode: overlay;
 }
@@ -172,7 +172,8 @@
 }
 
 .album-cover .cover-front {
-  background-image: url('/whatwedo/image copy.png');
+  /* ImageKit rewrote the space in "image copy.png" to an underscore on upload. */
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/image_copy.png?tr=f-auto,q-auto');
   background-size: 100% 100%;
   background-position: center;
   display: flex;
@@ -471,7 +472,7 @@
   inset: 0;
   /* Cinematic moody lighting: Grounding the scene on a physical table */
   /* Using table.png as requested. No dark overlays so the beautiful wood is 100% visible! */
-  background: url('/whatwedo/table.png') no-repeat center center;
+  background: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/table.webp?tr=f-auto,q-auto') no-repeat center center;
   background-size: cover;
 }
 
@@ -496,3 +497,4 @@
   font-size: clamp(1.4rem, 4vw, 2.4rem);
   letter-spacing: 0.14em;
 }
+

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ik } from '@/lib/imagekit';
 import './about.css';
 
 /* ── scalar helpers (same idiom as WhatWeDoSection) ─────────────────────── */
@@ -473,7 +474,7 @@ export default function AboutSection() {
               on top of this, the arm above that. */}
           {/* eslint-disable-next-line @next/next/no-img-element -- large fixed
               photographic plate; next/image adds no value inside the GSAP stage */}
-          <img className="tt-base" src="/record%20player/base.png" alt="" draggable={false} />
+          <img className="tt-base" src={ik('/record player/base.png')} alt="" draggable={false} />
 
           {/* The record itself rotates — grooves, vinyl and all. The room
               light and the needle's groove highlight are NOT on the record, so
@@ -482,7 +483,7 @@ export default function AboutSection() {
             {/* eslint-disable-next-line @next/next/no-img-element -- a background
                 image cannot be pivoted on the pressing's off-centre spindle; the
                 <img> lets us cancel the file's centring error so it spins true */}
-            <img className="tt-disc-img" src="/record%20player/disc.png" alt="" draggable={false} />
+            <img className="tt-disc-img" src={ik('/record player/disc.png')} alt="" draggable={false} />
           </div>
           <div className="tt-disc-optics" aria-hidden="true">
             <div ref={bandRef} className="tt-band" />
@@ -552,7 +553,7 @@ export default function AboutSection() {
           <svg className="tt-hardware" viewBox="0 0 1600 900" fill="none" aria-hidden="true">
             <g ref={armRef} className="tt-arm-swing">
               <image 
-                href="/record%20player/toneram.png"
+                href={ik('/record player/toneram.png')}
                 x={TONEARM_X.toFixed(1)}
                 y={TONEARM_Y.toFixed(1)}
                 width={TONEARM_IMG_W}

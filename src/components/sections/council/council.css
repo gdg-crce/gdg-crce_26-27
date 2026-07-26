@@ -24,7 +24,7 @@
   width: 100% !important;
   height: 100vh !important;
   overflow: hidden !important;
-  background: url('/walpaper.png') center/cover no-repeat !important;
+  background: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/walpaper.png?tr=f-auto,q-auto') center/cover no-repeat !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;

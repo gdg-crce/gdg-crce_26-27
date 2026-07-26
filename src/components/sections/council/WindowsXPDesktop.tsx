@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface WindowsXPDesktopProps {
   activeTeamIndex: number;
@@ -37,32 +38,32 @@ export default function WindowsXPDesktop({
     {
       label: 'My Computer',
       team: 'All Tracks',
-      svg: <img src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" />,
+      svg: <Image src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" width={34} height={34} sizes="34px" />,
     },
     {
       label: 'Core Council',
       team: 'Core Leadership',
-      svg: <img src="/about.webp" className="xp-desktop-icon-svg" alt="About" />,
+      svg: <Image src="/about.webp" className="xp-desktop-icon-svg" alt="About" width={34} height={34} sizes="34px" />,
     },
     {
       label: 'Tech & Web',
       team: 'Tech & Web',
-      svg: <img src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" />,
+      svg: <Image src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" width={34} height={34} sizes="34px" />,
     },
     {
       label: 'UI/UX Design',
       team: 'UI/UX & Design',
-      svg: <img src="/about.webp" className="xp-desktop-icon-svg" alt="About" />,
+      svg: <Image src="/about.webp" className="xp-desktop-icon-svg" alt="About" width={34} height={34} sizes="34px" />,
     },
     {
       label: 'Events & Ops',
       team: 'Events & Ops',
-      svg: <img src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" />,
+      svg: <Image src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" width={34} height={34} sizes="34px" />,
     },
     {
       label: 'PR Outreach',
       team: 'PR & Outreach',
-      svg: <img src="/about.webp" className="xp-desktop-icon-svg" alt="About" />,
+      svg: <Image src="/about.webp" className="xp-desktop-icon-svg" alt="About" width={34} height={34} sizes="34px" />,
     },
   ];
 
