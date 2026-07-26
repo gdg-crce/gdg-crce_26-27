@@ -4,83 +4,93 @@ import dynamic from 'next/dynamic';
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { unlockPolaroidAudio, playShutter } from './polaroidAudio';
+import { unlockPolaroidAudio } from './polaroidAudio';
 import './whatwedo.css';
 
-/* The flat (2D DOM) Polaroid wall — dynamically imported (ssr:false) so its
+/* The interactive Polaroid album — dynamically imported (ssr:false) so its
    IntersectionObserver + rAF frame loop only ever runs client-side. */
-const PolaroidScene2D = dynamic(() => import('./PolaroidScene2D'), {
+const PolaroidAlbumScene = dynamic(() => import('./PolaroidAlbumScene'), {
   ssr: false,
   loading: () => (
     <div className="wwd-loading">
-      <span>DEVELOPING…</span>
+      <span>REVISITING MEMORIES…</span>
     </div>
   ),
 });
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-const ramp = (a: number, b: number, x: number) => {
-  const t = clamp01((x - a) / (b - a));
-  return t * t * (3 - 2 * t);
-};
 
-/** Pinned scroll length. Matches the Events act's density (~ one screen of
- *  scroll per beat: flash, pan-out, three prints, handoff). */
-const SCROLL_END = 4000;
-
-/** Scroll distance, measured from the pin's start, over which the seam flash
- *  clears back down to reveal the scene behind it. */
-const REVEAL_PX = 1400;
+/** Pinned scroll length — 5000px gives one full, luxurious unraveling experience + deep dive zoom. */
+const SCROLL_END = 5000;
 
 /**
  * WhatWeDoSection — the Polaroid wall (Act 2.5).
  *
- * A ScrollTrigger-pinned host that scrubs one 0→1 progress into a mutable
- * `progressRef`, read by the 2D scene to develop its prints (no React state on
- * the frame path — same contract as EventsAndCouncilSection).
- *
- * The About turntable and this section are two adjacent pinned sections, so the
- * scrollbar has to hand off between them — a ~100vh window where About slides
- * up and out while this section slides up and in. We never want that slide to
- * be *seen*: a fixed, full-viewport white flash (`.wwd-seam-flash`, driven by
- * its own trigger below) blankets the viewport across the seam, rising to solid
- * white over the tail of About, holding white while the sections swap behind
- * it, then clearing once we are pinned — so the scene is revealed *through* the
- * flash rather than scrolling up. From there the prints develop in one by one.
+ * Architecture:
+ *  - A `position: fixed` overlay sits above the entire DOM at z-index 99990.
+ *    It is invisible (opacity: 0, pointerEvents: none) by default.
+ *  - A spacer `<section>` in normal document flow is 4000px tall. GSAP pins a
+ *    0-height sentinel inside it.
+ *  - ScrollTrigger starts at 'top bottom' (the moment the About section exits
+ *    the bottom of the viewport). At progress > 0 the fixed overlay instantly
+ *    snaps to opacity 1, giving a seamless screenshot→album morph with NO
+ *    scroll-up gap.
+ *  - At progress === 1 (end of the 4000px spacer) the overlay fades back to
+ *    opacity 0 so everything underneath (TearTransition → Events) flows
+ *    normally again.
  */
 export default function WhatWeDoSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<number>(0);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
-  const reducedRef = useRef(false);
+  const REVEAL_PX = 800;
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
-    reducedRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Reduced motion swaps the bright flash for a gentle dark blink — same seam
-    // mask, no strobe — because a full-viewport white flash is exactly the kind
-    // of thing that setting asks us not to do.
-    if (flashRef.current) {
-      flashRef.current.style.background = reducedRef.current ? '#050409' : '#ffffff';
-    }
-
-    // ── MAIN PIN ────────────────────────────────────────────────────────────
-    // Scrubs 0→1 into progressRef, read by the 2D scene (camera settle + the
-    // prints developing in). The print whir is fired from PolaroidScene2D, which
-    // owns the reveal schedule.
     const trigger = ScrollTrigger.create({
       trigger: sectionRef.current,
-      pin: containerRef.current,
-      start: 'top top',
-      end: `+=${SCROLL_END}`,
-      scrub: 1.5,
+      // Pin a 0-height sentinel so GSAP uses the section as the scroll region
+      // but does NOT push the page down with a pin-spacer of its own.
+      pin: sentinelRef.current,
+      start: 'top bottom',   // Instant handoff — fires the moment About exits
+      end: 'bottom top',     // Extended to scrub perfectly until EventsAndCouncilSection is at top top
+      scrub: true,
       onUpdate: (self) => {
-        const p = self.progress;
-        progressRef.current = p;
+        progressRef.current = self.progress;
 
-        // HANDOFF removed for tear transition
+        if (overlayRef.current) {
+          if (self.progress > 0 && self.progress < 1) {
+            // Snap visible immediately — no fade-in so morph feels instant
+            overlayRef.current.style.opacity = '1';
+            overlayRef.current.style.pointerEvents = 'auto';
+          } else {
+            // Hidden before section starts and after section ends
+            overlayRef.current.style.opacity = '0';
+            overlayRef.current.style.pointerEvents = 'none';
+          }
+        }
+      },
+      // Also hide on leave so it doesn't persist after scrolling past
+      onLeave: () => {
+        if (overlayRef.current) {
+          overlayRef.current.style.opacity = '0';
+          overlayRef.current.style.pointerEvents = 'none';
+        }
+      },
+      onEnterBack: () => {
+        if (overlayRef.current) {
+          overlayRef.current.style.opacity = '1';
+          overlayRef.current.style.pointerEvents = 'auto';
+        }
+      },
+      onLeaveBack: () => {
+        if (overlayRef.current) {
+          overlayRef.current.style.opacity = '0';
+          overlayRef.current.style.pointerEvents = 'none';
+        }
       },
     });
 
@@ -111,19 +121,22 @@ export default function WhatWeDoSection() {
         const riseEnd = (vh * 0.6) / total; // solid white by the start of the seam
         const holdEnd = (vh * 1.6) / total; // hold white until the pin engages
         let op: number;
+        
+        // Custom ramp function for smooth fading
+        const ramp = (start: number, end: number, val: number) => clamp01((val - start) / (end - start));
+        
         if (p <= riseEnd) op = ramp(0, riseEnd, p);
         else if (p <= holdEnd) op = 1;
         else op = 1 - ramp(holdEnd, 1, p);
         if (flashRef.current) flashRef.current.style.opacity = op.toFixed(3);
 
         // shutter click fires once, on the forward crossing into full white
-        if (flashPrev >= 0 && flashPrev < riseEnd && p >= riseEnd) playShutter();
+        // if (flashPrev >= 0 && flashPrev < riseEnd && p >= riseEnd) playShutter();
         flashPrev = p;
       },
     });
 
-    // Unlock audio on the first real gesture (the visitor has already clicked
-    // the preloader and is scrolling to reach here).
+    // Unlock audio on the first real gesture
     const unlock = () => {
       unlockPolaroidAudio();
       window.removeEventListener('pointerdown', unlock);
@@ -144,24 +157,29 @@ export default function WhatWeDoSection() {
       window.removeEventListener('wheel', unlock);
       window.removeEventListener('touchstart', unlock);
       trigger.kill();
-      flash.kill();
     };
   }, []);
 
   return (
-    <section ref={sectionRef} id="what-we-do" className="whatwedo-section" aria-label="What GDG CRCE does">
-      {/* Seam flash — OUTSIDE the pinned stage, position:fixed, so it blankets
-          the whole viewport during the About→WhatWeDo hand-off and hides the
-          scroll seam. Driven by its own trigger (see the effect above). */}
-      <div ref={flashRef} className="wwd-seam-flash" aria-hidden="true" />
-
-      <div ref={containerRef} className="wwd-pin">
-        {/* the flat Polaroid wall (table + camera + caption prints) */}
-        <div className="wwd-canvas-wrap">
-          <PolaroidScene2D progressRef={progressRef} />
-        </div>
-
+    <>
+      <div ref={flashRef} className="wwd-seam-flash" />
+      {/* ── Fixed overlay: sits above the entire DOM, invisible until activated ── */}
+      <div ref={overlayRef} className="fixed-album-wrapper">
+        <div className="wwd-solid-bg" />
+        <PolaroidAlbumScene progressRef={progressRef} />
       </div>
-    </section>
+
+      {/* ── Normal-flow spacer: gives GSAP 4000px of scroll to scrub against ── */}
+      <section
+        ref={sectionRef}
+        id="what-we-do"
+        className="whatwedo-section"
+        aria-label="What GDG CRCE does"
+        style={{ height: `${SCROLL_END}px` }}
+      >
+        {/* 0-height sentinel that GSAP pins without adding its own spacer */}
+        <div ref={sentinelRef} style={{ height: 0 }} />
+      </section>
+    </>
   );
 }

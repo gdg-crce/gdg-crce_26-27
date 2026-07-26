@@ -19,7 +19,8 @@
 .whatwedo-section {
   position: relative;
   width: 100%;
-  background: #17141c;
+  /* Height is set inline by WhatWeDoSection (= SCROLL_END px) */
+  background: transparent;
 }
 
 /* Pinned full-viewport stage (GSAP pins this element across SCROLL_END px). */
@@ -40,16 +41,18 @@
   display: block;
 }
 
-/* ── the 2D Polaroid wall ──────────────────────────────────────────────────
-   A flat DOM scene (no WebGL): a wooden table, the Polaroid camera dead-centre,
-   and the caption prints fanned to the four corners. Positions are centre-based
-   percentages of the stage; the camera + prints are placed with
-   translate(-50%,-50%) and animated on top of that from the scroll (see
-   PolaroidScene2D). Everything is pointer-events:none — the section scrolls. */
-.wwd2d-root {
+/* ── the 3D Photo Album ────────────────────────────────────────────────────
+   A fully interactive 3D CSS photo album. The scroll progress drives the
+   rotateY property of the pages to simulate a book opening. */
+.album-scene-root {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent; /* Changed from solid color to transparent so the table beneath is visible */
   overflow: hidden;
+  perspective: 2500px;
 }
 
 /* --- Media Queries and Layout Control --- */
@@ -91,39 +94,152 @@
   z-index: 9;
   background: radial-gradient(125% 105% at 50% 44%, transparent 42%, rgba(6, 4, 9, 0.34) 100%);
 }
-.wwd2d-camera {
+
+.album-overlay {
   position: absolute;
-  z-index: 10;
+  inset: 0;
   pointer-events: none;
-  height: clamp(400px, 80vh, 950px);
-  width: auto;
-  transform: translate(-50%, -50%);
-  left: 50%;
-  top: 24%;
-  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.5));
+  z-index: 100;
+  background: radial-gradient(circle, transparent 40%, rgba(30, 10, 0, 0.8) 120%);
+}
+
+.dust {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.04; /* Lowered grain opacity as requested */
+  mix-blend-mode: overlay;
+}
+
+.album-container-wrapper {
+  position: relative;
+  /* Top-bound Spiral Notebook is centered. 16:9 landscape */
+  width: 85vw;
+  max-width: 1300px;
+  height: 47.8125vw; /* 85vw * (9/16) */
+  max-height: 731.25px;
+}
+
+.album-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: albumFloat 8s ease-in-out infinite;
+  transform: rotateX(5deg);
+}
+
+@keyframes albumFloat {
+  0%, 100% { transform: translateY(0) rotateX(8deg) rotateY(0deg); }
+  50% { transform: translateY(-15px) rotateX(12deg) rotateY(-3deg); }
+}
+
+.album-back-cover, .album-page, .album-cover {
+  position: absolute;
+  inset: 0;
+  transform-origin: top center;
+  transform-style: preserve-3d;
   will-change: transform;
 }
-.wwd2d-photo-wrapper {
+
+.album-back-cover {
+  background-color: #1a1a1a;
+  /* Carbon/woven fine texture */
+  background-image: 
+    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4)),
+    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4));
+  background-size: 4px 4px;
+  background-position: 0 0, 2px 2px;
+  /* Deep, physically grounded contact shadow on the table */
+  box-shadow: 
+    0 15px 30px rgba(0,0,0,0.9), 
+    0 50px 100px rgba(0,0,0,0.8),
+    inset -5px 0 20px rgba(0,0,0,0.7),
+    inset 0 0 40px rgba(0,0,0,0.9);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px 4px 12px 12px;
+}
+
+.cover-front, .cover-back, .page-front, .page-back {
   position: absolute;
-  pointer-events: auto;
-  width: clamp(250px, 28vw, 420px);
-  height: auto;
-  transform: translate(-50%, -50%);
-  will-change: transform, opacity;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 2px 2px 10px 10px;
 }
-.wwd2d-photo-wrapper img {
-  display: block;
+
+.cover-back, .page-back {
+  transform: rotateX(180deg);
+}
+
+.album-cover .cover-front {
+  background-image: url('/whatwedo/image copy.png');
+  background-size: 100% 100%;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-top: 5px solid #1a0f0b;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.6);
+}
+
+.cover-title, .cover-subtitle {
+  display: none; /* Hide old text */
+}
+
+.album-cover .cover-back {
+  background: #111;
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 4px);
+}
+
+/* Authentic Textured Pages with Plastic Gloss and Stitching */
+.page-front, .page-back {
+  background-color: #1a1a1a;
+  /* Carbon/woven fine texture */
+  background-image: 
+    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4)),
+    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4));
+  background-size: 4px 4px;
+  background-position: 0 0, 2px 2px;
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-top: 1px solid rgba(255,255,255,0.25);
+  overflow: hidden;
+}
+
+
+
+/* High-gloss plastic reflection overlay */
+.page-front::after, .page-back::after, .album-back-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* Sharp gloss lines simulating light reflecting off plastic film */
+  background: linear-gradient(110deg, 
+    rgba(255,255,255,0) 30%, 
+    rgba(255,255,255,0.03) 35%, 
+    rgba(255,255,255,0.15) 40%, 
+    rgba(255,255,255,0) 45%, 
+    rgba(255,255,255,0) 65%, 
+    rgba(255,255,255,0.08) 70%, 
+    rgba(255,255,255,0) 75%);
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* High Definition Spiral Binder SVG */
+.spiral-binder {
+  position: absolute;
+  top: -20px;
+  left: 0;
   width: 100%;
-  height: auto;
-  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.42));
-  transition: transform 0.75s cubic-bezier(0.19, 1, 0.22, 1), filter 0.75s ease;
-}
-.wwd2d-photo-wrapper:hover {
-  z-index: 50 !important;
-}
-.wwd2d-photo-wrapper:hover img {
-  transform: scale(1.15);
-  filter: drop-shadow(0 25px 40px rgba(0, 0, 0, 0.6));
+  height: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg width='30' height='40' viewBox='0 0 30 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='w' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%23777' /%3E%3Cstop offset='20%25' stop-color='%23fff' /%3E%3Cstop offset='50%25' stop-color='%23999' /%3E%3Cstop offset='80%25' stop-color='%23ddd' /%3E%3Cstop offset='100%25' stop-color='%23555' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cellipse cx='15' cy='32' rx='6' ry='3.5' fill='%23050403' /%3E%3Cellipse cx='15' cy='32' rx='4.5' ry='2.5' fill='%23000' /%3E%3Cpath d='M -2 15 Q 15 0 15 32' fill='none' stroke='%23444' stroke-width='3' /%3E%3Cpath d='M 15 32 Q 15 0 32 15' fill='none' stroke='url(%23w)' stroke-width='4.5' stroke-linecap='round' filter='drop-shadow(2px 5px 3px rgba(0,0,0,0.6))' /%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 30px 40px;
+  z-index: 50;
+  opacity: 0;
 }
 
 /* Wrapper that positions the camera pair as a single unit.
@@ -207,13 +323,7 @@
    hidden at the peak — a radial that faded to transparent at the edges would
    let the sliding scene leak past the corners. JS swaps the fill to a dark
    blink under prefers-reduced-motion. Opacity is scrubbed from the effect.
-
-   z-index MUST clear the About turntable: `.tt-pin` sits at z-index 9995 (it
-   has to cover the fixed hero video — see about.css). At any lower value the
-   turntable paints straight over this flash while it scrolls up, which is the
-   hard top/bottom split the flash exists to prevent. 99990 keeps it above every
-   pinned section yet below the preloader (z 100000), which it never coexists
-   with anyway. */
+*/
 .wwd-seam-flash {
   position: fixed;
   inset: 0;
@@ -222,6 +332,154 @@
   opacity: 0;
   will-change: opacity;
   background: #ffffff;
+}
+
+/* The wrapper that creates the vintage photo corners illusion */
+.scrap-photo {
+  position: absolute;
+  /* Space for the black triangular corners */
+  padding: 12px;
+  /* 4 separate linear gradients to draw 4 black triangles at the corners */
+  background-image: 
+    linear-gradient(135deg, #111 16px, transparent 17px),
+    linear-gradient(-135deg, #111 16px, transparent 17px),
+    linear-gradient(45deg, #111 16px, transparent 17px),
+    linear-gradient(-45deg, #111 16px, transparent 17px);
+  background-position: top left, top right, bottom left, bottom right;
+  background-size: 50% 50%;
+  background-repeat: no-repeat;
+  filter: drop-shadow(3px 8px 15px rgba(0,0,0,0.6));
+  transition: transform 0.3s ease, filter 0.3s ease;
+  z-index: 5;
+}
+
+.scrap-photo:hover {
+  filter: drop-shadow(5px 12px 25px rgba(0,0,0,0.8)) brightness(1.1);
+  z-index: 10;
+}
+
+/* Native Polaroids (images that already have baked-in frames) */
+.native-polaroid-container {
+  position: absolute;
+  filter: drop-shadow(5px 15px 25px rgba(0,0,0,0.7));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.native-polaroid-container:hover {
+  filter: drop-shadow(8px 20px 35px rgba(0,0,0,0.9)) brightness(1.1);
+  z-index: 10;
+}
+
+.native-polaroid-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Standard photo print with a thin white border */
+.print-style {
+  background: #fff;
+  padding: 3%; /* Even thin border */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+  display: block;
+}
+
+/* --- True Polaroid Style --- */
+.polaroid-frame {
+  position: absolute;
+  background: #fcfcfc;
+  padding: 12px 12px 40px 12px; /* Adjusted padding for horizontal polaroid */
+  box-shadow: 2px 5px 15px rgba(0,0,0,0.6), inset 0 0 5px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, filter 0.3s ease;
+  z-index: 5;
+  border-radius: 2px;
+}
+
+.polaroid-frame:hover {
+  filter: drop-shadow(5px 15px 30px rgba(0,0,0,0.8)) brightness(1.05);
+  z-index: 10;
+}
+
+.polaroid-image {
+  width: 100%;
+  aspect-ratio: 16 / 9; /* Horizontal to match the event page */
+  object-fit: cover;
+  display: block;
+  background: #111;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.final-event-photo {
+  top: 50%;
+  left: 50%;
+  width: 75%;
+  max-width: 800px;
+  transform: translate(-50%, -50%);
+}
+
+/* --- Organic Scrapbook Layouts (SPACED OUT & MAXIMIZED) --- */
+
+/* Page 3: 3 images */
+.p3-1 { top: 10%; left: 2%; width: 46%; transform: rotate(-3deg); z-index: 2; }
+.p3-2 { top: 8%; right: 2%; width: 46%; transform: rotate(4deg); z-index: 1; }
+.p3-3 { bottom: 3%; left: 30%; width: 40%; transform: rotate(-2deg); z-index: 3; }
+
+/* Page 2: 3 images */
+.p2-1 { top: 10%; right: 3%; width: 48%; transform: rotate(3deg); z-index: 2; }
+.p2-2 { top: 8%; left: 3%; width: 40%; transform: rotate(-4deg); z-index: 1; }
+.p2-3 { bottom: 5%; left: 10%; width: 42%; transform: rotate(2deg); z-index: 3; }
+
+/* Page 1: 3 images */
+.p1-1 { top: 8%; left: 2%; width: 48%; transform: rotate(-4deg); z-index: 2; }
+.p1-2 { top: 6%; right: 4%; width: 40%; transform: rotate(5deg); z-index: 1; }
+.p1-3 { bottom: 3%; right: 15%; width: 42%; transform: rotate(-2deg); z-index: 3; }
+
+
+.memory-text {
+  position: absolute;
+  top: 45%;
+  left: 10%;
+  right: 10%;
+  text-align: center;
+  color: #8c857b;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  transform: rotate(-2deg);
+  opacity: 0.5;
+}
+
+/* ── globally fixed album wrapper ─────────────────────────────────────────
+   The album is completely removed from document flow so it never physically
+   scrolls up. It just sits in the viewport, and the ScrollTrigger onUpdate
+   controls its opacity and pointer-events based on scroll progress. */
+.fixed-album-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+}
+
+/* The solid background that hides the rotating About section */
+.wwd-solid-bg {
+  position: absolute;
+  inset: 0;
+  /* Cinematic moody lighting: Grounding the scene on a physical table */
+  /* Using table.png as requested. No dark overlays so the beautiful wood is 100% visible! */
+  background: url('/whatwedo/table.png') no-repeat center center;
+  background-size: cover;
+}
+
+/* Provides the 100vh physical block for GSAP to pin against in the DOM */
+.wwd-pin-spacer {
+  position: relative;
+  width: 100%;
+  height: 100vh;
 }
 
 /* ── loader (while the WebGL bundle + scene spin up) ───────────────────── */
