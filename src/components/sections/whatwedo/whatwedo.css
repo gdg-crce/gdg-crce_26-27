@@ -73,10 +73,10 @@
 .album-container-wrapper {
   position: relative;
   /* Top-bound Spiral Notebook is centered. 16:9 landscape */
-  width: 80vw;
-  max-width: 1200px;
-  height: 45vw; /* 80vw * (9/16) */
-  max-height: 675px;
+  width: 90vw;
+  max-width: 1400px;
+  height: 50.625vw; /* 90vw * (9/16) */
+  max-height: 787.5px;
 }
 
 .album-container {
@@ -105,10 +105,11 @@
   background: #2a1f1a;
   /* Deep, physically grounded contact shadow on the table */
   box-shadow: 
-    0 10px 15px rgba(0,0,0,0.8), 
-    0 40px 80px rgba(0,0,0,0.6),
-    inset -5px 0 20px rgba(0,0,0,0.5);
-  border-radius: 2px 2px 10px 10px;
+    0 15px 30px rgba(0,0,0,0.9), 
+    0 50px 100px rgba(0,0,0,0.8),
+    inset -5px 0 20px rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px 4px 12px 12px;
 }
 
 .cover-front, .cover-back, .page-front, .page-back {
@@ -130,7 +131,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  border: 1px solid rgba(255,255,255,0.2);
   border-top: 5px solid #1a0f0b;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.6);
 }
 
 .cover-title, .cover-subtitle {
@@ -151,8 +154,9 @@
     linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4));
   background-size: 4px 4px;
   background-position: 0 0, 2px 2px;
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
-  border-top: 1px solid rgba(255,255,255,0.05);
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-top: 1px solid rgba(255,255,255,0.25);
   overflow: hidden;
 }
 

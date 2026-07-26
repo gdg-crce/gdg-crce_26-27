@@ -33,8 +33,8 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       lastP = p; lastVw = vw; lastVh = vh;
 
       // Phase 1: The Morph (Extended to 0.20 for a luxurious, slow unraveling)
-      const coverW = Math.min(vw * 0.80, 1200); // Slightly increased 80vw wide centered book
-      const coverH = Math.min(vw * 0.45, 675); // 16:9 ratio
+      const coverW = Math.min(vw * 0.90, 1400); // Increased from 0.80 to 0.90 for larger size
+      const coverH = Math.min(vw * 0.50625, 787.5); // 16:9 ratio
       
       const maxStartScale = Math.max(vw / coverW, vh / coverH);
       
@@ -65,7 +65,7 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
         }
       }
 
-      // We no longer translate X because the book is permanently centered!
+      // The book is permanently centered. We don't shift it so the flipped page goes naturally out of screen.
       if (rotatorRef.current) {
         rotatorRef.current.style.transform = `translateX(0%)`;
       }
@@ -111,36 +111,35 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
 
       // Phase 2: Upward Page Flips & Clean Fading!
       // Pages flip upwards around the X-axis (rotateX(180deg)). 
-      // To keep the user's focus solely on the newly revealed page, the flipped page cleanly fades out into the darkness above.
+      // Flipped pages remain visible as the top half of the open notebook.
       const flipCover = smooth(0.35, 0.50, p) * 180;
-      const alphaCover = 1 - smooth(0.40, 0.50, p);
+      const zCover = 6 - (flipCover / 180) * 12; // Interpolates from 6 to -6
       if (coverRef.current) {
-        coverRef.current.style.transform = `translateZ(6px) rotateX(${flipCover}deg)`;
-        coverRef.current.style.opacity = alphaCover.toString();
+        coverRef.current.style.transform = `translateZ(${zCover}px) rotateX(${flipCover}deg)`;
+        coverRef.current.style.opacity = '1'; // Removed fade out to keep top half visible
         coverRef.current.style.pointerEvents = flipCover > 90 ? 'none' : 'auto';
       }
 
       const flipP1 = smooth(0.55, 0.70, p) * 180;
-      const alphaP1 = 1 - smooth(0.60, 0.70, p);
+      const zP1 = 4 - (flipP1 / 180) * 8; // Interpolates from 4 to -4
       if (page1Ref.current) {
-        page1Ref.current.style.transform = `translateZ(4px) rotateX(${flipP1}deg)`;
-        page1Ref.current.style.opacity = alphaP1.toString();
+        page1Ref.current.style.transform = `translateZ(${zP1}px) rotateX(${flipP1}deg)`;
+        page1Ref.current.style.opacity = '1';
         page1Ref.current.style.pointerEvents = flipP1 > 90 ? 'none' : 'auto';
       }
 
       const flipP2 = smooth(0.75, 0.90, p) * 180;
-      const alphaP2 = 1 - smooth(0.80, 0.90, p);
+      const zP2 = 2 - (flipP2 / 180) * 4; // Interpolates from 2 to -2
       if (page2Ref.current) {
-        page2Ref.current.style.transform = `translateZ(2px) rotateX(${flipP2}deg)`;
-        page2Ref.current.style.opacity = alphaP2.toString();
+        page2Ref.current.style.transform = `translateZ(${zP2}px) rotateX(${flipP2}deg)`;
+        page2Ref.current.style.opacity = '1';
         page2Ref.current.style.pointerEvents = flipP2 > 90 ? 'none' : 'auto';
       }
       
       const flipP3 = smooth(0.92, 1.0, p) * 180;
-      const alphaP3 = 1 - smooth(0.95, 1.0, p);
       if (page3Ref.current) {
         page3Ref.current.style.transform = `translateZ(0px) rotateX(${flipP3}deg)`;
-        page3Ref.current.style.opacity = alphaP3.toString();
+        page3Ref.current.style.opacity = '1';
         page3Ref.current.style.pointerEvents = flipP3 > 90 ? 'none' : 'auto';
       }
     };
