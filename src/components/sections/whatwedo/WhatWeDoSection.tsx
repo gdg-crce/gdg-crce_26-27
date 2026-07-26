@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { unlockPolaroidAudio, playShutter } from './polaroidAudio';
+import { unlockPolaroidAudio } from './polaroidAudio';
 import './whatwedo.css';
 
 /* The interactive Polaroid album — dynamically imported (ssr:false) so its
@@ -19,53 +19,77 @@ const PolaroidAlbumScene = dynamic(() => import('./PolaroidAlbumScene'), {
 });
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-const ramp = (a: number, b: number, x: number) => {
-  const t = clamp01((x - a) / (b - a));
-  return t * t * (3 - 2 * t);
-};
 
-/** Pinned scroll length. Matches the Events act's density (~ one screen of
- *  scroll per beat: flash, pan-out, three prints, handoff). */
+/** Pinned scroll length — 4000px gives one full, luxurious unraveling experience. */
 const SCROLL_END = 4000;
 
 /**
  * WhatWeDoSection — the Polaroid wall (Act 2.5).
  *
- * This section perfectly freezes the turntable exactly where it is by pinning at 'top bottom'.
- * The globally fixed wrapper then flawlessly morphs the screenshot into a 3D book,
- * stretched over 4000px of scrolling for an incredibly smooth and deliberate unraveling experience!
+ * Architecture:
+ *  - A `position: fixed` overlay sits above the entire DOM at z-index 99990.
+ *    It is invisible (opacity: 0, pointerEvents: none) by default.
+ *  - A spacer `<section>` in normal document flow is 4000px tall. GSAP pins a
+ *    0-height sentinel inside it.
+ *  - ScrollTrigger starts at 'top bottom' (the moment the About section exits
+ *    the bottom of the viewport). At progress > 0 the fixed overlay instantly
+ *    snaps to opacity 1, giving a seamless screenshot→album morph with NO
+ *    scroll-up gap.
+ *  - At progress === 1 (end of the 4000px spacer) the overlay fades back to
+ *    opacity 0 so everything underneath (TearTransition → Events) flows
+ *    normally again.
  */
 export default function WhatWeDoSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<number>(0);
-  const flashRef = useRef<HTMLDivElement>(null);
-  const reducedRef = useRef(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
-    reducedRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // ── MAIN PIN & TRANSITION ───────────────────────────────────────────────
-    // By starting at 'top bottom', we instantly take over the screen the moment
-    // AboutSection finishes. The entire 4000px scroll is now dedicated to the animation,
-    // giving us a beautifully slow, controlled unraveling experience without scroll gaps!
     const trigger = ScrollTrigger.create({
       trigger: sectionRef.current,
-      pin: containerRef.current,
-      start: 'top bottom', // INSTANT handoff from AboutSection
+      // Pin a 0-height sentinel so GSAP uses the section as the scroll region
+      // but does NOT push the page down with a pin-spacer of its own.
+      pin: sentinelRef.current,
+      start: 'top bottom',   // Instant handoff — fires the moment About exits
       end: `+=${SCROLL_END}`,
       scrub: true,
       onUpdate: (self) => {
         progressRef.current = self.progress;
-        if (flashRef.current) {
-          // Keep it perfectly visible during the section
-          flashRef.current.style.opacity = self.progress > 0 ? '1' : '0';
-          // Enable pointer events ONLY after the morph is mostly done, 
-          // to ensure scroll isn't hijacked during the critical morph phase
-          flashRef.current.style.pointerEvents = self.progress > 0.15 ? 'auto' : 'none';
+
+        if (overlayRef.current) {
+          if (self.progress > 0 && self.progress < 1) {
+            // Snap visible immediately — no fade-in so morph feels instant
+            overlayRef.current.style.opacity = '1';
+            overlayRef.current.style.pointerEvents = 'auto';
+          } else {
+            // Hidden before section starts and after section ends
+            overlayRef.current.style.opacity = '0';
+            overlayRef.current.style.pointerEvents = 'none';
+          }
         }
-      }
+      },
+      // Also hide on leave so it doesn't persist after scrolling past
+      onLeave: () => {
+        if (overlayRef.current) {
+          overlayRef.current.style.opacity = '0';
+          overlayRef.current.style.pointerEvents = 'none';
+        }
+      },
+      onEnterBack: () => {
+        if (overlayRef.current) {
+          overlayRef.current.style.opacity = '1';
+          overlayRef.current.style.pointerEvents = 'auto';
+        }
+      },
+      onLeaveBack: () => {
+        if (overlayRef.current) {
+          overlayRef.current.style.opacity = '0';
+          overlayRef.current.style.pointerEvents = 'none';
+        }
+      },
     });
 
     // Unlock audio on the first real gesture
@@ -94,15 +118,22 @@ export default function WhatWeDoSection() {
 
   return (
     <>
-      {/* The globally fixed wrapper that prevents the scroll-up and holds the 3D scene */}
-      <div ref={flashRef} className="fixed-album-wrapper">
+      {/* ── Fixed overlay: sits above the entire DOM, invisible until activated ── */}
+      <div ref={overlayRef} className="fixed-album-wrapper">
         <div className="wwd-solid-bg" />
         <PolaroidAlbumScene progressRef={progressRef} />
       </div>
 
-      <section ref={sectionRef} id="what-we-do" className="whatwedo-section" aria-label="What GDG CRCE does">
-        {/* Height 0 prevents empty scroll gap after unpinning */}
-        <div ref={containerRef} style={{ height: 0 }} />
+      {/* ── Normal-flow spacer: gives GSAP 4000px of scroll to scrub against ── */}
+      <section
+        ref={sectionRef}
+        id="what-we-do"
+        className="whatwedo-section"
+        aria-label="What GDG CRCE does"
+        style={{ height: `${SCROLL_END}px` }}
+      >
+        {/* 0-height sentinel that GSAP pins without adding its own spacer */}
+        <div ref={sentinelRef} style={{ height: 0 }} />
       </section>
     </>
   );

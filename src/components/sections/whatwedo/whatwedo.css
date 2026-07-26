@@ -19,7 +19,8 @@
 .whatwedo-section {
   position: relative;
   width: 100%;
-  background: #17141c;
+  /* Height is set inline by WhatWeDoSection (= SCROLL_END px) */
+  background: transparent;
 }
 
 /* Pinned full-viewport stage (GSAP pins this element across SCROLL_END px). */
@@ -281,8 +282,8 @@
 
 /* ── globally fixed album wrapper ─────────────────────────────────────────
    The album is completely removed from document flow so it never physically
-   scrolls up. It just sits in the viewport, and GSAP controls its opacity
-   and internal 3D animations based on scroll. */
+   scrolls up. It just sits in the viewport, and the ScrollTrigger onUpdate
+   controls its opacity and pointer-events based on scroll progress. */
 .fixed-album-wrapper {
   position: fixed;
   inset: 0;
