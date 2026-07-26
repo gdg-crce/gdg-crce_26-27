@@ -25,16 +25,21 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
     let lastVh = -1;
 
     const draw = () => {
-      const p = progressRef.current ?? 0;
+      const rawP = progressRef.current ?? 0;
       const vw = window.innerWidth;
       const vh = window.innerHeight;
 
-      if (p === lastP && vw === lastVw && vh === lastVh) return;
-      lastP = p; lastVw = vw; lastVh = vh;
+      if (rawP === lastP && vw === lastVw && vh === lastVh) return;
+      lastP = rawP; lastVw = vw; lastVh = vh;
+
+      // The flip/morph animation runs from 0.0 to 0.80
+      const p = Math.min(1, rawP / 0.80);
+      // The deep dive zoom animation runs from 0.80 to 1.0
+      const zoomP = Math.max(0, (rawP - 0.80) / 0.20);
 
       // Phase 1: The Morph (Extended to 0.20 for a luxurious, slow unraveling)
-      const coverW = Math.min(vw * 0.90, 1400); // Increased from 0.80 to 0.90 for larger size
-      const coverH = Math.min(vw * 0.50625, 787.5); // 16:9 ratio
+      const coverW = Math.min(vw * 0.85, 1300); // Reduced slightly from 0.90 for a better fit
+      const coverH = Math.min(vw * 0.478125, 731.25); // 16:9 ratio
       
       const maxStartScale = Math.max(vw / coverW, vh / coverH);
       
@@ -44,10 +49,21 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       const easeInOutCubic = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
       const cinematicMorph = easeInOutCubic(morphProgress);
       
-      const scale = maxStartScale - cinematicMorph * (maxStartScale - 1.0);
+      const morphScale = maxStartScale - cinematicMorph * (maxStartScale - 1.0);
+      
+      // Phase 3: The Deep Dive Zoom (runs concurrently after 0.80)
+      const zoomCurve = zoomP * zoomP * zoomP; // Cubic ease-in for dramatic acceleration
+      
+      // Calculate precise scale needed to make the polaroid photo cover the screen (like object-fit: cover)
+      const photoWidth = Math.min(vw * 0.75, 800) - 24; // 75% width, max 800px, minus 12px padding left/right
+      const photoHeight = photoWidth * (9 / 16);
+      // We perfectly match the max scale to the screen so it aligns flawlessly with the next section without overshooting
+      const targetScale = Math.max(vw / photoWidth, vh / photoHeight);
+      
+      const finalScale = morphScale + zoomCurve * (targetScale - 1.0);
       
       if (scalerRef.current) {
-        scalerRef.current.style.transform = `scale(${scale.toFixed(3)})`;
+        scalerRef.current.style.transform = `scale(${finalScale.toFixed(3)})`;
       }
       
       const container = rootRef.current?.querySelector('.album-container') as HTMLElement;
@@ -58,6 +74,12 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
           container.style.transform = `rotateX(${cinematicMorph * 8}deg) rotateY(${cinematicMorph * -3}deg) translateZ(${cinematicMorph * -60}px)`; 
           // Cast a massive, dramatic shadow onto the dark floor as it floats
           container.style.filter = `drop-shadow(0px ${cinematicMorph * 50}px ${cinematicMorph * 80}px rgba(0,0,0,${cinematicMorph * 0.9}))`;
+        } else if (zoomP > 0) {
+          container.style.animation = 'none';
+          // Flatten out the default 5deg tilt during zoom so the polaroid is perfectly parallel to the screen
+          container.style.transform = `rotateX(${(1 - zoomP) * 5}deg)`;
+          // Fade out the shadow
+          container.style.filter = `drop-shadow(0px 50px 80px rgba(0,0,0,${0.9 * (1 - zoomP)}))`;
         } else {
           container.style.animation = ''; 
           container.style.transform = ''; 
@@ -72,10 +94,10 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
 
       // Dynamically fade in the dust, vignette, and the new spiral binder!
       const overlay = rootRef.current?.querySelector('.album-overlay') as HTMLElement;
-      if (overlay) overlay.style.opacity = cinematicMorph.toString();
+      if (overlay) overlay.style.opacity = (cinematicMorph * (1 - zoomP)).toString();
       
       const binder = rootRef.current?.querySelector('.spiral-binder') as HTMLElement;
-      if (binder) binder.style.opacity = cinematicMorph.toString();
+      if (binder) binder.style.opacity = (cinematicMorph * (1 - zoomP)).toString();
 
       // Dynamic background sizing to ensure a seamless pixel-perfect transition!
       const coverFront = coverRef.current?.querySelector('.cover-front') as HTMLElement;

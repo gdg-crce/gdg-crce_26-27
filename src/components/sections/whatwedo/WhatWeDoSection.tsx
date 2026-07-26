@@ -20,8 +20,8 @@ const PolaroidAlbumScene = dynamic(() => import('./PolaroidAlbumScene'), {
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
-/** Pinned scroll length — 4000px gives one full, luxurious unraveling experience. */
-const SCROLL_END = 4000;
+/** Pinned scroll length — 5000px gives one full, luxurious unraveling experience + deep dive zoom. */
+const SCROLL_END = 5000;
 
 /**
  * WhatWeDoSection — the Polaroid wall (Act 2.5).
@@ -54,7 +54,7 @@ export default function WhatWeDoSection() {
       // but does NOT push the page down with a pin-spacer of its own.
       pin: sentinelRef.current,
       start: 'top bottom',   // Instant handoff — fires the moment About exits
-      end: `+=${SCROLL_END}`,
+      end: 'bottom top',     // Extended to scrub perfectly until EventsAndCouncilSection is at top top
       scrub: true,
       onUpdate: (self) => {
         progressRef.current = self.progress;

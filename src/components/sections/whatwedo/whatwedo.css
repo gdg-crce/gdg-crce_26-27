@@ -74,10 +74,10 @@
 .album-container-wrapper {
   position: relative;
   /* Top-bound Spiral Notebook is centered. 16:9 landscape */
-  width: 90vw;
-  max-width: 1400px;
-  height: 50.625vw; /* 90vw * (9/16) */
-  max-height: 787.5px;
+  width: 85vw;
+  max-width: 1300px;
+  height: 47.8125vw; /* 85vw * (9/16) */
+  max-height: 731.25px;
 }
 
 .album-container {
@@ -260,7 +260,7 @@
 .polaroid-frame {
   position: absolute;
   background: #fcfcfc;
-  padding: 12px 12px 45px 12px; /* Fixed padding for realistic polaroid bottom */
+  padding: 12px 12px 40px 12px; /* Adjusted padding for horizontal polaroid */
   box-shadow: 2px 5px 15px rgba(0,0,0,0.6), inset 0 0 5px rgba(0,0,0,0.1);
   transition: transform 0.3s ease, filter 0.3s ease;
   z-index: 5;
@@ -274,7 +274,7 @@
 
 .polaroid-image {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 16 / 9; /* Horizontal to match the event page */
   object-fit: cover;
   display: block;
   background: #111;
@@ -284,8 +284,8 @@
 .final-event-photo {
   top: 50%;
   left: 50%;
-  width: 55%;
-  max-width: 500px;
+  width: 75%;
+  max-width: 800px;
   transform: translate(-50%, -50%);
 }
 
