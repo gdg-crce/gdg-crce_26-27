@@ -114,10 +114,10 @@
 .album-container-wrapper {
   position: relative;
   /* Top-bound Spiral Notebook is centered. 16:9 landscape */
-  width: 85vw;
-  max-width: 1300px;
-  height: 47.8125vw; /* 85vw * (9/16) */
-  max-height: 731.25px;
+  width: 95vw;
+  max-width: 1600px;
+  height: 53.4375vw; /* 95vw * (9/16) */
+  max-height: 900px;
 }
 
 .album-container {
@@ -143,13 +143,10 @@
 }
 
 .album-back-cover {
-  background-color: #1a1a1a;
-  /* Carbon/woven fine texture */
-  background-image: 
-    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4)),
-    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4));
-  background-size: 4px 4px;
-  background-position: 0 0, 2px 2px;
+  background-color: #111;
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png');
+  background-size: 100% 100%;
+  background-position: center top;
   /* Deep, physically grounded contact shadow on the table */
   box-shadow: 
     0 15px 30px rgba(0,0,0,0.9), 
@@ -190,19 +187,18 @@
 }
 
 .album-cover .cover-back {
-  background: #111;
-  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 4px);
+  background-color: #111;
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png');
+  background-size: 100% 100%;
+  background-position: center top;
 }
 
 /* Authentic Textured Pages with Plastic Gloss and Stitching */
 .page-front, .page-back {
-  background-color: #1a1a1a;
-  /* Carbon/woven fine texture */
-  background-image: 
-    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4)),
-    linear-gradient(45deg, rgba(0,0,0,0.4) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.4));
-  background-size: 4px 4px;
-  background-position: 0 0, 2px 2px;
+  background-color: #111;
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png');
+  background-size: 100% 100%;
+  background-position: center top;
   box-shadow: inset 0 0 40px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.6);
   border: 1px solid rgba(255,255,255,0.15);
   border-top: 1px solid rgba(255,255,255,0.25);
@@ -229,18 +225,9 @@
   z-index: 20;
 }
 
-/* High Definition Spiral Binder SVG */
+/* High Definition Spiral Binder SVG (Double Loop Wire) */
 .spiral-binder {
-  position: absolute;
-  top: -20px;
-  left: 0;
-  width: 100%;
-  height: 40px;
-  background-image: url("data:image/svg+xml,%3Csvg width='30' height='40' viewBox='0 0 30 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='w' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%23777' /%3E%3Cstop offset='20%25' stop-color='%23fff' /%3E%3Cstop offset='50%25' stop-color='%23999' /%3E%3Cstop offset='80%25' stop-color='%23ddd' /%3E%3Cstop offset='100%25' stop-color='%23555' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cellipse cx='15' cy='32' rx='6' ry='3.5' fill='%23050403' /%3E%3Cellipse cx='15' cy='32' rx='4.5' ry='2.5' fill='%23000' /%3E%3Cpath d='M -2 15 Q 15 0 15 32' fill='none' stroke='%23444' stroke-width='3' /%3E%3Cpath d='M 15 32 Q 15 0 32 15' fill='none' stroke='url(%23w)' stroke-width='4.5' stroke-linecap='round' filter='drop-shadow(2px 5px 3px rgba(0,0,0,0.6))' /%3E%3C/svg%3E");
-  background-repeat: repeat-x;
-  background-size: 30px 40px;
-  z-index: 50;
-  opacity: 0;
+  display: none;
 }
 
 /* Wrapper that positions the camera pair as a single unit.
@@ -335,110 +322,18 @@
   background: #ffffff;
 }
 
-/* The wrapper that creates the vintage photo corners illusion */
-.scrap-photo {
-  position: absolute;
-  /* Space for the black triangular corners */
-  padding: 12px;
-  /* 4 separate linear gradients to draw 4 black triangles at the corners */
-  background-image: 
-    linear-gradient(135deg, #111 16px, transparent 17px),
-    linear-gradient(-135deg, #111 16px, transparent 17px),
-    linear-gradient(45deg, #111 16px, transparent 17px),
-    linear-gradient(-45deg, #111 16px, transparent 17px);
-  background-position: top left, top right, bottom left, bottom right;
-  background-size: 50% 50%;
-  background-repeat: no-repeat;
-  filter: drop-shadow(3px 8px 15px rgba(0,0,0,0.6));
-  transition: transform 0.3s ease, filter 0.3s ease;
-  z-index: 5;
-}
 
-.scrap-photo:hover {
-  filter: drop-shadow(5px 12px 25px rgba(0,0,0,0.8)) brightness(1.1);
-  z-index: 10;
-}
 
-/* Native Polaroids (images that already have baked-in frames) */
-.native-polaroid-container {
-  position: absolute;
-  filter: drop-shadow(5px 15px 25px rgba(0,0,0,0.7));
-  transition: transform 0.3s ease, filter 0.3s ease;
-}
-
-.native-polaroid-container:hover {
-  filter: drop-shadow(8px 20px 35px rgba(0,0,0,0.9)) brightness(1.1);
-  z-index: 10;
-}
-
-.native-polaroid-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
-/* Standard photo print with a thin white border */
-.print-style {
-  background: #fff;
-  padding: 3%; /* Even thin border */
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-  display: block;
-}
-
-/* --- True Polaroid Style --- */
-.polaroid-frame {
-  position: absolute;
-  background: #fcfcfc;
-  padding: 12px 12px 40px 12px; /* Adjusted padding for horizontal polaroid */
-  box-shadow: 2px 5px 15px rgba(0,0,0,0.6), inset 0 0 5px rgba(0,0,0,0.1);
-  transition: transform 0.3s ease, filter 0.3s ease;
-  z-index: 5;
-  border-radius: 2px;
-}
-
-.polaroid-frame:hover {
-  filter: drop-shadow(5px 15px 30px rgba(0,0,0,0.8)) brightness(1.05);
-  z-index: 10;
-}
-
-.polaroid-image {
-  width: 100%;
-  aspect-ratio: 16 / 9; /* Horizontal to match the event page */
-  object-fit: cover;
-  display: block;
-  background: #111;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-}
 
 .final-event-photo {
+  position: absolute;
   top: 50%;
   left: 50%;
-  width: 75%;
-  max-width: 800px;
+  width: 85%;
+  max-width: 1000px;
   transform: translate(-50%, -50%);
+  display: block;
 }
-
-/* --- Organic Scrapbook Layouts (SPACED OUT & MAXIMIZED) --- */
-
-/* Page 3: 3 images */
-.p3-1 { top: 10%; left: 2%; width: 46%; transform: rotate(-3deg); z-index: 2; }
-.p3-2 { top: 8%; right: 2%; width: 46%; transform: rotate(4deg); z-index: 1; }
-.p3-3 { bottom: 3%; left: 30%; width: 40%; transform: rotate(-2deg); z-index: 3; }
-
-/* Page 2: 3 images */
-.p2-1 { top: 10%; right: 3%; width: 48%; transform: rotate(3deg); z-index: 2; }
-.p2-2 { top: 8%; left: 3%; width: 40%; transform: rotate(-4deg); z-index: 1; }
-.p2-3 { bottom: 5%; left: 10%; width: 42%; transform: rotate(2deg); z-index: 3; }
-
-/* Page 1: 3 images */
-.p1-1 { top: 8%; left: 2%; width: 48%; transform: rotate(-4deg); z-index: 2; }
-.p1-2 { top: 6%; right: 4%; width: 40%; transform: rotate(5deg); z-index: 1; }
-.p1-3 { bottom: 3%; right: 15%; width: 42%; transform: rotate(-2deg); z-index: 3; }
-
 
 .memory-text {
   position: absolute;

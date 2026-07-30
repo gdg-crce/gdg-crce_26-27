@@ -18,6 +18,7 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
   const page1Ref = useRef<HTMLDivElement>(null);
   const page2Ref = useRef<HTMLDivElement>(null);
   const page3Ref = useRef<HTMLDivElement>(null);
+  const backCoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let raf = 0;
@@ -51,8 +52,8 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       const zoomP = Math.max(0, (rawP - 0.80) / 0.20);
 
       // Phase 1: The Morph (Extended to 0.20 for a luxurious, slow unraveling)
-      const coverW = Math.min(vw * 0.85, 1300); // Reduced slightly from 0.90 for a better fit
-      const coverH = Math.min(vw * 0.478125, 731.25); // 16:9 ratio
+      const coverW = Math.min(vw * 0.95, 1600);
+      const coverH = Math.min(vw * 0.534375, 900); // 16:9 ratio
       
       const maxStartScale = Math.max(vw / coverW, vh / coverH);
       
@@ -67,8 +68,8 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       // Phase 3: The Deep Dive Zoom (runs concurrently after 0.80)
       const zoomCurve = zoomP * zoomP * zoomP; // Cubic ease-in for dramatic acceleration
       
-      // Calculate precise scale needed to make the polaroid photo cover the screen (like object-fit: cover)
-      const photoWidth = Math.min(vw * 0.75, 800) - 24; // 75% width, max 800px, minus 12px padding left/right
+      // Calculate precise scale needed to make the image cover the screen (like object-fit: cover)
+      const photoWidth = Math.min(vw * 0.85, 1000); // 85% width, max 1000px
       const photoHeight = photoWidth * (9 / 16);
       // We perfectly match the max scale to the screen so it aligns flawlessly with the next section without overshooting
       const targetScale = Math.max(vw / photoWidth, vh / photoHeight);
@@ -100,10 +101,23 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
           const shadowScale = 1 - (cinematicMorph * 0.15);
           shadowRef.current.style.opacity = (cinematicMorph * 0.8).toString();
           shadowRef.current.style.transform = `translateY(10%) scale(${shadowScale})`;
+          shadowRef.current.style.display = 'block';
         } else if (zoomP > 0) {
+          // Disable the extremely expensive blur filter during zoom to save GPU fill rate
           shadowRef.current.style.opacity = (0.8 * (1 - zoomP)).toString();
+          if (zoomP > 0.2) shadowRef.current.style.display = 'none';
         } else {
           shadowRef.current.style.opacity = '0.8';
+          shadowRef.current.style.display = 'block';
+        }
+      }
+
+      // Hide heavy back-cover shadows during zoom to prevent massive GPU lag
+      if (backCoverRef.current) {
+        if (zoomP > 0.1) {
+          backCoverRef.current.style.boxShadow = 'none';
+        } else {
+          backCoverRef.current.style.boxShadow = ''; // restore css
         }
       }
 
@@ -124,7 +138,13 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
         // Dynamically fade in the book shadow so it doesn't darken the initial screenshot
         const shadowAlpha = cinematicMorph * 0.6;
         const edgeAlpha = cinematicMorph * 0.1;
-        coverFront.style.boxShadow = `inset -5px 0 20px rgba(0,0,0,${shadowAlpha.toFixed(2)}), inset 2px 0 5px rgba(255,255,255,${edgeAlpha.toFixed(2)})`;
+        
+        // Remove inner shadow entirely during zoom to save rendering time
+        if (zoomP > 0.1) {
+          coverFront.style.boxShadow = 'none';
+        } else {
+          coverFront.style.boxShadow = `inset -5px 0 20px rgba(0,0,0,${shadowAlpha.toFixed(2)}), inset 2px 0 5px rgba(255,255,255,${edgeAlpha.toFixed(2)})`;
+        }
 
         const bgW_start = vw / maxStartScale;
         const bgH_start = vh / maxStartScale;
@@ -248,56 +268,27 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
             <div className="spiral-binder" />
 
             {/* Back Cover (static base) */}
-            <div className="album-back-cover">
-              <div className="polaroid-frame final-event-photo">
-                <Image src="/transition/event.png" alt="Event" width={1000} height={562} className="polaroid-image" draggable={false} priority />
-              </div>
+            <div ref={backCoverRef} className="album-back-cover">
+              <Image src="/transition/event.png" alt="Event" width={1000} height={562} className="final-event-photo" draggable={false} priority />
             </div>
 
             {/* Page 3 */}
             <div ref={page3Ref} className="album-page album-page-3">
-              <div className="page-front">
-                <div className="native-polaroid-container p3-1">
-                  <Image src="/whatwedo/techinical.PNG" alt="Technical" width={800} height={800} className="native-polaroid-img" draggable={false} />
-                </div>
-                <div className="native-polaroid-container p3-2">
-                  <Image src="/whatwedo/context-poloriod.png" alt="Context" width={800} height={800} className="native-polaroid-img" draggable={false} />
-                </div>
-                <div className="scrap-photo p3-3">
-                  <Image src="/whatwedo/memories/memory-6.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
-                </div>
+              <div className="page-front" style={{ backgroundImage: "url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/image_0qhNBcRwO.png')" }}>
               </div>
               <div className="page-back"></div>
             </div>
 
             {/* Page 2 */}
             <div ref={page2Ref} className="album-page album-page-2">
-              <div className="page-front">
-                <div className="native-polaroid-container p2-1">
-                  <Image src="/whatwedo/design.webp" alt="Design" width={800} height={800} className="native-polaroid-img" draggable={false} />
-                </div>
-                <div className="scrap-photo p2-2">
-                  <Image src="/whatwedo/memories/memory-3.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
-                </div>
-                <div className="scrap-photo p2-3">
-                  <Image src="/whatwedo/memories/memory-5.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
-                </div>
+              <div className="page-front" style={{ backgroundImage: "url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/image_2kRTTbS2q.png')" }}>
               </div>
               <div className="page-back"></div>
             </div>
 
             {/* Page 1 */}
             <div ref={page1Ref} className="album-page album-page-1">
-              <div className="page-front">
-                <div className="native-polaroid-container p1-1">
-                  <Image src="/whatwedo/community.webp" alt="Community" width={800} height={800} className="native-polaroid-img" draggable={false} priority />
-                </div>
-                <div className="scrap-photo p1-2">
-                  <Image src="/whatwedo/memories/memory-1.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
-                </div>
-                <div className="scrap-photo p1-3">
-                  <Image src="/whatwedo/memories/memory-2.jpeg" alt="Memory" width={400} height={400} className="print-style" draggable={false} />
-                </div>
+              <div className="page-front" style={{ backgroundImage: "url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/image.png')" }}>
               </div>
               <div className="page-back">
                 <div className="memory-text">revisiting our memories...</div>
