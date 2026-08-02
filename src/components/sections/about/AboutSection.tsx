@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ik } from '@/lib/imagekit';
+import { currentIntroPhases } from '@/lib/introTimeline';
 import './about.css';
 
 /* ── scalar helpers (same idiom as WhatWeDoSection) ─────────────────────── */
@@ -341,9 +342,11 @@ export default function AboutSection() {
       }
     };
 
-    // We use a single ScrollTrigger to pin the turntable from scroll 0.
-    // The first phase of this scroll is the 3D zoom push-in from the hero video.
-    // The second phase plays the turntable animations.
+    // One ScrollTrigger pins the turntable from scroll 0. The first phase of
+    // that scroll is the whole intro (hero iris → title card → the title's
+    // knockout push-in); the turntable is the thing revealed THROUGH the
+    // letters, so it has to be painted and sitting at its start state before
+    // the knockout opens. The second phase plays the turntable itself.
     let lastP = -1;
     const onUpdate = (p: number) => {
       if (Math.abs(p - lastP) > 1e-5) lastScrollRef.current = performance.now();
@@ -351,47 +354,39 @@ export default function AboutSection() {
       draw(p);
     };
 
+    /** Scroll, in px, that the turntable itself is played over. */
+    const PLAY_DIST = 3250;
+
+    const drive = (progress: number) => {
+      const ph = currentIntroPhases();
+      const scrollPx = progress * (ph.total + PLAY_DIST);
+
+      // Phase 1 — the intro still owns the screen. The turntable no longer
+      // fades up under it: it is the thing the title card's letters are a
+      // window onto, so it has to be fully opaque before the knockout opens,
+      // and it is painted from the start of the hold beat so its first frame
+      // is not being composited on the frame the reveal begins.
+      // Before that it is hidden outright — a full-screen layer nobody can see
+      // is still a full-screen layer the compositor pays for.
+      const pin = pinRef.current;
+      if (pin) {
+        pin.style.opacity = '1';
+        pin.style.visibility = scrollPx >= ph.hold.start ? 'visible' : 'hidden';
+        pin.style.transform = 'scale(1)';
+      }
+
+      // Phase 2 — turntable playback.
+      onUpdate(clamp01((scrollPx - ph.total) / PLAY_DIST));
+    };
+
     const play = ScrollTrigger.create({
       trigger: document.body,
       pin: pinRef.current,
       start: 0,
-      end: () => `+=${window.innerHeight * 1.5 + 3250}`,
+      end: () => `+=${currentIntroPhases().total + PLAY_DIST}`,
       scrub: 1.5,
-      onUpdate: (self) => {
-        const zoomDist = window.innerHeight * 1.5;
-        const totalDist = zoomDist + 3250;
-        const scrollPx = self.progress * totalDist;
-        
-        // Phase 1: Zoom Reveal
-        const zoomP = clamp01(scrollPx / zoomDist);
-        if (pinRef.current) {
-          const op = ramp(0.3, 0.9, zoomP);
-          pinRef.current.style.opacity = op.toFixed(3);
-          pinRef.current.style.visibility = op < 0.01 ? 'hidden' : 'visible';
-          // Keep scale at 1 so it perfectly fills the screen and never exposes edges
-          pinRef.current.style.transform = 'scale(1)';
-        }
-
-        // Phase 2: Turntable Playback
-        const playP = clamp01((scrollPx - zoomDist) / 3250);
-        onUpdate(playP);
-      },
-      onRefresh: (self) => {
-        const zoomDist = window.innerHeight * 1.5;
-        const totalDist = zoomDist + 3250;
-        const scrollPx = self.progress * totalDist;
-        
-        const zoomP = clamp01(scrollPx / zoomDist);
-        if (pinRef.current) {
-          const op = ramp(0.3, 0.9, zoomP);
-          pinRef.current.style.opacity = op.toFixed(3);
-          pinRef.current.style.visibility = op < 0.01 ? 'hidden' : 'visible';
-          pinRef.current.style.transform = 'scale(1)';
-        }
-        
-        const playP = clamp01((scrollPx - zoomDist) / 3250);
-        onUpdate(playP);
-      },
+      onUpdate: (self) => drive(self.progress),
+      onRefresh: (self) => drive(self.progress),
     });
 
     // ── the motor ────────────────────────────────────────────────────────

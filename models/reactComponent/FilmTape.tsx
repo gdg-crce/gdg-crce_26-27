@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { orbitron, shareTechMono, specialElite } from '@/lib/fonts';
-import { ik, ikVideo } from '@/lib/imagekit';
+import { ik } from '@/lib/imagekit';
+import { HERO_VIDEO_SRC } from '@/lib/media';
 
 export type FilmTapeFrame = '2020s' | '2000x' | '90s' | '80s' | '70s';
 
@@ -152,10 +153,11 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
                   style={{ minWidth: 0, background: '#000' }}
                 >
                   <video
-                    // Progressive, transform-free URL: instant 200, no ImageKit
-                    // transcode stall. Warmed by the Preloader's preload of the
-                    // same file. (HLS would be overkill for this tiny cell.)
-                    src={ikVideo('/videos/intro.mp4')}
+                    // The hero film itself, not a stand-in. Same local url the
+                    // hero plays, so it is one download for both, and the
+                    // zoom-through hands over between two elements showing the
+                    // same footage instead of cutting between two clips.
+                    src={HERO_VIDEO_SRC}
                     autoPlay
                     muted
                     loop

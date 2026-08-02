@@ -46,10 +46,11 @@ export default function RootLayout({
     >
       {IMAGEKIT_ORIGIN && (
         <head>
-          {/* Warm the ImageKit connection early. Two preconnects: plain for
-              <img>/next-image, crossOrigin for hls.js segment fetches (CORS). */}
+          {/* Warm the ImageKit connection early. One preconnect, for images —
+              the second (crossOrigin) one existed for hls.js segment fetches
+              and opened a whole extra connection nothing uses now that video
+              is local. */}
           <link rel="preconnect" href={IMAGEKIT_ORIGIN} />
-          <link rel="preconnect" href={IMAGEKIT_ORIGIN} crossOrigin="anonymous" />
           <link rel="dns-prefetch" href={IMAGEKIT_ORIGIN} />
         </head>
       )}

@@ -7,16 +7,14 @@ import NextImage from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ik, ikVideo } from '@/lib/imagekit';
+import { ik } from '@/lib/imagekit';
+import { HERO_VIDEO_SRC } from '@/lib/media';
 import './xp-loader.css';
 
 const FilmTape = dynamic(() => import('../../../models/reactComponent/FilmTape'), {
   ssr: false,
   loading: () => null,
 });
-
-import { REVEAL_FRAME_INDEX, START_FRAME_INDEX, TOTAL_FRAME_COUNT } from '../../../models/reactComponent/FilmTape';
 
 interface PreloaderProps {
   onComplete: () => void;
@@ -64,7 +62,6 @@ const REVEAL_END = 1.0;
 export default function Preloader({ onComplete, onStartTransition }: PreloaderProps) {
   const [completed, setCompleted] = useState(false);
   const [assetsReady, setAssetsReady] = useState(false);
-  const [bufferProgress, setBufferProgress] = useState(0);
 
   const completedRef = useRef(false);
   const activeFrameRef = useRef<FilmFrame>('2020s');
@@ -90,10 +87,12 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
     ];
     const totalItems = preloaderImages.length + 1; // +1 for hero video
 
+    // The boot screen's bar is a canned XP marquee, not a real progress read —
+    // there is nothing to hand a percentage to. Counting into state anyway
+    // re-rendered the whole loader eight times during the heaviest part of
+    // startup, so the count stays a local.
     function checkReady() {
       loaded++;
-      const pct = Math.min(100, Math.floor((loaded / totalItems) * 100));
-      setBufferProgress(pct);
       if (loaded >= totalItems) {
         setTimeout(() => setAssetsReady(true), 1600);
       }
@@ -105,10 +104,11 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
       img.onload = img.onerror = checkReady;
     });
 
-    // Warm the progressive fallback (transform-free -> instant 200, no 202
-    // transcode stall). The hero streams HLS on top of this warmed connection.
+    // Pull the hero film into cache before the sequence starts. It is one
+    // local 1.1 MB file and the film strip's reveal cell plays the SAME url,
+    // so this single fetch serves the loader, the zoom-through and the hero.
     const vid = document.createElement('video');
-    vid.src = ikVideo('/videos/Video Project 1 (1).mp4');
+    vid.src = HERO_VIDEO_SRC;
     vid.preload = 'auto';
     vid.muted = true;
     vid.onloadeddata = vid.oncanplay = checkReady;
@@ -127,6 +127,11 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
   const complete = useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
+    // SKIP short-circuits the loader, not the film. Waking the hero here means
+    // the video is always playing by the time the loader is off screen — and
+    // therefore that there is always a real last frame for the iris to close
+    // over, instead of a black rectangle irising into a black screen.
+    onStartTransitionRef.current?.();
     setCompleted(true);
     window.scrollTo(0, 0);
     onCompleteRef.current();
@@ -286,7 +291,6 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
               <div className="absolute inset-0 bg-[#080706]" />
               <div className="loader-projector-beam" />
               <div className="loader-crt-green-wash" />
-              <div className="loader-projector-flicker" />
               <div className="preloader-vignette" />
               <div className="preloader-scanlines" style={{ opacity: 0.2 }} />
             </div>

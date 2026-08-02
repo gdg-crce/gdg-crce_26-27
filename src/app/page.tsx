@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Preloader from '@/components/sections/Preloader';
 import HeroVideoSection from '@/components/sections/hero-video/HeroVideoSection';
+import HomeSection from '@/components/sections/home/HomeSection';
 import EventsAndCouncilSection from '@/components/sections/EventsAndCouncilSection';
 import AboutSection from '@/components/sections/about/AboutSection';
 import WhatWeDoSection from '@/components/sections/whatwedo/WhatWeDoSection';
@@ -32,6 +33,11 @@ export default function Home() {
       )}
       <main className="relative z-0">
         <HeroVideoSection startPlaying={videoStarted} />
+        {/* The black title card the hero's iris closes onto, and whose letters
+            open again as a window onto the turntable. Fixed and self-stacking
+            (z 9996, between the hero at 9997 and the About pin at 9995), so its
+            position in this list is documentation, not layout. */}
+        <HomeSection />
         {/* Zero spacer: About turntable sits directly under the hero at top:0 to prevent scroller up artifacts. */}
         <AboutSection />
         <WhatWeDoSection />

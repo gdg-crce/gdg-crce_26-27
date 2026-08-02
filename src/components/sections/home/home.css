@@ -1,0 +1,70 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   HomeSection — the black title card between the film and the record.
+
+   One fixed layer and one SVG. The SVG is doing something specific: the same
+   two words are drawn TWICE, in the same place, at the same size —
+
+     · once as black ink inside a <mask>, which punches "GDG CRCE"-shaped holes
+       out of a black sheet covering the viewport, so whatever is behind the
+       sheet (AboutSection) shows through the letters;
+     · once as solid white type on top of those holes, which is what you
+       actually read while the screen is still black.
+
+   Cross-fading the second into the first is the whole trick: the type does not
+   move or change shape, it just stops being white and starts being a window.
+   Then the window is pushed in until it has swallowed the frame.
+
+   Everything animated is written straight to attributes from the scroll
+   callback — see HomeSection.tsx. Nothing in this file animates on a timer.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.home-section {
+  position: fixed;
+  inset: 0;
+  z-index: 9996;
+  /* NO background. This is load-bearing.
+     The black of this screen is the masked <rect> inside the SVG — the same
+     rect the letters are cut out of. A `background: #000` here is a SECOND
+     black layer, underneath the first, that nothing cuts holes in: the type
+     goes transparent exactly as designed and reveals... more black, until the
+     layer hides itself at the end and About appears as a hard cut. One
+     declaration, and the entire reveal is invisible. */
+  background: none;
+  /* Never a click target: it is scenery, and for most of the page it is not
+     even visible. */
+  pointer-events: none;
+  /* The layer is a closed box — nothing inside it can affect layout outside it,
+     so the browser is free to skip the lot the moment it goes hidden. */
+  contain: layout paint style;
+}
+
+.home-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Both copies of the title share this, so the mask and the visible type can
+   never drift apart by a subpixel. */
+.home-title {
+  font-family: var(--font-00s-body), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  /* The tracking above pads the right side of the last glyph; nudging the
+     anchor back by half of it keeps the line optically centred. */
+  text-anchor: middle;
+  dominant-baseline: central;
+  white-space: pre;
+}
+
+/* Screen-reader copy of the same words — the SVG is aria-hidden. */
+.home-title-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+}

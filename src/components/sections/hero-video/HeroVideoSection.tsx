@@ -3,39 +3,41 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ikVideo, ikVideoHls } from '@/lib/imagekit';
-import { useHlsVideo } from './useHlsVideo';
-
-import Image from 'next/image';
+import { HERO_VIDEO_SRC } from '@/lib/media';
+import { clamp01, currentIntroPhases } from '@/lib/introTimeline';
 
 interface HeroVideoSectionProps {
   startPlaying?: boolean;
 }
 
-const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-/** Eased ramp: 0 below `a`, 1 above `b`, smoothstep between. */
-const ramp = (a: number, b: number, x: number) => {
-  const t = clamp01((x - a) / (b - a));
-  return t * t * (3 - 2 * t);
-};
+/**
+ * Radius, as a CSS `circle()` percentage, at which the iris still covers the
+ * whole frame. `circle(r%)` resolves against sqrt(w²+h²)/√2, so the corners are
+ * reached at exactly √2/2 = 70.71%; 72 leaves a little slack for rounding.
+ */
+const IRIS_OPEN = 72;
 
 /** Hard ceiling on the scroll lock, so an unexpectedly long intro can never
  *  trap the page. */
 const MAX_LOCK_MS = 20000;
 
+/**
+ * Act 2 — the hero film, and the iris that closes it.
+ *
+ * Playback is a plain `<video>` pointed at a local file. There is no HLS, no
+ * hls.js and no CDN in this path at all (see `src/lib/media.ts` for why).
+ *
+ * Scroll no longer pushes the frame into the next section. The old behaviour —
+ * scale the whole video up 13× and cross-fade into the turntable — is gone:
+ * the last frame now closes through a circular iris to black, the way a reel
+ * ends, and `HomeSection` takes the black screen from there.
+ */
 export default function HeroVideoSection({ startPlaying = false }: HeroVideoSectionProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [fadeInDone, setFadeInDone] = useState(false);
-  const [videoEnded, setVideoEnded] = useState(false);
-
-  // Source is owned by the HLS hook: it streams the new intro as adaptive-bitrate
-  // HLS (buffered segments) and falls back to the progressive MP4 if HLS is
-  // unavailable or the manifest is still building. It also calls video.load(),
-  // so nothing here touches .src or .load().
-  useHlsVideo(videoRef, ikVideoHls('/videos/Video Project 1 (1).mp4'), ikVideo('/videos/Video Project 1 (1).mp4'));
 
   // If the element is already buffered by the time we mount, reflect that.
   useEffect(() => {
@@ -43,8 +45,8 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
     if (video && video.readyState >= 2) setIsLoaded(true);
   }, []);
 
-  // Sync video start explicitly when startPlaying turns true (when the VHS tape
-  // transition completes).
+  // Sync video start explicitly when startPlaying turns true (the moment the
+  // preloader's film strip begins its zoom-through).
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -62,8 +64,8 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       // 2. Lock body overflow so the user cannot scroll during the first pass
       document.body.style.overflow = 'hidden';
 
-      // 3. Play immediately so it is running directly behind the zooming VHS
-      //    tape with zero gap
+      // 3. Play immediately so it is running directly behind the zooming film
+      //    strip with zero gap
       try {
         video.currentTime = 0;
       } catch {}
@@ -74,7 +76,8 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
     }
   }, [startPlaying]);
 
-  // The intro NO LONGER LOOPS. Freeze on last frame and hand over to screenshot.
+  // The intro does NOT loop: it freezes on its last frame, which is the frame
+  // the iris then closes over.
   useEffect(() => {
     if (!startPlaying) return;
     const video = videoRef.current;
@@ -85,13 +88,12 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       if (released) return;
       released = true;
       document.body.style.overflow = '';
-      setVideoEnded(true);
     };
 
-    // Rely entirely on the native 'ended' event to ensure it is EXACTLY the last frame
+    // Rely on the native 'ended' event so the handover is EXACTLY the last frame
     video.addEventListener('ended', unlock);
 
-    // Fallback if ended doesn't fire for some reason
+    // Fallback if 'ended' doesn't fire for some reason
     const fallback = Math.min(((video.duration || 12) + 0.5) * 1000, MAX_LOCK_MS);
     const timer = setTimeout(unlock, fallback);
 
@@ -102,66 +104,66 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
     };
   }, [startPlaying]);
 
-  // Scroll hands the screen over to the About section via a deep 3D Zoom
+  // ── the iris ──────────────────────────────────────────────────────────────
+  // Scroll closes a circle over the frozen last frame until the screen is
+  // black. Nothing here fades: the section is opaque right up to the point the
+  // clip path has eaten it, so there is never a half-transparent video sitting
+  // on top of the title.
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
     const el = containerRef.current;
     if (!el) return;
 
+    const apply = (progress: number) => {
+      const p = clamp01(progress);
+      const e = p * p * (3 - 2 * p);
+
+      el.style.clipPath = `circle(${((1 - e) * IRIS_OPEN).toFixed(2)}% at 50% 50%)`;
+      // A touch of recede, so the frame reads as pulling away rather than as a
+      // mask sliding over a still image.
+      el.style.transform = `scale(${(1 - e * 0.06).toFixed(4)})`;
+
+      // Once shut, stop costing anything: a hidden element is not painted, and
+      // a paused video is not decoded. This layer stays mounted for the rest of
+      // the page, so leaving it live would be a full-screen tax on every
+      // section below it.
+      const shut = p >= 0.999;
+      el.style.visibility = shut ? 'hidden' : 'visible';
+      if (shut) videoRef.current?.pause();
+    };
+
     const st = ScrollTrigger.create({
       trigger: document.body,
       start: 0,
-      end: () => window.innerHeight * 1.5, // 1.5vh runway for deep zoom
-      scrub: 1.5,
-      onUpdate: (self) => {
-        const e = self.progress;
-        
-        // Softer zoom scale so we don't go too deep into the red circle
-        const scale = 1 + Math.pow(e, 3) * 12; 
-        
-        // Start fading out much earlier for a longer, more subtle crossfade
-        const opacity = 1 - ramp(0.3, 0.9, e);
-        
-        el.style.opacity = opacity.toFixed(3);
-        // Assuming mathematical center as requested
-        el.style.transformOrigin = '50% 50%';
-        el.style.transform = `scale(${scale.toFixed(3)})`;
-        el.style.pointerEvents = opacity < 0.02 ? 'none' : '';
-      }
+      end: () => currentIntroPhases().iris.end,
+      scrub: 0.6,
+      onUpdate: (self) => apply(self.progress),
+      onRefresh: (self) => apply(self.progress),
     });
 
+    apply(0);
     st.refresh();
 
     return () => {
       st.kill();
     };
-  }, [startPlaying]);
+  }, []);
 
   return (
     <section
       ref={containerRef}
-      className="fixed inset-0 w-full h-screen overflow-hidden select-none z-[9990]"
+      className="fixed inset-0 w-full h-screen overflow-hidden select-none z-[9997] pointer-events-none"
       aria-label="Storytelling Cinematic Intro"
+      style={{ clipPath: `circle(${IRIS_OPEN}% at 50% 50%)`, willChange: 'clip-path, transform' }}
     >
-      {/* Dark aesthetic background while video initializes */}
-      <div className="absolute inset-0 bg-[#080706] z-0" />
+      {/* Black backing, so the frame the iris closes over is never see-through */}
+      <div className="absolute inset-0 bg-black z-0" />
 
-      {/* Seamless Screenshot Overlay */}
-      <div className={`absolute inset-0 z-20 w-full h-full transition-opacity duration-1000 ease-in-out pointer-events-none ${videoEnded ? 'opacity-100' : 'opacity-0'}`}>
-        <Image 
-          src="https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/Screenshot%202026-07-27%20010718.png?tr=f-auto,q-auto"
-          alt="Transition"
-          fill
-          className="object-cover object-center"
-          priority
-          unoptimized
-        />
-      </div>
-
-      {/* Full screen storytelling video. */}
+      {/* Full screen storytelling video — local file, progressive, no streaming */}
       <video
         ref={videoRef}
+        src={HERO_VIDEO_SRC}
         preload="auto"
         muted
         playsInline
@@ -170,13 +172,10 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
         disableRemotePlayback
         onLoadedData={() => setIsLoaded(true)}
         onCanPlay={() => setIsLoaded(true)}
-        className={`absolute inset-0 w-full h-full object-cover z-10 transform-gpu will-change-transform transition-opacity duration-300 ease-in-out ${
+        className={`absolute inset-0 w-full h-full object-cover z-10 transform-gpu transition-opacity duration-300 ease-in-out ${
           isLoaded && (fadeInDone || startPlaying) ? 'opacity-100' : 'opacity-0'
         }`}
       />
-
-      {/* Subtle bottom vignette gradient blending smoothly into the next section */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#0a0807] via-[#0a0807]/40 to-transparent z-30 opacity-0" />
     </section>
   );
 }

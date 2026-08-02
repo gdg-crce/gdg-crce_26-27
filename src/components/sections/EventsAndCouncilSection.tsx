@@ -310,6 +310,15 @@ export default function EventsAndCouncilSection() {
               playerWrapperRef.current.style.pointerEvents = 'none';
               playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
             }
+
+            // `opacity: 0` hides a window; it does not stop the browser drawing
+            // it. The whole TheFacebook archive — its grid, its avatars, its
+            // chrome — was being laid out, painted and composited on every
+            // frame of the wall walk, invisibly, for the ~half of this section
+            // where it is not on screen. One property fixes that. Reading back
+            // the inline opacity we just wrote costs nothing (no layout flush).
+            playerWrapperRef.current.style.visibility =
+              parseFloat(playerWrapperRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
           }
 
           /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
@@ -327,6 +336,10 @@ export default function EventsAndCouncilSection() {
               pictureViewerRef.current.style.pointerEvents = pvT > 0.4 ? 'auto' : 'none';
               pictureViewerRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
             }
+
+            // Same again: this viewer is invisible for 96% of the section.
+            pictureViewerRef.current.style.visibility =
+              parseFloat(pictureViewerRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
           }
         },
       });
@@ -392,8 +405,8 @@ export default function EventsAndCouncilSection() {
               ))}
             </div>
 
-            {/* Film overlays */}
-            <div className="events-lift" />
+            {/* Film overlays. No lifted-blacks layer: see globals.css — it
+                added 1–2/255 and charged a full-screen blend to do it. */}
             <div className="events-scanlines" />
             <div className="events-grain" />
             <div className="events-vignette" />
@@ -700,9 +713,6 @@ export default function EventsAndCouncilSection() {
                 {/* 3D Wall Scene */}
                 <WallScene progressRef={progressRef} snapToTarget={scrollProgress >= 0.26} />
 
-                {/* Lifted blacks — film shadows never reach zero (under the grain) */}
-                <div className="events-lift" />
-
                 {/* Scanline overlay */}
                 <div className="events-scanlines" />
 
@@ -775,7 +785,7 @@ export default function EventsAndCouncilSection() {
           <div
             ref={playerWrapperRef}
             className="xp-player-window-wrapper"
-            style={{ opacity: 0, pointerEvents: 'none' }}
+            style={{ opacity: 0, pointerEvents: 'none', visibility: 'hidden' }}
           >
             <Y2KArchiveSystem embedded />
           </div>
@@ -784,7 +794,7 @@ export default function EventsAndCouncilSection() {
           <div
             ref={pictureViewerRef}
             className="xp-picture-viewer-wrapper"
-            style={{ opacity: 0, pointerEvents: 'none', transform: 'scale(0.85) translateY(25px)' }}
+            style={{ opacity: 0, pointerEvents: 'none', visibility: 'hidden', transform: 'scale(0.85) translateY(25px)' }}
           >
             <WindowsPictureViewer allMembers={filteredMembers} />
           </div>

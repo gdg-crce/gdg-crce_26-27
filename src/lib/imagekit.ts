@@ -60,46 +60,14 @@ export function ik(publicPath: string, ...transforms: string[]): string {
 export const ikUrl = (publicPath: string, ...transforms: string[]): string =>
   `url(${ik(publicPath, ...transforms)})`;
 
-/** Resolve a public path to its uploaded remote path (handles the space/`&`
- *  renames), without any query string. Shared by the video builders. */
-function remote(publicPath: string): string {
-  const local = publicPath.startsWith('/') ? publicPath : `/${publicPath}`;
-  return `${BASE}${encodeURI(REMOTE_PATH[local] ?? local)}`;
-}
-
-/**
- * HLS adaptive-bitrate manifest URL for a video in `public/`.
+/*
+ * There are deliberately no video helpers here.
  *
- * ImageKit segments the source into the given resolution ladder and serves it
- * as buffered HLS chunks off `ik-master.m3u8` — the player pulls only the
- * segments and bitrate the connection can sustain, so playback starts fast and
- * adapts instead of blocking on one big file. This is the streaming path.
- *
- * ABR is INCOMPATIBLE with `f-`/`q-`/`w-`/`h-` transforms (ImageKit rejects
- * them), so this URL carries only `sr-` — do not add `f-auto`/`q-auto` here.
- * That combination on a plain `.mp4` is what made the old URL 202/stall: a
- * quality transform forces a background transcode the `<video>` can't consume.
- *
- * First request for a not-yet-processed video returns `202 Accepted` while
- * ImageKit builds the variants; `useHlsVideo` retries and falls back to the
- * progressive MP4 if the manifest is not ready in time, so it never hard-stalls.
- *
- * With `NEXT_PUBLIC_IMAGEKIT_URL` unset, returns the plain local path.
+ * This file used to export `ikVideoHls()` (an `ik-master.m3u8?tr=sr-…` ABR
+ * manifest) and `ikVideo()` (its progressive fallback). Video is no longer
+ * served from the CDN at all: the one film on the site is a 1.1 MB local file,
+ * see `src/lib/media.ts`. Adding a streaming ladder back for it would only
+ * reintroduce the two failure modes it caused — a low bitrate rung held for
+ * the full-screen hero, and a manifest that stops existing when the ImageKit
+ * video plan does.
  */
-export function ikVideoHls(publicPath: string, resolutions = '240_360_480_720'): string {
-  const local = publicPath.startsWith('/') ? publicPath : `/${publicPath}`;
-  if (!BASE) return encodeURI(local);
-  return `${remote(local)}/ik-master.m3u8?tr=sr-${resolutions}`;
-}
-
-/**
- * Progressive (whole-file) video URL — no transforms, so ImageKit returns the
- * stored bytes immediately with no transcode step. The guaranteed fallback for
- * browsers without Media Source Extensions or when the HLS manifest is still
- * building. Kept transform-free on purpose: instant `200`, no 202.
- */
-export function ikVideo(publicPath: string): string {
-  const local = publicPath.startsWith('/') ? publicPath : `/${publicPath}`;
-  if (!BASE) return encodeURI(local);
-  return remote(local);
-}
