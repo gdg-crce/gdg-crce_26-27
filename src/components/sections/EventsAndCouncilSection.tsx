@@ -76,6 +76,7 @@ export default function EventsAndCouncilSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<number>(0);
+  const archiveScrollRef = useRef<number>(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const eventsWindowRef = useRef<HTMLDivElement>(null);
   const playerWrapperRef = useRef<HTMLDivElement>(null);
@@ -328,9 +329,12 @@ export default function EventsAndCouncilSection() {
               playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
             } else if (p <= MEMBERS_END) {
               // TheFacebook archive window holds centered through this scroll range.
+              // Drive the inner page scroll so the Facebook page scrolls down
+              // as the user scrolls, rather than appearing static.
               playerWrapperRef.current.style.opacity = '1';
               playerWrapperRef.current.style.pointerEvents = 'auto';
               playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+              archiveScrollRef.current = Math.min(1, Math.max(0, (p - MEMBERS_START) / (MEMBERS_END - MEMBERS_START)));
             } else if (p < ARCHIVE_MIN_END) {
               // Genie minimize animation down into bottom taskbar
               const t = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
@@ -815,7 +819,7 @@ export default function EventsAndCouncilSection() {
             className="xp-player-window-wrapper"
             style={{ opacity: 0, pointerEvents: 'none', visibility: 'hidden' }}
           >
-            <Y2KArchiveSystem embedded />
+            <Y2KArchiveSystem embedded scrollProgressRef={archiveScrollRef} />
           </div>
 
           {/* Layer 3: Windows Picture and Fax Viewer */}

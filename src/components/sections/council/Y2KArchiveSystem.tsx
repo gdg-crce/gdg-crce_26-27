@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styles from './Y2KArchiveSystem.module.css';
 import { councilMembers, teamsList, CouncilMember } from './councilData';
 
@@ -29,6 +29,12 @@ interface Y2KArchiveSystemProps {
    * window height so it floats cleanly on a host surface (e.g. the XP desktop).
    */
   embedded?: boolean;
+  /**
+   * A ref holding a 0→1 scroll fraction. When provided, the browser page area
+   * auto-scrolls to match, so the Facebook content scrolls down as the user
+   * scrolls the main page rather than appearing as a static window.
+   */
+  scrollProgressRef?: React.RefObject<number>;
 }
 
 const HOST = 'http://www.GDGFRCRCE.com';
@@ -291,9 +297,33 @@ function describe(e: Entry): { url: string; title: string } {
   }
 }
 
-export default function Y2KArchiveSystem({ onClose, onMinimize, embedded }: Y2KArchiveSystemProps) {
+export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scrollProgressRef }: Y2KArchiveSystemProps) {
   const [maximized, setMaximized] = useState(false);
   const [loading, setLoading] = useState(false);
+  const pageRef = useRef<HTMLDivElement>(null);
+
+  // Drive the page's scrollTop from the parent's scroll progress.
+  // This makes the Facebook page scroll down organically as the user
+  // scrolls the main page, instead of sitting statically.
+  useEffect(() => {
+    if (!scrollProgressRef) return;
+    let raf = 0;
+    let lastP = -1;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const p = scrollProgressRef.current ?? 0;
+      if (p === lastP) return;
+      lastP = p;
+      const el = pageRef.current;
+      if (!el) return;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll > 0) {
+        el.scrollTop = p * maxScroll;
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [scrollProgressRef]);
 
   // Browser history stack (drives Back / Forward).
   const [stack, setStack] = useState<Entry[]>([{ view: 'profile' }]);
@@ -859,7 +889,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded }: Y2KA
         </div>
 
         {/* ================= BROWSER PAGE — TheFacebook document ================= */}
-        <div className={styles.page} key={`${cur.view}-${cur.memberId ?? ''}-${cur.team ?? ''}`}>
+        <div ref={pageRef} className={styles.page} key={`${cur.view}-${cur.memberId ?? ''}-${cur.team ?? ''}`}>
           {/* thefacebook top bar */}
           <div className={styles.fbNav}>
             <button type="button" className={styles.fbWordmark} onClick={() => go({ view: 'profile' })}>
