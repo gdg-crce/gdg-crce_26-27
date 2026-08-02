@@ -27,14 +27,14 @@
  * Kept tight on purpose. An earlier cut ran 0.9/0.8/0.4/1.7 — 3.8 screens, and
  * the knockout did not begin until 2.1 of them had gone by, with a dead 0.4
  * screen of hold in the middle where nothing on screen changed at all. A
- * static title that does not respond to the wheel for that long does not read
- * as a beat, it reads as the end of the page, and the reveal never gets found.
- * The reveal now starts at 1.55 screens and is over by 2.85.
+ * Tuned for a cinematic, unhurried feel. Each phase now gets enough scroll
+ * distance that the viewer can register and enjoy the transition before the
+ * next one begins. The total intro is 4.5 screens of scroll.
  */
-const IRIS_VH = 0.8;
-const TITLE_VH = 0.6;
-const HOLD_VH = 0.15;
-const ZOOM_VH = 1.3;
+const IRIS_VH = 1.2;
+const TITLE_VH = 1.0;
+const HOLD_VH = 0.3;
+const ZOOM_VH = 2.0;
 
 export interface IntroPhase {
   start: number;

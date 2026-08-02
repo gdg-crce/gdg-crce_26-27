@@ -144,7 +144,7 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       trigger: document.body,
       start: 0,
       end: () => currentIntroPhases().iris.end,
-      scrub: 0.6,
+      scrub: 1.2,
       onUpdate: (self) => apply(self.progress),
       onRefresh: (self) => apply(self.progress),
     });

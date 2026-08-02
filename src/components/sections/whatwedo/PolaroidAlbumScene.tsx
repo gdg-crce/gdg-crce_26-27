@@ -203,9 +203,8 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
       }
 
       // Phase 2: Upward Page Flips & Clean Fading!
-      // Pages flip upwards around the X-axis (rotateX(180deg)). 
-      // Flipped pages remain visible as the top half of the open notebook.
-      const flipCover = smooth(0.35, 0.50, p) * 180;
+      // Smoothly cascading pages to prevent "stop-and-start" scrolling gaps
+      const flipCover = smooth(0.25, 0.50, p) * 180;
       const zCover = 6 - (flipCover / 180) * 12; // Interpolates from 6 to -6
       if (coverRef.current) {
         coverRef.current.style.transform = `translateZ(${zCover}px) rotateX(${flipCover}deg)`;
@@ -213,7 +212,7 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
         coverRef.current.style.pointerEvents = flipCover > 90 ? 'none' : 'auto';
       }
 
-      const flipP1 = smooth(0.55, 0.70, p) * 180;
+      const flipP1 = smooth(0.40, 0.65, p) * 180;
       const zP1 = 4 - (flipP1 / 180) * 8; 
       if (page1Ref.current) {
         page1Ref.current.style.transform = `translateZ(${zP1}px) rotateX(${flipP1}deg)`;
@@ -221,7 +220,7 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
         page1Ref.current.style.pointerEvents = flipP1 > 90 ? 'none' : 'auto';
       }
 
-      const flipP2 = smooth(0.75, 0.90, p) * 180;
+      const flipP2 = smooth(0.55, 0.80, p) * 180;
       const zP2 = 2 - (flipP2 / 180) * 4; 
       if (page2Ref.current) {
         page2Ref.current.style.transform = `translateZ(${zP2}px) rotateX(${flipP2}deg)`;
@@ -229,7 +228,7 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
         page2Ref.current.style.pointerEvents = flipP2 > 90 ? 'none' : 'auto';
       }
       
-      const flipP3 = smooth(0.92, 1.0, p) * 180;
+      const flipP3 = smooth(0.70, 0.95, p) * 180;
       if (page3Ref.current) {
         page3Ref.current.style.transform = `translateZ(0px) rotateX(${flipP3}deg)`;
         page3Ref.current.style.opacity = '1';
@@ -287,16 +286,16 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
       {/* The 3D Book Container wrapped in scaler and rotator */}
       <div ref={scalerRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', willChange: 'transform' }}>
         
-        {/* Hardware-accelerated fake shadow that doesn't trigger layout repaints */}
+        {/* Hardware-accelerated fake shadow that doesn't trigger layout repaints or expensive SVG filters */}
         <div ref={shadowRef} style={{
           position: 'absolute',
-          width: '75%', height: '42%',
-          background: 'rgba(0, 0, 0, 1)',
+          width: '70%', height: '30%',
+          backgroundColor: 'transparent',
           borderRadius: '40px',
-          filter: 'blur(50px)',
+          boxShadow: '0 40px 100px 40px rgba(0, 0, 0, 0.9)',
           opacity: 0,
           pointerEvents: 'none',
-          transform: 'translateY(10%)',
+          transform: 'translateY(20%)',
           willChange: 'opacity, transform'
         }}></div>
 
@@ -345,9 +344,8 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
                 {/* Cinematic light flare overlay */}
                 <div className="cover-glare" style={{
                   position: 'absolute', inset: 0, 
-                  background: 'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.1) 55%, transparent 70%)',
+                  backgroundImage: 'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.05) 55%, transparent 70%)',
                   backgroundSize: '300% 100%',
-                  mixBlendMode: 'overlay',
                   pointerEvents: 'none',
                   opacity: 0
                 }} />

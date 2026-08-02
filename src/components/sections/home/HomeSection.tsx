@@ -174,10 +174,12 @@ export default function HomeSection() {
       // Phase 4 — knockout, then push in.
       const zoomP = clamp01((scrollPx - ph.zoom.start) / (ph.zoom.end - ph.zoom.start));
 
-      // The letters turn from white ink into windows over the first tenth of
+      // The letters turn from white ink into windows over the first fifth of
       // the push-in, while they are still effectively still. Two halves of one
       // cross-fade: what leaves is exactly what arrives, in the same place.
-      const hole = ramp(0, 0.1, zoomP);
+      // Spread wider (0.20 instead of 0.10) so the knockout reads as a slow,
+      // deliberate reveal rather than a snap.
+      const hole = ramp(0, 0.20, zoomP);
       maskText.setAttribute('fill-opacity', hole.toFixed(4));
       solidGroupRef.current?.setAttribute('opacity', (titleIn * (1 - hole)).toFixed(4));
 
@@ -238,7 +240,7 @@ export default function HomeSection() {
       trigger: document.body,
       start: 0,
       end: () => currentIntroPhases().total,
-      scrub: 0.6,
+      scrub: 1.2,
       onUpdate: (self) => apply(self.progress * currentIntroPhases().total),
       onRefresh: (self) => apply(self.progress * currentIntroPhases().total),
     });

@@ -150,7 +150,37 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
         applyFrame(p);
       },
       onComplete: () => {
-        window.setTimeout(complete, 120);
+        // Wait for the hero video to have a painted frame before the
+        // preloader unmounts. Without this, on slow decode or cold cache
+        // the preloader's z-9999 layer disappears BEFORE the video has
+        // rendered its first frame, so the user sees the HomeSection's
+        // "GDG CRCE" directly instead of the video.
+        const heroVideo = document.querySelector<HTMLVideoElement>(
+          'section[aria-label="Storytelling Cinematic Intro"] video'
+        );
+        if (heroVideo && heroVideo.readyState >= 3) {
+          // Already has a frame painted — go immediately
+          window.setTimeout(complete, 80);
+        } else if (heroVideo) {
+          // Wait for the first painted frame
+          const onReady = () => {
+            heroVideo.removeEventListener('canplay', onReady);
+            heroVideo.removeEventListener('playing', onReady);
+            clearTimeout(fallback);
+            window.setTimeout(complete, 80);
+          };
+          heroVideo.addEventListener('canplay', onReady);
+          heroVideo.addEventListener('playing', onReady);
+          // Fallback: never stall longer than 600ms
+          const fallback = setTimeout(() => {
+            heroVideo.removeEventListener('canplay', onReady);
+            heroVideo.removeEventListener('playing', onReady);
+            complete();
+          }, 600);
+        } else {
+          // No video element found (shouldn't happen) — proceed
+          window.setTimeout(complete, 200);
+        }
       },
     });
 
@@ -222,7 +252,11 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
 
 
 
-      if (!heroWoken && p > TRANSLATE_END) {
+      // Wake the hero video earlier so it has the full hold + zoom duration
+      // (~2.2s) to buffer and decode its first frame before the preloader
+      // exits. Previously it woke at 0.75 (TRANSLATE_END) which left only
+      // the 0.7s zoom + 120ms timeout — too little for a cold start.
+      if (!heroWoken && p > 0.60) {
         heroWoken = true;
         onStartTransitionRef.current?.();
       }
