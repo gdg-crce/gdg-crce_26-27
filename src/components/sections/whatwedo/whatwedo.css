@@ -111,13 +111,29 @@
   mix-blend-mode: overlay;
 }
 
+/* ── the album's shape is the cover photo's shape ──────────────────────────
+   The book used to be 16:9 while the still on its cover is 1917×917 (2.0905).
+   That mismatch is the whole reason the hand-off from the turntable was
+   visible: `background-size: 100% 100%` on a box of the wrong ratio means the
+   picture has to be stretched to fit, and the amount of stretch changed every
+   frame as the cover shrank — so the still was quietly resizing itself inside
+   its own frame while it was pretending to be the page you were just looking
+   at. Give the box the picture's ratio and the picture never resizes relative
+   to it: the cover just scales down, uniformly, from full screen.
+
+   It is also, conveniently, exactly the "make the cover shorter" ask — at the
+   same width the book loses ~15% of its height (53.4vw → 45.4vw).
+
+   `--album-aspect` is the single source of truth. PolaroidAlbumScene measures
+   this element with offsetWidth/offsetHeight rather than recomputing the
+   formula, so the two can no longer disagree. */
 .album-container-wrapper {
+  --album-aspect: 2.0905;
   position: relative;
-  /* Top-bound Spiral Notebook is centered. 16:9 landscape */
-  width: 95vw;
-  max-width: 1600px;
-  height: 53.4375vw; /* 95vw * (9/16) */
-  max-height: 900px;
+  /* One scalar drives both axes, so the ratio survives every clamp. */
+  --album-w: min(95vw, 1600px, 88vh * var(--album-aspect));
+  width: var(--album-w);
+  height: calc(var(--album-w) / var(--album-aspect));
 }
 
 .album-container {
@@ -127,6 +143,13 @@
   transform-style: preserve-3d;
   animation: albumFloat 8s ease-in-out infinite;
   transform: rotateX(5deg);
+}
+
+/* The book breathes only while it is on screen. This overlay is fixed and
+   full-viewport, so it is "in view" for the entire page — the float used to
+   run, and be composited, from first paint to last. */
+.fixed-album-wrapper:not(.is-active) .album-container {
+  animation-play-state: paused;
 }
 
 @keyframes albumFloat {
@@ -139,12 +162,22 @@
   inset: 0;
   transform-origin: top center;
   transform-style: preserve-3d;
+}
+
+/* `will-change` only while the book is actually being flipped. Five
+   full-viewport-sized layers, each carrying a photographic background and a
+   gloss pseudo-element, were being promoted to their own GPU textures and held
+   there for the entire session — for a section that is on screen for about
+   three of the page's twenty-four thousand scroll pixels. */
+.fixed-album-wrapper.is-active .album-back-cover,
+.fixed-album-wrapper.is-active .album-page,
+.fixed-album-wrapper.is-active .album-cover {
   will-change: transform;
 }
 
 .album-back-cover {
   background-color: #111;
-  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png');
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png?tr=f-auto,q-auto');
   background-size: 100% 100%;
   background-position: center top;
   /* Deep, physically grounded contact shadow on the table */
@@ -188,7 +221,7 @@
 
 .album-cover .cover-back {
   background-color: #111;
-  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png');
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png?tr=f-auto,q-auto');
   background-size: 100% 100%;
   background-position: center top;
 }
@@ -196,7 +229,7 @@
 /* Authentic Textured Pages with Plastic Gloss and Stitching */
 .page-front, .page-back {
   background-color: #111;
-  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png');
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png?tr=f-auto,q-auto');
   background-size: 100% 100%;
   background-position: center top;
   box-shadow: inset 0 0 40px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.6);
@@ -318,8 +351,17 @@
   z-index: 99990;
   pointer-events: none;
   opacity: 0;
-  will-change: opacity;
   background: #ffffff;
+}
+
+/* Promoted only where it is actually used. WhatWeDoSection's flash callback
+   returns immediately above 768px — on desktop this element never changes
+   opacity, yet `will-change` was holding a full-viewport white texture in GPU
+   memory for the entire session to be ready for an animation that never runs. */
+@media (max-width: 767px) {
+  .wwd-seam-flash {
+    will-change: opacity;
+  }
 }
 
 
@@ -358,7 +400,17 @@
   z-index: 99990;
   pointer-events: none;
   opacity: 0;
+  /* `opacity: 0` hides this; it does not stop the browser building it. The
+     album is ~10 stacked full-viewport layers with photographic backgrounds,
+     gloss gradients, a 50px blur and a blended grain plate — all of it laid
+     out, painted and composited on every frame of the entire page. The class
+     is toggled from WhatWeDoSection alongside the opacity. */
+  visibility: hidden;
   will-change: opacity;
+}
+
+.fixed-album-wrapper.is-active {
+  visibility: visible;
 }
 
 /* The solid background that hides the rotating About section */

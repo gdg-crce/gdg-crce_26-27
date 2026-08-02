@@ -61,6 +61,20 @@ const SPIN_TURNS = 2;
  *  and what stops a flick of the wheel from reading as a jump-cut. */
 const FREE_DEG_PER_SEC = 50;
 const FREE_TAU = 0.42;
+
+/* ── the spin-down ─────────────────────────────────────────────────────────
+   The next act opens on a photograph of this deck, and the record in a
+   photograph is not turning. Cutting from a spinning platter to a still one is
+   the single tell that gives the whole hand-off away, so the deck is brought to
+   rest before the swap instead of being frozen by it.
+
+   Both drives are wound down over the same window. The wheel's contribution is
+   remapped through `t - t²/2`, whose slope is 1 where the window opens and 0
+   where it closes: no kick as the taper engages, no residual motion at the end,
+   and no way to scroll past it — turning the wheel harder just buys less
+   rotation per pixel until there is none left. The motor is scaled by the same
+   factor, so it cannot spin the disc back up while the taper is running. */
+const SPIN_DOWN_START = 0.86;
 /** Wheel input counts as "still scrolling" for this long after the last tick.
  *  Below ~150ms the motor stutters between wheel notches. */
 const SCROLL_IDLE_MS = 190;
@@ -229,6 +243,10 @@ export default function AboutSection() {
   const scrollSpinRef = useRef(0);
   const freeSpinRef = useRef(0);
   const freeRateRef = useRef(0);
+  /** 1 while the deck runs, easing to 0 across the spin-down window. */
+  const spinDownRef = useRef(1);
+  /** Whole-turn angle the platter is settling onto; null outside the window. */
+  const spinTargetRef = useRef<number | null>(null);
   const lastScrollRef = useRef(-1e9);
   const inViewRef = useRef(false);
 
@@ -279,7 +297,14 @@ export default function AboutSection() {
       // disc up and lets it coast to a stop instead of snapping. The write
       // itself belongs to the rAF loop below — this only banks the wheel's
       // contribution, because the motor is adding to the same angle.
-      scrollSpinRef.current = p * 360 * SPIN_TURNS;
+      //
+      // Past SPIN_DOWN_START the mapping tapers to a standstill so the deck is
+      // already still when the next act's photograph of it takes over.
+      const spinWindow = 1 - SPIN_DOWN_START;
+      const t = clamp01((p - SPIN_DOWN_START) / spinWindow);
+      const spinP = p <= SPIN_DOWN_START ? p : SPIN_DOWN_START + spinWindow * (t - (t * t) / 2);
+      spinDownRef.current = 1 - t;
+      scrollSpinRef.current = spinP * 360 * SPIN_TURNS;
 
       // ── tonearm ──────────────────────────────────────────────────────
       const deg = sampleKeys(ARM_KEYS, p);
@@ -406,14 +431,46 @@ export default function AboutSection() {
       last = now;
 
       const idle = now - lastScrollRef.current > SCROLL_IDLE_MS;
-      const target = idle && !reduced ? FREE_DEG_PER_SEC : 0;
+      // The motor obeys the spin-down too, or it would quietly wind the record
+      // back up the moment the wheel went idle inside the taper — and the deck
+      // would be turning again at exactly the handover.
+      const target = (idle && !reduced ? FREE_DEG_PER_SEC : 0) * spinDownRef.current;
       freeRateRef.current += (target - freeRateRef.current) * Math.min(1, dt / FREE_TAU);
       freeSpinRef.current += freeRateRef.current * dt;
 
-      stage?.style.setProperty(
-        '--spin',
-        `${(scrollSpinRef.current + freeSpinRef.current).toFixed(1)}deg`
-      );
+      /* ── settling onto a known pose ──────────────────────────────────────
+         Stopping the record is not enough on its own: WHERE it stops has to be
+         repeatable. The motor accumulates real time, so the resting angle was
+         previously whatever a given visit happened to land on — which means the
+         printed ring on the label sits somewhere different every time, and no
+         fixed photograph of this deck can ever agree with it.
+
+         Across the spin-down window the platter is eased onto the next whole
+         turn, so it always comes to rest in the same orientation it started in.
+         `ceil`, not `round`: a record does not run backwards, so the target is
+         always ahead of where we are. The correction rides on the deceleration
+         and reads as the platter coasting into place.
+
+         NOTE: this makes a matching still POSSIBLE; it does not by itself make
+         the current one match. `whatwedo/image copy.png` was captured at some
+         other angle, so its label print is still rotated differently from the
+         live deck's rest pose. Re-shoot that frame at the end of this scroll
+         and the two agree permanently. */
+      const spinDown = spinDownRef.current;
+      const total = scrollSpinRef.current + freeSpinRef.current;
+      if (spinDown >= 1) {
+        spinTargetRef.current = null;
+      } else if (spinTargetRef.current === null) {
+        spinTargetRef.current = Math.ceil(total / 360) * 360;
+      }
+
+      let angle = total;
+      if (spinTargetRef.current !== null) {
+        const k = 1 - spinDown;
+        angle = total + (spinTargetRef.current - total) * (k * k * (3 - 2 * k));
+      }
+
+      stage?.style.setProperty('--spin', `${angle.toFixed(1)}deg`);
     };
 
     const startLoop = () => {

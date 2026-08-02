@@ -130,6 +130,11 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
       // section below it.
       const shut = p >= 0.999;
       el.style.visibility = shut ? 'hidden' : 'visible';
+      // Release the compositor layer too. `will-change` is a promise about the
+      // near future; once the iris is shut this layer never animates again, and
+      // holding a full-viewport texture for the remaining twenty-odd screens of
+      // scroll is exactly the kind of tax `will-change` is famous for.
+      el.style.willChange = shut ? 'auto' : 'clip-path, transform';
       if (shut) videoRef.current?.pause();
     };
 

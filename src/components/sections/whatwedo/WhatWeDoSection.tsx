@@ -78,6 +78,24 @@ export default function WhatWeDoSection() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
+    /* One switch for "the album is on screen", written straight to the DOM.
+       `opacity: 0` alone left ten stacked full-viewport layers — photographic
+       backgrounds, gloss gradients, a 50px blur, a blended grain plate — being
+       laid out, painted and composited on every frame of the whole page, and
+       left the book's 8s float animation running from first paint to last.
+       The class drives `visibility`, `animation-play-state` and `will-change`
+       from the stylesheet, so all of that stops when the act is not playing.
+       No React state: this runs on the scroll hot path. */
+    let activeNow: boolean | null = null;
+    const setActive = (on: boolean) => {
+      const el = overlayRef.current;
+      if (!el || on === activeNow) return;
+      activeNow = on;
+      el.style.opacity = on ? '1' : '0';
+      el.style.pointerEvents = on ? 'auto' : 'none';
+      el.classList.toggle('is-active', on);
+    };
+
     const trigger = ScrollTrigger.create({
       trigger: sectionRef.current,
       // Pin a 0-height sentinel so GSAP uses the section as the scroll region
@@ -88,38 +106,12 @@ export default function WhatWeDoSection() {
       scrub: true,
       onUpdate: (self) => {
         progressRef.current = self.progress;
-
-        if (overlayRef.current) {
-          if (self.progress > 0 && self.progress < 1) {
-            // Snap visible immediately — no fade-in so morph feels instant
-            overlayRef.current.style.opacity = '1';
-            overlayRef.current.style.pointerEvents = 'auto';
-          } else {
-            // Hidden before section starts and after section ends
-            overlayRef.current.style.opacity = '0';
-            overlayRef.current.style.pointerEvents = 'none';
-          }
-        }
+        setActive(self.progress > 0 && self.progress < 1);
       },
       // Also hide on leave so it doesn't persist after scrolling past
-      onLeave: () => {
-        if (overlayRef.current) {
-          overlayRef.current.style.opacity = '0';
-          overlayRef.current.style.pointerEvents = 'none';
-        }
-      },
-      onEnterBack: () => {
-        if (overlayRef.current) {
-          overlayRef.current.style.opacity = '1';
-          overlayRef.current.style.pointerEvents = 'auto';
-        }
-      },
-      onLeaveBack: () => {
-        if (overlayRef.current) {
-          overlayRef.current.style.opacity = '0';
-          overlayRef.current.style.pointerEvents = 'none';
-        }
-      },
+      onLeave: () => setActive(false),
+      onEnterBack: () => setActive(true),
+      onLeaveBack: () => setActive(false),
     });
 
     const getRevealPx = () => (window.innerWidth < 768 ? 500 : REVEAL_PX);
@@ -190,6 +182,11 @@ export default function WhatWeDoSection() {
       window.removeEventListener('wheel', unlock);
       window.removeEventListener('touchstart', unlock);
       trigger.kill();
+      // The seam flash was created and never killed. Every remount — StrictMode
+      // in dev, any HMR edit to this file — left another live ScrollTrigger
+      // behind, each one running its callback on every scroll event for the
+      // rest of the session.
+      flash.kill();
     };
   }, []);
 
@@ -203,7 +200,7 @@ export default function WhatWeDoSection() {
           (isMobile ? (
             <PolaroidScene2D progressRef={progressRef} />
           ) : (
-            <PolaroidAlbumScene progressRef={progressRef} />
+            <PolaroidAlbumScene progressRef={progressRef} observeRef={sectionRef} />
           ))}
       </div>
 

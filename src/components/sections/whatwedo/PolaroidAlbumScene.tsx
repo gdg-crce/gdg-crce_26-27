@@ -9,7 +9,21 @@ const smooth = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
-export default function PolaroidAlbumScene({ progressRef }: { progressRef: React.RefObject<number> }) {
+interface PolaroidAlbumSceneProps {
+  progressRef: React.RefObject<number>;
+  /**
+   * The in-flow spacer section, for the frame loop's IntersectionObserver.
+   *
+   * It cannot observe its own root: this scene lives inside a `position: fixed;
+   * inset: 0` overlay, so its root intersects the viewport permanently and the
+   * observer said "visible" from first paint to last — the loop ran for the
+   * whole session. The spacer is the only element whose position actually
+   * tracks where this act is in the page.
+   */
+  observeRef?: React.RefObject<HTMLElement | null>;
+}
+
+export default function PolaroidAlbumScene({ progressRef, observeRef }: PolaroidAlbumSceneProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const scalerRef = useRef<HTMLDivElement>(null);
   const rotatorRef = useRef<HTMLDivElement>(null);
@@ -37,6 +51,27 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
     const glare = coverFront?.querySelector('.cover-glare') as HTMLElement | null;
     // Only touch container.style.animation when the phase actually changes.
     let animState = '';
+    let lastShadow = '';
+
+    if (coverFront) coverFront.style.filter = 'none';
+
+    /* The book's laid-out size, measured rather than re-derived.
+       This used to be `Math.min(vw * 0.95, 1600) × Math.min(vw * 0.534375, 900)`
+       — the stylesheet's formula, copied. Two copies of a layout rule drift the
+       moment either is touched, and every frame of the opening morph is built
+       on this number: get it wrong and the cover does not start exactly full
+       screen, which is precisely the seam the viewer is not supposed to notice.
+       offsetWidth/Height ignore the scale transform above it, so this is the
+       CSS box itself. */
+    let boxW = 1;
+    let boxH = 1;
+    const measure = () => {
+      const wrap = rotatorRef.current;
+      if (!wrap) return;
+      boxW = wrap.offsetWidth || 1;
+      boxH = wrap.offsetHeight || 1;
+    };
+    measure();
 
     const draw = () => {
       const rawP = progressRef.current ?? 0;
@@ -44,6 +79,7 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       const vh = window.innerHeight;
 
       if (rawP === lastP && vw === lastVw && vh === lastVh) return;
+      if (vw !== lastVw || vh !== lastVh) measure();
       lastP = rawP; lastVw = vw; lastVh = vh;
 
       // The flip/morph animation runs from 0.0 to 0.80
@@ -52,11 +88,11 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       const zoomP = Math.max(0, (rawP - 0.80) / 0.20);
 
       // Phase 1: The Morph (Extended to 0.20 for a luxurious, slow unraveling)
-      const coverW = Math.min(vw * 0.95, 1600);
-      const coverH = Math.min(vw * 0.534375, 900); // 16:9 ratio
-      
-      const maxStartScale = Math.max(vw / coverW, vh / coverH);
-      
+      // Scale that makes the closed book exactly cover the viewport — the frame
+      // the still has to arrive on. The book's ratio is the still's ratio, so
+      // this crops rather than stretches.
+      const maxStartScale = Math.max(vw / boxW, vh / boxH);
+
       const morphProgress = smooth(0.0, 0.20, p);
       
       // Cinematic easing curve (Cubic in-out) for a magical, breathless float
@@ -131,33 +167,32 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
 
       if (binder) binder.style.opacity = (cinematicMorph * (1 - zoomP)).toString();
 
-      // Dynamic background sizing to ensure a seamless pixel-perfect transition!
       if (coverFront) {
-        coverFront.style.filter = 'none';
-        
-        // Dynamically fade in the book shadow so it doesn't darken the initial screenshot
+        /* NOTHING here touches background-size any more, and that is the fix.
+           This block used to interpolate the cover photo's background-size from
+           "stretched to the viewport" to "cover the 16:9 book" across the
+           morph. Two things were wrong with it. The still is 1917×917 and the
+           box was 16:9, so both ends of that interpolation distorted it — and
+           because the size changed every frame, the picture was visibly
+           re-scaling *inside* its own frame while it was impersonating the page
+           you had just been looking at. The book is now the still's own ratio,
+           so the stylesheet's `100% 100%` is simultaneously exact and
+           undistorted at every scale, and the cover simply shrinks.
+           It is also four fewer style writes and one fewer background
+           re-rasterisation per frame. */
+
+        // Fade the book's own inner shadow in, so it does not darken the still
+        // while the still is still pretending to be the previous section.
         const shadowAlpha = cinematicMorph * 0.6;
         const edgeAlpha = cinematicMorph * 0.1;
-        
-        // Remove inner shadow entirely during zoom to save rendering time
-        if (zoomP > 0.1) {
-          coverFront.style.boxShadow = 'none';
-        } else {
-          coverFront.style.boxShadow = `inset -5px 0 20px rgba(0,0,0,${shadowAlpha.toFixed(2)}), inset 2px 0 5px rgba(255,255,255,${edgeAlpha.toFixed(2)})`;
+        const shadow =
+          zoomP > 0.1
+            ? 'none'
+            : `inset -5px 0 20px rgba(0,0,0,${shadowAlpha.toFixed(2)}), inset 2px 0 5px rgba(255,255,255,${edgeAlpha.toFixed(2)})`;
+        if (shadow !== lastShadow) {
+          coverFront.style.boxShadow = shadow;
+          lastShadow = shadow;
         }
-
-        const bgW_start = vw / maxStartScale;
-        const bgH_start = vh / maxStartScale;
-        
-        const bgW_target = Math.max(coverW, coverH * (vw / vh));
-        const bgH_target = Math.max(coverH, coverW * (vh / vw));
-        
-        const curBgW = bgW_start + cinematicMorph * (bgW_target - bgW_start);
-        const curBgH = bgH_start + cinematicMorph * (bgH_target - bgH_start);
-        
-        coverFront.style.backgroundSize = `${curBgW.toFixed(2)}px ${curBgH.toFixed(2)}px`;
-        coverFront.style.backgroundPosition = 'center center';
-        coverFront.style.backgroundRepeat = 'no-repeat';
 
         // Animate the dramatic light flare sweeping across the plastic cover
         if (glare) {
@@ -222,9 +257,13 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
         if (entries[0].isIntersecting && document.visibilityState !== 'hidden') start();
         else stop();
       },
-      { threshold: 0 }
+      // Watch the in-flow spacer, not this scene's own root — see `observeRef`.
+      // The margin wakes the loop a screen early so the book is already at its
+      // opening pose on the frame the overlay becomes visible.
+      { threshold: 0, rootMargin: '900px 0px' }
     );
-    if (rootRef.current) io.observe(rootRef.current);
+    const watched = observeRef?.current ?? rootRef.current;
+    if (watched) io.observe(watched);
     const onVis = () => {
       if (document.visibilityState === 'hidden') stop();
     };
@@ -236,7 +275,7 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
       document.removeEventListener('visibilitychange', onVis);
       stop();
     };
-  }, [progressRef]);
+  }, [progressRef, observeRef]);
 
   return (
     <div ref={rootRef} className="album-scene-root">
@@ -269,7 +308,12 @@ export default function PolaroidAlbumScene({ progressRef }: { progressRef: React
 
             {/* Back Cover (static base) */}
             <div ref={backCoverRef} className="album-back-cover">
-              <Image src="/transition/event.png" alt="Event" width={1000} height={562} className="final-event-photo" draggable={false} priority />
+              {/* No `priority`. This is the last frame of an act ~15,000px down
+                  the page; preloading it put a 1900px photo in front of the
+                  hero video in the network queue on first paint. The overlay is
+                  fixed and full-viewport, so the lazy loader fetches it early
+                  regardless — we just stop it competing with the opening. */}
+              <Image src="/transition/event.png" alt="Event" width={1000} height={562} className="final-event-photo" draggable={false} />
             </div>
 
             {/* Page 3 */}

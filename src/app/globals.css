@@ -1187,7 +1187,9 @@ body {
   height: 100%;
   background: linear-gradient(90deg, #D4722A, #7B2FBE);
   box-shadow: 0 0 10px rgba(212, 114, 42, 0.5), 0 0 3px rgba(123, 47, 190, 0.4);
-  will-change: width;
+  /* No `will-change: width`. Width is a layout property — it cannot be
+     animated on the compositor, so the hint buys nothing and the promotion it
+     forces is pure cost. The bar is 2px tall; it can repaint. */
 }
 
 /* ── Grunge vignette borders ── */

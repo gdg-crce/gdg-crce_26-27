@@ -86,7 +86,23 @@ export default function EventsAndCouncilSection() {
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  /**
+   * The act's coarse phase — NOT its scroll progress.
+   *
+   * This used to be `scrollProgress`, a float written from the scroll callback
+   * on every tick. React therefore re-rendered this component — and with it the
+   * XP desktop, the whole TheFacebook archive and the picture viewer — sixty
+   * times a second for eleven thousand pixels of scroll. Every one of those
+   * renders produced identical markup, because all four things that read it
+   * were threshold comparisons (0.26 / 0.32 / 0.50).
+   *
+   * Comparing the thresholds first and storing the result collapses that to
+   * three renders for the entire section. The continuous value still exists,
+   * on `progressRef`, where the 3D scene reads it without involving React at
+   * all — the same rule the rest of this file already follows.
+   */
+  const [phase, setPhase] = useState(0);
+  const phaseRef = useRef(0);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -189,7 +205,13 @@ export default function EventsAndCouncilSection() {
         scrub: 0.8,
         onUpdate: (self) => {
           const p = self.progress;
-          setScrollProgress(p);
+
+          // 0 walking · 1 dwelling on the last poster · 2 windowed · 3 minimized
+          const nextPhase = p >= 0.5 ? 3 : p >= 0.32 ? 2 : p >= 0.26 ? 1 : 0;
+          if (nextPhase !== phaseRef.current) {
+            phaseRef.current = nextPhase;
+            setPhase(nextPhase);
+          }
 
           /* ── Phase 1: Alleyway Walk (0.00 -> 0.26) ───────────────────────── */
           const WALK_END = 0.26;
@@ -656,9 +678,9 @@ export default function EventsAndCouncilSection() {
         <WindowsXPDesktop
           activeTeamIndex={activeMemberIndex}
           onSelectTeam={handleSelectTeam}
-          isEventsMinimized={isEventsMinimized || scrollProgress >= 0.50}
+          isEventsMinimized={isEventsMinimized || phase >= 3}
           onToggleEventsMinimize={handleToggleEventsMinimize}
-          showDesktopChrome={isEventsMinimized || scrollProgress >= 0.32}
+          showDesktopChrome={isEventsMinimized || phase >= 2}
         >
           {/* Layer 1: Events 3D Wall (Starts 100% Fullscreen, Walks, Dwells, then Shrinks into Media Player) */}
           <div className="xp-events-transition-wrapper">
@@ -711,7 +733,7 @@ export default function EventsAndCouncilSection() {
                 }}
               >
                 {/* 3D Wall Scene */}
-                <WallScene progressRef={progressRef} snapToTarget={scrollProgress >= 0.26} />
+                <WallScene progressRef={progressRef} snapToTarget={phase >= 1} />
 
                 {/* Scanline overlay */}
                 <div className="events-scanlines" />
@@ -757,7 +779,7 @@ export default function EventsAndCouncilSection() {
                     </div>
                     <div className="events-scroll-hint">
                       <span>
-                        {scrollProgress < 0.26
+                        {phase < 1
                           ? 'SCROLL DOWN STREET →'
                           : 'MINIMIZING VIDEO ARCHIVE TO XP DESKTOP ↓'}
                       </span>
