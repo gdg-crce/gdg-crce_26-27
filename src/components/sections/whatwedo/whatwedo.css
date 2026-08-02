@@ -128,10 +128,10 @@
    this element with offsetWidth/offsetHeight rather than recomputing the
    formula, so the two can no longer disagree. */
 .album-container-wrapper {
-  --album-aspect: 2.0905;
+  --album-aspect: 1.7778;
   position: relative;
   /* One scalar drives both axes, so the ratio survives every clamp. */
-  --album-w: min(95vw, 1600px, 88vh * var(--album-aspect));
+  --album-w: min(98vw, 1900px, 95vh * var(--album-aspect));
   width: var(--album-w);
   height: calc(var(--album-w) / var(--album-aspect));
 }
@@ -204,7 +204,7 @@
 .album-cover .cover-front {
   /* ImageKit rewrote the space in "image copy.png" to an underscore on upload. */
   background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/image_copy.png?tr=f-auto,q-auto');
-  background-size: 100% 100%;
+  background-size: cover;
   background-position: center;
   display: flex;
   flex-direction: column;

@@ -82,6 +82,7 @@ export default function HomeSection() {
   const solidTextRef = useRef<SVGTextElement | null>(null);
   const maskGroupRef = useRef<SVGGElement | null>(null);
   const solidGroupRef = useRef<SVGGElement | null>(null);
+  const maxTitleInRef = useRef(0);
 
   /** Push-in origin, in SVG user units (= CSS px, the viewBox is 1:1). */
   const focusRef = useRef({ x: 0, y: 0 });
@@ -166,7 +167,9 @@ export default function HomeSection() {
       const ph = currentIntroPhases();
 
       // Phase 2 — the type fades up on black.
-      const titleIn = ramp(ph.title.start, ph.title.end, scrollPx);
+      const rawTitleIn = ramp(ph.title.start, ph.title.end, scrollPx);
+      maxTitleInRef.current = Math.max(maxTitleInRef.current, rawTitleIn);
+      const titleIn = maxTitleInRef.current;
 
       // Phase 4 — knockout, then push in.
       const zoomP = clamp01((scrollPx - ph.zoom.start) / (ph.zoom.end - ph.zoom.start));

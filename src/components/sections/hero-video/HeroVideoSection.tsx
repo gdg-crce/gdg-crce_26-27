@@ -35,6 +35,7 @@ const MAX_LOCK_MS = 20000;
 export default function HeroVideoSection({ startPlaying = false }: HeroVideoSectionProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const maxProgressRef = useRef(0);
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [fadeInDone, setFadeInDone] = useState(false);
@@ -116,7 +117,8 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
     if (!el) return;
 
     const apply = (progress: number) => {
-      const p = clamp01(progress);
+      maxProgressRef.current = Math.max(maxProgressRef.current, progress);
+      const p = clamp01(maxProgressRef.current);
       const e = p * p * (3 - 2 * p);
 
       el.style.clipPath = `circle(${((1 - e) * IRIS_OPEN).toFixed(2)}% at 50% 50%)`;

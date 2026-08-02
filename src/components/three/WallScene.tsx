@@ -1142,6 +1142,21 @@ export default function WallScene({ progressRef, snapToTarget }: WallSceneProps)
     <div ref={hostRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
       <Canvas
         frameloop={active ? 'always' : 'never'}
+        /* Do NOT let the canvas re-measure itself on scroll.
+           R3F measures through react-use-measure, which reads
+           getBoundingClientRect() — and a bounding rect INCLUDES every
+           ancestor transform. This canvas lives inside
+           `.xp-events-transition-window`, which EventsAndCouncilSection
+           shrinks into the Media Player frame with `transform: scale(0.66)`.
+           So the moment a scroll re-measure landed while that scale was
+           applied, the canvas was sized to 66% of its container — and since
+           the canvas is inside the same scaled element, it rendered at 66% of
+           the window with the Canvas wrapper's #A6A8A9 showing through the rest.
+           That is the grey L-shape, and it stayed until a later debounced
+           measure happened to catch the transform back at 1.
+           The layout box never changes (100vw × 100vh), so there is nothing
+           legitimate for a scroll measure to find here anyway. */
+        resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
         camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
         dpr={dpr}
         shadows="soft"

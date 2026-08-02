@@ -127,7 +127,19 @@ export default function EventsAndCouncilSection() {
   }, []);
 
   const handleToggleEventsMinimize = useCallback(() => {
-    setIsEventsMinimized((prev) => !prev);
+    setIsEventsMinimized((prev) => {
+      const next = !prev;
+      // Force ScrollTrigger to apply the changes without waiting for a scroll event
+      setTimeout(() => ScrollTrigger.update(), 50);
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    // Apply initial classes that GSAP might mutate so React doesn't overwrite them
+    if (eventsWindowRef.current && !eventsWindowRef.current.classList.contains('xp-events-transition-window')) {
+      eventsWindowRef.current.classList.add('xp-events-transition-window');
+    }
   }, []);
 
   useEffect(() => {
@@ -686,11 +698,6 @@ export default function EventsAndCouncilSection() {
           <div className="xp-events-transition-wrapper">
             <div
               ref={eventsWindowRef}
-              className="xp-events-transition-window"
-              style={{
-                opacity: isEventsMinimized ? 0 : 1,
-                pointerEvents: isEventsMinimized ? 'none' : 'auto',
-              }}
             >
               {/* Titlebar of Windows Media Player */}
               <div className="xp-titlebar">
@@ -792,7 +799,6 @@ export default function EventsAndCouncilSection() {
                   <div
                     ref={progressBarRef}
                     className="events-progress-fill"
-                    style={{ width: '0%' }}
                   />
                 </div>
 
