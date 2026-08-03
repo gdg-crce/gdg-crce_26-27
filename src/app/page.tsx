@@ -8,6 +8,7 @@ import EventsAndCouncilSection from '@/components/sections/EventsAndCouncilSecti
 import AboutSection from '@/components/sections/about/AboutSection';
 import WhatWeDoSection from '@/components/sections/whatwedo/WhatWeDoSection';
 import ContactSection from '@/components/sections/contact/ContactSection';
+import TopNav from '@/components/layout/TopNav';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,11 @@ export default function Home() {
           onComplete={handleComplete}
         />
       )}
+      {/* Outside <main> and above every act layer. Gated on the preloader
+          being GONE, not on the film starting: `videoStarted` fires when the
+          strip begins its zoom-through, a couple of seconds before the loader
+          unmounts, and the nav sits at z-100000 — above the loader's z-9999. */}
+      <TopNav ready={!loading} />
       <main className="relative z-0">
         <HeroVideoSection startPlaying={videoStarted} />
         {/* The black title card the hero's iris closes onto, and whose letters
