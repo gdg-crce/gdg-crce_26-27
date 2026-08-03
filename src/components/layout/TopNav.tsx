@@ -9,16 +9,27 @@ import './top-nav.css';
 const ACCENT = '#E9A23B';
 
 /**
- * The capsule sits open by itself only while you are on the home act, and
- * closes into the mark for the rest of the page.
+ * The one stretch of scroll where the capsule opens by itself: while the
+ * "GDG CRCE" title card is the frame. Not before, not after.
  *
- * "The home act" is not the top 70px — it is the hero film plus the title card,
- * everything up to the moment the title's letters start pushing through into
- * the turntable. That instant is `zoom.start`, so the nav is open for exactly
- * the stretch that is still Home and has folded away before the reveal begins.
+ * Both edges are read off the shared intro ruler rather than guessed, so
+ * retuning a phase in `introTimeline.ts` cannot desync them:
+ *
+ *   from  the title fades up across the whole `title` phase, so opening at
+ *         `title.start` would unfurl the nav over a black screen. 0.42 into
+ *         that ramp is where the letters are legible.
+ *   to    `hold.end` is `zoom.start` — the exact frame the letters stop being
+ *         ink and start becoming holes onto the turntable. The nav is folded
+ *         away before the reveal begins.
+ *
+ * Below `from` (the hero film) and above `to` (everything after) it is a mark.
  */
-function autoOpenLimit() {
-  return currentIntroPhases().hold.end;
+function autoOpenWindow() {
+  const ph = currentIntroPhases();
+  return {
+    from: ph.title.start + (ph.title.end - ph.title.start) * 0.42,
+    to: ph.hold.end,
+  };
 }
 
 /** Radius of the progress ring, in the 58px mark's own coordinate space. */
@@ -59,7 +70,15 @@ const NAV_ITEMS = [
  */
 export default function TopNav({ ready }: { ready: boolean }) {
   const [mounted, setMounted] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  /**
+   * Entrance. `entered` fades/drops the mark in; `live` is the moment the
+   * entrance is over and the scroll window above takes the wheel. Until then
+   * the capsule is pinned shut, so it can never flash open on arrival.
+   */
+  const [entered, setEntered] = useState(false);
+  const [live, setLive] = useState(false);
+  /** Starts shut: y=0 is the hero film, which is outside the open window. */
+  const [collapsed, setCollapsed] = useState(true);
   const [active, setActive] = useState('home');
   /** Opened deliberately — by clicking the mark, or by keyboard focus. */
   const [held, setHeld] = useState(false);
@@ -67,7 +86,7 @@ export default function TopNav({ ready }: { ready: boolean }) {
   const ringRef = useRef<SVGCircleElement | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
   const targetsRef = useRef<{ id: string; at: number }[]>([]);
-  const collapsedRef = useRef(false);
+  const collapsedRef = useRef(true);
   const activeRef = useRef('home');
 
   /* ── where each entry lives on the scrollbar ─────────────────────────── */
@@ -111,15 +130,32 @@ export default function TopNav({ ready }: { ready: boolean }) {
   /* ── reveal, once the preloader has actually gone ────────────────────── */
   useEffect(() => {
     if (!ready) return;
-    // Short beat so it arrives after the loader's exit fade rather than during
-    // it. Measurement waits for the same beat: ScrollTrigger builds its pin
+    // A full beat, not a frame. `ready` flips the instant the loader unmounts,
+    // and anything that renders on that same tick reads as part of the loader.
+    // Measurement waits for the same beat too: ScrollTrigger builds its pin
     // spacers on mount, and the section offsets are meaningless before that.
     const t = window.setTimeout(() => {
       measure();
       setMounted(true);
-    }, 420);
+    }, 1100);
     return () => window.clearTimeout(t);
   }, [ready, measure]);
+
+  /* ── entrance: arrive as the mark, and stay one ───────────────────────── */
+  useEffect(() => {
+    if (!mounted) return;
+    // It arrives over the hero film, which is outside the open window, so it
+    // drops in as the mark and does not unfurl until the title card. The rAF
+    // is load-bearing: without a paint at the faded/offset values the browser
+    // has no "from" and skips the entrance transition entirely.
+    const raf = window.requestAnimationFrame(() => setEntered(true));
+    // Hand the wheel to the scroll window only once the drop-in has landed.
+    const t = window.setTimeout(() => setLive(true), 620);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+    };
+  }, [mounted]);
 
   /* ── scroll ──────────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -128,7 +164,8 @@ export default function TopNav({ ready }: { ready: boolean }) {
     const onScroll = () => {
       const y = window.scrollY;
 
-      const shouldCollapse = y > autoOpenLimit();
+      const win = autoOpenWindow();
+      const shouldCollapse = y < win.from || y > win.to;
       if (shouldCollapse !== collapsedRef.current) {
         collapsedRef.current = shouldCollapse;
         setCollapsed(shouldCollapse);
@@ -202,11 +239,14 @@ export default function TopNav({ ready }: { ready: boolean }) {
 
   if (!mounted) return null;
 
-  const isCollapsed = collapsed && !held;
+  // Shut until the entrance is over, then governed by the title-card window
+  // (or by a deliberate click, which overrides it anywhere on the page).
+  const isCollapsed = !live || (collapsed && !held);
 
   return (
     <div
       className="tnav-shell"
+      data-enter={entered ? 'true' : 'false'}
       data-collapsed={isCollapsed ? 'true' : 'false'}
       style={{ ['--tnav-accent' as string]: ACCENT }}
     >
@@ -254,11 +294,13 @@ export default function TopNav({ ready }: { ready: boolean }) {
         </button>
 
         <div className="tnav-links">
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.map((item, i) => (
             <button
               key={item.id}
               type="button"
               className="tnav-link"
+              // Index for the open stagger — see `--i` in top-nav.css.
+              style={{ ['--i' as string]: i + 1 }}
               aria-current={active === item.id ? 'true' : undefined}
               // Nothing to tab to while it is a circle.
               tabIndex={isCollapsed ? -1 : 0}

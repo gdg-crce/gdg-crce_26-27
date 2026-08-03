@@ -19,7 +19,15 @@
   position: fixed;
   top: 20px;
   left: 50%;
-  transform: translateX(-50%);
+  /* Entrance state. The mark drops in from just above the frame and settles —
+     the capsule only starts widening once this has landed (see TopNav.tsx).
+     translateX(-50%) has to be re-stated in every transform or the centring
+     is lost mid-animation. */
+  transform: translateX(-50%) translateY(-22px) scale(0.82);
+  opacity: 0;
+  transition:
+    opacity 460ms ease,
+    transform 760ms cubic-bezier(0.16, 1, 0.3, 1);
   /* Above the events act's 99990. */
   z-index: 100000;
   /* Scenery by default; only the capsule itself takes the pointer, so the
@@ -27,6 +35,11 @@
   pointer-events: none;
   display: flex;
   justify-content: center;
+}
+
+.tnav-shell[data-enter='true'] {
+  transform: translateX(-50%) translateY(0) scale(1);
+  opacity: 1;
 }
 
 .tnav {
@@ -168,6 +181,15 @@
   opacity: 0;
   transform: translateX(-6px);
   transition-duration: 200ms;
+  /* No stagger on the way out — closing should feel like one movement. */
+  transition-delay: 0ms;
+}
+
+/* Opening, the labels arrive left-to-right *behind* the widening capsule
+   rather than all at once in a block. The first delay clears the leading edge
+   of the width animation, so nothing is visible before there is room for it. */
+.tnav-shell[data-collapsed='false'] .tnav-link {
+  transition-delay: calc(150ms + (var(--i) - 1) * 48ms);
 }
 
 .tnav-link:hover,
@@ -208,10 +230,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tnav-shell,
   .tnav,
   .tnav-link,
   .tnav-mark img,
   .tnav-ring {
     transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
   }
 }

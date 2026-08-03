@@ -8,6 +8,15 @@ import { clamp01, currentIntroPhases } from '@/lib/introTimeline';
 
 interface HeroVideoSectionProps {
   startPlaying?: boolean;
+  /**
+   * Decode a first frame and hold it, without playing.
+   *
+   * The preloader raises this about two seconds before the zoom-through so the
+   * decoder is warm, then raises `startPlaying` at the exact frame the film
+   * strip opens onto this element. Splitting the two is what lets every copy
+   * of the film start from 0 together — see `onPrimeHero` in Preloader.tsx.
+   */
+  primed?: boolean;
 }
 
 /**
@@ -32,7 +41,7 @@ const MAX_LOCK_MS = 20000;
  * the last frame now closes through a circular iris to black, the way a reel
  * ends, and `HomeSection` takes the black screen from there.
  */
-export default function HeroVideoSection({ startPlaying = false }: HeroVideoSectionProps) {
+export default function HeroVideoSection({ startPlaying = false, primed = false }: HeroVideoSectionProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const maxProgressRef = useRef(0);
@@ -45,6 +54,19 @@ export default function HeroVideoSection({ startPlaying = false }: HeroVideoSect
     const video = videoRef.current;
     if (video && video.readyState >= 2) setIsLoaded(true);
   }, []);
+
+  // Warm the decoder without playing. Seeking a preloaded element to 0 forces
+  // a decode and a paint, so by the time `startPlaying` arrives the first frame
+  // is already on the GPU and `play()` is a state change rather than a stall.
+  // Deliberately does NOT touch `fadeInDone` — a primed hero is ready, not
+  // visible; the preloader's own layers are still opaque over it.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !primed || startPlaying) return;
+    try {
+      video.currentTime = 0;
+    } catch {}
+  }, [primed, startPlaying]);
 
   // Sync video start explicitly when startPlaying turns true (the moment the
   // preloader's film strip begins its zoom-through).

@@ -65,84 +65,215 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Rewind preloader: procedural film/VHS details kept CSS-only for startup speed. */
+/* ═══════════════════════════════════════════════════════════════════════════
+   REWIND PRELOADER — atmosphere, film stock, and the reveal portal
+
+   This block used to be six revisions stacked on top of each other: six
+   `.loader-film-model` rules, seven `.preloader-scanlines`, five
+   `.loader-film-body::after`. Only the last declaration of each property ever
+   rendered, so most of it was invisible weight the browser still had to parse,
+   match and cascade — and reading it, you could not tell what the film
+   actually looked like without resolving the cascade by hand. What follows is
+   that resolution, written once.
+
+   The deletions that mattered for frame rate, and why they must stay deleted:
+
+   - **`filter: drop-shadow()` on `.loader-film-model`.** The model is
+     `max(4000px, 500vw)` wide with 25 textured cells inside it. A drop-shadow
+     is not a paint effect — it renders the entire subtree to an offscreen
+     texture, derives an alpha mask, blurs it, and composites twice. Every
+     frame, for the whole eight-second rewind, and then again at every step of
+     the zoom. It is replaced by an outer `box-shadow` on `.loader-film-body`,
+     which looks the same on a strip this size and costs the compositor
+     nothing.
+   - **`transform-style: preserve-3d` + `perspective(1800px)`** on the model,
+     with `translateZ` on five descendants. The model's own rotation had
+     already been tuned to `rotateX(0) rotateY(0) rotateZ(0)` — a literal
+     identity — so the 3D context was buying at most a 1.3% perspective scale
+     on the deepest child, in exchange for putting a 9,500px subtree into a 3D
+     rendering context and disabling the compositor's fast paths for all of it.
+   - **`filter: blur(18px)`** on `.loader-film-flex-shadow`, which is a radial
+     gradient. Gradients are already soft; the blur was softening softness.
+   - **`filter: blur(0.8px)` / `blur(0.2px)` / `blur(0.15px)`** on the body
+     streaks, the scratches and the scanlines. Sub-pixel blurs: too small to
+     see, but each one forces its element onto its own filter layer.
+   - **Two `drop-shadow()`s on `.loader-film-sprockets`** — a 1px-tall
+     repeating gradient running the full 9,500px, filtered twice, top and
+     bottom.
+   - **`will-change: transform` on `.loader-film-cells`**, whose transform is
+     overridden to `none` inline by FilmTape. A promise to animate something
+     that never animates is a permanently-held compositor layer for nothing.
+   - **`.loader-film-body`'s 15-point `clip-path: polygon()`** — already
+     overridden to `none` sixty lines later.
+   - **Every `.is-active` rule.** `FilmTape` is rendered as `<FilmTape />` with
+     no props, so `activeFrame` is always `undefined` and `isActive` is always
+     false. Those rules had never rendered a pixel. Same for the four media
+     queries: each was outranked by a later same-specificity rule outside the
+     query, so none of them applied at any viewport.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── atmosphere ──────────────────────────────────────────────────────────── */
+
 .preloader-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 2;
   background:
     radial-gradient(circle at 50% 42%, transparent 0 42%, rgba(0, 0, 0, 0.28) 68%, rgba(0, 0, 0, 0.72) 100%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 24%, rgba(0, 0, 0, 0.3));
-  z-index: 2;
 }
 
+/* NOT animated, and not filtered. The 0.5s `analog-roll` that used to live
+   here repainted a full-screen repeating gradient AND re-blended it against
+   everything under it, twice a second, forever. The `blur(0.15px)
+   brightness(0.82)` that replaced it was almost as bad for almost no reason —
+   a sub-pixel blur is invisible, and the brightness is folded into the colour
+   below (0.032 × 0.82 ≈ 0.026). A scanline field that holds still reads the
+   same in a still frame and costs nothing after the first paint. */
 .preloader-scanlines {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 4;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.05) 0,
-      rgba(255, 255, 255, 0.05) 1px,
-      transparent 1px,
-      transparent 5px
-    );
-  mix-blend-mode: soft-light;
-  /* NOT animated. The 0.5s `analog-roll` that used to live here repainted a
-     full-screen repeating gradient AND re-blended it against everything under
-     it, twice a second, forever — during the exact stretch of startup where
-     the film strip is animating and the wall textures are being built. A
-     scanline field that holds still reads the same in a still frame and costs
-     nothing after the first paint. */
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(214, 238, 202, 0.026) 0,
+    rgba(214, 238, 202, 0.026) 1px,
+    transparent 1px,
+    transparent 7px
+  );
+  mix-blend-mode: screen;
 }
 
+/* Loader CRT tint: slight 90s green over aged white. */
+.loader-crt-green-wash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(226, 255, 215, 0.075), transparent 43%),
+    linear-gradient(180deg, rgba(230, 255, 218, 0.045), transparent 34%, rgba(150, 210, 145, 0.035));
+  mix-blend-mode: screen;
+  opacity: 0.82;
+}
 
+/* Subtle analog projector beam, so the negative space around the strip has
+   depth instead of being flat black. The lamp flicker layer that used to sit
+   on top of this is gone, element and all: a full-screen `mix-blend-mode:
+   screen` gradient at 0.038 alpha whose only job was to change opacity twelve
+   times a second, forever, forcing a full re-blend of the loader against its
+   backdrop each time. Maximum per-frame cost, near-zero pixels of difference. */
+.loader-projector-beam {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 47%, rgba(245, 230, 210, 0.05) 0%, rgba(230, 205, 175, 0.02) 38%, transparent 68%),
+    linear-gradient(180deg, rgba(16, 13, 10, 0.55) 0%, transparent 28%, transparent 72%, rgba(10, 8, 7, 0.65) 100%);
+}
 
+/* ── the film stock ──────────────────────────────────────────────────────── */
 
+/* `--rewind` (0 → 1) is written from Preloader.tsx onto the tape wrapper and
+   inherits down. It is the ONLY per-frame custom property here; everything
+   that reacts to the rewind reads it. */
 .loader-film-model {
   --rewind: 0;
-  --reel: 0;
   position: relative;
   width: 100%;
   height: 100%;
-  transform-style: preserve-3d;
-  transform: perspective(1300px) rotateX(4deg) rotateY(calc(var(--rewind) * -3deg));
-  filter: drop-shadow(0 34px 48px rgba(0, 0, 0, 0.82));
 }
 
-.loader-film-body,
-.loader-film-depth {
+.loader-film-flex-shadow {
   position: absolute;
-  inset: 0;
-  border-radius: clamp(5px, 0.7vw, 10px);
+  left: 1%;
+  right: 1%;
+  bottom: -18%;
+  height: 34%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.72), transparent 68%);
+  transform: scaleY(calc(0.75 + var(--rewind) * 0.32));
+  will-change: transform;
+  pointer-events: none;
+}
+
+.loader-film-thin-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 7;
+  height: clamp(4px, 0.38vw, 7px);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #070707, #2a2a2a 12%, #050505 26%, #343434 50%, #050505 72%, #242424 88%, #070707);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.loader-film-thin-edge-back {
+  top: 17.8%;
+  transform: translateY(calc(var(--rewind) * -2px));
+}
+
+.loader-film-thin-edge-front {
+  bottom: 17.8%;
+  transform: translateY(calc(var(--rewind) * 2px));
 }
 
 .loader-film-body {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
+  border: clamp(8px, 0.82vw, 13px) solid #050505;
+  border-radius: clamp(8px, 0.8vw, 14px);
   background:
-    linear-gradient(180deg, #111 0 18%, #050505 19% 81%, #161616 82% 100%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 12px);
-  border: clamp(10px, 1.2vw, 17px) solid #050505;
+    linear-gradient(180deg, #141414 0 18%, #020202 18.4% 81.6%, #151515 82% 100%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 8px);
+  /* The last entry is the strip's cast shadow. It was a `drop-shadow()` filter
+     on the model until it turned out to be the most expensive declaration in
+     the file — see the header. On a strip this wide the two are visually
+     indistinguishable, because all you ever see of either is the soft band
+     above and below the stock. */
   box-shadow:
-    inset 0 0 22px rgba(255, 255, 255, 0.05),
-    inset 0 -18px 36px rgba(0, 0, 0, 0.95),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
+    inset 0 0 18px rgba(255, 255, 255, 0.04),
+    inset 0 -16px 28px rgba(0, 0, 0, 0.96),
+    inset 0 14px 24px rgba(255, 255, 255, 0.03),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 32px 46px rgba(0, 0, 0, 0.92);
 }
 
-.loader-film-body::before {
+/* Gate streaks — light dragging along the stock as it rewinds. There used to
+   be two of these, `::before` and `::after`, layered over each other doing the
+   same job with different numbers; the survivor is the one whose values won. */
+.loader-film-body::after {
   content: '';
   position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: 8;
   pointer-events: none;
-  opacity: calc(0.18 + var(--rewind) * 0.42);
+  opacity: calc(0.07 + var(--rewind) * 0.11);
   background:
-    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent 24%),
-    repeating-linear-gradient(0deg, transparent 0 9px, rgba(255, 255, 255, 0.08) 10px, transparent 12px);
-  transform: translateX(calc(var(--rewind) * -18%));
-  filter: blur(1.4px);
+    linear-gradient(90deg, transparent 0 17%, rgba(255, 255, 255, 0.042) 24%, transparent 32% 55%, rgba(255, 255, 255, 0.03) 63%, transparent 73% 86%, rgba(255, 255, 255, 0.026) 91%, transparent 97%),
+    repeating-linear-gradient(0deg, transparent 0 18px, rgba(255, 255, 255, 0.012) 19px, transparent 21px);
+  transform: translateX(calc(var(--rewind) * -12%));
+  will-change: transform, opacity;
+}
+
+.loader-film-base-texture {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.34;
+  background:
+    radial-gradient(circle at 9% 44%, rgba(255, 255, 255, 0.08), transparent 8%),
+    radial-gradient(circle at 43% 32%, rgba(255, 255, 255, 0.06), transparent 9%),
+    radial-gradient(circle at 78% 58%, rgba(255, 255, 255, 0.06), transparent 10%),
+    repeating-linear-gradient(96deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 8px);
+  mix-blend-mode: screen;
 }
 
 .loader-film-edge {
@@ -150,8 +281,10 @@ body {
   left: 0;
   right: 0;
   z-index: 1;
-  height: 18%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 52%, rgba(0, 0, 0, 0.86));
+  height: 20.5%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 40%, rgba(0, 0, 0, 0.92)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 7px);
 }
 
 .loader-film-edge-top { top: 0; }
@@ -159,24 +292,24 @@ body {
 
 .loader-film-sprockets {
   position: absolute;
-  left: 1.2%;
-  right: 1.2%;
+  left: 0.85%;
+  right: 0.85%;
   z-index: 3;
-  height: clamp(10px, 1.25vw, 16px);
+  height: clamp(9px, 0.78vw, 14px);
+  opacity: 0.92;
   background-image: repeating-linear-gradient(
     90deg,
     transparent 0,
-    transparent clamp(13px, 1.75vw, 22px),
-    #d8d4cb clamp(13px, 1.75vw, 22px),
-    #d8d4cb clamp(22px, 2.55vw, 34px),
-    transparent clamp(22px, 2.55vw, 34px),
-    transparent clamp(38px, 4.1vw, 54px)
+    transparent clamp(11px, 1vw, 18px),
+    #c5c1b8 clamp(11px, 1vw, 18px),
+    #c5c1b8 clamp(20px, 1.65vw, 29px),
+    transparent clamp(20px, 1.65vw, 29px),
+    transparent clamp(34px, 2.55vw, 45px)
   );
-  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.18)) drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.8));
 }
 
-.loader-film-sprockets-top { top: 4.3%; }
-.loader-film-sprockets-bottom { bottom: 4.3%; }
+.loader-film-sprockets-top { top: 4.8%; }
+.loader-film-sprockets-bottom { bottom: 4.8%; }
 
 .loader-film-soundtrack {
   position: absolute;
@@ -185,6 +318,7 @@ body {
   left: 0.8%;
   width: 0.9%;
   z-index: 3;
+  opacity: 0.82;
   background: repeating-linear-gradient(
     180deg,
     #d4cfc4 0px,
@@ -196,158 +330,15 @@ body {
     transparent 7px,
     transparent 11px
   );
-  opacity: 0.82;
-  filter: drop-shadow(1px 0 1px rgba(0, 0, 0, 0.85));
 }
-
-.loader-film-cells {
-  position: absolute;
-  inset: 23% 2.2% 23%;
-  z-index: 2;
-  display: grid;
-  gap: clamp(7px, 1vw, 14px);
-}
-
-.loader-film-cell {
-  position: relative;
-  overflow: hidden;
-  border-radius: 4px;
-  background: #b9b3a8;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
-    inset 0 0 28px rgba(0, 0, 0, 0.52),
-    0 0 0 3px #040404;
-}
-
-.loader-film-cell-exposure {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 28%, rgba(255, 255, 255, 0.28), transparent 30%),
-    linear-gradient(135deg, #aaa69d 0%, #e6ded0 43%, #827d75 100%);
-  opacity: 0.86;
-}
-
-.loader-film-cell-noise {
-  position: absolute;
-  inset: 0;
-  opacity: 0.48;
-  background:
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 16px),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 12px);
-}
-
-.loader-film-year {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(12, 12, 12, 0.86);
-  font-size: clamp(1.2rem, 3.2vw, 4.2rem);
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  text-shadow: 0 0 7px rgba(0, 0, 0, 0.28), 1px 1px 0 rgba(255, 255, 255, 0.18);
-  transform: translateZ(24px) skewX(calc(var(--rewind) * -4deg));
-  mix-blend-mode: multiply;
-}
-
-.loader-film-year-x {
-  align-self: flex-start;
-  margin-top: 14%;
-  margin-left: 0.04em;
-  font-size: 0.22em;
-  opacity: 0.8;
-  filter: blur(0.15px);
-}
-
-.loader-film-gate-shadow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.48), inset 8px 0 16px rgba(0, 0, 0, 0.3);
-}
-
-
-
-
-
-@media (max-width: 720px) {
-  .loader-film-cells {
-    grid-template-columns: repeat(5, minmax(86px, 1fr));
-  }
-}
-
-
-/* Film tape refinement: full-strip realistic stock, not a single-cell gimmick. */
-.loader-film-model {
-  width: 100%;
-  height: 100%;
-  transform: perspective(1500px) rotateX(4deg) rotateY(calc(var(--rewind) * -3deg));
-  filter: drop-shadow(0 42px 58px rgba(0, 0, 0, 0.9));
-}
-
-.loader-film-body {
-  border-width: clamp(12px, 1.35vw, 19px);
-  background:
-    linear-gradient(180deg, #171717 0 17%, #030303 17.5% 82.5%, #181818 83% 100%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 10px);
-  box-shadow:
-    inset 0 0 28px rgba(255, 255, 255, 0.045),
-    inset 0 -24px 42px rgba(0, 0, 0, 0.96),
-    inset 0 18px 34px rgba(255, 255, 255, 0.035),
-    0 0 0 1px rgba(255, 255, 255, 0.065);
-}
-
-.loader-film-base-texture {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.36;
-  background:
-    radial-gradient(circle at 11% 46%, rgba(255, 255, 255, 0.08), transparent 12%),
-    radial-gradient(circle at 71% 30%, rgba(255, 255, 255, 0.06), transparent 10%),
-    repeating-linear-gradient(94deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 18px),
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.2) 0 1px, transparent 1px 9px);
-  mix-blend-mode: screen;
-}
-
-.loader-film-edge {
-  height: 20.5%;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 40%, rgba(0, 0, 0, 0.92)),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 7px);
-}
-
-.loader-film-sprockets {
-  left: 0.85%;
-  right: 0.85%;
-  height: clamp(11px, 1.2vw, 17px);
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent 0,
-    transparent clamp(12px, 1.5vw, 22px),
-    #c6c2ba clamp(12px, 1.5vw, 22px),
-    #c6c2ba clamp(22px, 2.35vw, 33px),
-    transparent clamp(22px, 2.35vw, 33px),
-    transparent clamp(38px, 3.7vw, 54px)
-  );
-  opacity: 0.92;
-  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.18)) drop-shadow(0 -2px 1px rgba(0, 0, 0, 0.9));
-}
-
-.loader-film-sprockets-top { top: 4.8%; }
-.loader-film-sprockets-bottom { bottom: 4.8%; }
 
 .loader-film-code {
   position: absolute;
-  left: 3.2%;
-  right: 3.2%;
+  left: 2.1%;
+  right: 2.1%;
   z-index: 5;
-  color: rgba(217, 213, 199, 0.38);
-  font-size: clamp(0.34rem, 0.58vw, 0.62rem);
+  color: rgba(217, 213, 199, 0.32);
+  font-size: clamp(0.3rem, 0.42vw, 0.5rem);
   letter-spacing: 0.26em;
   line-height: 1;
   text-transform: uppercase;
@@ -359,19 +350,27 @@ body {
 .loader-film-code-top { top: 3.8%; }
 .loader-film-code-bottom { bottom: 3.7%; text-align: right; }
 
+/* ── cells ───────────────────────────────────────────────────────────────── */
+
+/* Layout (display, gap, width, `transform: none`) is set inline by FilmTape —
+   see the centring maths in Preloader.tsx, which depends on the exact flex
+   geometry. Only the framing lives here. */
 .loader-film-cells {
-  inset: 23.5% 1.75% 23.5%;
-  gap: clamp(6px, 0.8vw, 12px);
+  position: absolute;
+  inset: 24% 1.15% 24%;
+  z-index: 2;
 }
 
 .loader-film-cell {
-  border-radius: clamp(3px, 0.35vw, 5px);
+  position: relative;
+  overflow: hidden;
+  border-radius: clamp(3px, 0.24vw, 5px);
   background: #918c83;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-    inset 0 0 34px rgba(0, 0, 0, 0.62),
-    0 0 0 3px #020202,
-    0 9px 14px rgba(0, 0, 0, 0.42);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.17),
+    inset 0 0 28px rgba(0, 0, 0, 0.66),
+    0 0 0 2px #020202,
+    0 7px 12px rgba(0, 0, 0, 0.46);
 }
 
 .loader-film-cell::before {
@@ -385,35 +384,30 @@ body {
     linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 22% 78%, rgba(0, 0, 0, 0.36));
 }
 
-.loader-film-cell.is-active {
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
-    inset 0 0 26px rgba(0, 0, 0, 0.54),
-    0 0 0 3px #020202,
-    0 0 24px rgba(255, 255, 255, 0.08),
-    0 12px 18px rgba(0, 0, 0, 0.5);
-}
-
 .loader-film-cell-exposure {
+  position: absolute;
+  inset: 0;
+  opacity: 0.72;
   background:
-    radial-gradient(circle at 18% 25%, rgba(255, 255, 255, 0.32), transparent 24%),
-    radial-gradient(circle at 84% 68%, rgba(0, 0, 0, 0.2), transparent 28%),
-    linear-gradient(135deg, #7c776e 0%, #d8d0c1 41%, #756f66 100%);
-  opacity: 0.78;
+    radial-gradient(circle at 18% 25%, rgba(255, 255, 255, 0.28), transparent 23%),
+    radial-gradient(circle at 84% 68%, rgba(0, 0, 0, 0.24), transparent 31%),
+    linear-gradient(135deg, #6f6b63 0%, #cfc6b5 40%, #69635b 100%);
 }
 
 .loader-film-cell-halation {
   position: absolute;
   inset: 0;
+  opacity: 0.42;
   background:
     radial-gradient(circle at 46% 46%, rgba(245, 238, 218, 0.2), transparent 42%),
     linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 22% 76%, rgba(0, 0, 0, 0.16));
   mix-blend-mode: screen;
-  opacity: 0.42;
 }
 
 .loader-film-cell-noise {
-  opacity: 0.38;
+  position: absolute;
+  inset: 0;
+  opacity: 0.28;
   background:
     repeating-linear-gradient(92deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 15px),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.09) 0 1px, transparent 1px 12px),
@@ -437,24 +431,34 @@ body {
 .loader-film-frame-code-left { left: 4%; }
 .loader-film-frame-code-right { right: 4%; transform: rotate(180deg); }
 
+/* The blur is the look — printed type on old stock, slightly out of the
+   projector's focal plane. It survived the cull because unlike the sub-pixel
+   blurs elsewhere it is doing visible work, and it is doing it on a handful of
+   short text runs rather than on the full 9,500px strip. */
 .loader-film-year {
+  position: absolute;
+  inset: 0;
   z-index: 3;
-  color: rgba(8, 8, 8, 0.82);
-  font-size: clamp(1rem, 2.35vw, 3.2rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(9, 9, 9, 0.84);
+  font-size: clamp(0.92rem, 1.45vw, 2.28rem);
+  font-weight: 900;
   letter-spacing: 0.015em;
-  filter: blur(2px) contrast(0.94);
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.34), 1px 1px 0 rgba(255, 255, 255, 0.14);
-}
-
-.loader-film-cell.is-active .loader-film-year {
-  filter: blur(1px) contrast(0.95);
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.28), 1px 1px 0 rgba(255, 255, 255, 0.18);
+  opacity: 0.68;
+  filter: blur(2.15px) contrast(0.92);
+  transform: skewX(calc(var(--rewind) * -4deg));
+  mix-blend-mode: multiply;
 }
 
 .loader-film-year-opening {
-  font-size: clamp(1.35rem, 3.1vw, 4.8rem);
+  font-size: clamp(1.18rem, 2.15vw, 3.85rem);
   font-weight: 950;
   letter-spacing: -0.02em;
-  transform: translateZ(26px) skewX(calc(var(--rewind) * -3deg)) scale(1.06);
+  transform: skewX(calc(var(--rewind) * -3deg)) scale(1.08);
 }
 
 .loader-film-year-x {
@@ -463,10 +467,12 @@ body {
   margin-left: 0.03em;
   font-size: 0.24em;
   opacity: 0.62;
-  filter: blur(0.8px);
 }
 
 .loader-film-gate-shadow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   box-shadow:
     inset 0 0 38px rgba(0, 0, 0, 0.55),
     inset 9px 0 16px rgba(0, 0, 0, 0.34),
@@ -481,435 +487,55 @@ body {
   width: 1px;
   pointer-events: none;
   background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.28), transparent 68%);
-  opacity: calc(0.18 + var(--rewind) * 0.28);
-  filter: blur(0.2px);
-}
-
-.loader-film-scratch-a { left: 31%; }
-.loader-film-scratch-b { left: 68%; opacity: calc(0.1 + var(--rewind) * 0.2); }
-
-@media (max-width: 720px) {
-  .loader-film-model {
-    aspect-ratio: 5.4 / 1;
-  }
-
-  .loader-film-cells {
-    grid-template-columns: repeat(7, minmax(74px, 1fr));
-    gap: 7px;
-  }
-
-  .loader-film-year-opening {
-    font-size: clamp(1.4rem, 9vw, 3.6rem);
-  }
-
-  .loader-film-code {
-    font-size: 0.34rem;
-  }
-}
-
-/* Film tape v3: longer, thinner, flexible, and scroll-rewind oriented. */
-.loader-film-model {
-  aspect-ratio: 14.4 / 1;
-  transform:
-    perspective(1800px)
-    rotateX(calc(6deg + var(--rewind) * 2deg))
-    rotateY(calc(var(--rewind) * -3.5deg))
-    rotateZ(calc(var(--rewind) * -0.7deg));
-  transform-style: preserve-3d;
-  filter: drop-shadow(0 34px 46px rgba(0, 0, 0, 0.92));
-  will-change: transform;
-  backface-visibility: hidden;
-}
-
-.loader-film-flex-shadow {
-  position: absolute;
-  left: 1%;
-  right: 1%;
-  bottom: -18%;
-  height: 34%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.72), transparent 68%);
-  filter: blur(18px);
-  transform: translateZ(-70px) scaleY(calc(0.75 + var(--rewind) * 0.32));
-  pointer-events: none;
-  will-change: transform;
-}
-
-.loader-film-thin-edge {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: clamp(4px, 0.38vw, 7px);
-  z-index: 7;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #070707, #2a2a2a 12%, #050505 26%, #343434 50%, #050505 72%, #242424 88%, #070707);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(255, 255, 255, 0.12);
-  pointer-events: none;
-}
-
-.loader-film-thin-edge-back {
-  top: 17.8%;
-  transform: translateZ(-16px) translateY(calc(var(--rewind) * -2px));
-  will-change: transform;
-}
-
-.loader-film-thin-edge-front {
-  bottom: 17.8%;
-  transform: translateZ(28px) translateY(calc(var(--rewind) * 2px));
-  will-change: transform;
-}
-
-.loader-film-body {
-  overflow: hidden;
-  border-width: clamp(8px, 0.82vw, 13px);
-  border-radius: clamp(8px, 0.8vw, 14px);
-  background:
-    linear-gradient(180deg, #141414 0 18%, #020202 18.4% 81.6%, #151515 82% 100%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 8px);
-  box-shadow:
-    inset 0 0 18px rgba(255, 255, 255, 0.04),
-    inset 0 -16px 28px rgba(0, 0, 0, 0.96),
-    inset 0 14px 24px rgba(255, 255, 255, 0.03),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
-  transform: translateZ(6px) rotateX(calc(var(--rewind) * 1.6deg));
-  will-change: transform;
-  clip-path: polygon(
-    0 9%,
-    8% 8.5%,
-    20% 10%,
-    34% 7.4%,
-    51% 9%,
-    67% 10.7%,
-    82% 8%,
-    100% 9%,
-    100% 91%,
-    86% 91.4%,
-    70% 90%,
-    55% 92.5%,
-    38% 91%,
-    20% 89.4%,
-    0 91%
-  );
-}
-
-.loader-film-body::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 8;
-  pointer-events: none;
-  opacity: calc(0.14 + var(--rewind) * 0.25);
-  background:
-    linear-gradient(90deg, transparent 0 17%, rgba(255, 255, 255, 0.14) 19%, transparent 21% 48%, rgba(255, 255, 255, 0.09) 50%, transparent 52% 76%, rgba(255, 255, 255, 0.1) 78%, transparent 81%),
-    repeating-linear-gradient(0deg, transparent 0 8px, rgba(255, 255, 255, 0.07) 9px, transparent 11px);
-  filter: blur(0.8px);
-  transform: translateX(calc(var(--rewind) * -7%));
-}
-
-.loader-film-base-texture {
-  opacity: 0.48;
-  background:
-    radial-gradient(circle at 9% 44%, rgba(255, 255, 255, 0.08), transparent 8%),
-    radial-gradient(circle at 43% 32%, rgba(255, 255, 255, 0.06), transparent 9%),
-    radial-gradient(circle at 78% 58%, rgba(255, 255, 255, 0.06), transparent 10%),
-    repeating-linear-gradient(96deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 14px),
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 8px);
-}
-
-.loader-film-sprockets {
-  height: clamp(9px, 0.78vw, 14px);
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent 0,
-    transparent clamp(11px, 1vw, 18px),
-    #c5c1b8 clamp(11px, 1vw, 18px),
-    #c5c1b8 clamp(20px, 1.65vw, 29px),
-    transparent clamp(20px, 1.65vw, 29px),
-    transparent clamp(34px, 2.55vw, 45px)
-  );
-}
-
-.loader-film-cells {
-  inset: 24% 1.15% 24%;
-  grid-template-columns: repeat(14, minmax(0, 1fr));
-  gap: clamp(5px, 0.48vw, 9px);
-  transform: translateX(calc(var(--rewind) * -7.5%));
-  will-change: transform;
-}
-
-.loader-film-cell {
-  border-radius: clamp(3px, 0.24vw, 5px);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.17),
-    inset 0 0 28px rgba(0, 0, 0, 0.66),
-    0 0 0 2px #020202,
-    0 7px 12px rgba(0, 0, 0, 0.46);
-}
-
-.loader-film-cell-exposure {
-  background:
-    radial-gradient(circle at 18% 25%, rgba(255, 255, 255, 0.28), transparent 23%),
-    radial-gradient(circle at 84% 68%, rgba(0, 0, 0, 0.24), transparent 31%),
-    linear-gradient(135deg, #6f6b63 0%, #cfc6b5 40%, #69635b 100%);
-  opacity: 0.72;
-}
-
-.loader-film-code {
-  left: 2.1%;
-  right: 2.1%;
-  font-size: clamp(0.3rem, 0.42vw, 0.5rem);
-  color: rgba(217, 213, 199, 0.32);
-}
-
-.loader-film-year {
-  font-size: clamp(0.76rem, 1.2vw, 2rem);
-  color: rgba(7, 7, 7, 0.72);
-  filter: blur(2.6px) contrast(0.9);
-}
-
-.loader-film-cell.is-active .loader-film-year {
-  filter: blur(1.35px) contrast(0.92);
-}
-
-.loader-film-year-opening {
-  font-size: clamp(1rem, 1.9vw, 3.4rem);
-  transform: translateZ(24px) skewX(calc(var(--rewind) * -3deg)) scale(1.08);
+  opacity: calc(0.06 + var(--rewind) * 0.1);
 }
 
 .loader-film-scratch-a { left: 22%; }
 .loader-film-scratch-b { left: 49%; }
-.loader-film-scratch-c { left: 73%; opacity: calc(0.08 + var(--rewind) * 0.18); }
+.loader-film-scratch-c { left: 73%; }
 
-@media (max-width: 720px) {
-  .loader-film-model {
-    aspect-ratio: 8.2 / 1;
-  }
+/* ── the reveal portal ───────────────────────────────────────────────────── */
 
-  .loader-film-cells {
-    grid-template-columns: repeat(14, minmax(58px, 1fr));
-  }
-}
-
-.loader-film-year {
-  font-size: clamp(0.92rem, 1.45vw, 2.28rem);
-  color: rgba(9, 9, 9, 0.84);
-  opacity: 0.86;
-  filter: blur(1.65px) contrast(0.98);
-  text-shadow: 0 0 6px rgba(0, 0, 0, 0.28), 1px 1px 0 rgba(255, 255, 255, 0.18);
-}
-
-.loader-film-cell.is-active .loader-film-year {
-  opacity: 0.96;
-  filter: blur(0.95px) contrast(1);
-}
-
-.loader-film-year-opening {
-  font-size: clamp(1.18rem, 2.15vw, 3.85rem);
-  filter: blur(1.05px) contrast(0.98);
-}
-
-.loader-film-cell:not(.is-active) .loader-film-year {
-  opacity: 0.68;
-  filter: blur(2.15px) contrast(0.92);
-}
-
-.loader-film-cell.is-active .loader-film-frame-code {
-  color: rgba(13, 13, 13, 0.58);
-}
-
-.loader-film-model {
-  --pull-bend: calc(var(--rewind) * 1deg);
-}
-
-.loader-film-body::after {
-  opacity: calc(0.18 + var(--rewind) * 0.4);
-  background:
-    linear-gradient(90deg, transparent 0 10%, rgba(255, 255, 255, 0.18) 16%, transparent 22% 38%, rgba(255, 255, 255, 0.12) 43%, transparent 49% 64%, rgba(255, 255, 255, 0.16) 70%, transparent 78%),
-    repeating-linear-gradient(0deg, transparent 0 7px, rgba(255, 255, 255, 0.08) 8px, transparent 10px);
-  transform: translateX(calc(var(--rewind) * -12%));
-  will-change: transform, opacity;
-}
-
-
-
-.preloader-scanlines {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.01) 0,
-      rgba(255, 255, 255, 0.01) 1px,
-      transparent 1px,
-      transparent 11px
-    );
-}
-
-.loader-film-body::after {
-  opacity: calc(0.08 + var(--rewind) * 0.16);
-  background:
-    linear-gradient(90deg, transparent 0 14%, rgba(255, 255, 255, 0.06) 19%, transparent 25% 48%, rgba(255, 255, 255, 0.04) 54%, transparent 62% 76%, rgba(255, 255, 255, 0.045) 80%, transparent 86%),
-    repeating-linear-gradient(0deg, transparent 0 14px, rgba(255, 255, 255, 0.018) 15px, transparent 17px);
-  will-change: transform, opacity;
-}
-
-.preloader-scanlines {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.007) 0,
-      rgba(255, 255, 255, 0.007) 1px,
-      transparent 1px,
-      transparent 14px
-    );
-  filter: brightness(0.75);
-}
-
-.loader-film-model {
-  transform:
-    perspective(1800px)
-    rotateX(calc(5.2deg + var(--rewind) * 0.8deg))
-    rotateY(calc(var(--rewind) * -1.2deg))
-    rotateZ(calc(var(--rewind) * -0.22deg));
-}
-
-.loader-film-body::after {
-  opacity: calc(0.045 + var(--rewind) * 0.075);
-  background:
-    linear-gradient(90deg, transparent 0 18%, rgba(255, 255, 255, 0.026) 24%, transparent 31% 55%, rgba(255, 255, 255, 0.018) 62%, transparent 72% 86%, rgba(255, 255, 255, 0.014) 90%, transparent 96%),
-    repeating-linear-gradient(0deg, transparent 0 22px, rgba(255, 255, 255, 0.006) 23px, transparent 25px);
-}
-
-.loader-film-base-texture {
-  opacity: 0.28;
-}
-
-.loader-film-cell-noise {
-  opacity: 0.22;
-}
-
-.loader-film-scratch {
-  opacity: calc(0.045 + var(--rewind) * 0.08);
-}
-
-.loader-film-scratch-c {
-  opacity: calc(0.035 + var(--rewind) * 0.06);
-}
-
-.preloader-scanlines {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.012) 0,
-      rgba(255, 255, 255, 0.012) 1px,
-      transparent 1px,
-      transparent 11px
-    );
-  filter: brightness(0.9);
-}
-
-.loader-film-body::after {
-  opacity: calc(0.07 + var(--rewind) * 0.11);
-  background:
-    linear-gradient(90deg, transparent 0 17%, rgba(255, 255, 255, 0.042) 24%, transparent 32% 55%, rgba(255, 255, 255, 0.03) 63%, transparent 73% 86%, rgba(255, 255, 255, 0.026) 91%, transparent 97%),
-    repeating-linear-gradient(0deg, transparent 0 18px, rgba(255, 255, 255, 0.012) 19px, transparent 21px);
-}
-
-.loader-film-base-texture {
-  opacity: 0.34;
-}
-
-.loader-film-cell-noise {
-  opacity: 0.28;
-}
-
-.loader-film-scratch {
-  opacity: calc(0.06 + var(--rewind) * 0.1);
-}
-
-.preloader-scanlines {
-  mix-blend-mode: normal;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(190, 190, 180, 0.012) 0,
-      rgba(190, 190, 180, 0.012) 1px,
-      transparent 1px,
-      transparent 13px
-    );
-  filter: none;
-}
-
-.preloader-scanlines {
-  mix-blend-mode: screen;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(205, 205, 195, 0.026) 0,
-      rgba(205, 205, 195, 0.026) 1px,
-      transparent 1px,
-      transparent 7px
-    );
-  filter: blur(0.15px) brightness(0.82);
-}
-
-/* Loader CRT tint: slight 90s green over aged white. */
-.loader-crt-green-wash {
+/* How the loader hands over to the hero film.
+ *
+ * The old zoom scaled `.loader-film-model` — the whole 9,500px strip, 25
+ * textured cells, a 3D context and a drop-shadow — up by **18×**, and faded it
+ * out at the same time. There is no tuning that makes that smooth. The
+ * compositor has to re-rasterise the visible sliver of that subtree at
+ * eighteen times its authored resolution, every frame, while also re-blending
+ * ~40 `mix-blend-mode` layers inside it. That was the stutter.
+ *
+ * This replaces it. The portal is a fixed, full-viewport video that is already
+ * laid out at its final size and aspect from the first frame; the zoom is a
+ * `clip-path: inset()` window opening from the reveal cell's measured rect out
+ * to the viewport edges. Nothing is ever rasterised at a scale it was not
+ * authored at, there is exactly one element and one texture, and the only
+ * animated properties are `clip-path` and `opacity`.
+ *
+ * `contain: strict` is not decoration: it promises the browser that nothing
+ * inside can affect layout or paint outside, so the opening window never
+ * invalidates the loader behind it.
+ */
+.loader-reveal-portal {
   position: absolute;
   inset: 0;
-  z-index: 5;
+  z-index: 30;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 42%, rgba(226, 255, 215, 0.075), transparent 43%),
-    linear-gradient(180deg, rgba(230, 255, 218, 0.045), transparent 34%, rgba(150, 210, 145, 0.035));
-  mix-blend-mode: screen;
-  opacity: 0.82;
+  background: #000;
+  opacity: 0;
+  visibility: hidden;
+  contain: strict;
 }
 
-.preloader-scanlines {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(214, 238, 202, 0.032) 0,
-      rgba(214, 238, 202, 0.032) 1px,
-      transparent 1px,
-      transparent 7px
-    );
-}
-
-/* Loader VHS final modeling and staged brand reveal. */
-.loader-film-model {
-  aspect-ratio: 17 / 1;
-  transform: perspective(1800px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-}
-
-.loader-film-body {
-  clip-path: none;
-}
-
-@media (max-width: 720px) {
-  .loader-film-model {
-    aspect-ratio: 11.5 / 1;
-  }
-}
-
-/* ── Atmosphere & Negative Space Enhancements for Reviewer Feedback ── */
-
-/* Subtle analog cinema projector beam to give rich depth to background negative space */
-.loader-projector-beam {
+.loader-reveal-portal-video {
   position: absolute;
   inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 47%, rgba(245, 230, 210, 0.05) 0%, rgba(230, 205, 175, 0.02) 38%, transparent 68%),
-    linear-gradient(180deg, rgba(16, 13, 10, 0.55) 0%, transparent 28%, transparent 72%, rgba(10, 8, 7, 0.65) 100%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: 50% 50%;
+  will-change: transform;
 }
-
-/* The projector lamp flicker layer is gone, element and all.
-   It was a full-screen `mix-blend-mode: screen` gradient at 0.038 alpha whose
-   only job was to change opacity twelve times a second, forever. Every one of
-   those changes forced the compositor to re-blend the entire loader against
-   its backdrop. That is the definition of artificial noise: maximum per-frame
-   cost, near-zero pixels of difference. The lamp does not flicker any more. */
 
 /* ═══════════════════════════════════════════════════════════════
    90s MTV POSTER WALL — Events Section

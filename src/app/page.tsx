@@ -13,6 +13,9 @@ import TopNav from '@/components/layout/TopNav';
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [videoStarted, setVideoStarted] = useState(false);
+  const [videoPrimed, setVideoPrimed] = useState(false);
+
+  const handlePrimeHero = React.useCallback(() => setVideoPrimed(true), []);
 
   const handleStartTransition = React.useCallback(() => {
     window.scrollTo(0, 0);
@@ -28,6 +31,7 @@ export default function Home() {
     <div className="relative min-h-screen bg-[#0a0807] text-neutral-200">
       {loading && (
         <Preloader
+          onPrimeHero={handlePrimeHero}
           onStartTransition={handleStartTransition}
           onComplete={handleComplete}
         />
@@ -38,7 +42,7 @@ export default function Home() {
           unmounts, and the nav sits at z-100000 — above the loader's z-9999. */}
       <TopNav ready={!loading} />
       <main className="relative z-0">
-        <HeroVideoSection startPlaying={videoStarted} />
+        <HeroVideoSection startPlaying={videoStarted} primed={videoPrimed} />
         {/* The black title card the hero's iris closes onto, and whose letters
             open again as a window onto the turntable. Fixed and self-stacking
             (z 9996, between the hero at 9997 and the About pin at 9995), so its

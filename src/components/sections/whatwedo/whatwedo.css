@@ -201,6 +201,27 @@
   transform: rotateX(180deg);
 }
 
+/* THE SEAM. At progress 0 this face is scaled to cover the viewport and is
+   impersonating the About turntable you were looking at one frame earlier, so
+   its geometry has to agree with that section's to the pixel.
+
+   `cover` is correct here and must stay. The still is 1917×917 (2.0905:1) and
+   this box is 16:9, so `cover` fits it by HEIGHT and crops the sides — drawing
+   the deck 2.0905 / 1.7778 = 1.1759× larger than AboutSection's live 1600×900
+   stage draws it. That ratio is a constant at every viewport, so it is fixed
+   on the ABOUT side: `SEAM_MATCH` in AboutSection.tsx pushes the live deck in
+   by exactly 1.1759× over the tail of its scroll, and the two now meet.
+
+   Do not "fix" it back here. Aligning by width instead (`100% auto`) does make
+   the deck the right size, but the still only holds 85% of the stage's height,
+   so it lands 54px short top and bottom — and letterbox bands are not a seam
+   artifact you can hide, they sit on the album cover for the whole act. A
+   second stretched copy underneath to fill them was worse still: the still has
+   real structure near its edges, so the fill read as a ghosted duplicate of
+   the tonearm pivot and the knobs.
+
+   The only change that removes the constraint entirely is a 16:9 re-shoot of
+   the still. Until then the push-in is the answer. */
 .album-cover .cover-front {
   /* ImageKit rewrote the space in "image copy.png" to an underscore on upload. */
   background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/image_copy.png?tr=f-auto,q-auto');

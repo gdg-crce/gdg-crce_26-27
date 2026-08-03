@@ -18,7 +18,21 @@ const FilmTape = dynamic(() => import('../../../models/reactComponent/FilmTape')
 
 interface PreloaderProps {
   onComplete: () => void;
+  /** Play the hero film. Fired the instant the zoom-through begins. */
   onStartTransition?: () => void;
+  /**
+   * Decode the hero's first frame without playing it, ~2s ahead of the zoom.
+   *
+   * Split out from `onStartTransition` so the two jobs stop fighting. A cold
+   * `play()` can take 100ms+ to put a frame on screen, so waking the hero at
+   * the moment of handover risks a black flash; but waking it *early* meant it
+   * was already seconds into the film when the strip finally opened onto it,
+   * and the loader's own copy was somewhere else again — two clips of the same
+   * footage, cut together at two unrelated timestamps. That mismatch was the
+   * visible "glitch" at the end of the loader. Now the hero is primed here and
+   * every copy is restarted together at the zoom.
+   */
+  onPrimeHero?: () => void;
 }
 
 type FilmFrame = '2020s' | '90s' | '80s' | '70s';
@@ -59,7 +73,20 @@ const TRANSLATE_END = 0.75;
 const HOLD_FRAME21_END = 0.88;
 const REVEAL_END = 1.0;
 
-export default function Preloader({ onComplete, onStartTransition }: PreloaderProps) {
+/**
+ * How hard the film strip itself flies at the camera during the zoom-through,
+ * and how much of the zoom it survives. The two are coupled on purpose — see
+ * the `filmWrapRef` block in `applyFrame`.
+ *
+ * 2.6 is a budget, not a taste. The strip is `max(4000px, 500vw)` wide, so its
+ * layer is ~17k px across at this scale; Chrome tiles that and only rasterises
+ * the tiles the viewport touches. The 18× this replaced put the layer past
+ * 115k px, which is where tiling stops saving you.
+ */
+const STRIP_SCALE = 2.6;
+const STRIP_FADE = 0.5;
+
+export default function Preloader({ onComplete, onStartTransition, onPrimeHero }: PreloaderProps) {
   const [completed, setCompleted] = useState(false);
   const [assetsReady, setAssetsReady] = useState(false);
 
@@ -72,6 +99,10 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   const hudEraRef = useRef<HTMLSpanElement | null>(null);
   const bgLayersRef = useRef<HTMLDivElement | null>(null);
+  const portalRef = useRef<HTMLDivElement | null>(null);
+  const portalVideoRef = useRef<HTMLVideoElement | null>(null);
+  /** The reveal cell's screen rect, measured once during the hold. */
+  const revealRectRef = useRef<DOMRect | null>(null);
 
   // Preload intro video + all 7 preloader event images
   useEffect(() => {
@@ -118,11 +149,13 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
 
   const onStartTransitionRef = useRef(onStartTransition);
   const onCompleteRef = useRef(onComplete);
+  const onPrimeHeroRef = useRef(onPrimeHero);
 
   useEffect(() => {
     onStartTransitionRef.current = onStartTransition;
     onCompleteRef.current = onComplete;
-  }, [onStartTransition, onComplete]);
+    onPrimeHeroRef.current = onPrimeHero;
+  }, [onStartTransition, onComplete, onPrimeHero]);
 
   const complete = useCallback(() => {
     if (completedRef.current) return;
@@ -142,7 +175,13 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
     document.body.style.overflow = 'hidden';
 
     const animObj = { val: 0 };
-    let heroWoken = false;
+    let heroPrimed = false;
+    let zoomStarted = false;
+    let cellVideoParked = false;
+
+    /** The loader's copy of the film, living inside the strip's reveal cell. */
+    const cellVideo = () =>
+      filmWrapRef.current?.querySelector<HTMLVideoElement>('.loader-film-cell-reveal video') ?? null;
 
     const tl = gsap.timeline({
       onUpdate: () => {
@@ -227,38 +266,135 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
       const currentFraction = fStart + slideP * (fReveal - fStart);
       const stripX = (0.50 - currentFraction) * 100; // translateX in % of strip width
 
-      // Phase B (HOLD_FRAME21_END -> REVEAL_END): Zoom dead-centered Reveal Window outwards into full screen
-      const zoomP = clamp((p - HOLD_FRAME21_END) / (REVEAL_END - HOLD_FRAME21_END));
-      const easedZoom = zoomP * zoomP * (3 - 2 * zoomP);
-      const zoomScale = 1 + easedZoom * 18;
-
       if (filmTapeInnerRef.current) {
         filmTapeInnerRef.current.style.transform = `translate3d(${stripX}%, 0, 0)`;
         filmTapeInnerRef.current.style.setProperty('--rewind', String(rewind));
       }
 
+      // Measure the reveal cell exactly once, during the hold. This is the only
+      // layout read in the whole timeline, and it is taken in the one stretch
+      // where nothing on screen is moving — so it costs a frame nobody can see.
+      if (!revealRectRef.current && p >= TRANSLATE_END) {
+        const cell = filmWrapRef.current?.querySelector('.loader-film-cell-reveal');
+        const r = cell?.getBoundingClientRect();
+        if (r && r.width > 1 && r.height > 1) revealRectRef.current = r;
+      }
+
+      // Prime the hero's decoder while the strip is still holding, so `play()`
+      // at the zoom is instant rather than a cold start. It stays PAUSED on its
+      // first frame until the handover below.
+      if (!heroPrimed && p > 0.55) {
+        heroPrimed = true;
+        onPrimeHeroRef.current?.();
+      }
+
+      // ── Phase B: the zoom-through ─────────────────────────────────────────
+      // Nothing is scaled 18× any more. The strip drifts forward a little and
+      // fades; the reveal is a clip-path window opening out of the cell's
+      // measured rect. See `.loader-reveal-portal` in globals.css for why.
+      const zoomP = clamp((p - HOLD_FRAME21_END) / (REVEAL_END - HOLD_FRAME21_END));
+      const eased = zoomP * zoomP * (3 - 2 * zoomP);
+
+      if (zoomP > 0 && !zoomStarted) {
+        zoomStarted = true;
+        // Every copy of the film restarts on this one tick — the loader's cell,
+        // the portal, and the hero. That is what makes the handover invisible:
+        // three elements showing frame 0 of the same file at the same instant.
+        // It is also the replay the strip has been promising, since the cell
+        // only ever showed a cropped sliver of the frame.
+        for (const v of [cellVideo(), portalVideoRef.current]) {
+          if (!v) continue;
+          try {
+            v.currentTime = 0;
+          } catch {}
+          v.play().catch(() => {});
+        }
+        onStartTransitionRef.current?.();
+      }
+
+      // Once the portal is opaque it fully covers the cell, so the loader's
+      // copy is painting nothing and only costs a decoder. Park it.
+      if (!cellVideoParked && zoomP > 0.16) {
+        cellVideoParked = true;
+        cellVideo()?.pause();
+      }
+
+      applyPortal(zoomP, eased);
+
       if (filmWrapRef.current) {
-        filmWrapRef.current.style.transform = `translate3d(-50%, -50%, 0) scale(${zoomScale})`;
-        filmWrapRef.current.style.opacity = String(1 - clamp(easedZoom / 0.45));
+        // The strip flies at you too, so the shot reads as going INTO the film
+        // rather than as a window opening in front of a still one.
+        //
+        // Every bit of that growth is growth you can see, which is the whole
+        // trick: the scale is driven by `min(eased, STRIP_FADE)` rather than by
+        // `eased`, so it reaches its maximum at the exact frame the strip
+        // becomes invisible and stops there. Scaling on past that would be
+        // rasterising a 6,400px-wide subtree at ever-larger sizes to show
+        // nobody anything — which, at 18×, is what the original zoom did.
+        const fade = clamp(eased / STRIP_FADE);
+        const grow = Math.min(eased, STRIP_FADE);
+        filmWrapRef.current.style.transform =
+          `translate3d(-50%, -50%, 0) scale(${(1 + grow * (STRIP_SCALE - 1) / STRIP_FADE).toFixed(4)})`;
+        filmWrapRef.current.style.opacity = (1 - fade).toFixed(4);
+        // Fully transparent is still fully composited. Take it out of the tree.
+        filmWrapRef.current.style.visibility = fade >= 1 ? 'hidden' : 'visible';
       }
 
       if (bgLayersRef.current) {
-        bgLayersRef.current.style.opacity = String(1 - clamp(easedZoom / 0.45));
+        bgLayersRef.current.style.opacity = (1 - clamp(eased / 0.55)).toFixed(4);
       }
 
       if (progressBarRef.current) {
         progressBarRef.current.style.width = `${p * 100}%`;
       }
+    }
 
+    /** Open the reveal window from the cell's rect out to the viewport edges. */
+    function applyPortal(zoomP: number, eased: number) {
+      const portal = portalRef.current;
+      if (!portal) return;
 
+      if (zoomP <= 0) {
+        portal.style.visibility = 'hidden';
+        portal.style.opacity = '0';
+        return;
+      }
 
-      // Wake the hero video earlier so it has the full hold + zoom duration
-      // (~2.2s) to buffer and decode its first frame before the preloader
-      // exits. Previously it woke at 0.75 (TRANSLATE_END) which left only
-      // the 0.7s zoom + 120ms timeout — too little for a cold start.
-      if (!heroWoken && p > 0.60) {
-        heroWoken = true;
-        onStartTransitionRef.current?.();
+      portal.style.visibility = 'visible';
+      // Fast, and while the window is still cell-sized — by the time it is big
+      // enough to read, the crossfade with the strip is long over.
+      portal.style.opacity = clamp(zoomP / 0.1).toFixed(4);
+
+      const r = revealRectRef.current;
+      if (!r) {
+        // Measurement never landed (a zero-sized viewport, a hidden tab). Fall
+        // back to a straight fade rather than clipping against garbage.
+        portal.style.clipPath = 'none';
+        return;
+      }
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const k = 1 - eased;
+
+      portal.style.clipPath =
+        `inset(${(r.top * k).toFixed(1)}px ${((vw - r.right) * k).toFixed(1)}px ` +
+        `${((vh - r.bottom) * k).toFixed(1)}px ${(r.left * k).toFixed(1)}px ` +
+        `round ${(5 * k).toFixed(1)}px)`;
+
+      // The window is a clip, not a resize — so on its own it would open on a
+      // tiny centre crop of a full-size frame and pull back to reveal the rest.
+      // That is a zoom OUT, and the opposite of the shot. The video is shrunk
+      // to the cell's size to start with, so the content inside the window at
+      // zoomP 0 is the whole frame at exactly the size the cell was showing it,
+      // and it grows to full screen with the window.
+      //
+      // `max` rather than `min`: the video must cover the window at every step,
+      // the same rule `object-fit: cover` follows inside the cell itself.
+      const video = portalVideoRef.current;
+      if (video) {
+        const fit = Math.max(r.width / vw, r.height / vh);
+        video.style.transform = `scale(${(fit + (1 - fit) * eased).toFixed(4)})`;
       }
     }
 
@@ -369,6 +505,23 @@ export default function Preloader({ onComplete, onStartTransition }: PreloaderPr
               >
                 <FilmTape />
               </div>
+            </div>
+
+            {/* The reveal portal: the hero film at its final size and aspect
+                from the first frame, with a clip-path window opening out of
+                the strip's reveal cell. Same local url as the cell and the
+                hero, so it is still one download for all three. */}
+            <div ref={portalRef} className="loader-reveal-portal" aria-hidden="true">
+              <video
+                ref={portalVideoRef}
+                className="loader-reveal-portal-video"
+                src={HERO_VIDEO_SRC}
+                preload="auto"
+                muted
+                playsInline
+                disablePictureInPicture
+                disableRemotePlayback
+              />
             </div>
 
             <div className="absolute bottom-7 left-1/2 h-px w-[min(360px,66vw)] -translate-x-1/2 overflow-hidden rounded-full bg-white/10">

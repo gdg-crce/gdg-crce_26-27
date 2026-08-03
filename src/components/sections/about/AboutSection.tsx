@@ -22,6 +22,34 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
    has to follow (the disc/label rects are hard-coded there). */
 const STAGE_W = 1600;
 const STAGE_H = 900;
+
+/**
+ * How much the deck pushes in over the tail of this act, and why the number is
+ * not a taste decision.
+ *
+ * The next act opens on a still of this deck (`image_copy.png`) painted across
+ * the closed photo album, and at the hand-off that album is scaled to cover the
+ * viewport — so for one frame the still IS this section, and any disagreement
+ * between them reads as the whole deck jumping size.
+ *
+ * They disagreed. The still is 1917×917 (2.0905:1) and the album's face is
+ * 16:9, so `background-size: cover` fits it by height and crops the sides,
+ * drawing the deck 2.0905 / 1.7778 larger than this stage draws it. Because
+ * both sides resolve their on-screen width to `max(vw, vh × 16/9)`, that ratio
+ * is the same at every viewport — one constant, no per-viewport correction.
+ *
+ * Fixing it on the album's side is worse than it sounds: aligning by width
+ * instead sizes the deck correctly but the still only carries 85% of the
+ * stage's height, so it letterboxes, and those bands live on the album cover
+ * for the whole act rather than just at the seam. Meeting the still here costs
+ * nothing and reads as a camera pushing in before a photograph is taken —
+ * which is precisely what the next act is.
+ *
+ * A 16:9 re-shoot of the still would let this go back to 1.
+ */
+const SEAM_MATCH = 1917 / 917 / (STAGE_W / STAGE_H); // 1.1759
+/** Fraction of the playback the push occupies — the last sixth of it. */
+const SEAM_PUSH_START = 0.83;
 const REC_CX = 984;
 const REC_CY = 445;
 const REC_R = 830;
@@ -393,15 +421,23 @@ export default function AboutSection() {
       // is not being composited on the frame the reveal begins.
       // Before that it is hidden outright — a full-screen layer nobody can see
       // is still a full-screen layer the compositor pays for.
+      const playP = clamp01((scrollPx - ph.total) / PLAY_DIST);
+
       const pin = pinRef.current;
       if (pin) {
         pin.style.opacity = '1';
         pin.style.visibility = scrollPx >= ph.hold.start ? 'visible' : 'hidden';
-        pin.style.transform = 'scale(1)';
+        // The whole pinned frame pushes in to meet the still the next act opens
+        // on — see SEAM_MATCH. The pin rather than the stage, deliberately: the
+        // vignette and the grain are part of the shot, so a camera move has to
+        // take them with it, and scaling one element keeps the stage's own
+        // fit() maths the single owner of layout.
+        const push = 1 + ramp(SEAM_PUSH_START, 1, playP) * (SEAM_MATCH - 1);
+        pin.style.transform = `scale(${push.toFixed(5)})`;
       }
 
       // Phase 2 — turntable playback.
-      onUpdate(clamp01((scrollPx - ph.total) / PLAY_DIST));
+      onUpdate(playP);
     };
 
     const play = ScrollTrigger.create({
