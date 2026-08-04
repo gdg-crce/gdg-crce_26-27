@@ -56,52 +56,12 @@ function IEIcon({ size = 17 }: IconProps) {
   );
 }
 
-function BackIcon({ size = 18 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <circle cx="8" cy="8" r="7.5" fill="#2f8f3a" />
-      <circle cx="8" cy="8" r="7.5" fill="none" stroke="#1c5f26" />
-      <polygon points="3,8 8,3 8,6 12,6 12,10 8,10 8,13" fill="#fff" />
-    </svg>
-  );
-}
-
 function ForwardIcon({ size = 18 }: IconProps) {
   return (
     <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
       <circle cx="8" cy="8" r="7.5" fill="#2f8f3a" />
       <circle cx="8" cy="8" r="7.5" fill="none" stroke="#1c5f26" />
       <polygon points="13,8 8,3 8,6 4,6 4,10 8,10 8,13" fill="#fff" />
-    </svg>
-  );
-}
-
-function StopIcon({ size = 18 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5" fill="#d81f1f" stroke="#8f1010" />
-      <polygon points="5,3.6 6.4,2.2 8,3.8 9.6,2.2 11,3.6 9.4,5.2 11,6.8 9.6,8.2 8,6.6 6.4,8.2 5,6.8 6.6,5.2" fill="#fff" transform="translate(0 2.6)" />
-    </svg>
-  );
-}
-
-function RefreshIcon({ size = 18 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <path d="M12.5 4.5 A5 5 0 1 0 13 9" fill="none" stroke="#1f8a3b" strokeWidth="2.4" />
-      <polygon points="10,2 14,4.5 9.6,6" fill="#1f8a3b" />
-      <path d="M3.5 11.5 A5 5 0 0 0 4 12" fill="none" stroke="#1c66c9" strokeWidth="2.4" />
-      <polygon points="6,14 2,11.5 6.4,10" fill="#1c66c9" />
-    </svg>
-  );
-}
-
-function HomeIcon({ size = 18 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <polygon points="8,2 15,8 1,8" fill="#c0392b" stroke="#7d2419" />
-      <rect x="3" y="8" width="10" height="6" fill="#e6c96a" stroke="#8a7328" />
-      <rect x="6.5" y="10" width="3" height="4" fill="#6b4a2b" />
     </svg>
   );
 }
@@ -123,31 +83,11 @@ function StarIcon({ size = 16 }: IconProps) {
   );
 }
 
-function HistoryIcon({ size = 16 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <circle cx="8" cy="8" r="6.5" fill="#dfe7c8" stroke="#5a7a2a" />
-      <path d="M8 4 V8 L11 10" fill="none" stroke="#3a5a10" strokeWidth="1.4" />
-    </svg>
-  );
-}
-
 function MailIcon({ size = 16 }: IconProps) {
   return (
     <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
       <rect x="1" y="3" width="14" height="10" fill="#fff" stroke="#5a6b8c" />
       <polyline points="1,3 8,9 15,3" fill="none" stroke="#5a6b8c" strokeWidth="1.2" />
-    </svg>
-  );
-}
-
-function PrintIcon({ size = 16 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <rect x="3" y="1" width="10" height="5" fill="#e8ecf6" stroke="#8a93b0" />
-      <rect x="1" y="6" width="14" height="6" fill="#c9d3e6" stroke="#5a6b8c" />
-      <rect x="4" y="9" width="8" height="5" fill="#fff" stroke="#8a93b0" />
-      <rect x="11.5" y="7.5" width="1.5" height="1.5" fill="#2f8f3a" />
     </svg>
   );
 }
@@ -259,13 +199,10 @@ const featuredGrid = [
   { slot: 'f4', m: memberById(12), caption: 'PR & Outreach Lead' },
 ];
 
-// Deterministic pseudo-timestamps so the Wall feels alive without being random.
-const WALL_TIMES = ['14 min ago', '1 hr ago', '3 hrs ago', 'yesterday', '2 days ago', 'Aug 14', 'Aug 12', 'Aug 09'];
-
 /* -----------------------------------------------------------------------------
    Navigation model
    -------------------------------------------------------------------------- */
-type ViewName = 'profile' | 'members' | 'member' | 'groups' | 'wall' | 'account';
+type ViewName = 'profile' | 'members' | 'member' | 'groups' | 'account';
 interface Entry {
   view: ViewName;
   memberId?: number;
@@ -287,8 +224,6 @@ function describe(e: Entry): { url: string; title: string } {
     }
     case 'groups':
       return { url: `${HOST}/groups.php`, title: 'Groups' };
-    case 'wall':
-      return { url: `${HOST}/wall.php`, title: 'The Wall' };
     case 'account':
       return { url: `${HOST}/account.php`, title: 'My Account' };
     case 'profile':
@@ -325,12 +260,10 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
     return () => cancelAnimationFrame(raf);
   }, [scrollProgressRef]);
 
-  // Browser history stack (drives Back / Forward).
+  // Browser history stack — kept so the address bar reflects where you are.
   const [stack, setStack] = useState<Entry[]>([{ view: 'profile' }]);
   const [idx, setIdx] = useState(0);
   const cur = stack[idx];
-  const canBack = idx > 0;
-  const canForward = idx < stack.length - 1;
 
   const loadTimer = useRef<number | null>(null);
   const flash = useCallback(() => {
@@ -347,22 +280,12 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
     },
     [idx, flash]
   );
+  // The IE toolbar is gone, but the member-detail page still offers an in-page
+  // "back to results" link, so the history stack keeps a back step.
   const back = useCallback(() => {
-    if (canBack) {
-      setIdx((i) => i - 1);
-      flash();
-    }
-  }, [canBack, flash]);
-  const forward = useCallback(() => {
-    if (canForward) {
-      setIdx((i) => i + 1);
-      flash();
-    }
-  }, [canForward, flash]);
-  const stop = useCallback(() => {
-    if (loadTimer.current) window.clearTimeout(loadTimer.current);
-    setLoading(false);
-  }, []);
+    setIdx((i) => (i > 0 ? i - 1 : i));
+    flash();
+  }, [flash]);
 
   const meta = describe(cur);
   const activeTab: ViewName = cur.view === 'member' ? 'members' : cur.view;
@@ -665,47 +588,6 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
     </>
   );
 
-  const renderWall = () => (
-    <>
-      <div className={styles.dirHead}>
-        <span className={styles.panelTitle}>
-          <CursorIcon size={14} /> The Wall
-        </span>
-        <span className={styles.dirCount}>{councilMembers.length} posts</span>
-      </div>
-      <div className={styles.wallCompose}>
-        <span className={styles.wallComposeAvatar}>⚡</span>
-        <input className={styles.wallComposeInput} readOnly value="Write something on the wall..." />
-        <button type="button" className={styles.actionBtn}>Post</button>
-      </div>
-      <div className={styles.wallList}>
-        {councilMembers.map((m, i) => (
-          <div key={m.id} className={styles.wallPost}>
-            <button type="button" className={styles.wallAvatar} style={{ background: m.avatarBg }} onClick={() => go({ view: 'member', memberId: m.id })}>
-              {m.avatarIcon}
-            </button>
-            <div className={styles.wallPostBody}>
-              <div className={styles.wallPostHead}>
-                <button type="button" className={styles.wallPostName} onClick={() => go({ view: 'member', memberId: m.id })}>
-                  {m.name}
-                </button>
-                <span className={styles.wallPostTime}>{WALL_TIMES[i % WALL_TIMES.length]}</span>
-              </div>
-              <div className={styles.wallPostText}>{m.quote}</div>
-              <div className={styles.wallPostActions}>
-                <span>Wall-to-Wall</span>
-                <span>·</span>
-                <span>Poke</span>
-                <span>·</span>
-                <span>Message</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-
   const renderAccount = () => (
     <>
       <div className={styles.dirHead}>
@@ -757,8 +639,6 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         return renderMemberDetail();
       case 'groups':
         return renderGroups();
-      case 'wall':
-        return renderWall();
       case 'account':
         return renderAccount();
       case 'profile':
@@ -768,10 +648,10 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
   };
 
   const TABS: Array<{ key: ViewName; label: string; entry: Entry }> = [
+    // No 'members' tab — the directory is reached from the profile and groups
+    // pages instead, which keeps the strip down to the three top-level places.
     { key: 'profile', label: 'my profile', entry: { view: 'profile' } },
-    { key: 'members', label: 'members', entry: { view: 'members', team: 'All Tracks' } },
     { key: 'groups', label: 'groups', entry: { view: 'groups' } },
-    { key: 'wall', label: 'the wall', entry: { view: 'wall' } },
     { key: 'account', label: 'my account', entry: { view: 'account' } },
   ];
 
@@ -812,51 +692,6 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           ))}
         </div>
 
-        {/* ---- Standard Buttons toolbar (beveled, pixel-art icons + throbber) ---- */}
-        <div className={styles.toolbar}>
-          <button type="button" className={`${styles.tbBtn} ${!canBack ? styles.tbDisabled : ''}`} title="Back" onClick={back} disabled={!canBack}>
-            <BackIcon />
-            <span className={styles.tbLabel}>Back</span>
-            <span className={styles.tbCaret}>▾</span>
-          </button>
-          <button type="button" className={`${styles.tbBtn} ${styles.tbIconOnly} ${!canForward ? styles.tbDisabled : ''}`} title="Forward" onClick={forward} disabled={!canForward}>
-            <ForwardIcon />
-          </button>
-          <button type="button" className={`${styles.tbBtn} ${styles.tbIconOnly}`} title="Stop" onClick={stop}>
-            <StopIcon />
-          </button>
-          <button type="button" className={`${styles.tbBtn} ${styles.tbIconOnly}`} title="Refresh" onClick={flash}>
-            <RefreshIcon />
-          </button>
-          <button type="button" className={`${styles.tbBtn} ${styles.tbIconOnly}`} title="Home" onClick={() => go({ view: 'profile' })}>
-            <HomeIcon />
-          </button>
-          <span className={styles.tbSep} />
-          <button type="button" className={styles.tbBtn} title="Search" onClick={() => go({ view: 'members', team: 'All Tracks' })}>
-            <SearchIcon />
-            <span className={styles.tbLabel}>Search</span>
-          </button>
-          <button type="button" className={styles.tbBtn} title="Favorites">
-            <StarIcon />
-            <span className={styles.tbLabel}>Favorites</span>
-          </button>
-          <button type="button" className={`${styles.tbBtn} ${styles.tbIconOnly}`} title="History">
-            <HistoryIcon />
-          </button>
-          <span className={styles.tbSep} />
-          <button type="button" className={`${styles.tbBtn} ${styles.tbIconOnly}`} title="Mail">
-            <MailIcon />
-          </button>
-          <button type="button" className={`${styles.tbBtn} ${styles.tbIconOnly}`} title="Print" onClick={() => typeof window !== 'undefined' && window.print()}>
-            <PrintIcon />
-          </button>
-
-          {/* Animated throbber — spins while a page is "loading" */}
-          <span className={`${styles.throbber} ${loading ? styles.throbberSpin : ''}`} title={loading ? 'Loading…' : 'Internet Explorer'}>
-            <IEIcon size={22} />
-          </span>
-        </div>
-
         {/* ---- Address bar ---- */}
         <div className={styles.addressBar}>
           <span className={styles.addressLabel}>Address</span>
@@ -895,10 +730,6 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <button type="button" className={styles.fbWordmark} onClick={() => go({ view: 'profile' })}>
               <span className={styles.fbWordmarkThe}>the</span>facebook
             </button>
-            <div className={styles.fbSearch}>
-              <SearchIcon size={13} />
-              <input type="text" placeholder="search for people..." readOnly />
-            </div>
             <div className={styles.fbNavRight}>
               <span className={styles.fbOnline}>
                 <span className={styles.onlineDot} /> online now
@@ -938,19 +769,13 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
 
                 <div className={styles.sideHead}>Quick Links</div>
                 <div className={styles.quickLinks}>
-                  {TABS.map((t) => (
-                    <button
-                      type="button"
-                      key={t.key}
-                      className={`${styles.quickLink} ${activeTab === t.key ? styles.quickLinkActive : ''}`}
-                      onClick={() => go(t.entry)}
-                    >
-                      <FolderIcon /> {t.label}
-                    </button>
-                  ))}
-                  <span className={`${styles.quickLink} ${styles.quickDisabled}`}>
-                    <FolderIcon /> my photos (0)
-                  </span>
+                  <button
+                    type="button"
+                    className={`${styles.quickLink} ${activeTab === 'profile' ? styles.quickLinkActive : ''}`}
+                    onClick={() => go({ view: 'profile' })}
+                  >
+                    <FolderIcon /> my profile
+                  </button>
                 </div>
 
                 <div className={styles.adBox}>

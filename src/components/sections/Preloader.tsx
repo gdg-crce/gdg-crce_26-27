@@ -433,7 +433,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
 
                   {/* Typography */}
                   <div className="xp-brand">
-                    <span className="xp-title">Sunékheia</span>
+                    <span className="xp-title">Synécheia</span>
                     <span className="xp-subtitle">xp</span>
                   </div>
                   <div className="xp-role">GDG CRCE</div>

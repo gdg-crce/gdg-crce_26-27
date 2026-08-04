@@ -128,7 +128,7 @@ export function WallDecalsAndGrime() {
     tCtx.fillText('GDG ARCH', 45, 85);
     tCtx.font = 'bold 21px monospace';
     tCtx.fillStyle = 'rgba(84, 74, 62, 0.24)';
-    tCtx.fillText('SUNÉKHEIA /', 45, 135);
+    tCtx.fillText('SYNÉCHEIA /', 45, 135);
     tCtx.font = 'italic 17px monospace';
     tCtx.fillStyle = 'rgba(120, 58, 44, 0.22)';
     tCtx.fillText('[ TORN REM', 45, 182);

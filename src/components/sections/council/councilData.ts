@@ -144,7 +144,7 @@ export const councilMembers: CouncilMember[] = [
     name: 'Sneha Kulkarni',
     role: 'UI/UX & Creative Head',
     team: 'UI/UX & Design',
-    trackTitle: 'Sunékheia Design Tokens (Acoustic)',
+    trackTitle: 'Synécheia Design Tokens (Acoustic)',
     duration: '3:33',
     bio: 'Designing timeless interfaces that honor historical visual culture while feeling hyper-modern.',
     techStack: ['Figma', 'Design Systems', 'Typography', 'Motion Design'],

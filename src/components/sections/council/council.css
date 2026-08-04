@@ -1672,233 +1672,846 @@
   transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) !important;
 }
 
-.xp-picture-viewer {
-  width: 98% !important;
-  max-width: 1600px !important;
-  height: clamp(680px, 86vh, 920px) !important;
-  background: #ece9d8 !important;
-  border: 3px solid #0831d9 !important;
-  border-top: none !important;
-  border-radius: 8px 8px 4px 4px !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.25),
-    0 35px 80px rgba(0, 0, 0, 0.95) !important;
+/* --------------------------------------------------------------------------
+   WINDOWS XP PHOTO GALLERY — Explorer "My Pictures", thumbnails by default,
+   with a details pane on selection and a Picture-and-Fax-Viewer command bar
+   whose transport is styled after Media Player's.
+
+   Luna Blue system colours, verbatim:
+     caption      #0054E3     gradient caption #3D95FF
+     3D objects   #ECE9D8     control light    #F1EFE2   control dark #ACA899
+     window       #FFFFFF     window text      #000000
+     highlight    #316AC5     highlight text   #FFFFFF
+   Everything here is 8pt Tahoma, because that is what the OS was.
+   -------------------------------------------------------------------------- */
+
+.xp-pv {
+  --thumb: 1;
+  width: 97% !important;
+  max-width: 1320px !important;
+  height: clamp(620px, 86vh, 880px) !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  font-family: 'Tahoma', 'Segoe UI', Arial, sans-serif !important;
+  background: #ece9d8 !important;
+  border: 3px solid #0054e3 !important;
+  border-top: none !important;
+  border-radius: 8px 8px 0 0 !important;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75) !important;
+  font-family: Tahoma, 'Segoe UI', Verdana, sans-serif !important;
+  font-size: 11px !important;
   color: #000000 !important;
   user-select: none !important;
 }
 
-.xp-pv-titlebar {
-  height: 38px !important;
-  font-size: 16px !important;
-}
-
-.xp-pv-icon {
-  font-size: 20px !important;
-}
-
-.xp-pv-viewport {
-  flex: 1 !important;
-  background: #f0f0e8 !important;
-  overflow: auto !important;
-  position: relative !important;
-  display: flex !important;
-  align-items: flex-start !important;
-  justify-content: center !important;
-  padding: 24px !important;
-  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.22) !important;
-}
-
-.xp-pv-image-canvas {
-  background: #ffffff !important;
-  border: 1px solid #c0c0b8 !important;
-  box-shadow: 0 0 0 1px #ece9d8, 0 0 0 2px #707070 !important;
-  padding: 32px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 28px !important;
-  min-width: 1300px !important;
-  max-width: 1500px !important;
-  transform-origin: center top !important;
-}
-
-.xp-pv-group-header {
-  text-align: center !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 8px !important;
-  border-bottom: 2px solid #e0e0d8 !important;
-  padding-bottom: 20px !important;
-  width: 100% !important;
-}
-
-.xp-pv-badge {
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
-  color: #ffffff !important;
-  padding: 6px 16px !important;
-  border-radius: 20px !important;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-  letter-spacing: 1px !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
-}
-
-.xp-pv-group-title {
-  margin: 0 !important;
-  font-family: 'Tahoma', sans-serif !important;
-  font-size: 24px !important;
-  font-weight: 700 !important;
-  color: #000000 !important;
-}
-
-.xp-pv-group-subtitle {
-  margin: 0 !important;
-  font-size: 16px !important;
-  color: #555555 !important;
-  font-weight: 600 !important;
-}
-
-.xp-pv-collage-grid {
-  display: grid !important;
-  grid-template-columns: repeat(7, 1fr) !important;
-  gap: 20px !important;
-  width: 100% !important;
-}
-
-.xp-pv-polaroid-card {
-  background: #ffffff !important;
-  border: 1px solid #808080 !important;
-  padding: 8px 8px 12px 8px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 10px !important;
-}
-
-.xp-pv-polaroid-photo {
-  width: 100% !important;
-  aspect-ratio: 1 / 1 !important;
-  border: 1px solid #000000 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  position: relative !important;
-}
-
-.xp-pv-polaroid-glyph {
-  font-size: 48px !important;
-}
-
-.xp-pv-polaroid-team-tag {
-  position: absolute !important;
-  bottom: 6px !important;
-  background: rgba(0, 0, 0, 0.75) !important;
-  color: #ffffff !important;
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  padding: 2px 6px !important;
-  border-radius: 3px !important;
-  white-space: nowrap !important;
-}
-
-.xp-pv-polaroid-caption {
-  text-align: center !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 2px !important;
-  width: 100% !important;
-}
-
-.xp-pv-polaroid-caption strong {
-  font-size: 13px !important;
-  color: #003399 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
-.xp-pv-polaroid-caption span {
+.xp-pv-empty {
+  padding: 40px !important;
   font-size: 11px !important;
-  color: #666666 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
 }
 
-.xp-pv-watermark {
+/* ---- Luna title bar ---------------------------------------------------- */
+
+.xp-pv-titlebar {
+  flex: 0 0 auto !important;
+  height: 30px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  width: 100% !important;
-  border-top: 1px solid #e0e0d8 !important;
-  padding-top: 14px !important;
-  font-size: 13px !important;
-  color: #888888 !important;
+  padding: 0 4px 0 5px !important;
+  border-radius: 6px 6px 0 0 !important;
+  /* The real Luna caption is a many-stop vertical ramp, not a two-stop fade. */
+  background: linear-gradient(
+    180deg,
+    #0058ee 0%,
+    #3593ff 4%,
+    #288eff 6%,
+    #127dff 8%,
+    #036ffc 10%,
+    #0262ee 14%,
+    #0057e5 20%,
+    #0054e3 24%,
+    #0055e5 56%,
+    #005bed 68%,
+    #0262f0 72%,
+    #0468f2 76%,
+    #0d6efb 78%,
+    #1476fd 80%,
+    #257efe 84%,
+    #3e8fff 90%,
+    #0054e3 100%
+  ) !important;
 }
 
-/* Bottom Circular Action Toolbar */
-.xp-pv-toolbar {
-  background: #ece9d8 !important;
-  border-top: 1px solid #d0c8b0 !important;
-  padding: 10px 24px !important;
+.xp-pv-titlebar-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+}
+
+.xp-pv-titlebar-icon {
+  display: flex !important;
+  flex: 0 0 auto !important;
+}
+
+.xp-pv-titlebar-text {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.55) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.xp-pv-titlebar-buttons {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  flex: 0 0 auto !important;
+}
+
+.xp-pv-sysbtn {
+  width: 21px !important;
+  height: 21px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 16px !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 3px !important;
+  background: linear-gradient(180deg, #3f8bf5 0%, #1c5fd4 48%, #1450bd 52%, #4b93f7 100%) !important;
+  box-shadow: inset -1px -1px 0 rgba(0, 0, 0, 0.25) !important;
+  cursor: pointer !important;
+  padding: 0 !important;
 }
 
-.xp-pv-toolbar-group {
+.xp-pv-sysbtn:hover {
+  background: linear-gradient(180deg, #6fa9f8 0%, #3f81e4 48%, #3572d4 52%, #7cb2fa 100%) !important;
+}
+
+.xp-pv-sysbtn-close {
+  width: 33px !important;
+  background: linear-gradient(180deg, #f08e6c 0%, #d94f26 44%, #c33e17 52%, #ef8a63 100%) !important;
+}
+
+.xp-pv-sysbtn-close:hover {
+  background: linear-gradient(180deg, #f7ab90 0%, #e56a44 44%, #d75833 52%, #f6a481 100%) !important;
+}
+
+.xp-pv-sys-min {
+  width: 7px !important;
+  height: 3px !important;
+  background: #ffffff !important;
+  margin-top: 7px !important;
+}
+
+.xp-pv-sys-max {
+  width: 9px !important;
+  height: 8px !important;
+  border: 1px solid #ffffff !important;
+  border-top-width: 2px !important;
+}
+
+.xp-pv-sys-close {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1 !important;
+}
+
+/* ---- Menu bar ---------------------------------------------------------- */
+
+.xp-pv-menubar {
+  flex: 0 0 auto !important;
   display: flex !important;
   align-items: center !important;
+  height: 20px !important;
+  padding: 0 2px !important;
+  background: #ece9d8 !important;
+}
+
+.xp-pv-menu {
+  padding: 3px 7px !important;
+  border: none !important;
+  background: transparent !important;
+  font-family: Tahoma, sans-serif !important;
+  font-size: 11px !important;
+  color: #000000 !important;
+  cursor: default !important;
+}
+
+.xp-pv-menu:hover,
+.xp-pv-menu-open {
+  background: #316ac5 !important;
+  color: #ffffff !important;
+}
+
+.xp-pv-menu-key {
+  text-decoration: underline !important;
+}
+
+/* ---- Standard Buttons toolbar ------------------------------------------ */
+
+.xp-pv-toolbar {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1px !important;
+  height: 34px !important;
+  padding: 0 4px !important;
+  background: linear-gradient(180deg, #faf9f4 0%, #f1efe2 46%, #eae7d6 100%) !important;
+  border-top: 1px solid #ffffff !important;
+  border-bottom: 1px solid #d0ccb8 !important;
+}
+
+.xp-pv-tb {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 26px !important;
+  padding: 0 7px !important;
+  border: 1px solid transparent !important;
+  border-radius: 3px !important;
+  background: transparent !important;
+  font-family: Tahoma, sans-serif !important;
+  font-size: 11px !important;
+  color: #000000 !important;
+  cursor: default !important;
+  white-space: nowrap !important;
+}
+
+/* Luna's hot-track: pale blue wash, saturated blue outline. */
+.xp-pv-tb:hover {
+  background: #dbe7f7 !important;
+  border-color: #316ac5 !important;
+}
+
+.xp-pv-tb:active {
+  background: #c1d2ee !important;
+}
+
+.xp-pv-tb-icon {
+  padding: 0 5px !important;
+}
+
+.xp-pv-tb-caret {
+  font-size: 8px !important;
+  color: #4a4a4a !important;
+}
+
+.xp-pv-tb-sep {
+  width: 1px !important;
+  height: 22px !important;
+  margin: 0 3px !important;
+  background: #d0ccb8 !important;
+  box-shadow: 1px 0 0 #ffffff !important;
+}
+
+/* ---- Address bar ------------------------------------------------------- */
+
+.xp-pv-addressbar {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  height: 26px !important;
+  padding: 0 5px !important;
+  background: linear-gradient(180deg, #f6f4ea 0%, #ece9d8 100%) !important;
+  border-bottom: 1px solid #d0ccb8 !important;
+}
+
+.xp-pv-address-label {
+  font-size: 11px !important;
+  color: #5a5a5a !important;
+}
+
+.xp-pv-address-field {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 19px !important;
+  padding: 0 4px !important;
+  background: #ffffff !important;
+  border: 1px solid #7f9db9 !important;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.12) !important;
+}
+
+.xp-pv-address-text {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  font-size: 11px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.xp-pv-address-caret {
+  font-size: 8px !important;
+  color: #4a4a4a !important;
+}
+
+.xp-pv-go {
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  height: 20px !important;
+  padding: 0 6px !important;
+  border: 1px solid transparent !important;
+  border-radius: 3px !important;
+  background: transparent !important;
+  font-family: Tahoma, sans-serif !important;
+  font-size: 11px !important;
+  cursor: default !important;
+}
+
+.xp-pv-go:hover {
+  background: #dbe7f7 !important;
+  border-color: #316ac5 !important;
+}
+
+/* ---- Content ----------------------------------------------------------- */
+
+/* The client area is the content row itself — gallery (or filmstrip) on the
+   left, details pane on the right when a picture is selected. */
+.xp-pv-content {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  background: #ffffff !important;
+}
+
+/* ---- Thumbnail gallery — the default view ------------------------------ */
+
+.xp-pv-grid {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(calc(116px * var(--thumb)), 1fr)) !important;
+  gap: 6px !important;
+  align-content: start !important;
+  padding: 12px !important;
+  background: #ffffff !important;
+}
+
+.xp-pv-tile {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 7px 4px 6px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  font-family: Tahoma, sans-serif !important;
+  cursor: default !important;
+}
+
+.xp-pv-tile:hover {
+  background: #ebf1fb !important;
+}
+
+.xp-pv-tile-selected {
+  background: #316ac5 !important;
+}
+
+/* Explorer drew a white mat and a hard 1px edge under every thumbnail. */
+.xp-pv-tile-shell {
+  padding: 4px !important;
+  background: #ffffff !important;
+  border: 1px solid #7a7a7a !important;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.26) !important;
+}
+
+.xp-pv-tile-photo {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: calc(84px * var(--thumb)) !important;
+  height: calc(64px * var(--thumb)) !important;
+  font-size: calc(30px * var(--thumb)) !important;
+  transition: transform 0.2s ease-out !important;
+}
+
+.xp-pv-tile-name {
+  max-width: calc(108px * var(--thumb)) !important;
+  font-size: 11px !important;
+  color: #000000 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.xp-pv-tile-selected .xp-pv-tile-name {
+  color: #ffffff !important;
+}
+
+/* ---- Filmstrip view ---------------------------------------------------- */
+
+.xp-pv-film {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.xp-pv-preview {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  overflow: hidden !important;
+}
+
+.xp-pv-photo-shell {
+  padding: 4px !important;
+  background: #ffffff !important;
+  border: 1px solid #7a7a7a !important;
+  box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.35) !important;
+  transition: transform 0.22s ease-out !important;
+}
+
+.xp-pv-photo {
+  position: relative !important;
+  width: clamp(220px, 30vw, 380px) !important;
+  aspect-ratio: 4 / 3 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.xp-pv-photo-glyph {
+  font-size: clamp(58px, 7vw, 100px) !important;
+  line-height: 1 !important;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35)) !important;
+}
+
+.xp-pv-photo-team {
+  position: absolute !important;
+  left: 8px !important;
+  bottom: 8px !important;
+  padding: 2px 6px !important;
+  background: rgba(0, 0, 0, 0.72) !important;
+  color: #ffffff !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
+
+.xp-pv-strip {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  height: 88px !important;
+  padding: 6px 8px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  background: linear-gradient(180deg, #f4f2e8 0%, #ece9d8 100%) !important;
+  border-top: 1px solid #d0ccb8 !important;
+  scrollbar-width: thin !important;
+}
+
+.xp-pv-frame {
+  flex: 0 0 auto !important;
+  padding: 3px !important;
+  border: 1px solid #ffffff !important;
+  background: #ffffff !important;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.28) !important;
+  cursor: default !important;
+}
+
+.xp-pv-frame-photo {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 74px !important;
+  height: 56px !important;
+  font-size: 26px !important;
+  border: 1px solid #9a9a9a !important;
+}
+
+/* Selection is Luna highlight blue, same as anywhere else in the shell. */
+.xp-pv-frame-selected {
+  border-color: #316ac5 !important;
+  box-shadow: 0 0 0 1px #316ac5, 1px 1px 4px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* ---- Details pane (opens on selection) --------------------------------- */
+
+.xp-pv-info {
+  flex: 0 0 258px !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-left: 1px solid #99a8c6 !important;
+  /* Same blue as the task pane, so it reads as part of the shell. */
+  background: linear-gradient(180deg, #7ba2e7 0%, #6f8fdf 45%, #6375d6 100%) !important;
+  animation: xpPvSlideIn 0.16s ease-out !important;
+}
+
+@keyframes xpPvSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.xp-pv-info-head {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 5px 6px 5px 10px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #eef3fd 55%, #dae4f7 100%) !important;
+  border-bottom: 1px solid #99a8c6 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #215dc6 !important;
+}
+
+.xp-pv-info-close {
+  width: 17px !important;
+  height: 17px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 1px solid #8fa9ce !important;
+  border-radius: 3px !important;
+  background: linear-gradient(180deg, #ffffff, #dbe5f6) !important;
+  font-size: 9px !important;
+  color: #24406f !important;
+  cursor: default !important;
+}
+
+.xp-pv-info-close:hover {
+  background: linear-gradient(180deg, #ffd9cf, #f2a48c) !important;
+  border-color: #c33e17 !important;
+}
+
+.xp-pv-info-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 8px !important;
 }
 
-.xp-pv-toolbar-divider {
-  width: 1px !important;
-  height: 32px !important;
-  background: #c0b8a0 !important;
-  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.6) !important;
+.xp-pv-info-preview {
+  align-self: center !important;
+  padding: 4px !important;
+  background: #ffffff !important;
+  border: 1px solid #4a5f86 !important;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.35) !important;
 }
 
-.xp-pv-btn {
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  border-radius: 3px !important;
-  padding: 6px 6px !important;
-  font-family: 'Tahoma', sans-serif !important;
-  font-size: 18px !important;
+.xp-pv-info-photo {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  cursor: pointer !important;
+  width: 148px !important;
+  height: 112px !important;
+  font-size: 54px !important;
 }
 
-.xp-pv-btn.circular {
-  border-radius: 50% !important;
-  width: 40px !important;
-  height: 40px !important;
-  padding: 0 !important;
+.xp-pv-info-file {
+  text-align: center !important;
+  font-size: 11px !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4) !important;
+  word-break: break-all !important;
+}
+
+.xp-pv-info-fields {
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  gap: 3px 8px !important;
+  margin: 0 !important;
+  padding: 7px 8px !important;
+  border-radius: 4px !important;
+  background: #eff3fb !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18) !important;
+  font-size: 11px !important;
+}
+
+.xp-pv-info-fields dt {
+  color: #4a4a4a !important;
+  white-space: nowrap !important;
+}
+
+.xp-pv-info-fields dd {
+  margin: 0 !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+.xp-pv-info-section {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4) !important;
+}
+
+.xp-pv-info-bio {
+  margin: 0 !important;
+  padding: 7px 8px !important;
+  border-radius: 4px !important;
+  background: #eff3fb !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18) !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+  color: #1a1a1a !important;
+}
+
+.xp-pv-info-chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+}
+
+.xp-pv-chip {
+  padding: 2px 6px !important;
+  border: 1px solid #93a9d4 !important;
+  border-radius: 3px !important;
+  background: linear-gradient(180deg, #ffffff, #dfe8f8) !important;
+  font-size: 10px !important;
+  color: #1c3f7c !important;
+}
+
+.xp-pv-info-quote {
+  margin: 0 !important;
+  font-size: 11px !important;
+  font-style: italic !important;
+  line-height: 1.45 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* ---- Command bar ------------------------------------------------------- */
+
+.xp-pv-cmdbar {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 7px 12px !important;
+  background: linear-gradient(180deg, #fcfbf6 0%, #f3f1e6 52%, #e9e6d6 100%) !important;
+  border-top: 1px solid #ffffff !important;
+  border-bottom: 1px solid #d0ccb8 !important;
+}
+
+.xp-pv-cmd-left {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  font-size: 11px !important;
+  color: #5c6675 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.xp-pv-cmd-center {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+}
+
+.xp-pv-cmd-right {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+}
+
+/* Flat command buttons — transparent until Luna hot-tracks them. */
+.xp-pv-mini {
+  width: 25px !important;
+  height: 25px !important;
+  display: flex !important;
+  align-items: center !important;
   justify-content: center !important;
-  font-size: 18px !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 3px !important;
+  background: transparent !important;
+  cursor: default !important;
 }
 
-.xp-pv-btn:hover {
+.xp-pv-mini:hover {
+  background: #dbe7f7 !important;
+  border-color: #316ac5 !important;
+}
+
+.xp-pv-mini:active {
+  background: #c1d2ee !important;
+}
+
+.xp-pv-mini-on {
   background: #c1d2ee !important;
   border-color: #316ac5 !important;
 }
 
-.xp-pv-zoom-indicator {
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: #333333 !important;
-  min-width: 54px !important;
-  text-align: center !important;
+.xp-pv-cmd-sep {
+  width: 1px !important;
+  height: 19px !important;
+  margin: 0 5px !important;
+  background: #b9b4a2 !important;
+  box-shadow: 1px 0 0 #ffffff !important;
+}
+
+/* The glossy blue orbs. Media Player's play button is a lit sphere: a bright
+   specular near the top, a saturated core, a dark rim, and a soft halo. */
+.xp-pv-orb {
+  width: 27px !important;
+  height: 27px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 1px solid #0a4179 !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 50% 20%, #93cbf7 0%, #4b96e2 42%, #1a68c4 70%, #0d4f9c 100%) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.85),
+    inset 0 -3px 5px rgba(0, 40, 90, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.28) !important;
+  cursor: default !important;
+}
+
+.xp-pv-orb:hover {
+  background: radial-gradient(circle at 50% 20%, #b6ddfb 0%, #66aaea 42%, #2a7ad2 70%, #145aa8 100%) !important;
+}
+
+.xp-pv-orb:active {
+  box-shadow: inset 0 2px 4px rgba(0, 30, 70, 0.55) !important;
+}
+
+.xp-pv-orb-big {
+  width: 38px !important;
+  height: 38px !important;
+  margin: 0 3px !important;
+  /* The halo is what makes it read as the primary control. */
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 7px rgba(0, 40, 90, 0.42),
+    0 0 0 3px rgba(168, 209, 245, 0.55),
+    0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.xp-pv-orb-big:hover {
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 7px rgba(0, 40, 90, 0.42),
+    0 0 0 4px rgba(168, 209, 245, 0.7),
+    0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.xp-pv-slider-icon {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  opacity: 0.75 !important;
+}
+
+.xp-pv-slider {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 116px !important;
+  height: 4px !important;
+  border-radius: 2px !important;
+  background: linear-gradient(
+    90deg,
+    #4b96e2 0%,
+    #4b96e2 var(--fill, 30%),
+    #cfcabb var(--fill, 30%)
+  ) !important;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.28) !important;
+  cursor: default !important;
+}
+
+.xp-pv-slider::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 12px !important;
+  height: 12px !important;
+  border: 1px solid #14559e !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 46% 28%, #ffffff 0%, #cbe3f8 45%, #6ba5db 100%) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.xp-pv-slider::-moz-range-thumb {
+  width: 12px !important;
+  height: 12px !important;
+  border: 1px solid #14559e !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 46% 28%, #ffffff 0%, #cbe3f8 45%, #6ba5db 100%) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ---- Status bar -------------------------------------------------------- */
+
+.xp-pv-statusbar {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: stretch !important;
+  gap: 2px !important;
+  height: 21px !important;
+  padding: 2px !important;
+  background: #ece9d8 !important;
+  border-top: 1px solid #ffffff !important;
+}
+
+.xp-pv-status-cell {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 0 6px !important;
+  /* Statusbar panes are sunken 1px, the classic Win32 etched look. */
+  border: 1px solid #aca899 !important;
+  border-right-color: #ffffff !important;
+  border-bottom-color: #ffffff !important;
+  font-size: 11px !important;
+  color: #1a1a1a !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.xp-pv-status-grow {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.xp-pv-status-place {
+  flex: 0 0 auto !important;
+}
+
+/* Below this width the details pane would leave no room for tiles, and the
+   gallery is the point of the view — so it goes, along with the bar's flanks. */
+@media (max-width: 780px) {
+  .xp-pv-info {
+    display: none !important;
+  }
+
+  .xp-pv-cmd-right,
+  .xp-pv-cmd-left {
+    display: none !important;
+  }
 }
 
 /* --------------------------------------------------------------------------

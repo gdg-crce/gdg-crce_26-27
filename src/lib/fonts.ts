@@ -87,7 +87,7 @@ export const inter = Inter({
 });
 
 // About Us / turntable — the brush-script signature the record label is set in
-// ("Sunékheia:"). Everything else on that label is Cormorant small-caps.
+// ("Synécheia:"). Everything else on that label is Cormorant small-caps.
 export const kaushanScript = Kaushan_Script({
   subsets: ['latin'],
   weight: '400',

@@ -187,70 +187,6 @@
   text-decoration: underline;
 }
 
-/* --- Toolbar (beveled grey panel) --- */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 6px;
-  background:
-    linear-gradient(180deg, #ffffff 0%, #ece9d8 42%, #e3ddc7 100%);
-  border-bottom: 1px solid #aca899;
-}
-
-.tbBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 30px;
-  padding: 0 7px;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  background: transparent;
-  cursor: pointer;
-  color: #303030;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.tbBtn:hover {
-  border-color: #a7c4e8;
-  background: linear-gradient(180deg, #fdfefe 0%, #dcecfb 100%);
-}
-
-.tbBtn:active {
-  border-color: #6d9fd6;
-  background: linear-gradient(180deg, #cfe0f4 0%, #eaf3fe 100%);
-}
-
-.tbBtn:disabled {
-  cursor: default;
-  opacity: 0.42;
-}
-
-.tbBtn:disabled:hover {
-  border-color: transparent;
-  background: transparent;
-}
-
-.tbLabel {
-  line-height: 1;
-}
-
-.tbCaret {
-  font-size: 8px;
-  color: #444;
-  margin-left: -1px;
-}
-
-.tbSep {
-  width: 1px;
-  height: 24px;
-  margin: 0 3px;
-  background: #b7b3a2;
-  box-shadow: 1px 0 0 #ffffff;
-}
-
 /* --- Address bar --- */
 .addressBar {
   display: flex;
@@ -390,26 +326,6 @@
   color: #fff;
   border-color: var(--fb-blue-mid);
   background: #34497e;
-}
-
-.fbSearch {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 22px;
-  padding: 0 6px;
-  background: #fff;
-  border: 1px solid #1e2a4a;
-}
-
-.fbSearch input {
-  width: 116px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: 11px;
-  color: #333;
 }
 
 /* --- Page body wrapper --- */
@@ -828,35 +744,6 @@
   flex: 0 0 auto;
 }
 
-/* -----------------------------------------------------------------------------
-   8. EXTRA IE6 CHROME — icon-only buttons, throbber, Links bar, status zone
-   -------------------------------------------------------------------------- */
-.tbIconOnly {
-  gap: 0;
-  padding: 0 6px;
-}
-
-.tbDisabled {
-  cursor: default;
-  opacity: 0.42;
-}
-
-/* Animated throbber (waving-flag/spinning "e") pinned to the toolbar's right */
-.throbber {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-left: 1px solid #b7b3a2;
-  box-shadow: -1px 0 0 #ffffff;
-}
-
-.throbberSpin {
-  animation: y2kThrob 0.7s linear infinite;
-}
-
 @keyframes y2kThrob {
   to {
     transform: rotate(360deg);
@@ -1067,15 +954,6 @@
   background: var(--fb-blue-pale);
   border-color: var(--fb-blue-soft);
   font-weight: 700;
-}
-
-.quickDisabled {
-  color: #9aa0b0;
-  cursor: default;
-}
-.quickDisabled:hover {
-  border-color: transparent;
-  background: transparent;
 }
 
 .adBox {
@@ -1583,120 +1461,6 @@
 }
 
 /* -----------------------------------------------------------------------------
-   15. THE WALL
-   -------------------------------------------------------------------------- */
-.wallCompose {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  background: #fff;
-  border: 1px solid var(--fb-blue-soft);
-}
-
-.wallComposeAvatar {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: #fff;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  border: 1px solid var(--hair);
-}
-
-.wallComposeInput {
-  flex: 1;
-  min-width: 0;
-  height: 26px;
-  padding: 0 8px;
-  border: 1px solid var(--fb-blue-soft);
-  background: #f6f7fb;
-  font-family: inherit;
-  font-size: 11px;
-  color: #8b93a8;
-}
-
-.wallList {
-  background: #fff;
-  border: 1px solid var(--fb-blue-soft);
-}
-
-.wallPost {
-  display: flex;
-  gap: 10px;
-  padding: 11px 12px;
-  border-bottom: 1px solid var(--fb-blue-pale);
-}
-
-.wallPost:last-child {
-  border-bottom: 0;
-}
-
-.wallAvatar {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  color: #fff;
-  border: 1px solid var(--hair);
-  cursor: pointer;
-}
-
-.wallPostBody {
-  flex: 1;
-  min-width: 0;
-}
-
-.wallPostHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.wallPostName {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--fb-blue);
-  cursor: pointer;
-}
-
-.wallPostName:hover {
-  text-decoration: underline;
-}
-
-.wallPostTime {
-  font-size: 10px;
-  color: #8b93a8;
-  white-space: nowrap;
-}
-
-.wallPostText {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #333;
-  line-height: 1.5;
-}
-
-.wallPostActions {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-  font-size: 10px;
-  color: var(--fb-blue-mid);
-}
-
-/* -----------------------------------------------------------------------------
    16. ACCOUNT VIEW + FOOTER
    -------------------------------------------------------------------------- */
 .acctCheckRow {
@@ -1767,9 +1531,6 @@
   .bannerTitle {
     font-size: 22px;
   }
-  .fbSearch {
-    display: none;
-  }
   .titleText {
     font-size: 11px;
   }
@@ -1778,9 +1539,6 @@
 @media (max-width: 520px) {
   .socialGrid {
     grid-template-columns: 1fr;
-  }
-  .tbLabel {
-    display: none;
   }
   .bannerText {
     right: 12px;

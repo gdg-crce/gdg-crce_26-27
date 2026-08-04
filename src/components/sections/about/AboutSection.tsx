@@ -203,7 +203,7 @@ const TRACKS: Track[] = [
   {
     key: 'theme',
     word: 'Theme',
-    brush: 'Sunékheia:',
+    brush: 'Synécheia:',
     lines: ['What continues,', 'becomes greater.'],
   },
   {
@@ -630,7 +630,7 @@ export default function AboutSection() {
                       (2π·264 ≈ 1659), so there is never a bald patch drifting
                       past to give the trick away */}
                   <textPath href="#ttRimPath" startOffset="0" textLength="1659" lengthAdjust="spacing">
-                    GDG CRCE · SUNÉKHEIA · WHAT CONTINUES, BECOMES GREATER · 33⅓ RPM ·
+                    GDG CRCE · SYNÉCHEIA · WHAT CONTINUES, BECOMES GREATER · 33⅓ RPM ·
                   </textPath>
                 </text>
               </g>
