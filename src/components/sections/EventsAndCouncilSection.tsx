@@ -10,6 +10,7 @@ import { councilMembers } from './council/councilData';
 import WindowsXPDesktop from './council/WindowsXPDesktop';
 import Y2KArchiveSystem from './council/Y2KArchiveSystem';
 import WindowsPictureViewer from './council/WindowsPictureViewer';
+import MemberPhoto from './council/MemberPhoto';
 import { ikUrl } from '@/lib/imagekit';
 import './council/council.css';
 
@@ -599,9 +600,7 @@ export default function EventsAndCouncilSection() {
             <div key={member.id} className="fb-post-card">
               {/* Post Header */}
               <div className="fb-post-header">
-                <div className="fb-post-avatar" style={{ background: member.avatarBg }}>
-                  {member.avatarIcon}
-                </div>
+                <MemberPhoto member={member} className="fb-post-avatar" />
                 <div className="fb-post-author-info">
                   <span className="fb-post-author-name">{member.name}</span>
                   <span className="fb-post-meta">{member.role} • 2 hrs ago • 👥</span>
@@ -615,9 +614,7 @@ export default function EventsAndCouncilSection() {
 
               {/* Attached Member Photo Card */}
               <div className="fb-post-media-container">
-                <div className="fb-post-member-card" style={{ background: member.avatarBg }}>
-                  <span className="fb-post-member-glyph">{member.avatarIcon}</span>
-                </div>
+                <MemberPhoto member={member} className="fb-post-member-card" size="full" glyphSize="4rem" />
               </div>
 
               {/* Reactions summary */}

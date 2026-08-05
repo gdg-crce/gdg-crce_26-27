@@ -1,8 +1,51 @@
+/* -----------------------------------------------------------------------------
+   THE COUNCIL ROSTER — single source of truth.
+
+   Every surface that shows a council member reads from here: the TheFacebook
+   archive (Y2KArchiveSystem), the XP photo gallery (WindowsPictureViewer), and
+   the mobile card feed in EventsAndCouncilSection. Add a person to this array
+   and they appear in all three; there is no second list to keep in sync.
+
+   Photos live on ImageKit under /gdg-crce/images/ and are named after the
+   person, so both photo URLs are derived from a slug rather than pasted per
+   row — a typo'd URL is impossible by construction, and adding a size is a
+   one-line change instead of fourteen.
+
+   `avatarBg` and `avatarIcon` are NOT decoration — they are the fallback the
+   photo sits on while it loads, and what shows if the fetch fails. Keep one
+   per department so the fallback still reads as a team.
+   -------------------------------------------------------------------------- */
+
+const IMG_BASE = 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images';
+
+/* Photos are `<name>.JPG` — the filename is the person.
+
+   ALWAYS go through here, and always with a width. The source files are
+   full-resolution camera JPEGs of 0.8–2.2MB; the gallery shows all fourteen at
+   once, so serving them unsized is ~20MB of portraits on a page that already
+   carries a video and two WebGL scenes. ImageKit resizes at the edge and
+   `f-auto` negotiates WebP/AVIF: at w-320 a 1.39MB original comes back as
+   7.5KB, at w-800 as 62KB. Measured, not estimated. */
+const photoFor = (slug: string, width: number, quality: number) =>
+  `${IMG_BASE}/${slug}.JPG?tr=w-${width},q-${quality},f-auto`;
+
+/** Grid tiles, filmstrip frames, avatars — never larger than ~160 CSS px. */
+const THUMB_W = 320;
+/** The one photo on screen at full size: gallery preview and details pane. */
+const FULL_W = 800;
+
+export type Department = 'Technical' | 'Social Media' | 'Design' | 'Outreach' | 'Core Team';
+
 export interface CouncilMember {
   id: number;
   name: string;
+  /** Job title — shown as "Post" in the gallery's details pane. */
   role: string;
-  team: 'Core Leadership' | 'Tech & Web' | 'UI/UX & Design' | 'Events & Ops' | 'PR & Outreach';
+  team: Department;
+  /** Full-size photograph — the gallery preview and the details pane. */
+  photo: string;
+  /** Same photograph at grid size. Use this anywhere many are on screen. */
+  photoThumb: string;
   trackTitle: string;
   duration: string;
   bio: string;
@@ -18,252 +61,128 @@ export interface CouncilMember {
   };
 }
 
-export const councilMembers: CouncilMember[] = [
-  {
-    id: 1,
-    name: 'Movin',
-    role: 'GDG CRCE Lead',
-    team: 'Core Leadership',
-    trackTitle: 'System Architect & Lead Developer',
-    duration: '3:45',
-    bio: 'Architecting high-performance web applications and driving the tech ecosystem at GDG CRCE with 60 FPS precision.',
-    techStack: ['Next.js', 'GSAP', 'WebGL', 'System Architecture'],
-    avatarBg: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
-    avatarIcon: '⚡',
-    quote: 'New Hardware Found: Lead Processor Operating at Peak Efficiency',
-    socials: {
-      github: 'https://github.com',
-      linkedin: 'https://linkedin.com',
-      instagram: 'https://instagram.com',
-    },
+/* Department styling, kept in one place so the fallback tile, the department
+   chip and the gallery frame can never disagree about what "Design" looks
+   like. */
+const DEPT: Record<Department, { role: string; bg: string; icon: string; track: string }> = {
+  Technical: {
+    role: 'Technical Associate',
+    bg: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+    icon: '💻',
+    track: 'Technical',
   },
-  {
-    id: 2,
-    name: 'Sir Harvey York',
-    role: 'Barkend Developer & Mascot Lead',
-    team: 'Core Leadership',
-    trackTitle: 'Barkend Developer (Remix)',
-    duration: '3:25',
-    bio: 'Ensuring zero dropped treats and 99.9% uptime on morale across all student council operations.',
-    techStack: ['Treat Optimization', 'Barkend APIs', 'Security Patrol', 'Tailwind'],
-    avatarBg: 'linear-gradient(135deg, #f12711 0%, #f5af19 100%)',
-    avatarIcon: '🐶',
-    quote: 'Windows Audio Notification: Woof.exe executed successfully.',
-    socials: {
-      github: 'https://github.com',
-      instagram: 'https://instagram.com',
-    },
+  'Social Media': {
+    role: 'Social Media Associate',
+    bg: 'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)',
+    icon: '📸',
+    track: 'Social Media',
   },
-  {
-    id: 3,
-    name: 'Aarav Sharma',
-    role: 'Co-Lead & Strategy Head',
-    team: 'Core Leadership',
-    trackTitle: 'Executive Pipeline (Extended Cut)',
-    duration: '4:10',
-    bio: 'Bridging technical execution with strategic community initiatives to scale GDG CRCE across campuses.',
-    techStack: ['Community Scale', 'Product Roadmap', 'Public Speaking'],
-    avatarBg: 'linear-gradient(135deg, #13547a 0%, #80d0c7 100%)',
-    avatarIcon: '🎯',
-    quote: 'Task Manager: All strategic threads running smoothly.',
-    socials: {
-      linkedin: 'https://linkedin.com',
-      email: 'aarav@gdgcrce.edu',
-    },
+  Design: {
+    role: 'Designer',
+    bg: 'linear-gradient(135deg, #8e2de2 0%, #c04ac0 100%)',
+    icon: '🎨',
+    track: 'Design',
   },
-  {
-    id: 4,
-    name: 'Rohan Mehta',
-    role: 'Tech & Web Lead',
-    team: 'Tech & Web',
-    trackTitle: 'Fullstack Rhapsody in C# & TS',
-    duration: '3:50',
-    bio: 'Obsessed with clean architecture, React Server Components, and zero-latency micro-interactions.',
-    techStack: ['TypeScript', 'React 19', 'Node.js', 'Docker'],
-    avatarBg: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-    avatarIcon: '💻',
-    quote: 'Firewall Status: 0 bugs detected in production pipeline.',
-    socials: {
-      github: 'https://github.com',
-      linkedin: 'https://linkedin.com',
-    },
+  Outreach: {
+    role: 'Outreach Associate',
+    bg: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+    icon: '📣',
+    track: 'Outreach',
   },
-  {
-    id: 5,
-    name: 'Ananya Iyer',
-    role: 'AI & ML Lead',
-    team: 'Tech & Web',
-    trackTitle: 'TensorFlow Symphony No. 9',
-    duration: '4:20',
-    bio: 'Building intelligent autonomous agents and deploying edge-optimized deep learning models.',
-    techStack: ['PyTorch', 'Gemini AI', 'Python', 'Vector DBs'],
-    avatarBg: 'linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)',
-    avatarIcon: '🧠',
-    quote: 'Neural Net Trained: Convergence achieved at epoch 100.',
-    socials: {
-      github: 'https://github.com',
-      linkedin: 'https://linkedin.com',
-    },
+  'Core Team': {
+    role: 'Council Member',
+    bg: 'linear-gradient(135deg, #3a4a5c 0%, #64748b 100%)',
+    icon: '⭐',
+    track: 'Core Team',
   },
-  {
-    id: 6,
-    name: 'Karan Patel',
-    role: 'App Development Lead',
-    team: 'Tech & Web',
-    trackTitle: 'Flutter & Kotlin Groove',
-    duration: '3:15',
-    bio: 'Crafting responsive cross-platform mobile apps with native 120Hz gesture animations.',
-    techStack: ['Flutter', 'Kotlin', 'SwiftUI', 'Firebase'],
-    avatarBg: 'linear-gradient(135deg, #00b4db 0%, #0083b0 100%)',
-    avatarIcon: '📱',
-    quote: 'Mobile Sync: APK compiled and ready for deployment.',
-    socials: {
-      github: 'https://github.com',
-      linkedin: 'https://linkedin.com',
-    },
-  },
-  {
-    id: 7,
-    name: 'Priya Nair',
-    role: 'Cloud & DevOps Lead',
-    team: 'Tech & Web',
-    trackTitle: 'Kubernetes Cluster (Remastered)',
-    duration: '3:40',
-    bio: 'Automating multi-region deployments on Google Cloud with zero downtime and instant failover.',
-    techStack: ['Google Cloud', 'Kubernetes', 'Terraform', 'CI/CD'],
-    avatarBg: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
-    avatarIcon: '☁️',
-    quote: 'GCP Service Alert: Auto-scaling triggered under load.',
-    socials: {
-      github: 'https://github.com',
-      linkedin: 'https://linkedin.com',
-    },
-  },
-  {
-    id: 8,
-    name: 'Sneha Kulkarni',
-    role: 'UI/UX & Creative Head',
-    team: 'UI/UX & Design',
-    trackTitle: 'Synécheia Design Tokens (Acoustic)',
-    duration: '3:33',
-    bio: 'Designing timeless interfaces that honor historical visual culture while feeling hyper-modern.',
-    techStack: ['Figma', 'Design Systems', 'Typography', 'Motion Design'],
-    avatarBg: 'linear-gradient(135deg, #ec008c 0%, #fc6767 100%)',
-    avatarIcon: '🎨',
-    quote: 'Color Profile Loaded: sRGB accurate down to the pixel.',
-    socials: {
-      linkedin: 'https://linkedin.com',
-      instagram: 'https://instagram.com',
-    },
-  },
-  {
-    id: 9,
-    name: 'Devraj Singh',
-    role: '3D & Motion Specialist',
-    team: 'UI/UX & Design',
-    trackTitle: 'Draco Compression Dubstep',
-    duration: '4:02',
-    bio: 'Creating cinematic WebGL shaders, retro Windows XP aesthetics, and 3D spline animations.',
-    techStack: ['Three.js', 'Blender', 'GLSL Shaders', 'GSAP'],
-    avatarBg: 'linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)',
-    avatarIcon: '🌐',
-    quote: 'DirectX 9.0 Enabled: Hardware accelerated shaders active.',
-    socials: {
-      github: 'https://github.com',
-      instagram: 'https://instagram.com',
-    },
-  },
-  {
-    id: 10,
-    name: 'Vikram Deshmukh',
-    role: 'Events & Operations Lead',
-    team: 'Events & Ops',
-    trackTitle: 'Hackathon Logistics VIP Mix',
-    duration: '3:55',
-    bio: 'Orchestrating 500+ attendee hackathons, speaker sessions, and tech festivals smoothly.',
-    techStack: ['Event Planning', 'Sponsorships', 'Logistics', 'Operations'],
-    avatarBg: 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)',
-    avatarIcon: '🎪',
-    quote: 'System Sound: Stage lights green, auditorium ready.',
-    socials: {
-      linkedin: 'https://linkedin.com',
-      email: 'events@gdgcrce.edu',
-    },
-  },
-  {
-    id: 11,
-    name: 'Nisha Gupta',
-    role: 'Operations & Sponsorship Head',
-    team: 'Events & Ops',
-    trackTitle: 'Corporate Relations Ballad',
-    duration: '3:18',
-    bio: 'Building industry partnerships and securing resources for cutting-edge student workshops.',
-    techStack: ['Partner Relations', 'Budgeting', 'Vendor Management'],
-    avatarBg: 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',
-    avatarIcon: '🤝',
-    quote: 'Sponsorship Packet: Delivered with high priority.',
-    socials: {
-      linkedin: 'https://linkedin.com',
-    },
-  },
-  {
-    id: 12,
-    name: 'Aditya Verma',
-    role: 'PR & Outreach Lead',
-    team: 'PR & Outreach',
-    trackTitle: 'Viral Transmission (Radio Edit)',
-    duration: '2:58',
-    bio: 'Amplifying GDG CRCE stories across campuses and creating buzz worthy tech campaigns.',
-    techStack: ['Public Relations', 'Brand Strategy', 'Copywriting'],
-    avatarBg: 'linear-gradient(135deg, #e65c00 0%, #F9D423 100%)',
-    avatarIcon: '📢',
-    quote: 'Broadcast Message: Reach engagement up by 240%.',
-    socials: {
-      linkedin: 'https://linkedin.com',
-      instagram: 'https://instagram.com',
-    },
-  },
-  {
-    id: 13,
-    name: 'Tanvi Joshi',
-    role: 'Social Media & Editorial Lead',
-    team: 'PR & Outreach',
-    trackTitle: 'Y2K Aesthetic Chronicle',
-    duration: '3:12',
-    bio: 'Curating engaging reels, newsletters, and visual narratives for the developer community.',
-    techStack: ['Content Direction', 'Reels Production', 'Editorial Layout'],
-    avatarBg: 'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)',
-    avatarIcon: '📸',
-    quote: 'New Media File: Exported in 4K resolution.',
-    socials: {
-      instagram: 'https://instagram.com',
-      linkedin: 'https://linkedin.com',
-    },
-  },
-  {
-    id: 14,
-    name: 'Siddharth Rao',
-    role: 'Open Source & Community Mentor',
-    team: 'Tech & Web',
-    trackTitle: 'Git Rebase & Merge Anthem',
-    duration: '3:48',
-    bio: 'Guiding first-time contributors through open source maintainership and collaborative coding.',
-    techStack: ['Git/GitHub', 'Linux Engine', 'Open Source', 'Mentorship'],
-    avatarBg: 'linear-gradient(135deg, #2b5876 0%, #4e4376 100%)',
-    avatarIcon: '🚀',
-    quote: 'Pull Request #2026: Approved and merged into main.',
-    socials: {
-      github: 'https://github.com',
-      linkedin: 'https://linkedin.com',
-    },
-  },
+};
+
+/** One row per person. `slug` is both the photo filename and the display name. */
+interface RosterEntry {
+  slug: string;
+  name: string;
+  team: Department;
+  /** Overrides DEPT[team].role when someone's title is not the default. */
+  role?: string;
+}
+
+/* NOTE — the last four have no department on record yet, so they sit in
+   'Core Team' as a holding bay rather than being guessed into a team they may
+   not be on. Move them the moment the real assignment is known; nothing else
+   needs editing. */
+const ROSTER: RosterEntry[] = [
+  { slug: 'movin', name: 'Movin', team: 'Technical' },
+  { slug: 'manubav', name: 'Manubav', team: 'Technical' },
+
+  { slug: 'heet', name: 'Heet', team: 'Social Media' },
+  { slug: 'soham', name: 'Soham', team: 'Social Media' },
+  { slug: 'tanisha', name: 'Tanisha', team: 'Social Media' },
+  { slug: 'isaac', name: 'Isaac', team: 'Social Media' },
+
+  { slug: 'kisha', name: 'Kisha', team: 'Design' },
+  { slug: 'saumya', name: 'Saumya', team: 'Design' },
+
+  { slug: 'neomy', name: 'Neomy', team: 'Outreach' },
+  { slug: 'niya', name: 'Niya', team: 'Outreach' },
+
+  { slug: 'astin', name: 'Astin', team: 'Core Team' },
+  { slug: 'mehta', name: 'Mehta', team: 'Core Team' },
+  { slug: 'joshua', name: 'Joshua', team: 'Core Team' },
+  { slug: 'simardeep', name: 'Simardeep', team: 'Core Team' },
 ];
+
+/* Bio / quote copy is deliberately factual and department-derived. These are
+   real people — nothing here claims anything about them that was not supplied.
+   Swap in real copy per person when it arrives; only `bio` and `quote` need
+   touching. */
+export const councilMembers: CouncilMember[] = ROSTER.map((entry, i) => {
+  const d = DEPT[entry.team];
+  return {
+    id: i + 1,
+    name: entry.name,
+    role: entry.role ?? d.role,
+    team: entry.team,
+    photo: photoFor(entry.slug, FULL_W, 75),
+    photoThumb: photoFor(entry.slug, THUMB_W, 70),
+    trackTitle: d.track,
+    duration: '3:30',
+    bio: `${entry.name} is part of the ${entry.team} team at GDG on Campus · CRCE.`,
+    techStack: [entry.team],
+    avatarBg: d.bg,
+    avatarIcon: d.icon,
+    quote: `${entry.team} · GDG on Campus CRCE`,
+    // Left empty on purpose: no invented handles for real people. Fill in as
+    // the actual profiles are collected — the UI renders nothing for an empty
+    // socials object, so partial data is safe.
+    socials: {},
+  };
+});
 
 export const teamsList = [
   'All Tracks',
-  'Core Leadership',
-  'Tech & Web',
-  'UI/UX & Design',
-  'Events & Ops',
-  'PR & Outreach',
+  'Technical',
+  'Social Media',
+  'Design',
+  'Outreach',
+  'Core Team',
 ] as const;
+
+/* -----------------------------------------------------------------------------
+   Wall snapshots.
+
+   The `facebook*.JPG` uploads are event/candid photos rather than portraits, so
+   they are not people and must not go in the roster — they are the club's photo
+   album, and they hang on the TheFacebook profile page.
+   -------------------------------------------------------------------------- */
+export interface WallPhoto {
+  id: string;
+  src: string;
+  caption: string;
+}
+
+export const wallPhotos: WallPhoto[] = [
+  { id: 'fb1', src: photoFor('facebook1', FULL_W, 75), caption: 'the council, assembled' },
+  { id: 'fb2', src: photoFor('facebook2', FULL_W, 75), caption: 'session day' },
+  { id: 'fb3', src: photoFor('facebook3', FULL_W, 75), caption: 'behind the scenes' },
+  { id: 'fb4', src: photoFor('facebook4', FULL_W, 75), caption: 'after the event' },
+];

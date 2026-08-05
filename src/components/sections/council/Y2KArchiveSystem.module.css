@@ -1545,3 +1545,36 @@
   }
 }
 
+
+/* ── the club's photo album ───────────────────────────────────────────────
+   The facebook*.JPG uploads: candids and event shots, not portraits. A
+   horizontal strip rather than the square grid the roster uses, because these
+   are landscape frames and cropping them square throws away the photograph. */
+.photoStrip {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 16px;
+}
+
+.photoTile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.photoTile img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--hair);
+  background: #d8dbe6;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.12);
+}
+
+.photoTile figcaption {
+  font-size: 11px;
+  color: #4a5568;
+}

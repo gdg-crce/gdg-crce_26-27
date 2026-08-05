@@ -9,6 +9,29 @@ const smooth = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
+/* The album's interior leaves, in the order you turn them. The cover and the
+   back cover are NOT in here — they are the book's boards, not photo pages,
+   and they carry the seam into this act and the hand-off out of it.
+   Add a URL and the page appears; the flip schedule below is derived from the
+   list's length, so nothing else needs touching. */
+const PAGE_PHOTOS = [
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(2).png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(3).png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech.png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(1).png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(4).png?tr=f-auto,q-auto',
+];
+
+/* Flip cascade, in units of `p` (the 0 → 0.80 morph/flip phase remapped to
+   0 → 1). FLIP_START clears the opening morph, which owns 0 → 0.20. The
+   stagger is whatever is left over once the last leaf's own travel is
+   reserved, divided between the pages — so the book always finishes turning
+   exactly as the deep-dive zoom begins, at any page count. */
+const FLIP_START = 0.2;
+const FLIP_SPAN = 0.24;
+const Z_STEP = 2;
+const flipStagger = (1 - FLIP_START - FLIP_SPAN) / PAGE_PHOTOS.length;
+
 interface PolaroidAlbumSceneProps {
   progressRef: React.RefObject<number>;
   /**
@@ -29,9 +52,9 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
   const rotatorRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<HTMLDivElement>(null);
   const coverRef = useRef<HTMLDivElement>(null);
-  const page1Ref = useRef<HTMLDivElement>(null);
-  const page2Ref = useRef<HTMLDivElement>(null);
-  const page3Ref = useRef<HTMLDivElement>(null);
+  // One slot per photo page, in reading order. An array rather than a ref each,
+  // so the page count follows PAGE_PHOTOS instead of the markup.
+  const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const backCoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -202,37 +225,33 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
         }
       }
 
-      // Phase 2: Upward Page Flips & Clean Fading!
-      // Smoothly cascading pages to prevent "stop-and-start" scrolling gaps
-      const flipCover = smooth(0.25, 0.50, p) * 180;
-      const zCover = 6 - (flipCover / 180) * 12; // Interpolates from 6 to -6
-      if (coverRef.current) {
-        coverRef.current.style.transform = `translateZ(${zCover}px) rotateX(${flipCover}deg)`;
-        coverRef.current.style.opacity = '1'; 
-        coverRef.current.style.pointerEvents = flipCover > 90 ? 'none' : 'auto';
-      }
+      /* Phase 2: Upward Page Flips & Clean Fading!
+         The cascade is derived from the page count, not hand-tuned per leaf, so
+         adding a photo to PAGE_PHOTOS re-times the whole book automatically.
+         Every flip keeps FLIP_SPAN of travel and they overlap by roughly half
+         of it — that overlap is what stops the turn reading as stop-and-start.
+         The last leaf lands exactly on p = 1.0, the frame the deep-dive zoom
+         takes over.
 
-      const flipP1 = smooth(0.40, 0.65, p) * 180;
-      const zP1 = 4 - (flipP1 / 180) * 8; 
-      if (page1Ref.current) {
-        page1Ref.current.style.transform = `translateZ(${zP1}px) rotateX(${flipP1}deg)`;
-        page1Ref.current.style.opacity = '1';
-        page1Ref.current.style.pointerEvents = flipP1 > 90 ? 'none' : 'auto';
-      }
+         Each leaf starts one step higher in Z than the one beneath and travels
+         to the mirror of that height, so the stack stays physically ordered
+         all the way through the turn instead of z-fighting at the halfway
+         point where two pages are edge-on to each other. */
+      const flipEach = (el: HTMLDivElement | null, from: number, z0: number) => {
+        if (!el) return;
+        const flip = smooth(from, from + FLIP_SPAN, p) * 180;
+        el.style.transform = `translateZ(${z0 - (flip / 180) * z0 * 2}px) rotateX(${flip}deg)`;
+        el.style.opacity = '1';
+        el.style.pointerEvents = flip > 90 ? 'none' : 'auto';
+      };
 
-      const flipP2 = smooth(0.55, 0.80, p) * 180;
-      const zP2 = 2 - (flipP2 / 180) * 4; 
-      if (page2Ref.current) {
-        page2Ref.current.style.transform = `translateZ(${zP2}px) rotateX(${flipP2}deg)`;
-        page2Ref.current.style.opacity = '1';
-        page2Ref.current.style.pointerEvents = flipP2 > 90 ? 'none' : 'auto';
-      }
-      
-      const flipP3 = smooth(0.70, 0.95, p) * 180;
-      if (page3Ref.current) {
-        page3Ref.current.style.transform = `translateZ(0px) rotateX(${flipP3}deg)`;
-        page3Ref.current.style.opacity = '1';
-        page3Ref.current.style.pointerEvents = flipP3 > 90 ? 'none' : 'auto';
+      flipEach(coverRef.current, FLIP_START, (PAGE_PHOTOS.length + 1) * Z_STEP);
+      for (let i = 0; i < PAGE_PHOTOS.length; i++) {
+        flipEach(
+          pageRefs.current[i],
+          FLIP_START + (i + 1) * flipStagger,
+          (PAGE_PHOTOS.length - i) * Z_STEP
+        );
       }
     };
 
@@ -315,28 +334,27 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
               <Image src="/transition/event.png" alt="Event" width={1000} height={562} className="final-event-photo" draggable={false} />
             </div>
 
-            {/* Page 3 */}
-            <div ref={page3Ref} className="album-page album-page-3">
-              <div className="page-front" style={{ backgroundImage: "url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/image_0qhNBcRwO.png')" }}>
-              </div>
-              <div className="page-back"></div>
-            </div>
-
-            {/* Page 2 */}
-            <div ref={page2Ref} className="album-page album-page-2">
-              <div className="page-front" style={{ backgroundImage: "url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/image_2kRTTbS2q.png')" }}>
-              </div>
-              <div className="page-back"></div>
-            </div>
-
-            {/* Page 1 */}
-            <div ref={page1Ref} className="album-page album-page-1">
-              <div className="page-front" style={{ backgroundImage: "url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/image.png')" }}>
-              </div>
-              <div className="page-back">
-                <div className="memory-text">revisiting our memories...</div>
-              </div>
-            </div>
+            {/* Photo pages. Rendered deepest-first so the DOM order matches the
+                Z stack: the last photo is the leaf furthest down in the book,
+                and the first is the one lying right under the cover. */}
+            {PAGE_PHOTOS.map((_, i) => {
+              const idx = PAGE_PHOTOS.length - 1 - i;
+              const src = PAGE_PHOTOS[idx];
+              return (
+                <div
+                  key={src}
+                  ref={(el) => {
+                    pageRefs.current[idx] = el;
+                  }}
+                  className={`album-page album-page-${idx + 1}`}
+                >
+                  <div className="page-front" style={{ backgroundImage: `url('${src}')` }} />
+                  <div className="page-back">
+                    {idx === 0 && <div className="memory-text">revisiting our memories...</div>}
+                  </div>
+                </div>
+              );
+            })}
 
             {/* Cover */}
             <div ref={coverRef} className="album-cover">

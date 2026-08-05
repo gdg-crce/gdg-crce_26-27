@@ -95,12 +95,16 @@
   background: radial-gradient(125% 105% at 50% 44%, transparent 42%, rgba(6, 4, 9, 0.34) 100%);
 }
 
+/* No lighting. This used to carry
+   `radial-gradient(circle, transparent 40%, rgba(30,10,0,0.8) 120%)` — a warm
+   pool of light with the book sitting in it, which is the look that made this
+   read as a lamp-lit table rather than an album. The element stays because it
+   is the grain plate's host; only the light is gone. */
 .album-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 100;
-  background: radial-gradient(circle, transparent 40%, rgba(30, 10, 0, 0.8) 120%);
 }
 
 .dust {
@@ -130,8 +134,32 @@
 .album-container-wrapper {
   --album-aspect: 1.7778;
   position: relative;
-  /* One scalar drives both axes, so the ratio survives every clamp. */
-  --album-w: min(98vw, 1900px, 95vh * var(--album-aspect));
+  /* One scalar drives both axes, so the ratio survives every clamp.
+
+     The 1900px hard cap that used to sit in here is gone, and that is the
+     whole "make it bigger" fix. On a 1920-wide screen it never bound, so the
+     book filled ~95% and looked right; on anything larger it bound hard — a
+     2560-wide monitor got 1900px of book in 2509px of viewport, three quarters
+     of the width, floating in a sea of table. The book was only ever "small"
+     on big displays, which is exactly where it should be most impressive.
+
+     Both axes are viewport-relative. 98/97 is the practical ceiling, and the
+     limit is mechanical rather than aesthetic: `.album-scene-root` clips with
+     `overflow: hidden`, and `albumFloat` lifts the book on its up-beat, so the
+     top edge has to keep at least that lift in clearance or the book crops
+     against the viewport at the peak of its breath. That is why the float's
+     rise is now expressed in vh — see the keyframes below. Measured worst-frame
+     top clearance: 10px at 1440 tall, 5px at 768.
+
+     Do not chase the last 2%. Past this the book crops on the up-beat, and a
+     16:9 book filling a 16:9 screen edge to edge stops reading as an object at
+     all.
+
+     If it needs more presence, the lever is `--album-aspect`, not this — but
+     that one is load-bearing: AboutSection's SEAM_MATCH (1917/917 ÷ 16/9) is
+     derived from 1.7778, and the turntable hand-off comes apart if the two
+     disagree. Change both together or neither. */
+  --album-w: min(98vw, 97vh * var(--album-aspect));
   width: var(--album-w);
   height: calc(var(--album-w) / var(--album-aspect));
 }
@@ -152,9 +180,15 @@
   animation-play-state: paused;
 }
 
+/* The rise is in vh, not px, and that is deliberate. At 97vh the clearance
+   above the book is 1.5vh — which is 21px on a 1440-tall screen but only 11px
+   on a 1366×768 laptop. A fixed 15px lift cropped the top edge outright; a
+   fixed 10px still left just 2px on the laptop, which any rounding or browser
+   zoom would eat. 0.7vh is always half the available gap, so the breath is
+   proportionally identical at every size and can never crop. */
 @keyframes albumFloat {
   0%, 100% { transform: translateY(0) rotateX(8deg) rotateY(0deg); }
-  50% { transform: translateY(-15px) rotateX(12deg) rotateY(-3deg); }
+  50% { transform: translateY(-0.7vh) rotateX(12deg) rotateY(-3deg); }
 }
 
 .album-back-cover, .album-page, .album-cover {
@@ -434,14 +468,17 @@
   visibility: visible;
 }
 
-/* The solid background that hides the rotating About section */
+/* The solid background that hides the rotating About section.
+
+   No table. This was `table.webp` cover-fitted — the wood surface the album
+   used to sit on. It has to stay fully opaque: this overlay is what occludes
+   the still-rotating About turntable underneath, so it cannot become
+   transparent, only plain. #17141c is the same base .wwd-pin and .wwd-loading
+   already use, so the act keeps one background colour end to end. */
 .wwd-solid-bg {
   position: absolute;
   inset: 0;
-  /* Cinematic moody lighting: Grounding the scene on a physical table */
-  /* Using table.png as requested. No dark overlays so the beautiful wood is 100% visible! */
-  background: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/table.webp?tr=f-auto,q-auto') no-repeat center center;
-  background-size: cover;
+  background: #17141c;
 }
 
 /* Provides the 100vh physical block for GSAP to pin against in the DOM */

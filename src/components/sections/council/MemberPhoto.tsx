@@ -1,0 +1,94 @@
+'use client';
+
+import React from 'react';
+import { CouncilMember } from './councilData';
+
+/* -----------------------------------------------------------------------------
+   One member's photograph, everywhere.
+
+   Every avatar in the council surfaces — TheFacebook archive, the XP gallery,
+   the mobile feed — goes through here, so the loading and failure behaviour is
+   defined once instead of at sixteen call sites.
+
+   The department gradient and glyph sit UNDER the photo rather than being
+   replaced by it: that is what fills the frame during the fetch (these are ~1MB
+   camera JPEGs) and what remains if the fetch fails outright. A broken portrait
+   degrades to a department-coloured tile, never to a broken-image icon.
+
+   Styling is inline rather than a class because the call sites are split
+   between global CSS (council.css) and CSS modules, and a shared class would
+   have to exist in both.
+   -------------------------------------------------------------------------- */
+
+interface MemberPhotoProps {
+  member: CouncilMember;
+  /** The caller's own frame class — sizing and borders stay with the caller. */
+  className?: string;
+  style?: React.CSSProperties;
+  /** Size of the fallback glyph while the photo is loading. */
+  glyphSize?: number | string;
+  /**
+   * Which CDN variant to fetch. Defaults to the 320px thumbnail, because most
+   * call sites are grids and rails where many are on screen at once — only the
+   * one photo actually being looked at large should ask for 'full'.
+   */
+  size?: 'thumb' | 'full';
+  /** Rendered above the photo — slot badges, team tags, hover chrome. */
+  children?: React.ReactNode;
+  title?: string;
+}
+
+export default function MemberPhoto({
+  member,
+  className,
+  style,
+  glyphSize,
+  size = 'thumb',
+  children,
+  title,
+}: MemberPhotoProps) {
+  return (
+    <span
+      className={className}
+      title={title}
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: member.avatarBg,
+        ...style,
+      }}
+    >
+      <span aria-hidden style={{ lineHeight: 1, fontSize: glyphSize }}>
+        {member.avatarIcon}
+      </span>
+      {/* Plain <img>, not next/image: these are remote ImageKit URLs that would
+          otherwise need a remotePatterns entry, and ImageKit is already doing
+          the format negotiation via ?tr=f-auto. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={size === 'full' ? member.photo : member.photoThumb}
+        alt={member.name}
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        // Drop the element entirely on failure so the department tile below is
+        // what shows, rather than the browser's broken-image glyph.
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block',
+        }}
+      />
+      {children}
+    </span>
+  );
+}

@@ -2,7 +2,8 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styles from './Y2KArchiveSystem.module.css';
-import { councilMembers, teamsList, CouncilMember } from './councilData';
+import { councilMembers, teamsList, wallPhotos, CouncilMember } from './councilData';
+import MemberPhoto from './MemberPhoto';
 
 /* =============================================================================
    Y2KArchiveSystem
@@ -307,9 +308,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
 
   const MemberCard = ({ m }: { m: CouncilMember }) => (
     <button type="button" className={styles.memberCard} onClick={() => go({ view: 'member', memberId: m.id })}>
-      <div className={styles.memberCardPhoto} style={{ background: m.avatarBg }}>
-        {m.avatarIcon}
-      </div>
+      <MemberPhoto member={m} className={styles.memberCardPhoto} />
       <div className={styles.memberCardBody}>
         <div className={styles.memberCardName}>{m.name}</div>
         <div className={styles.memberCardRole}>{m.role}</div>
@@ -384,15 +383,33 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
               onClick={() => go({ view: 'member', memberId: p.m.id })}
             >
               <span className={styles.pinNum}>{String(i + 1).padStart(2, '0')}</span>
-              <div className={styles.pinnedPhoto} style={{ background: p.m.avatarBg }}>
-                {p.m.avatarIcon}
-              </div>
+              <MemberPhoto member={p.m} className={styles.pinnedPhoto} />
               <div className={styles.pinnedInfo}>
                 <div className={styles.pinnedName}>{p.m.name}</div>
                 <div className={styles.pinnedRole}>{p.role}</div>
               </div>
               <span className={styles.pinnedTag}>{p.tag}</span>
             </button>
+          ))}
+        </div>
+      </section>
+
+      {/* The club's own photo album — candids, not portraits, so these come
+          from wallPhotos rather than the roster. */}
+      <section className={styles.panel}>
+        <div className={styles.panelHead}>
+          <span className={styles.panelTitle}>
+            <FolderIcon size={13} /> Photos
+          </span>
+          <span className={styles.panelMeta}>{wallPhotos.length} albums · uploaded 2026</span>
+        </div>
+        <div className={styles.photoStrip}>
+          {wallPhotos.map((p) => (
+            <figure key={p.id} className={styles.photoTile}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.src} alt={p.caption} loading="lazy" decoding="async" draggable={false} />
+              <figcaption>{p.caption}</figcaption>
+            </figure>
           ))}
         </div>
       </section>
@@ -409,10 +426,9 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         <div className={styles.socialGrid}>
           {featuredGrid.map((g) => (
             <button type="button" key={g.slot} className={styles.gridCell} onClick={() => go({ view: 'member', memberId: g.m.id })}>
-              <div className={styles.gridSquare} style={{ background: g.m.avatarBg }}>
+              <MemberPhoto member={g.m} className={styles.gridSquare}>
                 <span className={styles.gridSlot}>{g.slot}</span>
-                {g.m.avatarIcon}
-              </div>
+              </MemberPhoto>
               <div className={styles.gridCaption}>{g.caption}</div>
               <div className={styles.gridName}>{g.m.name}</div>
             </button>
@@ -465,9 +481,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         </button>
         <div className={styles.detailTop}>
           <div className={styles.detailLeft}>
-            <div className={styles.detailAvatar} style={{ background: m.avatarBg }}>
-              {m.avatarIcon}
-            </div>
+            <MemberPhoto member={m} className={styles.detailAvatar} />
             <div className={styles.detailActions}>
               <button type="button" className={styles.actionBtn}>
                 <PokeIcon /> Poke
@@ -538,9 +552,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div className={styles.teammates}>
               {teammates.map((t) => (
                 <button type="button" key={t.id} className={styles.teammateChip} onClick={() => go({ view: 'member', memberId: t.id })}>
-                  <span className={styles.teammateAvatar} style={{ background: t.avatarBg }}>
-                    {t.avatarIcon}
-                  </span>
+                  <MemberPhoto member={t} className={styles.teammateAvatar} />
                   {t.name}
                 </button>
               ))}
@@ -572,9 +584,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
                 <div className={styles.groupCount}>{members.length} members</div>
                 <div className={styles.groupAvatars}>
                   {members.slice(0, 6).map((m) => (
-                    <span key={m.id} className={styles.groupAvatar} style={{ background: m.avatarBg }} title={m.name}>
-                      {m.avatarIcon}
-                    </span>
+                    <MemberPhoto key={m.id} member={m} className={styles.groupAvatar} title={m.name} />
                   ))}
                 </div>
               </div>

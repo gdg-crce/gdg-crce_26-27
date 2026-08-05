@@ -21,6 +21,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CouncilMember } from './councilData';
+import MemberPhoto from './MemberPhoto';
 
 interface WindowsPictureViewerProps {
   allMembers: CouncilMember[];
@@ -36,8 +37,10 @@ const SLIDE_MS = 2800;
 const FOLDER = 'Council 2026-27';
 const ADDRESS = `C:\\Documents and Settings\\GDG CRCE\\My Documents\\My Pictures\\${FOLDER}`;
 
+/* The real filename off the CDN, not a synthesised one — the tile caption is
+   meant to read like a folder listing, and these are the actual files. */
 const fileNameFor = (m: CouncilMember) =>
-  `${m.name.replace(/[^A-Za-z0-9]+/g, '_')}_${String(m.id).padStart(3, '0')}.jpg`;
+  decodeURIComponent(m.photo.split('?')[0].split('/').pop() ?? `${m.name}.JPG`);
 
 /* -----------------------------------------------------------------------------
    Icons — 16×16 Luna pictograms. Flat fills, 1px outlines, no soft shadows:
@@ -461,15 +464,13 @@ export default function WindowsPictureViewer({
                     title={`${m.name} — ${m.role}`}
                   >
                     <span className="xp-pv-tile-shell">
-                      <span
+                      <MemberPhoto
+                        member={m}
                         className="xp-pv-tile-photo"
                         style={{
-                          background: m.avatarBg,
                           transform: on && rotation ? `rotate(${rotation}deg)` : undefined,
                         }}
-                      >
-                        {m.avatarIcon}
-                      </span>
+                      />
                     </span>
                     <span className="xp-pv-tile-name">{fileNameFor(m)}</span>
                   </button>
@@ -480,10 +481,9 @@ export default function WindowsPictureViewer({
             <div className="xp-pv-film">
               <div className="xp-pv-preview">
                 <div className="xp-pv-photo-shell" style={{ transform: `rotate(${rotation}deg)` }}>
-                  <div className="xp-pv-photo" style={{ background: current.avatarBg }}>
-                    <span className="xp-pv-photo-glyph">{current.avatarIcon}</span>
+                  <MemberPhoto member={current} className="xp-pv-photo" size="full" glyphSize="clamp(58px, 7vw, 100px)">
                     <span className="xp-pv-photo-team">{current.team}</span>
-                  </div>
+                  </MemberPhoto>
                 </div>
               </div>
               <div className="xp-pv-strip" ref={stripRef}>
@@ -499,9 +499,7 @@ export default function WindowsPictureViewer({
                     }}
                     title={fileNameFor(m)}
                   >
-                    <span className="xp-pv-frame-photo" style={{ background: m.avatarBg }}>
-                      {m.avatarIcon}
-                    </span>
+                    <MemberPhoto member={m} className="xp-pv-frame-photo" glyphSize={26} />
                   </button>
                 ))}
               </div>
@@ -526,9 +524,7 @@ export default function WindowsPictureViewer({
 
               <div className="xp-pv-info-body">
                 <div className="xp-pv-info-preview">
-                  <span className="xp-pv-info-photo" style={{ background: current.avatarBg }}>
-                    {current.avatarIcon}
-                  </span>
+                  <MemberPhoto member={current} className="xp-pv-info-photo" size="full" glyphSize={54} />
                 </div>
                 <div className="xp-pv-info-file">{fileNameFor(current)}</div>
 
@@ -537,25 +533,12 @@ export default function WindowsPictureViewer({
                   <dd>{current.name}</dd>
                   <dt>Post</dt>
                   <dd>{current.role}</dd>
-                  <dt>Team</dt>
+                  <dt>Department</dt>
                   <dd>{current.team}</dd>
-                  <dt>Track</dt>
-                  <dd>{current.trackTitle}</dd>
                 </dl>
 
                 <div className="xp-pv-info-section">About</div>
                 <p className="xp-pv-info-bio">{current.bio}</p>
-
-                <div className="xp-pv-info-section">Tech Stack</div>
-                <div className="xp-pv-info-chips">
-                  {current.techStack.map((t) => (
-                    <span key={t} className="xp-pv-chip">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                <p className="xp-pv-info-quote">&ldquo;{current.quote}&rdquo;</p>
               </div>
             </aside>
           )}
