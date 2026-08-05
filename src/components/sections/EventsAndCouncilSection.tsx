@@ -5,7 +5,10 @@ import Image from 'next/image';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { events } from './events/eventData';
+// Wall placements and the poster artwork both come from eventData now — the
+// mobile carousel used to carry its own copy of the list, which is how the two
+// views ended up showing different posters for the same four events.
+import { events, mobileEvents } from './events/eventData';
 import { councilMembers } from './council/councilData';
 import WindowsXPDesktop from './council/WindowsXPDesktop';
 import Y2KArchiveSystem from './council/Y2KArchiveSystem';
@@ -28,34 +31,6 @@ const WallScene = dynamic(() => import('@/components/three/WallScene'), {
 function THREE_MATH_LERP(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
-
-export const mobileEvents = [
-  {
-    id: 'mobile-evt-1',
-    title: 'CRCE HACK 2026',
-    subtitle: 'Retro Tech Hackathon',
-    // Raw public path — next/image's ImageKit loader adds f-auto/q-auto/w-<size>.
-    posterImage: '/events/1.png',
-  },
-  {
-    id: 'mobile-evt-2',
-    title: 'AGENT SESSIONS',
-    subtitle: 'AI Workshop Series',
-    posterImage: '/events/2.png',
-  },
-  {
-    id: 'mobile-evt-3',
-    title: 'DEVFEST 2026',
-    subtitle: 'Build the Future',
-    posterImage: '/events/3.png',
-  },
-  {
-    id: 'mobile-evt-4',
-    title: 'BYTE CLUB',
-    subtitle: 'Weekly Code Jams',
-    posterImage: '/events/4.png',
-  },
-];
 
 /**
  * EventsAndCouncilSection — Unified Master Choreography Section

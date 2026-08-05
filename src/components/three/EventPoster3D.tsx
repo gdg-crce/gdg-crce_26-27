@@ -54,8 +54,24 @@ export default function EventPoster3D({
 
   const paper = useMemo(() => buildPaperMaps(), []);
 
-  const w = 3.4 * posterScale;
+  /* The sheet takes its shape from the artwork, not the other way round.
+     This was a hardcoded 3.4 × 3.4 square, which was fine while the posters
+     were square 1024×1024 placeholders and silently squashed the real event
+     designs (1179×1579 portrait) by a quarter of their width the moment they
+     were swapped in.
+
+     HEIGHT is the fixed dimension and width follows the aspect — not the other
+     way round. These sheets sit at y ≈ 2.3–2.55 on a wall whose ground is at
+     y = 0: driving height from a fixed width would have put a portrait poster's
+     bottom edge through the pavement.
+
+     useTexture suspends until the image has decoded, so `texture.image` is
+     always populated by first render; the `|| 1` is for a texture with no
+     intrinsic size, which would otherwise collapse the geometry to zero. */
+  const img = texture.image as { width?: number; height?: number } | undefined;
+  const aspect = img?.width && img?.height ? img.width / img.height : 1;
   const h = 3.4 * posterScale;
+  const w = h * aspect;
 
   /* Per-poster variation. Cloned textures share the GPU image (Texture.clone
      keeps .source), so four masks flipped four ways give sixteen distinct
