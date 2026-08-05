@@ -143,23 +143,25 @@
      of the width, floating in a sea of table. The book was only ever "small"
      on big displays, which is exactly where it should be most impressive.
 
-     Both axes are viewport-relative. 98/97 is the practical ceiling, and the
-     limit is mechanical rather than aesthetic: `.album-scene-root` clips with
-     `overflow: hidden`, and `albumFloat` lifts the book on its up-beat, so the
-     top edge has to keep at least that lift in clearance or the book crops
-     against the viewport at the peak of its breath. That is why the float's
-     rise is now expressed in vh — see the keyframes below. Measured worst-frame
-     top clearance: 10px at 1440 tall, 5px at 768.
+     Both axes sit at the ceiling. 99/99 is the measured maximum, not a taste
+     call: `.album-scene-root` clips with `overflow: hidden`, and the book is a
+     3D object under `perspective: 2500px`, so its PROJECTED footprint is bigger
+     than its CSS box — the near edge swings outward as the float tilts it.
+     Sweeping the float and shrinking until nothing crossed the viewport on any
+     frame found the limit at 99.5%; 99 is that, with a few px against rounding.
+     100 looks like it should work and does not: it crops 13px left and 31px
+     right at the sway's peak.
 
-     Do not chase the last 2%. Past this the book crops on the up-beat, and a
-     16:9 book filling a 16:9 screen edge to edge stops reading as an object at
-     all.
+     Two things in `albumFloat` below exist to buy this size — the vertical
+     lift is gone (no clearance left for it) and the tilt is halved (every
+     degree of rotateX foreshortens height away under the perspective). Do not
+     reintroduce a translateY, and do not deepen the tilt.
 
      If it needs more presence, the lever is `--album-aspect`, not this — but
      that one is load-bearing: AboutSection's SEAM_MATCH (1917/917 ÷ 16/9) is
      derived from 1.7778, and the turntable hand-off comes apart if the two
      disagree. Change both together or neither. */
-  --album-w: min(98vw, 97vh * var(--album-aspect));
+  --album-w: min(99vw, 99vh * var(--album-aspect));
   width: var(--album-w);
   height: calc(var(--album-w) / var(--album-aspect));
 }
@@ -180,16 +182,20 @@
   animation-play-state: paused;
 }
 
-/* The rise is in vh, not px, and that is deliberate. At 97vh the clearance
-   above the book is 1.5vh — which is 21px on a 1440-tall screen but only 11px
-   on a 1366×768 laptop. A fixed 15px lift cropped the top edge outright; a
-   fixed 10px still left just 2px on the laptop, which any rounding or browser
-   zoom would eat. 0.7vh is always half the available gap, so the breath is
-   proportionally identical at every size and can never crop. */
+/* The breath no longer translates, only tilts — and the tilt is shallower than
+   it was (8→5, 12→7).
+
+   Both changes exist to buy size. The book is now exactly viewport-sized, so
+   there is no clearance left: any vertical lift cropped the top edge against
+   `.album-scene-root`'s `overflow: hidden`, and every degree of rotateX
+   foreshortens the height away under `perspective: 2500px`. Shallower tilt is
+   literally a taller book on screen. The float still reads as a float because
+   rotateY is doing the work. */
 @keyframes albumFloat {
-  0%, 100% { transform: translateY(0) rotateX(8deg) rotateY(0deg); }
-  50% { transform: translateY(-0.7vh) rotateX(12deg) rotateY(-3deg); }
+  0%, 100% { transform: rotateX(5deg) rotateY(0deg); }
+  50% { transform: rotateX(7deg) rotateY(-3deg); }
 }
+
 
 .album-back-cover, .album-page, .album-cover {
   position: absolute;
