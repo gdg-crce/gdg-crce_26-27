@@ -1,0 +1,262 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   SHUT DOWN — the bridge out of 2003 and into now.
+
+   Act 3 leaves you inside a Windows XP desktop. There is exactly one honest
+   way to leave a machine, and it is to turn it off — which is also the site's
+   own thesis: the past powers down, the present picks up.
+
+   Five beats, scrubbed off one scalar:
+
+     0.00 → 0.10   cross-dissolve onto a bare XP desktop (the gallery closes)
+     0.10 → 0.44   the desktop dims, the shutdown dialog runs its marquee
+     0.44 → 0.59   cut to the XP shutdown field
+     0.59 → 0.84   CRT power-off: the picture collapses to a scanline, the
+                   scanline contracts to a dot, the dot burns out
+     0.80 → 0.88   the contact screen fades up on the black
+     0.88 → 1.00   rest
+
+   The overlay is `position: fixed` and contributes NO height to the document.
+   On desktop the scalar comes from Act 3's pin, so this never fights Act 3's
+   ScrollTrigger — it *is* Act 3's ScrollTrigger. See ShutdownTransition.tsx.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.sd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99998; /* above Act 3's chrome, below TopNav's 100000 */
+  pointer-events: none;
+  overflow: hidden;
+  background: #000;
+  opacity: 0;
+  /* Built but not painted until the act is live — this is ten stacked
+     full-viewport layers and they should not composite for the whole page. */
+  visibility: hidden;
+  will-change: opacity;
+}
+
+.sd-overlay.is-active {
+  visibility: visible;
+}
+
+/* ── the tube ─────────────────────────────────────────────────────────────
+   Everything that is "on screen" lives in here, because the CRT collapse
+   scales this one element. Keeping the collapse on a single transform means
+   the whole picture discharges together, which is what a real tube does. */
+.sd-tube {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+/* The seam. Same wallpaper Act 3's desktop is showing, so the hand-off from
+   the council archive into this overlay has nothing to notice. */
+.sd-wallpaper {
+  position: absolute;
+  inset: 0;
+  background: #3a6ea5 url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/walpaper.png?tr=f-auto,q-auto')
+    center / cover no-repeat;
+}
+
+.sd-scrim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+}
+
+/* ── "Shut Down Windows" dialog ──────────────────────────────────────────── */
+
+.sd-dialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(92vw, 400px);
+  transform: translate(-50%, -50%) scale(0.94);
+  opacity: 0;
+  border: 1px solid #0a3d8f;
+  border-radius: 8px 8px 3px 3px;
+  overflow: hidden;
+  background: #ece9d8;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  font-family: Tahoma, 'Segoe UI', Verdana, sans-serif;
+  color: #000;
+}
+
+.sd-dialog-title {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+  /* The Luna caption ramp, same as the gallery's title bar. */
+  background: linear-gradient(
+    180deg,
+    #0058ee 0%, #3593ff 4%, #288eff 6%, #127dff 8%, #036ffc 10%,
+    #0262ee 14%, #0057e5 20%, #0054e3 24%, #0055e5 56%, #005bed 68%,
+    #0262f0 72%, #0468f2 76%, #0d6efb 78%, #1476fd 80%, #257efe 84%,
+    #3e8fff 90%, #0054e3 100%
+  );
+}
+
+.sd-dialog-body {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 18px 18px 14px;
+}
+
+.sd-dialog-icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 38% 28%, #a8dcff 0%, #4a9de8 36%, #1a63b4 68%, #0a3a72 100%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), 0 1px 3px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 19px;
+}
+
+.sd-dialog-text strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.sd-dialog-text span {
+  font-size: 11px;
+  color: #3d3d3d;
+  line-height: 1.5;
+}
+
+/* The XP marquee: a lozenge train sliding through a sunken trough. */
+.sd-progress {
+  margin: 4px 18px 18px;
+  height: 17px;
+  padding: 2px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.sd-progress-train {
+  display: flex;
+  gap: 2px;
+  height: 100%;
+  width: 200%;
+  animation: sdMarquee 1.1s linear infinite;
+}
+
+.sd-progress-train i {
+  flex: 0 0 10px;
+  background: linear-gradient(180deg, #7fc3f5 0%, #2f7fd4 48%, #1d63b4 52%, #61aae8 100%);
+}
+
+@keyframes sdMarquee {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+/* ── the shutdown field ───────────────────────────────────────────────────
+   XP's own farewell: a flat blue field, centred sans, nothing else. */
+.sd-field {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #3a6ea5;
+  opacity: 0;
+  font-family: Tahoma, 'Segoe UI', Verdana, sans-serif;
+  color: #fff;
+  text-align: center;
+  padding: 24px;
+}
+
+.sd-field-main {
+  font-size: clamp(15px, 2.4vw, 22px);
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.sd-field-sub {
+  font-size: clamp(11px, 1.4vw, 13px);
+  opacity: 0.72;
+}
+
+/* ── CRT discharge ────────────────────────────────────────────────────────
+   The scanline and the dot are siblings of the tube, not children: once the
+   tube has collapsed to nothing there is no element left to draw them on. */
+.sd-scanline {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vw;
+  height: 3px;
+  transform: translate(-50%, -50%) scaleX(0);
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, #fff 8%, #fff 92%, transparent);
+  box-shadow: 0 0 26px 7px rgba(190, 225, 255, 0.85);
+  will-change: transform, opacity;
+}
+
+.sd-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 22px 8px rgba(200, 232, 255, 0.9);
+  opacity: 0;
+  transform: scale(0);
+  will-change: transform, opacity;
+}
+
+/* ── the spacer ───────────────────────────────────────────────────────────
+   Real height in the document is what the scrub reads; the overlay itself is
+   fixed and contributes nothing to flow. */
+.sd-spacer {
+  position: relative;
+  width: 100%;
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-progress-train {
+    animation: none;
+  }
+}
+
+/* ── the text-mode screen ─────────────────────────────────────────────────
+   Sits above the tube and its discharge, on the black. Sibling of the tube,
+   not a child, so the CRT collapse cannot scale it. */
+.sd-term-host {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Only the contact screen itself takes pointer events, and only once the
+   shutdown has actually revealed it.
+
+   The class goes on the HOST, which is the element the draw loop holds a ref
+   to. This selector used to read `.sd-term-host .ct-term.is-live`, i.e. it
+   wanted the class on the DESCENDANT — so it never matched anything and the
+   contact links were unclickable at every scroll position. */
+.sd-term-host.is-live .ct-term {
+  pointer-events: auto;
+}

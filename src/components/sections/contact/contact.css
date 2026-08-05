@@ -1,116 +1,263 @@
-/* ==========================================================================
-   CONTACT US FOOTER — MICHELANGELO "CREATION OF ADAM" HANDS
-   ========================================================================== */
+/* ══════════════════════════════════════════════════════════════════════════
+   CONTACT — text mode.
 
-:root {
-  --footer-logo-size: 220px;
-  --footer-overlap: 120px;
-  --footer-container-height: 520px;
-}
+   This is NOT a footer and it does not scroll. It is drawn on the black the
+   CRT leaves behind, inside the shutdown overlay, so nothing follows the
+   machine powering down and there is no page left to scroll up into.
 
-@media (max-width: 768px) {
-  :root {
-    --footer-logo-size: 160px;
-    --footer-overlap: 80px;
-    --footer-container-height: 380px;
-  }
-}
+   Era, not modern: when a CRT of that vintage went dark, what you saw last was
+   the text-mode screen underneath Windows — BIOS, POST, a directory listing.
+   So the contact details are a directory listing, in phosphor on black, with
+   box-drawing rules. Amber rather than green: the site's own palette is warm
+   (#E0A526 is the 70s secondary), and green would import a terminal aesthetic
+   that belongs to a different machine.
 
-@media (max-width: 480px) {
-  :root {
-    --footer-logo-size: 100px;
-    --footer-overlap: 50px;
-    --footer-container-height: 280px;
-  }
-}
+   Deliberately quiet. It arrives after twenty thousand scroll pixels of noise
+   and one dying picture tube; loud here would undo the ending.
+   ══════════════════════════════════════════════════════════════════════════ */
 
-.contact-section {
-  position: relative;
-  width: 100%;
-  background: #000000;
-  overflow: hidden;
-  padding: 40px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+.ct-term {
+  --amber: #e8b767;
+  --amber-dim: #9c7c46;
+  --amber-faint: #5e4b2c;
+  --amber-hot: #ffe9c2;
 
-.contact-adam-container {
-  position: relative;
-  width: 100%;
-  max-width: none; /* Spans full width of viewport */
-  height: var(--footer-container-height);
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-}
-
-.contact-logo-wrapper {
-  position: relative;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.contact-logo {
-  width: var(--footer-logo-size);
-  height: var(--footer-logo-size);
-  object-fit: contain;
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.15));
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
-}
-
-.contact-logo-wrapper:hover .contact-logo {
-  transform: scale(1.06) rotate(2deg);
-}
-
-.contact-hand {
   position: absolute;
-  /* Dynamically size the hands to bridge the screen edge to the center logo */
-  width: calc(50vw - (var(--footer-logo-size) / 2) + var(--footer-overlap));
-  height: auto;
-  object-fit: contain;
-  pointer-events: none;
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.7));
+  inset: 0;
   z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 5vw, 64px);
+  /* NO `opacity: 0` here. The fade belongs to `.sd-term-host`, which is what
+     the shutdown's draw loop holds a ref to and writes. When both carried it,
+     the effective opacity was host(0 → 1) × this(0) = 0 at every scroll
+     position on the page, which is why the contact screen was never visible:
+     it rendered, it occupied the DOM, and it was mathematically transparent. */
+  pointer-events: none;
+  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', 'Courier New', monospace;
+  color: var(--amber);
+  /* Phosphor does not render a crisp edge — it blooms. */
+  text-shadow: 0 0 12px rgba(232, 183, 103, 0.28);
 }
 
-/* Left hand: extends from the absolute left screen edge, touching logo's left edge */
-.contact-hand-left {
-  left: 0;
-  top: 105%;
-  width: calc(50vw - (var(--footer-logo-size) / 2) + var(--footer-overlap) + 100px);
-  transform: translateY(-50%) rotate(-12deg);
-  transform-origin: left center;
-  opacity: 0.95;
+/* Clickability is granted by the host once the shutdown has revealed this —
+   see `.sd-term-host.is-live .ct-term` in shutdown.css. */
+
+.ct-inner {
+  width: 100%;
+  max-width: 860px;
 }
 
-/* Right hand: extends from the absolute right screen edge, touching logo's right edge */
-.contact-hand-right {
-  right: -50px;
-  top: 10%;
-  width: calc(50vw - (var(--footer-logo-size) / 2) + var(--footer-overlap) + 200px);
-  transform: translateY(-50%) rotate(-14deg);
-  transform-origin: right center;
-  opacity: 0.95;
+.ct-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: clamp(10px, 1.5vw, 12.5px);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--amber-dim);
 }
 
-/* Hover effect on container: subtle movement to emphasize the connection */
-.contact-adam-container:hover .contact-hand-left {
-  transform: translateY(-50%) rotate(-9deg) translate(15px, -5px) scale(1.01);
+.ct-rule {
+  height: 1px;
+  margin: 12px 0 22px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--amber-faint) 0 6px,
+    transparent 6px 10px
+  );
+}
+
+.ct-title {
+  margin: 0 0 6px;
+  font-size: clamp(1.1rem, 3.4vw, 1.9rem);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber-hot);
+  text-shadow: 0 0 18px rgba(255, 233, 194, 0.35);
+}
+
+.ct-strap {
+  margin: 0 0 26px;
+  font-size: clamp(11px, 1.6vw, 13px);
+  line-height: 1.75;
+  color: var(--amber-dim);
+  max-width: 54ch;
+}
+
+/* ── the two columns: reach us, and where everything was ─────────────────── */
+
+.ct-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(22px, 5vw, 56px);
+}
+
+@media (max-width: 720px) {
+  .ct-cols {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+}
+
+.ct-colhead {
+  margin: 0 0 12px;
+  font-size: 10.5px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--amber-faint);
+}
+
+.ct-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: clamp(11.5px, 1.7vw, 14px);
+  line-height: 1.5;
+  color: var(--amber);
+  text-decoration: none;
+  transition: color 0.18s linear, text-shadow 0.18s linear;
+}
+
+.ct-key {
+  flex: 0 0 auto;
+  min-width: 9ch;
+  color: var(--amber-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.86em;
+}
+
+.ct-val {
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* The cursor block only sits next to the row you are pointing at — the same
+   way a text-mode menu highlighted the active line. */
+.ct-row::after {
+  content: '';
+  width: 7px;
+  height: 1.05em;
+  margin-left: 2px;
+  background: var(--amber-hot);
+  opacity: 0;
+  transform: translateY(0.14em);
+}
+
+a.ct-row:hover,
+a.ct-row:focus-visible {
+  color: var(--amber-hot);
+  text-shadow: 0 0 16px rgba(255, 233, 194, 0.45);
+  outline: none;
+}
+
+a.ct-row:hover::after,
+a.ct-row:focus-visible::after {
   opacity: 1;
+  animation: ctBlink 1s steps(1) infinite;
 }
 
-.contact-adam-container:hover .contact-hand-right {
-  transform: translateY(-50%) rotate(-11deg) translate(-15px, 5px) scale(1.01);
-  opacity: 1;
+@keyframes ctBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 
+/* A channel with no URL on record. Listed, but must not look clickable. */
+.ct-row.is-pending {
+  color: var(--amber-faint);
+}
+
+.ct-row.is-pending .ct-val::after {
+  content: ' — not on record';
+  font-size: 0.82em;
+  opacity: 0.8;
+}
+
+/* ── the navigational map ─────────────────────────────────────────────────
+   A directory tree of the acts you walked through, in the order you met them.
+   Box-drawing glyphs rather than an icon set: this is the machine's own way of
+   listing a folder, and it is what the era had. */
+.ct-map {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: clamp(11px, 1.6vw, 13px);
+  line-height: 1.95;
+}
+
+.ct-map a {
+  color: var(--amber-dim);
+  text-decoration: none;
+  transition: color 0.18s linear, text-shadow 0.18s linear;
+}
+
+.ct-map a:hover,
+.ct-map a:focus-visible {
+  color: var(--amber-hot);
+  text-shadow: 0 0 14px rgba(255, 233, 194, 0.4);
+  outline: none;
+}
+
+.ct-branch {
+  color: var(--amber-faint);
+  user-select: none;
+}
+
+.ct-era {
+  margin-left: 8px;
+  font-size: 0.82em;
+  letter-spacing: 0.14em;
+  color: var(--amber-faint);
+}
+
+/* ── sign-off ─────────────────────────────────────────────────────────────── */
+
+.ct-foot {
+  margin-top: clamp(22px, 4vh, 38px);
+  padding-top: 14px;
+  border-top: 1px solid var(--amber-faint);
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber-faint);
+}
+
+/* The prompt that never gets typed into. */
+.ct-caret {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  background: var(--amber);
+  vertical-align: -0.14em;
+  margin-left: 6px;
+  animation: ctBlink 1.05s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-caret,
+  a.ct-row:hover::after {
+    animation: none;
+  }
+}
+
+/* The act you are currently on — listed, but not a link to itself. */
+.ct-here {
+  color: var(--amber-hot);
+  text-shadow: 0 0 14px rgba(255, 233, 194, 0.4);
+}
