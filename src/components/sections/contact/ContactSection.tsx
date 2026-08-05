@@ -1,61 +1,106 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import './contact.css';
 
 /* -----------------------------------------------------------------------------
-   CONTACT — the text-mode screen under the dead tube.
+   CONTACT — the BIOS setup utility.
 
    Rendered INSIDE ShutdownTransition's overlay, on the black the CRT leaves
    behind. It is not a <footer> and it is not in the page flow: nothing follows
    the machine powering down, so there is nothing left to scroll into and no
    scroll-up to watch.
 
-   Content rule: nothing invented. The address and the campus are the ones the
-   site already carried. A channel whose URL is not on record renders as plain
-   text saying so, rather than as a plausible-looking dead link.
+   Why BIOS, and not a footer or the amber directory listing this used to be:
+   the shutdown ends with a tube discharging to nothing. The only thing that
+   ever came after that, on that machine, was the machine coming back — and the
+   first screen it draws is firmware, before any operating system exists to have
+   an era. That is the one screen on the whole site that belongs to no decade,
+   which is exactly what the ending needs.
+
+   It also happens to be the right FORM for this content. A BIOS setup screen is
+   already a menu bar (the navigational map), a field list (the contact details)
+   and an Item Specific Help panel (what each one is), laid out in a grid. None
+   of that had to be invented, only filled in.
+
+   TWO HARD CONSTRAINTS, both easy to break by accident:
+
+   · It must fit in ONE viewport. This is drawn at the very bottom of the
+     document, where there is no scroll left by design — anything that overflows
+     is simply unreachable. Keep the row count down and the type on clamp().
+
+   · Nothing here may be a link that scrolls the page. The menu bar is chrome,
+     not navigation; TopNav sits above this overlay and is the way back.
+
+   Content rule: nothing invented. A channel whose URL is not on record renders
+   as a plain, unclickable value and says so in the help panel, rather than as a
+   plausible-looking dead link.
    -------------------------------------------------------------------------- */
 
 const EMAIL = 'gdg.crce@gmail.com';
 
-interface Channel {
-  key: string;
+interface Field {
+  id: string;
   label: string;
-  /** Fill these in and the row becomes a live link automatically. */
+  value: string;
+  /** Fill this in and the row becomes selectable and live automatically. */
   href: string;
+  help: string;
 }
 
-const CHANNELS: Channel[] = [
-  { key: 'mail', label: EMAIL, href: `mailto:${EMAIL}` },
-  { key: 'github', label: 'github.com/gdgcrce', href: '' },
-  { key: 'linkedin', label: 'linkedin.com/company/gdgcrce', href: '' },
-  { key: 'twitter', label: 'x.com/gdgcrce', href: '' },
+const FIELDS: Field[] = [
+  {
+    id: 'mail',
+    label: 'E-Mail Address',
+    value: EMAIL,
+    href: `mailto:${EMAIL}`,
+    help: 'Primary channel. Goes to the council inbox — events, collaborations, speaking, sponsorship, or joining a track.',
+  },
+  {
+    id: 'linkedin',
+    label: 'LinkedIn',
+    value: 'linkedin.com/company/gdgcrce',
+    href: '',
+    help: 'Chapter page. Council announcements and event write-ups. No URL on record yet, so this field is display only.',
+  },
+  {
+    id: 'github',
+    label: 'GitHub',
+    value: 'github.com/gdgcrce',
+    href: '',
+    help: 'Workshop material and project source. No URL on record yet, so this field is display only.',
+  },
+  {
+    id: 'x',
+    label: 'X / Twitter',
+    value: 'x.com/gdgcrce',
+    href: '',
+    help: 'Short-form updates and event-day posts. No URL on record yet, so this field is display only.',
+  },
+];
+
+/** Read-only firmware-detected values. A BIOS screen always has a block. */
+const SYSTEM: Array<{ label: string; value: string }> = [
+  { label: 'Chapter', value: 'GDG on Campus · CRCE' },
+  { label: 'Institute', value: 'Fr. C. Rodrigues College of Engineering' },
+  { label: 'Location', value: 'Bandra (W), Mumbai 400050' },
+  { label: 'Council Term', value: '2026 - 27' },
 ];
 
 /**
- * The acts, in the order you walked through them.
+ * The navigational map, as the setup utility's menu bar.
  *
- * Deliberately NOT links. Two reasons, both hard:
- *
- *   · Every destination lives inside a ScrollTrigger-pinned section, where an
- *     element's document position has nothing to do with the scroll offset that
- *     puts it on screen. A native `#anchor` jump teleports to the wrong place.
- *     `#council` did not resolve at all — CouncilSection.tsx is dead code and
- *     is never imported, so that href pointed at nothing.
- *   · Anything here that scrolls the page back up is the one thing this ending
- *     exists to prevent. TopNav sits above this overlay at z-100000 and already
- *     navigates by measured scroll position; that is the way back.
- *
- * So this is a listing of where you have been, not a control.
+ * Deliberately NOT links — the same rule the rest of this ending runs on. Every
+ * destination lives inside a ScrollTrigger-pinned section, where an element's
+ * document position has nothing to do with the scroll offset that puts it on
+ * screen, so an anchor jump lands in the wrong place; and anything here that
+ * scrolls the page back up is the one thing this ending exists to prevent.
+ * It is a "you are here", drawn the way firmware draws one.
  */
-const MAP: Array<{ label: string; era: string }> = [
-  { label: 'home', era: 'title card' },
-  { label: 'about', era: '1970s' },
-  { label: 'what we do', era: '1980s' },
-  { label: 'events', era: '1990s' },
-  { label: 'council', era: '2000s' },
-  { label: 'contact', era: 'now' },
-];
+const MENU = ['Home', 'About', 'What We Do', 'Events', 'Council', 'Contact'];
+
+const DEFAULT_HELP =
+  'Use the pointer to select a field. Fields shown in full brightness are live; dimmed fields have no address on record yet.';
 
 /* NOTE — deliberately no id="contact" on the root below. TopNav navigates by
    measured scroll offsets, not by anchors, and this element lives inside a
@@ -64,74 +109,84 @@ const MAP: Array<{ label: string; era: string }> = [
 export default function ContactSection() {
   return (
     <section className="ct-term" aria-label="Contact GDG on Campus CRCE">
-      <div className="ct-inner">
-        <div className="ct-head">
-          <span>GDG on Campus · CRCE</span>
-          <span>Council 2026&ndash;27</span>
-        </div>
-        <div className="ct-rule" />
+      <div className="bios">
+        <div className="bios-title">GDG CRCE BIOS Setup Utility</div>
 
-        <h2 className="ct-title">Contact us</h2>
-        <p className="ct-strap">
-          The archive is closed. We are still here — building, teaching, and running
-          this thing out of Fr. Conceicao Rodrigues College of Engineering, Bandra.
-          If you build things, or want to learn how, get in touch.
-        </p>
-
-        <div className="ct-cols">
-          <div>
-            <p className="ct-colhead">{'// reach us'}</p>
-            <ul className="ct-list">
-              {CHANNELS.map((c) =>
-                c.href ? (
-                  <li key={c.key}>
-                    <a
-                      className="ct-row"
-                      href={c.href}
-                      {...(c.href.startsWith('mailto:')
-                        ? {}
-                        : { target: '_blank', rel: 'noopener noreferrer' })}
-                    >
-                      <span className="ct-key">{c.key}</span>
-                      <span className="ct-val">{c.label}</span>
-                    </a>
-                  </li>
-                ) : (
-                  /* No URL on record — see the content rule above. */
-                  <li key={c.key}>
-                    <span className="ct-row is-pending">
-                      <span className="ct-key">{c.key}</span>
-                      <span className="ct-val">{c.label}</span>
-                    </span>
-                  </li>
-                )
-              )}
-            </ul>
-          </div>
-
-          <div>
-            <p className="ct-colhead">{'// where you have been'}</p>
-            <ul className="ct-map">
-              {MAP.map((m, i) => {
-                const here = i === MAP.length - 1; // you are on this one
+        <div className="bios-body">
+          <div className="bios-main">
+            <h2 className="bios-group">Contact Us</h2>
+            <ul className="bios-fields">
+              {FIELDS.map((f) => {
+                const live = Boolean(f.href);
+                const row = (
+                  <>
+                    <span className="bios-label">{f.label}</span>
+                    <span className="bios-dots" aria-hidden="true" />
+                    <span className="bios-value">[{f.value}]</span>
+                  </>
+                );
                 return (
-                  <li key={m.label}>
-                    <span className="ct-branch">{here ? '└─ ' : '├─ '}</span>
-                    <span className={here ? 'ct-here' : undefined}>{m.label}</span>
-                    <span className="ct-era">{m.era}</span>
+                  <li key={f.id}>
+                    {live ? (
+                      <a
+                        className="bios-row"
+                        href={f.href}
+                        {...(f.href.startsWith('mailto:')
+                          ? {}
+                          : { target: '_blank', rel: 'noopener noreferrer' })}
+                      >
+                        {row}
+                      </a>
+                    ) : (
+                      <span className="bios-row is-unset">
+                        {row}
+                      </span>
+                    )}
                   </li>
                 );
               })}
             </ul>
           </div>
+
+          <div className="bios-help">
+            <div className="bios-help-title">Location Map</div>
+            <div className="bios-help-map" style={{ width: '100%', height: '100%', minHeight: '350px' }}>
+              <iframe 
+                src="https://maps.google.com/maps?q=Fr.%20C.%20Rodrigues%20College%20of%20Engineering&t=k&z=16&ie=UTF8&iwloc=&output=embed" 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0, filter: 'grayscale(100%) invert(90%) contrast(1.2)' }} 
+                allowFullScreen 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade" 
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="ct-foot">
-          <span>Father Agnel Ashram, Bandra (W), Mumbai 400050</span>
-          <span>
-            Synécheia — what continues, becomes greater
-            <i className="ct-caret" aria-hidden="true" />
-          </span>
+        <div className="bios-legend" aria-hidden="true">
+          <div className="bios-legend-row">
+            <span>
+              <b>F1</b> Help
+            </span>
+            <span>
+              <b>↑↓</b> Select Item
+            </span>
+            <span>
+              <b>Enter</b> Open
+            </span>
+          </div>
+          <div className="bios-legend-row">
+            <span>
+              <b>Esc</b> Exit
+            </span>
+            <span>
+              <b>←→</b> Select Menu
+            </span>
+            <span>
+              <b>F10</b> Save and Exit
+            </span>
+          </div>
         </div>
       </div>
     </section>
