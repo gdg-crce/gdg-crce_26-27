@@ -54,14 +54,18 @@
   .wwd2d-desktop {
     display: none !important;
   }
-  .wwd2d-mobile {
-    display: block;
-    width: 100%;
-    height: 100%;
-    position: relative;
-    background: #17141c url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/mobile/watwedomobbg.png?tr=f-auto,q-auto') center / cover no-repeat;
+  .wwd2d-root {
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
   }
-
+  .wwd2d-mobile {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    background: #17141c url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/mobile/watwedomobbg.png?tr=f-auto,q-auto') center / cover no-repeat !important;
+  }
 }
 
 .wwd2d-table {
@@ -301,10 +305,10 @@
   position: absolute;
   z-index: 15;
   pointer-events: none;
-  width: min(85vw, 320px);
+  width: min(76vw, 280px);
   left: 50%;
-  top: 9%;
-  transform: translateX(-50%);
+  top: 28px;
+  transform: translateX(calc(-50% - 16px));
 }
 
 /* Camera body — fills the wrapper, no scale animation so it matches
@@ -325,17 +329,17 @@
   position: absolute;
   z-index: 30;
   pointer-events: none;
-  width: min(85vw, 320px);
+  width: min(76vw, 280px);
   height: auto;
   left: 50%;
-  top: 9%;
-  transform: translateX(-50%);
+  top: 28px;
+  transform: translateX(calc(-50% - 16px));
 }
 
 .wwd2d-mobile-photo-wrapper {
   position: absolute;
   pointer-events: none;
-  width: min(85vw, 320px);
+  width: min(94vw, 360px);
   height: auto;
   left: 50%;
   top: 0%;
@@ -352,22 +356,33 @@
 }
 
 /* ── Mobile Title ───────────────────────────────────────────────────────── */
-.wwd2d-mobile-title {
+.wwd2d-mobile-flash {
   position: absolute;
-  top: 4.5%;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 35;
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-88s-body), 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  font-size: clamp(2rem, 9vw, 3rem);
-  color: #d8c19a;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  opacity: 0;
+  will-change: opacity;
+  mix-blend-mode: screen;
+}
+
+.wwd2d-mobile-title {
+  position: absolute !important;
+  top: 90px !important;
+  left: 50% !important;
+  transform: translateX(calc(-50% - 12px)) !important;
+  width: max-content !important;
+  text-align: center !important;
+  z-index: 35 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: var(--font-70s-display), 'Shrikhand', serif !important;
+  font-weight: 700 !important;
+  font-size: clamp(2rem, 9vw, 3rem) !important;
+  color: #d8c19a !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* ── the seam flash ────────────────────────────────────────────────────────

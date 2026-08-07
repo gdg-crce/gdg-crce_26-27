@@ -1901,7 +1901,7 @@
 /* Mobile Events Carousel Styles */
 .mobile-events-header {
   position: absolute !important;
-  top: 14vh !important;
+  top: 90px !important;
   left: 0 !important;
   right: 0 !important;
   text-align: center !important;
@@ -1923,13 +1923,16 @@
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
-  height: 100% !important;
+  height: calc(100% - 130px) !important;
+  margin-top: 130px !important;
   align-items: center !important;
   /* The TRACK is the only thing GSAP transforms, so it is the only thing that
      earns a layer. `perspective: 1000px` was doing nothing — there is no 3D
      child here — but it forced a stacking context and a rendering surface. */
   will-change: transform !important;
   backface-visibility: hidden !important;
+  perspective: 1000px !important;
+  transform-style: preserve-3d !important;
   background: transparent !important;
   gap: 0px !important;
 }
@@ -1941,6 +1944,8 @@
   justify-content: center !important;
   align-items: center !important;
   box-sizing: border-box !important;
+  transform-style: preserve-3d !important;
+  perspective: 1000px !important;
 }
 
 .mobile-event-image-raw {

@@ -220,10 +220,52 @@ export default function EventsAndCouncilSection({
                 totalCards - 1,
                 Math.round(p * (totalCards - 1))
               );
+
+              // Apply 3D curved transformation to each card based on its position relative to viewport center
+              const cards = track.querySelectorAll('.mobile-event-image-raw');
+              cards.forEach((card, idx) => {
+                const relativeX = idx - p * (totalCards - 1);
+                
+                // Curve calculations:
+                const angle = 0; // Keep poster shape unchanged (no 3D perspective skewing)
+                const z = -Math.abs(Math.max(-1.5, Math.min(1.5, relativeX))) * 100; // Curve outwards in depth
+                const scale = 1 - Math.abs(Math.max(-1, Math.min(1, relativeX))) * 0.1; // Scale down side cards
+                const y = Math.abs(relativeX) * 25; // Convex arch curve (pushes side cards down)
+                const opacity = 1 - Math.abs(Math.max(-1, Math.min(1, relativeX))) * 0.35; // Fade out side cards
+
+                gsap.set(card, {
+                  rotateY: angle,
+                  z: z,
+                  scale: scale,
+                  y: y,
+                  opacity: opacity,
+                  transformPerspective: 1000,
+                });
+              });
             },
           },
         });
         scrollTriggerInstance = anim;
+
+        // Position cards correctly initially before scroll trigger updates
+        const cards = track.querySelectorAll('.mobile-event-image-raw');
+        cards.forEach((card, idx) => {
+          const relativeX = idx;
+          const angle = 0; // Keep poster shape unchanged
+          const z = -Math.abs(Math.max(-1.5, Math.min(1.5, relativeX))) * 100;
+          const scale = 1 - Math.abs(Math.max(-1, Math.min(1, relativeX))) * 0.1;
+          const y = Math.abs(relativeX) * 25;
+          const opacity = 1 - Math.abs(Math.max(-1, Math.min(1, relativeX))) * 0.35;
+
+          gsap.set(card, {
+            rotateY: angle,
+            z: z,
+            scale: scale,
+            y: y,
+            opacity: opacity,
+            transformPerspective: 1000,
+          });
+        });
       };
 
       const timeoutId = setTimeout(() => {
@@ -511,7 +553,6 @@ export default function EventsAndCouncilSection({
 
             {/* Grunge vignette borders */}
             <div className="events-grunge-top" />
-            <div className="events-grunge-bottom" />
           </div>
         </section>
 
@@ -525,7 +566,15 @@ export default function EventsAndCouncilSection({
         <div className="mobile-header-sticky">
           {/* Cover Photo / Banner */}
           <div className="fb-cover-photo-wrapper">
-            <div className="fb-cover-photo" style={{ backgroundColor: '#161f47' }}>
+            <div
+              className="fb-cover-photo"
+              style={{
+                backgroundImage: ikUrl('/events/eventsmobbg.png'),
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+              }}
+            >
               <div className="fb-cover-content">
                 <span className="fb-cover-text">GDG CRCE 26-27</span>
                 <span className="fb-cover-subtext">Google Developers Group</span>

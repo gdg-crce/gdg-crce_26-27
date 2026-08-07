@@ -91,7 +91,10 @@ export default function WhatWeDoSection() {
       const el = overlayRef.current;
       if (!el || on === activeNow) return;
       activeNow = on;
-      el.style.opacity = on ? '1' : '0';
+      if (!on) {
+        el.style.opacity = '0';
+        el.style.transform = '';
+      }
       el.style.pointerEvents = on ? 'auto' : 'none';
       el.classList.toggle('is-active', on);
     };
@@ -106,7 +109,33 @@ export default function WhatWeDoSection() {
       scrub: true,
       onUpdate: (self) => {
         progressRef.current = self.progress;
-        setActive(self.progress > 0 && self.progress < 1);
+        const active = self.progress > 0 && self.progress < 1;
+        setActive(active);
+
+        if (active) {
+          const el = overlayRef.current;
+          if (el) {
+            const isMobile = window.innerWidth < 768;
+            if (isMobile) {
+              // On mobile, scroll the What We Do section upwards (translateY) out of the viewport
+              let translateY = 0;
+              if (self.progress > 0.90) {
+                const factor = (self.progress - 0.90) / 0.10;
+                translateY = -factor * 100;
+              }
+              el.style.transform = `translateY(${translateY}%)`;
+              el.style.opacity = '1';
+            } else {
+              // Desktop version uses the original opacity fade
+              let opacity = 1;
+              if (self.progress > 0.90) {
+                opacity = 1 - (self.progress - 0.90) / 0.10;
+              }
+              el.style.opacity = opacity.toFixed(3);
+              el.style.transform = '';
+            }
+          }
+        }
       },
       // Also hide on leave so it doesn't persist after scrolling past
       onLeave: () => setActive(false),

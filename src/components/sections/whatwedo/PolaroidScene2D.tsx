@@ -155,6 +155,10 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
   const photoRefs = useRef<(HTMLDivElement | null)[]>([]);
   const mobileCameraRef = useRef<HTMLImageElement>(null);
   const mobilePhotoRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const mobileCameraWrapperRef = useRef<HTMLDivElement>(null);
+  const mobileCameratopRef = useRef<HTMLImageElement>(null);
+  const mobileTitleRef = useRef<HTMLHeadingElement>(null);
+  const mobileFlashRef = useRef<HTMLDivElement>(null);
   const prevPRef = useRef<number>(-1);
 
   useEffect(() => {
@@ -174,35 +178,62 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const containerHeight = containerRect.height;
           const containerWidth = containerRect.width;
 
-          // Camera width is min(85vw, 320px)
-          // Camera width is min(85vw, 320px)
-          const cameraWidth = Math.min(0.85 * containerWidth, 320);
-          // Camera height is roughly 1.5015x width
+          // Safe space for header navbar (starts around 80px)
+          const topOffset = Math.max(80, containerHeight * 0.1);
+          const availableHeight = containerHeight - topOffset - 24;
+
+          // Calculate a scale factor based on screen height and width to prevent any overflow/overlap
+          // Base height required is roughly:
+          // Title (40) + Gap (20) + Camera height (240*1.5015 = 360) * 0.791 + Ejected photo height (280*1.2 = 336) * 0.95
+          // = 40 + 20 + 284.76 + 319.2 = 663.96px
+          const baseGroupHeight = 664;
+          const heightScale = availableHeight / baseGroupHeight;
+          
+          // Width fit: photo width is 280px. With side padding, base is 320px
+          const widthScale = (containerWidth * 0.85) / 280;
+          
+          // Determine the scale factor (clamp it to prevent elements from becoming infinitely large)
+          const scale = Math.max(0.45, Math.min(1.0, Math.min(heightScale, widthScale)));
+
+          const titleHeight = 40 * scale;
+          const gap = 20 * scale;
+
+          // Scaled camera dimensions
+          const cameraWidth = 240 * scale;
           const cameraHeight = cameraWidth * 1.5015;
 
-          // Camera top in CSS is 9%
-          const cameraTop = containerHeight * 0.09;
+          // Scaled photo dimensions
+          const photoWidth = 280 * scale;
+          const photoHeight = photoWidth * 1.2;
+
+          const titleTop = topOffset;
+          const cameraTop = titleTop + titleHeight + gap;
+
+          if (mobileTitleRef.current) {
+            mobileTitleRef.current.style.top = `${titleTop}px`;
+            mobileTitleRef.current.style.fontSize = `calc(2rem * ${scale})`;
+          }
+
+          if (mobileCameraWrapperRef.current) {
+            mobileCameraWrapperRef.current.style.top = `${cameraTop}px`;
+            mobileCameraWrapperRef.current.style.width = `${cameraWidth}px`;
+          }
+          if (mobileCameratopRef.current) {
+            mobileCameratopRef.current.style.top = `${cameraTop}px`;
+            mobileCameratopRef.current.style.width = `${cameraWidth}px`;
+          }
 
           // Slot Y relative to container top (79.1% from the top of the camera)
           const slotY = cameraTop + cameraHeight * 0.791;
 
-          // Photo dimensions
-          const photoWidth = Math.min(0.85 * containerWidth, 320);
-          // Standard polaroid aspect ratio is roughly 1 : 1.2
-          const photoHeight = photoWidth * 1.2;
-
-          // At t = 0, photo is hidden inside the camera.
-          // This means its BOTTOM edge should be at the slot.
+          // At t = 0, photo starts inside the new camera slot.
           // Scaled height is 0.4 * photoHeight.
           const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
-          // At t = 1, photo has popped out DOWNWARDS but remains anchored in the slot.
-          // We want the TOP edge of the photo to remain hidden inside the camera.
-          // By setting the center to slotY + 15% of the height, 
-          // 35% of the photo remains hidden above the slot, and 65% hangs below it.
-          const restingCenterY = slotY + (photoHeight * 0.15);
+          // Resting center of fully ejected polaroids
+          const restingCenterY = slotY + (photoHeight * 0.45);
 
-          // photos: stack on top of each other in the bottom half
+          // photos: stack on top of each other fanned out
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {
             const el = mobilePhotoRefs.current[i];
             if (!el) continue;
@@ -211,6 +242,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             const t = easeOut(smooth(ph.start, ph.start + REVEAL_DUR_MOBILE, p));
             const opacity = smooth(ph.start, ph.start + 0.05, p);
             el.style.opacity = opacity.toFixed(3);
+            el.style.width = `${photoWidth}px`;
 
             // Interpolate the actual center Y position
             const currentCenterY = lerp(startCenterY, restingCenterY, t);
@@ -219,8 +251,36 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             const rot = lerp(-10, ph.rot, t);
             
             // We apply translate(left, top) relative to the container.
-            // Left is always 50% (center). Top is currentCenterY.
-            el.style.transform = `translate(-50%, -50%) translate(${ph.offsetX}px, calc(${currentCenterY.toFixed(1)}px + ${ph.offsetY}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
+            // Left is shifted by 16px to the left to match the shifted camera body wrapper
+            const currentOffsetX = ph.offsetX * scale - 16;
+            el.style.transform = `translate(-50%, -50%) translate(${currentOffsetX}px, calc(${currentCenterY.toFixed(1)}px + ${ph.offsetY * scale}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
+          }
+
+          // Calculate flash opacity based on proximity to photo reveal starts
+          let flashOpacity = 0;
+          const flashThresholds = [0.08, 0.26, 0.44, 0.62, 0.80];
+          const flashDuration = 0.03;
+          
+          for (const tVal of flashThresholds) {
+            if (p >= tVal && p <= tVal + flashDuration) {
+              const progressInFlash = (p - tVal) / flashDuration;
+              flashOpacity = 0.85 * (1 - progressInFlash);
+              break;
+            }
+          }
+          if (mobileFlashRef.current) {
+            const cameraLeft = containerWidth * 0.5 - 16 - cameraWidth * 0.5;
+            const flashCenterX = cameraLeft + cameraWidth * 0.73;
+            const flashCenterY = cameraTop + cameraHeight * 0.215;
+
+            const bgGradient = `radial-gradient(circle ${80 * scale}px at ${flashCenterX.toFixed(1)}px ${flashCenterY.toFixed(1)}px, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 30%, rgba(255, 255, 255, 0) 100%), radial-gradient(circle 1000px at ${flashCenterX.toFixed(1)}px ${flashCenterY.toFixed(1)}px, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%)`;
+
+            mobileFlashRef.current.style.left = '0';
+            mobileFlashRef.current.style.top = '0';
+            mobileFlashRef.current.style.width = '100%';
+            mobileFlashRef.current.style.height = '100%';
+            mobileFlashRef.current.style.background = bgGradient;
+            mobileFlashRef.current.style.opacity = flashOpacity.toFixed(3);
           }
         }
       } else {
@@ -315,11 +375,12 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
 
       {/* --- MOBILE VIEW --- */}
       <div className="wwd2d-mobile">
-        <h2 className="wwd2d-mobile-title">What We Do</h2>
+        <div ref={mobileFlashRef} className="wwd2d-mobile-flash" />
+        <h2 ref={mobileTitleRef} className="wwd2d-mobile-title">What We Do</h2>
         <div className="wwd2d-vignette" />
 
         {/* Camera body wrapper — z:15, sits BEHIND the polaroids */}
-        <div className="wwd2d-mobile-camera-wrapper">
+        <div ref={mobileCameraWrapperRef} className="wwd2d-mobile-camera-wrapper">
           {/* eslint-disable-next-line @next/next/no-img-element -- decorative camera cutout */}
           <img
             ref={mobileCameraRef}
@@ -353,6 +414,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             Positioned identically to the wrapper so it overlaps camera.png perfectly. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- decorative overlay */}
         <img
+          ref={mobileCameratopRef}
           src={ik('/whatwedo/mobile/cameratop.png')}
           alt=""
           className="wwd2d-mobile-cameratop"

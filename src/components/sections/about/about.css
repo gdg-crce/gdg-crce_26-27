@@ -34,6 +34,7 @@
   position: relative;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: #0a0908;
   /* Sits over the fixed hero video, which fades out beneath it. */
@@ -400,6 +401,27 @@
 }
 
 /* ── narrow viewports ──────────────────────────────────────────────────── */
+
+@media (max-width: 767px), (max-height: 500px) {
+  .tt-center {
+    width: calc(var(--label-r, 260px) * 1.65);
+  }
+
+  .tt-copy-line {
+    font-size: calc(var(--label-r, 260px) * 0.155);
+    letter-spacing: 0.008em;
+  }
+
+  /* The long vision/mission paragraphs need to run slightly smaller to ensure they don't clip on small screens */
+  .tt-copy-para .tt-copy-line {
+    font-size: calc(var(--label-r, 260px) * 0.120);
+  }
+
+  .tt-copy-brush {
+    font-size: calc(var(--label-r, 260px) * 0.320);
+    margin-bottom: calc(var(--label-r, 260px) * 0.080);
+  }
+}
 
 /* ── reduced motion ────────────────────────────────────────────────────── */
 
