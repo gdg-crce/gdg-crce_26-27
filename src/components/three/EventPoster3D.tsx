@@ -173,7 +173,12 @@ export default function EventPoster3D({
     // the colour. They are still the NEWEST thing on a 30-year surface, not the
     // quietest. 0.32–0.58 reads as cheap paper that has been rained on, while
     // leaving it the only saturated element in the frame.
-    const fade = 0.32 + ((variant * 0.137) % 1) * 0.26;
+    // Trimmed again to 0.24–0.44. Same reasoning as the 0.62→0.32 move, one
+    // notch further: the posters are the only saturated element in an
+    // intentionally muted frame, so they are where "give it life" is actually
+    // paid for. Still visibly rained-on — the dye-loss warm shift and the
+    // top-of-sheet gradient are untouched.
+    const fade = 0.24 + ((variant * 0.137) % 1) * 0.20;
     applyPosterFade(m, fade);
     return m;
   }, [texture, tearMask, wrinkle, variant]);

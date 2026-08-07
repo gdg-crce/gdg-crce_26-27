@@ -481,7 +481,7 @@ export default function WindowsPictureViewer({
             <div className="xp-pv-film">
               <div className="xp-pv-preview">
                 <div className="xp-pv-photo-shell" style={{ transform: `rotate(${rotation}deg)` }}>
-                  <MemberPhoto member={current} className="xp-pv-photo" size="full" glyphSize="clamp(58px, 7vw, 100px)">
+                  <MemberPhoto member={current} className="xp-pv-photo" size="full">
                     <span className="xp-pv-photo-team">{current.team}</span>
                   </MemberPhoto>
                 </div>
@@ -499,7 +499,7 @@ export default function WindowsPictureViewer({
                     }}
                     title={fileNameFor(m)}
                   >
-                    <MemberPhoto member={m} className="xp-pv-frame-photo" glyphSize={26} />
+                    <MemberPhoto member={m} className="xp-pv-frame-photo" />
                   </button>
                 ))}
               </div>
@@ -524,7 +524,7 @@ export default function WindowsPictureViewer({
 
               <div className="xp-pv-info-body">
                 <div className="xp-pv-info-preview">
-                  <MemberPhoto member={current} className="xp-pv-info-photo" size="full" glyphSize={54} />
+                  <MemberPhoto member={current} className="xp-pv-info-photo" size="full" />
                 </div>
                 <div className="xp-pv-info-file">{fileNameFor(current)}</div>
 

@@ -1,116 +1,281 @@
-/* ==========================================================================
-   CONTACT US FOOTER — MICHELANGELO "CREATION OF ADAM" HANDS
-   ========================================================================== */
+/* ══════════════════════════════════════════════════════════════════════════
+   CONTACT — BIOS setup utility.
 
-:root {
-  --footer-logo-size: 220px;
-  --footer-overlap: 120px;
-  --footer-container-height: 520px;
-}
+   This is NOT a footer and it does not scroll. It is drawn on the black the
+   CRT leaves behind, inside the shutdown overlay, so nothing follows the
+   machine powering down and there is no page left to scroll up into.
 
-@media (max-width: 768px) {
-  :root {
-    --footer-logo-size: 160px;
-    --footer-overlap: 80px;
-    --footer-container-height: 380px;
-  }
-}
+   The shutdown ends with a tube discharging to nothing. The only thing that
+   ever came after that was the machine coming back — and the first screen it
+   draws is firmware, before any operating system exists to have an era. Blue
+   field, light-grey rules, inverse-video selection: the one screen on this
+   site that belongs to no decade.
 
-@media (max-width: 480px) {
-  :root {
-    --footer-logo-size: 100px;
-    --footer-overlap: 50px;
-    --footer-container-height: 280px;
-  }
-}
+   THE HARD CONSTRAINT: this must fit in ONE viewport. It is drawn at the very
+   bottom of the document, where by design there is no scroll left — anything
+   that overflows is unreachable, not merely below the fold. Every size here is
+   on clamp() and the row count is deliberately low. If you add a field, check
+   it at 700px tall before you commit.
 
-.contact-section {
-  position: relative;
-  width: 100%;
-  background: #000000;
-  overflow: hidden;
-  padding: 40px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+   Palette is the Phoenix/Award set: #0000a8 field, #a8a8a8 rules and body,
+   white for values, cyan for headings, and selection is a true inverse of the
+   first two. Do not introduce a colour outside it — the whole point of this
+   screen is that it is what the hardware could draw, not what we would like.
+   ══════════════════════════════════════════════════════════════════════════ */
 
-.contact-adam-container {
-  position: relative;
-  width: 100%;
-  max-width: none; /* Spans full width of viewport */
-  height: var(--footer-container-height);
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-}
+.ct-term {
+  --bios-bg: #0000a8;
+  --bios-line: #a8a8a8;
+  --bios-text: #a8a8a8;
+  --bios-bright: #ffffff;
+  --bios-cyan: #54fcfc;
+  --bios-dim: #6a6ad0;
+  --bios-sel-bg: #a8a8a8;
+  --bios-sel-fg: #0000a8;
 
-.contact-logo-wrapper {
-  position: relative;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.contact-logo {
-  width: var(--footer-logo-size);
-  height: var(--footer-logo-size);
-  object-fit: contain;
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.15));
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
-}
-
-.contact-logo-wrapper:hover .contact-logo {
-  transform: scale(1.06) rotate(2deg);
-}
-
-.contact-hand {
   position: absolute;
-  /* Dynamically size the hands to bridge the screen edge to the center logo */
-  width: calc(50vw - (var(--footer-logo-size) / 2) + var(--footer-overlap));
-  height: auto;
-  object-fit: contain;
-  pointer-events: none;
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.7));
+  inset: 0;
   z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(8px, 2vw, 28px);
+  /* NO `opacity: 0` here. The fade belongs to `.sd-term-host`, which is what
+     the shutdown's draw loop holds a ref to and writes. When both carried it,
+     the effective opacity was host(0 → 1) × this(0) = 0 at every scroll
+     position on the page, which is why the contact screen was never visible:
+     it rendered, it occupied the DOM, and it was mathematically transparent. */
+  pointer-events: none;
+  background: var(--bios-bg);
+  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', 'Courier New', monospace;
+  /* Width AND height, because this screen has to fit a viewport it cannot
+     scroll out of.
+
+     The vw term is a fixed rem plus a small ramp, not a pure `1.12vw` — that
+     hit its floor at every width under ~850px and went unreadable on a tablet
+     that had 700px of unused headroom.
+
+     The vh term is the one that actually protects the invariant. In a short
+     window (800x454, a landscape phone, a half-height browser) the utility
+     measured 462px against 414px of room and the bottom 40px were simply
+     unreachable, because there is no scroll left here by design. Taking the
+     smaller of the two keeps it inside the glass at any aspect ratio. */
+  font-size: clamp(14px, min(1.2rem + 1.2vw, 4vh), 28px);
+  line-height: 1.6;
+  color: var(--bios-text);
+  /* A CRT does not resolve a crisp edge, and firmware text was never
+     antialiased into one either. Just enough bloom to sit on the glass. */
+  text-shadow: 0 0 6px rgba(150, 170, 255, 0.25);
 }
 
-/* Left hand: extends from the absolute left screen edge, touching logo's left edge */
-.contact-hand-left {
-  left: 0;
-  top: 105%;
-  width: calc(50vw - (var(--footer-logo-size) / 2) + var(--footer-overlap) + 100px);
-  transform: translateY(-50%) rotate(-12deg);
-  transform-origin: left center;
-  opacity: 0.95;
+/* Clickability is granted by the host once the shutdown has revealed this —
+   see `.sd-term-host.is-live .ct-term` in shutdown.css. */
+
+/* ── the utility ──────────────────────────────────────────────────────────
+   One double rule around the whole screen, the way setup drew its frame. */
+.bios {
+  width: 100%;
+  max-width: 1400px;
+  border: 3px double var(--bios-line);
+  padding: clamp(12px, 2vw, 24px) clamp(16px, 3vw, 36px);
+  /* Last-resort safety valve. The type above is sized so this never engages in
+     any realistic viewport, but "unreachable content" is the one failure this
+     screen must not have — there is no page scroll here to recover with. An
+     internal scroll is not a page scroll and cannot produce the scroll-up this
+     whole ending is built to prevent. */
+  max-height: 100%;
+  overflow-y: auto;
 }
 
-/* Right hand: extends from the absolute right screen edge, touching logo's right edge */
-.contact-hand-right {
-  right: -50px;
-  top: 10%;
-  width: calc(50vw - (var(--footer-logo-size) / 2) + var(--footer-overlap) + 200px);
-  transform: translateY(-50%) rotate(-14deg);
-  transform-origin: right center;
-  opacity: 0.95;
+.bios-title {
+  text-align: center;
+  color: var(--bios-bright);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-bottom: 0.35em;
 }
 
-/* Hover effect on container: subtle movement to emphasize the connection */
-.contact-adam-container:hover .contact-hand-left {
-  transform: translateY(-50%) rotate(-9deg) translate(15px, -5px) scale(1.01);
-  opacity: 1;
+/* ── body: fields on the left, help on the right ─────────────────────────── */
+.bios-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
+  gap: clamp(10px, 2vw, 26px);
+  padding: clamp(6px, 1.2vw, 14px) 0;
 }
 
-.contact-adam-container:hover .contact-hand-right {
-  transform: translateY(-50%) rotate(-11deg) translate(-15px, 5px) scale(1.01);
-  opacity: 1;
+.bios-main {
+  min-width: 0;
 }
 
+.bios-group {
+  margin: 0 0 0.2em;
+  font-size: 1em;
+  font-weight: 400;
+  color: var(--bios-cyan);
+  letter-spacing: 0.06em;
+}
+
+.bios-group:not(:first-child) {
+  margin-top: 0.9em;
+}
+
+.bios-fields {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The leader-dot row: label, a dotted run to the right margin, then the value
+   in brackets. Grid rather than flex so every value starts on the same column
+   — a setup screen is a character grid and ragged values read as a web page. */
+.bios-row {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(1.5em, 1fr) minmax(0, max-content);
+  align-items: baseline;
+  gap: 0 0.5em;
+  padding: 0 0.4em;
+  color: inherit;
+  text-decoration: none;
+}
+
+.bios-label {
+  color: var(--bios-text);
+  white-space: nowrap;
+}
+
+.bios-dots {
+  border-bottom: 1px dotted currentColor;
+  opacity: 0.35;
+  transform: translateY(-0.25em);
+}
+
+.bios-value {
+  color: var(--bios-bright);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Firmware-detected values are not settings, so they get no brackets. */
+.bios-value.is-plain {
+  color: var(--bios-text);
+}
+
+/* Firmware-detected rows are readouts, not fields: no hover rule below ever
+   matches them, so they never invert and never look selectable. */
+.bios-row.is-static {
+  cursor: default;
+}
+
+/* A field with no address on record. Listed and describable, but dim, and
+   visibly not something you can open. */
+.bios-row.is-unset .bios-value {
+  color: var(--bios-dim);
+}
+
+/* Selection. Inverse video across the whole row, exactly as the real thing —
+   and `currentColor` on the leader dots means they invert with it for free. */
+a.bios-row:hover,
+a.bios-row:focus-visible,
+.bios-row.is-unset:hover {
+  background: var(--bios-sel-bg);
+  color: var(--bios-sel-fg);
+  outline: none;
+}
+
+a.bios-row:hover .bios-label,
+a.bios-row:hover .bios-value,
+a.bios-row:focus-visible .bios-label,
+a.bios-row:focus-visible .bios-value,
+.bios-row.is-unset:hover .bios-label,
+.bios-row.is-unset:hover .bios-value {
+  color: var(--bios-sel-fg);
+}
+
+a.bios-row {
+  cursor: pointer;
+}
+
+/* ── Item Specific Help ──────────────────────────────────────────────────── */
+.bios-help {
+  border-left: 1px solid var(--bios-line);
+  padding-left: clamp(10px, 2vw, 22px);
+  min-width: 0;
+}
+
+.bios-help-title {
+  color: var(--bios-bright);
+  border-bottom: 1px solid var(--bios-line);
+  padding-bottom: 0.25em;
+  margin-bottom: 0.5em;
+}
+
+/* ── key legend ──────────────────────────────────────────────────────────── */
+.bios-legend {
+  border-top: 1px solid var(--bios-line);
+  padding-top: 0.35em;
+}
+
+.bios-legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 clamp(12px, 3vw, 44px);
+}
+
+.bios-legend b {
+  color: var(--bios-bright);
+  font-weight: 400;
+  margin-right: 0.35em;
+}
+
+/* ── narrow ───────────────────────────────────────────────────────────────
+   Stack the help under the fields and let the rule move with it.
+
+   900px, not 720: at 61.7% of the body the field column has to hold a label,
+   a leader run and a value like "Fr. C. Rodrigues College of Engineering" on
+   one line, and below ~900px that stops fitting before the viewport does.
+   Vertical room is the one thing this screen always has — it is ~380px tall in
+   a 1024px-tall tablet — so spending height to buy width is free here. */
+@media (max-width: 900px) {
+  .bios-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bios-help {
+    border-left: 0;
+    border-top: 1px solid var(--bios-line);
+    padding-left: 0;
+    padding-top: 0.6em;
+  }
+}
+
+/* Short viewports: a landscape phone, or a browser window half a screen tall.
+   The type is already shrinking on vh; this reclaims the fixed chrome, which
+   does not scale with it. */
+@media (max-height: 540px) {
+  .ct-term {
+    padding: clamp(4px, 1vw, 10px);
+    line-height: 1.45;
+  }
+
+  .bios {
+    padding: 4px clamp(8px, 1.6vw, 14px);
+  }
+
+  .bios-group:not(:first-child) {
+    margin-top: 0.45em;
+  }
+
+  .bios-legend-row:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+
+  /* Two legend rows wrap into four on a phone and start competing with the
+     content they are a footnote to. One row carries the idea. */
+  .bios-legend-row:last-child {
+    display: none;
+  }
+
+}

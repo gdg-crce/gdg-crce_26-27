@@ -23,24 +23,6 @@
   background: transparent;
 }
 
-/* Pinned full-viewport stage (GSAP pins this element across SCROLL_END px). */
-.wwd-pin {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-  background: #17141c;
-}
-
-.wwd-canvas-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-.wwd-canvas-wrap canvas {
-  display: block;
-}
-
 /* ── the 3D Photo Album ────────────────────────────────────────────────────
    A fully interactive 3D CSS photo album. The scroll progress drives the
    rotateY property of the pages to simulate a book opening. */
@@ -79,6 +61,7 @@
     position: relative;
     background: #17141c url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/mobile/watwedomobbg.png?tr=f-auto,q-auto') center / cover no-repeat;
   }
+
 }
 
 .wwd2d-table {
@@ -196,7 +179,6 @@
   50% { transform: rotateX(7deg) rotateY(-3deg); }
 }
 
-
 .album-back-cover, .album-page, .album-cover {
   position: absolute;
   inset: 0;
@@ -299,25 +281,14 @@
   overflow: hidden;
 }
 
-
-
-/* High-gloss plastic reflection overlay */
-.page-front::after, .page-back::after, .album-back-cover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  /* Sharp gloss lines simulating light reflecting off plastic film */
-  background: linear-gradient(110deg, 
-    rgba(255,255,255,0) 30%, 
-    rgba(255,255,255,0.03) 35%, 
-    rgba(255,255,255,0.15) 40%, 
-    rgba(255,255,255,0) 45%, 
-    rgba(255,255,255,0) 65%, 
-    rgba(255,255,255,0.08) 70%, 
-    rgba(255,255,255,0) 75%);
-  pointer-events: none;
-  z-index: 20;
-}
+/* The high-gloss plastic reflection overlay is GONE.
+   It was a 110deg white gradient laid over every album page — two hard-edged
+   bands at 15% and 8% white. The intent was light catching a plastic sleeve,
+   but the page does not move under it, so it did not read as a reflection; it
+   read as a pale diagonal stripe painted across the artwork, cutting straight
+   through the photos and the headline copy. A reflection that never travels is
+   just a smudge on the content. Do not reinstate it as a static gradient — if
+   this ever comes back it has to be driven by the page's own rotation. */
 
 /* High Definition Spiral Binder SVG (Double Loop Wire) */
 .spiral-binder {
@@ -425,9 +396,6 @@
   }
 }
 
-
-
-
 .final-event-photo {
   position: absolute;
   top: 50%;
@@ -485,13 +453,6 @@
   position: absolute;
   inset: 0;
   background: #17141c;
-}
-
-/* Provides the 100vh physical block for GSAP to pin against in the DOM */
-.wwd-pin-spacer {
-  position: relative;
-  width: 100%;
-  height: 100vh;
 }
 
 /* ── loader (while the WebGL bundle + scene spin up) ───────────────────── */

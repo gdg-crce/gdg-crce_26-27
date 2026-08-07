@@ -454,19 +454,26 @@ export function RightSideAlleyDetail() {
     []
   );
 
-  const lightRef = useRef<THREE.PointLight>(null);
-  const bulbMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  /* The caged lamp is a PROP. Its light, its flicker and its per-frame driver
+     are all gone, and this is the third time that has had to be written down.
 
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const flicker = Math.random() > 0.92 ? 0.3 : 1.0;
-    const pulse = 0.85 + Math.sin(t * 8.0) * 0.15;
-    const intensity = flicker * pulse;
+     Art direction (see CLAUDE.md): "the fixture stays as a prop; the light is
+     off and the bulb is cold glass." The scene is lit by an even overcast
+     cloud deck at midday — a burning sodium lamp is a light source that cannot
+     exist in it, and at intensity 15 it washed that whole stretch of plaster
+     amber, which is exactly the warm cast the whole rig was rebuilt to remove.
 
-    if (lightRef.current) lightRef.current.intensity = 15 * intensity;
-    if (bulbMatRef.current) bulbMatRef.current.emissiveIntensity = 2.0 * intensity;
-  });
+     It was also, by a distance, the most expensive object in the scene:
+       · `castShadow` on a POINT light renders a shadow CUBE — six faces, every
+         frame. Nothing else here casts more than one.
+       · the useFrame above rewrote its intensity every frame, so that cube
+         could never be cached; it was re-rendered on all six faces forever.
+       · it was one of twelve point lights, and three.js forward-renders, so it
+         also added per-fragment cost to every lit material in the scene.
 
+     Deleting it removes a light, a cube shadow map, and a per-frame callback.
+     If the bulb ever needs to read as "on" again, do it with emissive on the
+     glass — an emissive material is free, a light is not. */
   return (
     <group position={[15.5, 5.2, 0.4]}>
       {/* Structural C-Channel Outer Steel Perimeter Frame */}
@@ -533,9 +540,10 @@ export function RightSideAlleyDetail() {
       </mesh>
       <mesh position={[0, -0.22, 0.1]}>
         <sphereGeometry args={[0.07, 12, 12]} />
-        <meshStandardMaterial ref={bulbMatRef} color="#FF9A40" emissive="#FF9A40" emissiveIntensity={2.0} roughness={0.2} metalness={0.1} />
+        {/* Cold glass. A dead bulb in daylight is grey and slightly dirty, not
+            orange — the colour was the giveaway even with the light removed. */}
+        <meshStandardMaterial color="#9A958C" roughness={0.35} metalness={0.1} />
       </mesh>
-      <pointLight ref={lightRef} position={[0, -0.4, 0.1]} color="#FF9A40" intensity={15} distance={15} decay={2} castShadow />
     </group>
   );
 }

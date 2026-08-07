@@ -7,13 +7,19 @@ import HomeSection from '@/components/sections/home/HomeSection';
 import EventsAndCouncilSection from '@/components/sections/EventsAndCouncilSection';
 import AboutSection from '@/components/sections/about/AboutSection';
 import WhatWeDoSection from '@/components/sections/whatwedo/WhatWeDoSection';
-import ContactSection from '@/components/sections/contact/ContactSection';
+import ShutdownTransition from '@/components/sections/contact/ShutdownTransition';
 import TopNav from '@/components/layout/TopNav';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [videoStarted, setVideoStarted] = useState(false);
   const [videoPrimed, setVideoPrimed] = useState(false);
+
+  /* The shutdown has no clock of its own. It parks its draw function here and
+     Act 3's pin calls it from the same scroll callback that runs the council
+     archive — one ScrollTrigger, one scrub, one scalar for the entire ending.
+     See EventsAndCouncilSectionProps for why anything else drifts. */
+  const shutdownDrawRef = React.useRef<((p: number) => void) | null>(null);
 
   const handlePrimeHero = React.useCallback(() => setVideoPrimed(true), []);
 
@@ -51,8 +57,26 @@ export default function Home() {
         {/* Zero spacer: About turntable sits directly under the hero at top:0 to prevent scroller up artifacts. */}
         <AboutSection />
         <WhatWeDoSection />
-        <EventsAndCouncilSection />
-        <ContactSection />
+        <EventsAndCouncilSection shutdownDrawRef={shutdownDrawRef} />
+        {/* Act 3 ends inside a Windows XP desktop. This switches it off —
+            shutdown dialog, XP field, CRT discharge — and then draws the
+            contact screen on the black that is left.
+
+            Two things about this line, and both are load-bearing.
+
+            It renders NOTHING in flow on desktop: the overlay is fixed and the
+            shutdown runs inside Act 3's pin. Act 3 is therefore the last thing
+            in the document, its pin ends exactly at the maximum scroll, and the
+            XP desktop cannot scroll up out of frame because there is no scroll
+            left for it to move into. That is a structural guarantee, not a
+            cover-up. Putting ANY element with height after this — a footer, a
+            spacer, a margin — hands the scroll-up straight back.
+
+            And there is deliberately no separate <ContactSection> here: the
+            contact screen is drawn inside the shutdown overlay, on the same
+            black the tube leaves behind, so the site's last frame is the
+            shutdown's. */}
+        <ShutdownTransition drawRef={shutdownDrawRef} />
       </main>
     </div>
   );

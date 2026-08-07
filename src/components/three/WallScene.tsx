@@ -132,9 +132,16 @@ function CyanNeonTube3D() {
         </mesh>
       ))}
 
-      {/* Point lights distributed along the tube for an even neon glow on the wall */}
+      {/* Two lights along the tube, not five.
+          The tube is 48m of emissive geometry and the emissive material is what
+          you actually read as "neon" — it costs nothing per fragment. These
+          point lights only exist to spill that cyan onto nearby plaster, and
+          with `distance: 15` and `decay: 2` their pools overlapped so heavily
+          that three of the five were adding shader cost inside a gradient that
+          was already saturated. Widened the spacing and kept the two that do
+          visible work. */}
       <group ref={lightGroupRef}>
-        {[-20, -10, 0, 10, 20].map((x, i) => (
+        {[-14, 14].map((x, i) => (
           <pointLight
             key={i}
             position={[x, -0.2, 0.8]}
@@ -289,7 +296,7 @@ function WeatheredUrbanStreetWall() {
       // darkest pixel 10/255), which is impossible under a dome and was a large
       // part of what read as "dull". The cavity layer now carries the recesses
       // deliberately, so this only needs to deepen true occlusion.
-      aoMapIntensity: 0.7,
+      aoMapIntensity: 0.62,
       // roughness/metalness are multipliers over the maps, so keep them at 1/0
       // and let the maps do the talking. A scalar 0.92 across brick, paint,
       // soot and damp is one material — and one material reads as CG.
@@ -306,7 +313,7 @@ function WeatheredUrbanStreetWall() {
       // toneMappingExposure or environmentIntensity would have blown them.
       // Raised to pay for the relief: normalScale 1.6 plus the cavity layer
       // cost the wall ~25% of its brightness, and this hands it back.
-      envMapIntensity: 1.75,
+      envMapIntensity: 2.05,
     });
     // roughnessMap doubles as the cavity source — cavity is packed in its .b
     applyMacroLayer(m, tex.macroMap, tex.ghostMap, tex.roughnessMap, tex.detailNormal, tex.crackMap);
@@ -954,7 +961,11 @@ function AlleyEnvironment() {
   useEffect(() => {
     const env = buildAlleyEnvironment(gl);
     scene.environment = env;
-    scene.environmentIntensity = 1.7;
+    /* Master exposure. The dome IS the key light, so this is the only correct
+       place to answer "the alley reads dull" — adding a light is how the rig
+       drifted back to golden hour twice. 1.7 → 1.95 opens the cloud deck up
+       without touching its colour or its zenith-to-horizon ramp. */
+    scene.environmentIntensity = 1.95;
     return () => {
       scene.environment = null;
       env.dispose();
@@ -1015,7 +1026,7 @@ function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<num
       {/* Whisper of neutral fill. The env already lights everything, but deep
           cavities receive almost nothing from a dome and would crush to black —
           and crushed blacks are contrast, which the brief rules out. */}
-      <ambientLight intensity={0.46} color="#DFE2E2" />
+      <ambientLight intensity={0.56} color="#DFE2E2" />
 
       {/* Not a sun. A weak, nearly-overhead neutral light that exists only so
           solid props (bins, pipes, railings) drop a soft contact shadow and
@@ -1037,17 +1048,22 @@ function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<num
         shadow-bias={-0.0008}
       />
 
-      {/* Dim sodium lamps for neon light effect with little brightness */}
-      {[-24, -13, -2, 9, 21].map((x, i) => (
-        <pointLight
-          key={`lamp-${i}`}
-          position={[x, 5.5, 2]}
-          color="#FFD890"
-          intensity={3}
-          distance={18}
-          decay={2}
-        />
-      ))}
+      {/* The five #FFD890 sodium lamps that used to sit here are gone — again.
+          They are on the removal list in CLAUDE.md by name, and they came back
+          at intensity 3 labelled "dim ... with little brightness".
+
+          Dim does not make them correct. This scene is a midday cloud deck:
+          a warm sodium street lamp is a light source that cannot be switched
+          on in it at ANY intensity, and five of them laid a warm wash along the
+          whole 68m of plaster — which is a large part of why the wall read
+          muddy rather than bright. Brightness here comes from the dome
+          (environmentIntensity) and from the wall's own envMapIntensity; that
+          is the documented lever and it is the one that was actually turned.
+
+          They were also five of the scene's twelve point lights. three.js
+          forward-renders, so every point light adds per-fragment cost to every
+          lit material — five lights is five times that tax on all 158 meshes,
+          paid on every frame, for an effect the art direction forbids. */}
 
       {/* Camera rig. The cursor-tracked flashlight that used to live here is
           gone: a torch pool chasing the mouse is the opposite of "naturally
@@ -1156,11 +1172,42 @@ export default function WallScene({ progressRef, snapToTarget }: WallSceneProps)
            measure happened to catch the transform back at 1.
            The layout box never changes (100vw × 100vh), so there is nothing
            legitimate for a scroll measure to find here anyway. */
-        resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
+        /* `offsetSize: true` is the load-bearing one. Do not remove it.
+
+           R3F sizes the drawing buffer from react-use-measure, which by default
+           reports `getBoundingClientRect()` — and a bounding rect INCLUDES every
+           ancestor transform. This canvas lives inside
+           `.xp-events-transition-window`, which EventsAndCouncilSection shrinks
+           into the Media Player frame with `transform: scale(...)` from 1.0 down
+           to 0.66. Measured live, mid-transition, on the same element:
+
+               offsetWidth/offsetHeight   1440 x 900   (true layout box)
+               getBoundingClientRect()     950 x 594   (x0.66 — the transform)
+
+           So any re-measure taken while that scale is applied hands R3F 66% of
+           the real size, the buffer is built at 66%, and the Canvas wrapper's
+           own `#A6A8A9` shows through the remaining L. That is the grey L-shape.
+
+           `offsetSize` switches the measurement to offsetWidth/offsetHeight,
+           which are layout values and are NOT affected by transforms — so the
+           size is correct at every point in the shrink, by construction.
+
+           `scroll: false` stays, but it was only ever a partial fix: it blocked
+           the scroll-triggered re-measure and missed the ResizeObserver one.
+           Toggling `.is-windowed` grows the titlebar 0→30px and the border
+           0→3px, which genuinely resizes the body's layout box and fires RO on
+           its own — mid-scale, every single time the window forms. That is why
+           the L came back. It costs nothing to read offsetWidth instead. */
+        resize={{ scroll: false, offsetSize: true, debounce: { scroll: 0, resize: 0 } }}
         camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
         dpr={dpr}
         shadows="soft"
-        gl={{ antialias: true, powerPreference: 'high-performance', toneMappingExposure: 1.15 }}
+        /* Exposure 1.15 → 1.22. Measured, not guessed: the tone curve rolls off
+           so hard up here that the frame's brightest pixel moves 236 → 237 out
+           of 255 while the mean gains ~2%. Free headroom, so it is taken — but
+           it is the small half of the lift. The real lift is the dome
+           (environmentIntensity) and the wall's own envMapIntensity. */
+        gl={{ antialias: true, powerPreference: 'high-performance', toneMappingExposure: 1.22 }}
         style={{
           width: '100%',
           height: '100%',

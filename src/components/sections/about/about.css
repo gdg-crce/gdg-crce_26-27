@@ -145,14 +145,12 @@
   -webkit-user-drag: none;
 }
 
-
 /* Optics layer — everything that is NOT on the record. Same circle, same
    place, but it never rotates, because a room light that swept round with the
    platter is precisely the fake this section is not allowed to use. */
 .tt-disc-optics {
   pointer-events: none;
 }
-
 
 /* The groove band the stylus is currently in, lifted a hair. The radii are
    lerped between detents by AboutSection so it tracks the needle. */
@@ -223,7 +221,19 @@
   transform: rotate(var(--spin, 0deg));
   will-change: transform;
 }
-/* ImageKit (see src/lib/imagekit.ts). It rewrote the spaces in both the folder
+
+/* The three record labels — one per section, and the only colour on this
+   turntable.
+
+   DO NOT let an automated dead-CSS sweep near these. AboutSection selects them
+   with a TEMPLATE LITERAL — `className={`tt-lab tt-lab-${t.key}`}` — so the
+   strings "tt-lab-theme", "tt-lab-vision" and "tt-lab-mission" appear NOWHERE
+   in the TSX. Any tool that greps for literal class names reports all three as
+   unused and deletes them, and the disc goes black. That has now happened
+   once. Whitelist `tt-lab-*`, or check for template-literal class construction
+   before trusting the sweep.
+
+   ImageKit (see src/lib/imagekit.ts). It rewrote the spaces in both the folder
    and the filenames on upload, so these paths are not a literal mirror of
    public/record player/. */
 .tt-lab-theme   { background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Orange_record.png?tr=f-auto,q-auto'); }
@@ -308,7 +318,6 @@
     rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.26) 74%, rgba(0, 0, 0, 0.58) 100%);
 }
 
-
 /* ── tonearm (one SVG over the whole design space) ──────────────────────── */
 
 .tt-hardware {
@@ -337,8 +346,6 @@
   pointer-events: none;
   color: #fdfcfa;
 }
-
-
 
 /* Centre copy — anchored to the label's projected screen position. */
 .tt-center {
@@ -393,7 +400,6 @@
 }
 
 /* ── narrow viewports ──────────────────────────────────────────────────── */
-
 
 /* ── reduced motion ────────────────────────────────────────────────────── */
 

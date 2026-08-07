@@ -32,6 +32,52 @@ function THREE_MATH_LERP(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   The desktop pin's scroll budget, in px, as three consecutive stretches.
+
+   ACT3_LEN is the council choreography, and it is the ruler every threshold in
+   the scroll callback is written against — `0.26` still means "26% of the walk
+   to the gallery", exactly as it did when the pin was 11000px and nothing
+   followed it. Appending scroll to the pin therefore cannot desync a single one
+   of those tuned numbers; see the re-normalisation in `onUpdate`.
+
+   GALLERY_HOLD is the fix for "the last component is never properly seen". The
+   Picture and Fax Viewer finishes opening at ACT3_LEN, and then NOTHING moves
+   for this many pixels — no fade, no cover, no shutdown. Before it existed the
+   viewer reached full opacity 110px before the pin ended, with the shutdown
+   already 77% opaque on top of it, so the gallery was never once on screen
+   unobscured.
+
+   SHUTDOWN_LEN is the power-off, and it runs INSIDE this pin deliberately. That
+   is what makes "no scroll-up, at any cost" structural instead of a cover-up:
+   this pin is the last thing in the document, so its end is also the document's
+   maximum scroll. The XP desktop cannot scroll away because there is no scroll
+   left for it to scroll into. Nothing is being hidden — there is nothing to
+   hide. Adding any in-flow element after this section breaks that guarantee.
+   ───────────────────────────────────────────────────────────────────────────── */
+const ACT3_LEN = 11000;
+const GALLERY_HOLD = 900;
+const SHUTDOWN_LEN = 2600;
+const PIN_LEN = ACT3_LEN + GALLERY_HOLD + SHUTDOWN_LEN;
+
+export interface EventsAndCouncilSectionProps {
+  /**
+   * ShutdownTransition parks its draw function here.
+   *
+   * The shutdown used to own a second ScrollTrigger anchored to its own spacer,
+   * which meant two clocks: this one lagged by `scrub: 0.8`, that one instant,
+   * and the overlay ran ahead of the gallery under any real scroll velocity. It
+   * also meant the shutdown's start position was measured against a document
+   * that did not yet contain this pin's 11720px spacer, which is how it ended up
+   * playing back over the events wall.
+   *
+   * Calling it from this callback removes both problems by construction: one
+   * trigger, one scrub, one scalar. Left null on mobile, which has no XP desktop
+   * to switch off and anchors the shutdown to its own spacer instead.
+   */
+  shutdownDrawRef?: React.MutableRefObject<((p: number) => void) | null>;
+}
+
 /**
  * EventsAndCouncilSection — Unified Master Choreography Section
  * Upgraded with !important Bliss grid scanlines, 3D carved grass text, and the
@@ -48,7 +94,9 @@ function THREE_MATH_LERP(a: number, b: number, t: number) {
  * 7. 0.93 -> 0.96: Archive Minimize (IE6 window genies down into taskbar).
  * 8. 0.96 -> 1.00: Grand Finale (Windows Picture and Fax Viewer pops up with group photo).
  */
-export default function EventsAndCouncilSection() {
+export default function EventsAndCouncilSection({
+  shutdownDrawRef,
+}: EventsAndCouncilSectionProps = {}) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<number>(0);
@@ -59,7 +107,19 @@ export default function EventsAndCouncilSection() {
   const pictureViewerRef = useRef<HTMLDivElement>(null);
   const activeEventRef = useRef(0);
   const carouselTrackRef = useRef<HTMLDivElement>(null);
-  const [activeEvent, setActiveEvent] = useState(0);
+  /* HUD readout, written straight to the DOM.
+     An `activeEvent` state used to be set roughly once per poster as the camera
+     walked. Each of those re-rendered THIS component — and this component's
+     subtree is the whole R3F scene graph, the TheFacebook archive and the
+     picture viewer. React reconciling several hundred three.js nodes to change
+     a two-digit counter is the stall you feel on entering the act, in either
+     direction, because the walk runs at both ends of the pin. Only three text
+     nodes ever read that value, so it takes three refs instead. (The mobile
+     carousel wrote the same state and NOTHING read it — that one was pure
+     waste; it keeps `activeEventRef` alone.) */
+  const eventNumRef = useRef<HTMLSpanElement>(null);
+  const eventTitleRef = useRef<HTMLSpanElement>(null);
+  const eventSubtitleRef = useRef<HTMLSpanElement>(null);
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
@@ -156,14 +216,10 @@ export default function EventsAndCouncilSection() {
               }
 
               const totalCards = mobileEvents.length;
-              const closest = Math.min(
+              activeEventRef.current = Math.min(
                 totalCards - 1,
                 Math.round(p * (totalCards - 1))
               );
-              if (closest !== activeEventRef.current) {
-                activeEventRef.current = closest;
-                setActiveEvent(closest);
-              }
             },
           },
         });
@@ -190,10 +246,18 @@ export default function EventsAndCouncilSection() {
         trigger: sectionRef.current,
         pin: containerRef.current,
         start: 'top top',
-        end: '+=11000',
+        end: `+=${PIN_LEN}`,
         scrub: 0.8,
         onUpdate: (self) => {
-          const p = self.progress;
+          /* One clock, two rulers.
+             `px` is the position along the whole pin. `p` re-normalises it onto
+             the council choreography so every threshold below is still a
+             fraction of ACT3_LEN and none of them had to move. It saturates at
+             1 for the gallery hold and the shutdown, which is precisely what
+             leaves the Picture and Fax Viewer open and motionless underneath
+             them instead of still fading in while the screen goes dark. */
+          const px = self.progress * PIN_LEN;
+          const p = Math.min(1, px / ACT3_LEN);
 
           // 0 walking · 1 dwelling on the last poster · 2 windowed · 3 minimized
           const nextPhase = p >= 0.5 ? 3 : p >= 0.32 ? 2 : p >= 0.26 ? 1 : 0;
@@ -226,7 +290,13 @@ export default function EventsAndCouncilSection() {
 
           if (closest !== activeEventRef.current) {
             activeEventRef.current = closest;
-            setActiveEvent(closest);
+            // No setState here — see eventNumRef.
+            const evt = events[closest];
+            if (eventNumRef.current) {
+              eventNumRef.current.textContent = String(closest + 1).padStart(2, '0');
+            }
+            if (eventTitleRef.current) eventTitleRef.current.textContent = evt?.title ?? '';
+            if (eventSubtitleRef.current) eventSubtitleRef.current.textContent = evt?.subtitle ?? '';
           }
 
           /* ── Phase 2 -> 4: Dwell, Windowize & Minimize (0.26 -> 0.50) ────── */
@@ -355,6 +425,19 @@ export default function EventsAndCouncilSection() {
             pictureViewerRef.current.style.visibility =
               parseFloat(pictureViewerRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
           }
+
+          /* ── Phase 9: hand the tail of the pin to the shutdown ─────────────
+             Stays at 0 for the whole of ACT3_LEN and for GALLERY_HOLD after
+             it — the gallery gets its dwell with nothing on top of it — then
+             runs 0 → 1 over the last SHUTDOWN_LEN px. Same tick, same scrub,
+             same scalar as everything above, so the overlay physically cannot
+             start before the last component has been sitting there in the
+             clear. Driving it from here rather than from a second trigger is
+             the whole point; see EventsAndCouncilSectionProps. */
+          if (shutdownDrawRef) {
+            const sp = (px - ACT3_LEN - GALLERY_HOLD) / SHUTDOWN_LEN;
+            shutdownDrawRef.current?.(Math.min(1, Math.max(0, sp)));
+          }
         },
       });
 
@@ -367,9 +450,8 @@ export default function EventsAndCouncilSection() {
         trigger.kill();
       };
     }
-  }, [isEventsMinimized, isMobile, mounted]);
+  }, [isEventsMinimized, isMobile, mounted, shutdownDrawRef]);
 
-  const current = isMobile ? mobileEvents[activeEvent] : events[activeEvent];
 
   if (mounted && isMobile) {
     return (
@@ -589,7 +671,7 @@ export default function EventsAndCouncilSection() {
 
               {/* Attached Member Photo Card */}
               <div className="fb-post-media-container">
-                <MemberPhoto member={member} className="fb-post-member-card" size="full" glyphSize="4rem" />
+                <MemberPhoto member={member} className="fb-post-member-card" size="full" />
               </div>
 
               {/* Reactions summary */}
@@ -745,8 +827,8 @@ export default function EventsAndCouncilSection() {
                   <div className="events-hud-bottom">
                     <div className="events-event-info">
                       <div className="events-event-counter">
-                        <span className="events-event-number">
-                          {String(activeEvent + 1).padStart(2, '0')}
+                        <span ref={eventNumRef} className="events-event-number">
+                          01
                         </span>
                         <span className="events-event-divider">/</span>
                         <span className="events-event-total">
@@ -754,9 +836,11 @@ export default function EventsAndCouncilSection() {
                         </span>
                       </div>
                       <div className="events-event-meta">
-                        <span className="events-event-title">{current?.title}</span>
-                        <span className="events-event-subtitle">
-                          {current?.subtitle}
+                        <span ref={eventTitleRef} className="events-event-title">
+                          {events[0]?.title}
+                        </span>
+                        <span ref={eventSubtitleRef} className="events-event-subtitle">
+                          {events[0]?.subtitle}
                         </span>
                       </div>
                     </div>

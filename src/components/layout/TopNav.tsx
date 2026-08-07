@@ -100,18 +100,21 @@ export default function TopNav({ ready }: { ready: boolean }) {
     const intro = currentIntroPhases().total;
     const wwd = top('#what-we-do');
     const events = top('#events');
-    const contact = top('#contact');
     const maxScroll = document.documentElement.scrollHeight - vh;
 
     // WhatWeDo and Events engage when their spacers reach the viewport bottom /
     // top — the same offsets their own triggers use.
     const wwdAt = wwd === null ? intro + 3250 : wwd - vh;
     const eventsAt = events === null ? wwdAt + 5000 : events;
-    // Nearly a full screen of lead: the footer is the last thing on the page,
-    // so it should light up as it comes into view rather than once it is
-    // already most of the way up the screen — at 0.6 it only took over in the
-    // final 2% of the scrollbar.
-    const contactAt = contact === null ? maxScroll : Math.min(contact - vh * 0.85, maxScroll);
+    /* Contact is the bottom of the page, full stop — there is no element to
+       measure. The shutdown runs inside the Events pin and finishes with the
+       contact screen up and readable, and that pin is the last thing in the
+       document, so its end and the maximum scroll are the same pixel.
+       This used to measure `#contact` (an in-flow spacer) minus 0.85 of a
+       viewport, which landed 612px short of the bottom — on the shutdown
+       DIALOG, with the contact screen still at zero opacity. Clicking Contact
+       never once reached contact. */
+    const contactAt = maxScroll;
     // The council window opens partway through the Events pin. Expressed as a
     // fraction of that pin rather than its hard-coded length, so retuning the
     // section cannot silently desync the highlight.

@@ -355,140 +355,6 @@
   overflow: hidden;
 }
 
-/* Authentic Windows XP Luna Titlebar (matches the transition window) */
-.xp-player-titlebar {
-  height: 29px;
-  background: linear-gradient(180deg,
-      #0d5fff 0%,
-      #0956f4 4%,
-      #0250ee 9%,
-      #0b58f0 46%,
-      #0243dc 86%,
-      #0139cf 95%,
-      #0a57ef 100%);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 3px 0 8px;
-  font-family: 'Trebuchet MS', 'Tahoma', 'Segoe UI', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  text-shadow: 1px 1px 2px rgba(0, 10, 74, 0.8);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 2px 2px rgba(120, 170, 255, 0.35),
-    inset 0 -1px 0 rgba(0, 20, 92, 0.6);
-}
-
-.xp-player-content {
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Top Split: Left Photo Box + Right Media Controls */
-.xp-player-top-grid {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 16px;
-  align-items: stretch;
-}
-
-@media (max-width: 640px) {
-  .xp-player-top-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Authentic Sunken 3D Box */
-.xp-sunken-box {
-  background: #101010;
-  border-top: 2px solid #808080;
-  border-left: 2px solid #808080;
-  border-right: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
-  overflow: hidden;
-  position: relative;
-}
-
-.xp-member-photo-frame {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.xp-member-photo-card {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.xp-member-avatar-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 2px 7px;
-  font-size: 10px;
-  color: #00ff66;
-  font-weight: 700;
-  letter-spacing: 1px;
-  z-index: 5;
-}
-
-/* Right Controls Box */
-.xp-player-controls-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.xp-disc-and-volume {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px;
-  background: #d4d0c8;
-  border-top: 1px solid #808080;
-  border-left: 1px solid #808080;
-  border-right: 1px solid #ffffff;
-  border-bottom: 1px solid #ffffff;
-}
-
-/* Realistic CD Disc */
-.xp-cd-disc {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at center, #ffffff 13%, #222222 15%, #222222 22%, transparent 23%),
-    conic-gradient(from 45deg, #e4e4e4, #a8dcf0, #ffb8d0, #e4e4e4, #ffdf6d, #a8dcf0, #e4e4e4);
-  border: 1px solid #777;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: xpDiscSpin 8s linear infinite;
-}
-
-.xp-cd-disc.fast-spin {
-  animation: xpDiscSpin 1.4s linear infinite;
-}
-
 @keyframes xpDiscSpin {
   0% {
     transform: rotate(0deg);
@@ -499,235 +365,10 @@
   }
 }
 
-/* Realistic LED Equalizer */
-.xp-visualizer {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 40px;
-  padding: 4px 6px;
-  background: #020e02;
-  border-top: 2px solid #808080;
-  border-left: 2px solid #808080;
-  border-right: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
-}
-
-.xp-vis-bar {
-  flex: 1;
-  background: linear-gradient(180deg, #ff2a2a 0%, #ffcc00 35%, #00ea3f 100%);
-  border-radius: 1px;
-  transition: height 0.12s ease;
-}
-
-/* Raised 3D Win95/XP Buttons */
-.xp-raised-btn {
-  background: #ece9d8;
-  border-top: 2px solid #ffffff;
-  border-left: 2px solid #ffffff;
-  border-right: 2px solid #5a5851;
-  border-bottom: 2px solid #5a5851;
-  font-family: 'Tahoma', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  color: #111;
-  padding: 4px 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: filter 0.1s ease;
-}
-
-.xp-raised-btn:hover {
-  filter: brightness(1.04);
-}
-
-.xp-raised-btn:active {
-  border-top: 2px solid #5a5851;
-  border-left: 2px solid #5a5851;
-  border-right: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
-  padding: 5px 9px 3px 11px;
-}
-
-.xp-playback-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.xp-playback-row .xp-raised-btn {
-  flex: 1;
-  min-width: 32px;
-  height: 30px;
-}
-
-/* --------------------------------------------------------------------------
-   MIDDLE DROPDOWN FIELDS (Artist & Title)
-   -------------------------------------------------------------------------- */
-.xp-dropdown-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.xp-dropdown-label {
-  width: 54px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #222;
-  text-align: right;
-}
-
-.xp-dropdown-select-box {
-  flex: 1;
-  height: 26px;
-  background: #ffffff;
-  border-top: 2px solid #808080;
-  border-left: 2px solid #808080;
-  border-right: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 4px 0 8px;
-  cursor: pointer;
-  position: relative;
-}
-
-.xp-dropdown-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: #000;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.xp-dropdown-arrow {
-  width: 18px;
-  height: 18px;
-  background: #ece9d8;
-  border-top: 1px solid #ffffff;
-  border-left: 1px solid #ffffff;
-  border-right: 1px solid #5a5851;
-  border-bottom: 1px solid #5a5851;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  font-weight: bold;
-}
-
-.xp-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: #ffffff;
-  border: 1px solid #000;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 100;
-}
-
-.xp-dropdown-item {
-  padding: 5px 8px;
-  font-size: 12px;
-  color: #000;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-}
-
 .xp-dropdown-item:hover,
 .xp-dropdown-item.active {
   background: #0a246a;
   color: #ffffff;
-}
-
-/* --------------------------------------------------------------------------
-   BOTTOM SCRUBBER & PROFESSIONAL COUNCIL LINER NOTES
-   -------------------------------------------------------------------------- */
-.xp-scrubber-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #333;
-}
-
-.xp-scrubber-track {
-  flex: 1;
-  height: 16px;
-  background: #d4d0c8;
-  border-top: 2px solid #808080;
-  border-left: 2px solid #808080;
-  border-right: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
-  position: relative;
-  cursor: pointer;
-}
-
-.xp-scrubber-progress {
-  height: 100%;
-  background: #1178a8;
-}
-
-.xp-scrubber-knob {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 14px;
-  height: 22px;
-  background: #ece9d8;
-  border-top: 2px solid #ffffff;
-  border-left: 2px solid #ffffff;
-  border-right: 2px solid #5a5851;
-  border-bottom: 2px solid #5a5851;
-}
-
-.xp-member-bio-panel {
-  background: #ffffff;
-  border-top: 2px solid #808080;
-  border-left: 2px solid #808080;
-  border-right: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.xp-bio-text {
-  font-size: 12px;
-  color: #222;
-  line-height: 1.45;
-}
-
-.xp-tags-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.xp-tech-tag {
-  background: #f0f4fc;
-  border: 1px solid #7c98c8;
-  color: #0b2d6c;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 2px;
-}
-
-.xp-social-buttons {
-  display: flex;
-  gap: 6px;
-  margin-top: 2px;
 }
 
 /* --------------------------------------------------------------------------
@@ -876,57 +517,6 @@
     inset 2px 0 4px rgba(0, 0, 0, 0.12);
 }
 
-/* ==========================================================================
-   AUTHENTIC MSN MESSENGER (WINDOWS MESSENGER 7.0) DUAL-WINDOW STYLING
-   SCALED UP FOR MAXIMUM READABILITY & EFFORTLESS VISIBILITY (NO ZOOM NEEDED)
-   ========================================================================== */
-
-.msn-dual-desktop-container {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 20px !important;
-  width: auto !important;
-  max-width: 95vw !important;
-  margin: 0 auto !important;
-  padding-left: clamp(90px, 9vw, 140px) !important;
-  position: relative !important;
-  z-index: 50 !important;
-  pointer-events: auto !important;
-}
-
-/* Base Window Style for both Contact List & Chat Window */
-.msn-contact-list-window,
-.msn-chat-window {
-  background: #ece9d8 !important;
-  border: 3px solid #0831d9 !important;
-  border-top: none !important;
-  border-radius: 8px 8px 4px 4px !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.25),
-    0 30px 70px rgba(0, 0, 0, 0.88) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  font-family: 'Tahoma', 'Segoe UI', Arial, sans-serif !important;
-  color: #000000 !important;
-  user-select: none !important;
-}
-
-.msn-contact-list-window {
-  width: 380px !important;
-  height: clamp(520px, 72vh, 680px) !important;
-  flex-shrink: 0 !important;
-}
-
-.msn-chat-window {
-  width: clamp(560px, 46vw, 740px) !important;
-  height: clamp(520px, 72vh, 680px) !important;
-  flex-shrink: 0 !important;
-  position: relative !important;
-}
-
 /* Nudge Animation (Authentic Window Shaking) */
 @keyframes msn-shake {
   0% {
@@ -962,696 +552,9 @@
   }
 }
 
-.msn-chat-window.is-nudging {
-  animation: msn-shake 0.65s ease-in-out !important;
-}
-
-/* Titlebar & Menubar */
-.msn-titlebar {
-  height: 38px !important;
-  background: linear-gradient(180deg,
-      #0d5fff 0%,
-      #0956f4 6%,
-      #0250ee 12%,
-      #0b58f0 48%,
-      #0243dc 88%,
-      #0139cf 95%,
-      #0a57ef 100%) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 0 8px 0 12px !important;
-  color: #ffffff !important;
-  font-family: 'Trebuchet MS', 'Tahoma', sans-serif !important;
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  text-shadow: 1px 1px 2px rgba(0, 10, 74, 0.8) !important;
-  border-top-left-radius: 6px !important;
-  border-top-right-radius: 6px !important;
-}
-
-.msn-titlebar-left {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.msn-butterfly-icon {
-  font-size: 20px !important;
-}
-
-.msn-titlebar-buttons {
-  display: flex !important;
-  align-items: center !important;
-  gap: 3px !important;
-}
-
-.msn-menubar {
-  background: #ece9d8 !important;
-  border-bottom: 1px solid #d0c8b0 !important;
-  padding: 5px 12px !important;
-  display: flex !important;
-  gap: 16px !important;
-  font-size: 14px !important;
-  color: #000000 !important;
-}
-
-.msn-menubar span {
-  cursor: pointer !important;
-  padding: 2px 4px !important;
-}
-
-.msn-menubar span:hover {
-  background: #316ac5 !important;
-  color: #ffffff !important;
-  border-radius: 3px !important;
-}
-
-/* User Header (Top Card of Contact List) */
-.msn-user-header {
-  background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%) !important;
-  border-bottom: 1px solid #a0b0d0 !important;
-  padding: 12px 14px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 14px !important;
-}
-
-.msn-visitor-dp-box {
-  width: 68px !important;
-  height: 68px !important;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
-  border: 2px solid #316ac5 !important;
-  border-radius: 6px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 36px !important;
-  position: relative !important;
-  box-shadow: inset 1px 1px 3px rgba(255, 255, 255, 0.4), 1px 2px 5px rgba(0, 0, 0, 0.25) !important;
-}
-
-.msn-status-indicator {
-  position: absolute !important;
-  bottom: -4px !important;
-  right: -4px !important;
-  width: 16px !important;
-  height: 16px !important;
-  border-radius: 50% !important;
-  border: 2px solid #ffffff !important;
-  background: #00dd44 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
-}
-
-.msn-visitor-info {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 6px !important;
-  flex: 1 !important;
-}
-
-.msn-visitor-name {
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  color: #003399 !important;
-}
-
-.msn-status-select {
-  font-family: 'Tahoma', sans-serif !important;
-  font-size: 13px !important;
-  color: #333333 !important;
-  background: #ffffff !important;
-  border: 1px solid #a0a0a0 !important;
-  border-radius: 3px !important;
-  padding: 4px 6px !important;
-  cursor: pointer !important;
-}
-
-/* Quick Toolbar & Search Box */
-.msn-toolbar {
-  background: #ece9d8 !important;
-  padding: 6px 12px !important;
-  border-bottom: 1px solid #d0c8b0 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-}
-
-.msn-toolbar-btn {
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  border-radius: 4px !important;
-  padding: 5px 8px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-  font-size: 13px !important;
-  color: #222222 !important;
-  cursor: pointer !important;
-}
-
-.msn-toolbar-btn:hover {
-  background: rgba(255, 255, 255, 0.6) !important;
-  border: 1px solid #a0b0d0 !important;
-}
-
-.msn-search-bar {
-  background: #ffffff !important;
-  border-bottom: 1px solid #b0b8c8 !important;
-  padding: 8px 12px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.msn-search-input {
-  flex: 1 !important;
-  border: none !important;
-  outline: none !important;
-  font-family: 'Tahoma', sans-serif !important;
-  font-size: 14px !important;
-  color: #111111 !important;
-}
-
-.msn-search-clear {
-  background: transparent !important;
-  border: none !important;
-  font-size: 16px !important;
-  font-weight: bold !important;
-  color: #888888 !important;
-  cursor: pointer !important;
-}
-
-/* Contact Accordion Area */
-.msn-contacts-container {
-  flex: 1 !important;
-  background: #ffffff !important;
-  overflow-y: auto !important;
-  padding: 8px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 8px !important;
-}
-
-.msn-group-folder {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.msn-group-header {
-  background: linear-gradient(90deg, #e4efff 0%, #ffffff 100%) !important;
-  border: 1px solid #b8d0f8 !important;
-  border-radius: 4px !important;
-  padding: 8px 10px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: #003399 !important;
-  cursor: pointer !important;
-}
-
-.msn-group-header:hover {
-  background: linear-gradient(90deg, #d0e4ff 0%, #f0f6ff 100%) !important;
-}
-
-.msn-group-count {
-  font-weight: 400 !important;
-  color: #555555 !important;
-  margin-left: auto !important;
-}
-
-.msn-group-items {
-  display: flex !important;
-  flex-direction: column !important;
-  padding-left: 16px !important;
-  margin-top: 4px !important;
-  gap: 4px !important;
-}
-
-.msn-contact-row {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-  padding: 8px 10px !important;
-  border: 1px solid transparent !important;
-  border-radius: 4px !important;
-  cursor: pointer !important;
-  transition: background 0.1s ease !important;
-}
-
-.msn-contact-row:hover {
-  background: #e6f0ff !important;
-  border: 1px dotted #80b0f0 !important;
-}
-
 .msn-contact-row.active {
   background: #c6dcfc !important;
   border: 1px solid #316ac5 !important;
-}
-
-.msn-buddy-icon-wrap {
-  position: relative !important;
-  font-size: 16px !important;
-}
-
-.msn-buddy-online-dot {
-  position: absolute !important;
-  bottom: 0 !important;
-  right: -2px !important;
-  width: 8px !important;
-  height: 8px !important;
-  border-radius: 50% !important;
-  background: #00dd44 !important;
-  border: 1px solid #ffffff !important;
-}
-
-.msn-contact-dp-mini {
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 4px !important;
-  border: 1px solid #a0a0a0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 20px !important;
-  flex-shrink: 0 !important;
-}
-
-.msn-contact-text {
-  font-size: 14px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  flex: 1 !important;
-}
-
-.msn-contact-name {
-  font-weight: 700 !important;
-  color: #111111 !important;
-}
-
-.msn-contact-status {
-  font-size: 13px !important;
-  color: #666666 !important;
-}
-
-/* Status Bar */
-.msn-statusbar {
-  background: #ece9d8 !important;
-  border-top: 1px solid #d0c8b0 !important;
-  padding: 8px 12px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 13px !important;
-  color: #333333 !important;
-}
-
-/* --------------------------------------------------------------------------
-   MSN CHAT WINDOW STYLING (SCALED UP)
-   -------------------------------------------------------------------------- */
-.msn-recipient-bar {
-  background: #ffffff !important;
-  border-bottom: 1px solid #d0c8b0 !important;
-  padding: 8px 14px !important;
-  font-size: 14px !important;
-}
-
-.msn-recipient-to {
-  color: #666666 !important;
-}
-
-.msn-recipient-name {
-  font-weight: 700 !important;
-  color: #003399 !important;
-}
-
-.msn-security-banner {
-  background: #fff8c6 !important;
-  border-bottom: 1px solid #e0c860 !important;
-  padding: 10px 14px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  font-size: 13px !important;
-  color: #554400 !important;
-}
-
-.msn-security-text {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.msn-security-close {
-  background: transparent !important;
-  border: none !important;
-  font-size: 16px !important;
-  font-weight: bold !important;
-  color: #887733 !important;
-  cursor: pointer !important;
-}
-
-.msn-chat-body {
-  display: flex !important;
-  flex: 1 !important;
-  overflow: hidden !important;
-}
-
-.msn-chat-left-pane {
-  flex: 1 !important;
-  min-width: 300px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  border-right: 1px solid #b0b8c8 !important;
-  background: #ffffff !important;
-  overflow: hidden !important;
-}
-
-.msn-chat-history {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  padding: 18px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 16px !important;
-  font-size: 15px !important;
-  line-height: 1.55 !important;
-}
-
-.msn-msg-system {
-  color: #888888 !important;
-  font-style: italic !important;
-  text-align: center !important;
-  font-size: 13px !important;
-  margin: 6px 0 !important;
-}
-
-.msn-msg-item {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 4px !important;
-}
-
-.msn-msg-header {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
-}
-
-.msn-sender-member {
-  font-weight: 700 !important;
-  color: #003399 !important;
-}
-
-.msn-sender-user {
-  font-weight: 700 !important;
-  color: #990000 !important;
-}
-
-.msn-msg-time {
-  color: #888888 !important;
-  font-size: 12px !important;
-}
-
-.msn-msg-text {
-  margin: 0 !important;
-  color: #111111 !important;
-  padding-left: 10px !important;
-  font-size: 15px !important;
-}
-
-.msn-msg-chips {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 8px !important;
-  padding-left: 10px !important;
-  margin-top: 6px !important;
-}
-
-.msn-chip {
-  background: #f0f6ff !important;
-  border: 1px solid #a4c2e8 !important;
-  border-radius: 4px !important;
-  padding: 4px 10px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #003399 !important;
-}
-
-.msn-quick-actions {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 8px !important;
-  padding-left: 10px !important;
-  margin-top: 8px !important;
-}
-
-.msn-quick-action-btn {
-  background: #eef4ff !important;
-  border: 1px solid #316ac5 !important;
-  border-radius: 5px !important;
-  padding: 10px 16px !important;
-  font-family: 'Tahoma', sans-serif !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: #003399 !important;
-  text-align: left !important;
-  cursor: pointer !important;
-  transition: background 0.15s ease !important;
-}
-
-.msn-quick-action-btn:hover {
-  background: #d4e8ff !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12) !important;
-}
-
-.msn-social-links-box {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 10px !important;
-  padding-left: 10px !important;
-  margin-top: 8px !important;
-}
-
-.msn-social-link {
-  background: #1864d8 !important;
-  color: #ffffff !important;
-  border-radius: 4px !important;
-  padding: 8px 14px !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  text-decoration: none !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-}
-
-.msn-social-link:hover {
-  background: #0d46a0 !important;
-}
-
-.msn-chat-formatting-bar {
-  background: #ece9d8 !important;
-  border-top: 1px solid #d0c8b0 !important;
-  padding: 6px 12px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-}
-
-.msn-format-left {
-  display: flex !important;
-  gap: 6px !important;
-}
-
-.msn-format-btn {
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  border-radius: 3px !important;
-  padding: 4px 8px !important;
-  cursor: pointer !important;
-  font-size: 16px !important;
-}
-
-.msn-format-btn:hover {
-  background: rgba(255, 255, 255, 0.6) !important;
-  border: 1px solid #a0b0d0 !important;
-}
-
-.msn-nudge-btn {
-  background: linear-gradient(180deg, #fffae0 0%, #ffdf60 100%) !important;
-  border: 1px solid #c8a000 !important;
-  border-radius: 4px !important;
-  padding: 6px 14px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  font-family: 'Tahoma', sans-serif !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: #664400 !important;
-  cursor: pointer !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
-}
-
-.msn-nudge-btn:hover {
-  filter: brightness(1.08) !important;
-}
-
-.msn-chat-input-row {
-  display: flex !important;
-  background: #ffffff !important;
-  border-top: 1px solid #b0b8c8 !important;
-  height: 86px !important;
-}
-
-.msn-chat-textarea {
-  flex: 1 !important;
-  border: none !important;
-  outline: none !important;
-  resize: none !important;
-  padding: 12px !important;
-  font-family: 'Tahoma', sans-serif !important;
-  font-size: 15px !important;
-  color: #111111 !important;
-}
-
-.msn-chat-send-actions {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 6px !important;
-  padding: 8px !important;
-  background: #ece9d8 !important;
-  border-left: 1px solid #d0c8b0 !important;
-}
-
-.msn-send-btn {
-  flex: 1 !important;
-  background: linear-gradient(180deg, #5db63a 0%, #3d9522 100%) !important;
-  border: 1px solid #297d12 !important;
-  border-radius: 4px !important;
-  color: #ffffff !important;
-  font-family: 'Tahoma', sans-serif !important;
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  padding: 0 22px !important;
-  cursor: pointer !important;
-}
-
-.msn-send-btn:hover {
-  filter: brightness(1.1) !important;
-}
-
-.msn-search-history-btn {
-  background: #ece9d8 !important;
-  border: 1px solid #a0a0a0 !important;
-  border-radius: 3px !important;
-  font-size: 12px !important;
-  color: #444444 !important;
-  cursor: pointer !important;
-}
-
-/* Right Pane: Dual DP Avatars Sidebar (Scaled Up) */
-.msn-chat-right-pane {
-  width: 220px !important;
-  flex-shrink: 0 !important;
-  background: #f4f2e8 !important;
-  padding: 14px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 16px !important;
-  border-left: 1px solid #d0c8b0 !important;
-  overflow-y: auto !important;
-}
-
-.msn-dp-section {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.msn-dp-title {
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  color: #444444 !important;
-}
-
-.msn-dp-box-large {
-  width: 146px !important;
-  height: 146px !important;
-  border: 4px solid #ffffff !important;
-  border-radius: 8px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  position: relative !important;
-  box-shadow:
-    inset 1px 1px 4px rgba(255, 255, 255, 0.4),
-    0 4px 10px rgba(0, 0, 0, 0.35) !important;
-}
-
-.msn-dp-large-glyph {
-  font-size: 72px !important;
-}
-
-.msn-dp-status-badge {
-  position: absolute !important;
-  bottom: 8px !important;
-  right: 8px !important;
-  width: 18px !important;
-  height: 18px !important;
-  border-radius: 50% !important;
-  border: 2px solid #ffffff !important;
-  background: #00dd44 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
-}
-
-.msn-dp-caption {
-  text-align: center !important;
-  font-size: 13px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  color: #222222 !important;
-  gap: 2px !important;
-}
-
-.msn-dp-caption strong {
-  color: #003399 !important;
-  font-size: 14px !important;
-}
-
-.msn-dp-nav-row {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  background: #e4efff !important;
-  border: 1px solid #b8d0f8 !important;
-  border-radius: 4px !important;
-  padding: 6px 8px !important;
-  font-size: 13px !important;
-}
-
-.msn-dp-nav-btn {
-  background: #ffffff !important;
-  border: 1px solid #316ac5 !important;
-  border-radius: 3px !important;
-  padding: 4px 8px !important;
-  font-weight: 700 !important;
-  color: #003399 !important;
-  cursor: pointer !important;
-}
-
-.msn-dp-nav-btn:hover {
-  background: #316ac5 !important;
-  color: #ffffff !important;
-}
-
-.msn-dp-nav-counter {
-  font-weight: 700 !important;
-  color: #555555 !important;
 }
 
 /* ==========================================================================
@@ -1687,6 +590,10 @@
 
 .xp-pv {
   --thumb: 1;
+  /* Full-size Explorer window — the finale is meant to fill the desktop.
+     Shrinking the WINDOW was the wrong lever for "it looks too zoomed in": the
+     complaint was the thumbnails, so that is what moved (see .xp-pv-tile-photo).
+     Leave this big. */
   width: 97% !important;
   max-width: 1320px !important;
   height: clamp(620px, 86vh, 880px) !important;
@@ -1991,10 +898,15 @@
   min-height: 0 !important;
   overflow-y: auto !important;
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(calc(116px * var(--thumb)), 1fr)) !important;
-  gap: 6px !important;
+  /* Cell size is what "zoom" means in this view — it is the same number the
+     magnifier slider in the command bar scales via --thumb. The default sits
+     high on purpose: opening at a small thumbnail and expecting the user to
+     find the slider is backwards, so the album opens near the top of the range
+     and the slider is there to zoom OUT. */
+  grid-template-columns: repeat(auto-fill, minmax(calc(158px * var(--thumb)), 1fr)) !important;
+  gap: 10px !important;
   align-content: start !important;
-  padding: 12px !important;
+  padding: 16px !important;
   background: #ffffff !important;
 }
 
@@ -2030,14 +942,19 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: calc(84px * var(--thumb)) !important;
-  height: calc(64px * var(--thumb)) !important;
-  font-size: calc(30px * var(--thumb)) !important;
+  /* 132×100 against the 84×64 this shipped with — a bit over 2× the area.
+     Sized so 14 members land as 7 across × 2 rows in the full-size window at
+     1280×720, which is the tightest desktop case: bigger than this and the
+     third row pushes the grid into a scrollbar on open. The slider still runs
+     60–190% either side of it. */
+  width: calc(132px * var(--thumb)) !important;
+  height: calc(100px * var(--thumb)) !important;
+  font-size: calc(46px * var(--thumb)) !important;
   transition: transform 0.2s ease-out !important;
 }
 
 .xp-pv-tile-name {
-  max-width: calc(108px * var(--thumb)) !important;
+  max-width: calc(148px * var(--thumb)) !important;
   font-size: 11px !important;
   color: #000000 !important;
   text-align: center !important;
@@ -2086,12 +1003,6 @@
   align-items: center !important;
   justify-content: center !important;
   overflow: hidden !important;
-}
-
-.xp-pv-photo-glyph {
-  font-size: clamp(58px, 7vw, 100px) !important;
-  line-height: 1 !important;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35)) !important;
 }
 
 .xp-pv-photo-team {
@@ -2275,30 +1186,6 @@
   font-size: 11px !important;
   line-height: 1.45 !important;
   color: #1a1a1a !important;
-}
-
-.xp-pv-info-chips {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 4px !important;
-}
-
-.xp-pv-chip {
-  padding: 2px 6px !important;
-  border: 1px solid #93a9d4 !important;
-  border-radius: 3px !important;
-  background: linear-gradient(180deg, #ffffff, #dfe8f8) !important;
-  font-size: 10px !important;
-  color: #1c3f7c !important;
-}
-
-.xp-pv-info-quote {
-  margin: 0 !important;
-  font-size: 11px !important;
-  font-style: italic !important;
-  line-height: 1.45 !important;
-  color: #ffffff !important;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35) !important;
 }
 
 /* ---- Command bar ------------------------------------------------------- */
@@ -2540,8 +1427,6 @@
   flex-direction: column !important;
 }
 
-
-
 /* Cover Photo */
 .fb-cover-photo-wrapper {
   width: 100% !important;
@@ -2640,40 +1525,6 @@
   object-fit: contain !important;
 }
 
-.fb-profile-action-buttons {
-  display: flex !important;
-  gap: 8px !important;
-  margin-left: auto !important;
-}
-
-.fb-btn {
-  border: none !important;
-  border-radius: 6px !important;
-  padding: 6px 14px !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  outline: none !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.fb-btn-primary {
-  background-color: #1877f2 !important; /* Facebook modern active blue */
-  color: #ffffff !important;
-}
-
-.fb-btn-secondary {
-  background-color: #e4e6eb !important; /* Soft gray buttons */
-  color: #050505 !important;
-}
-
-/* Name Section */
-.fb-profile-name-section {
-  margin-top: 14px !important;
-}
-
 .fb-profile-name {
   font-family: 'Sugo Display', 'Arial Black', Impact, sans-serif !important;
   font-size: 24px !important;
@@ -2699,13 +1550,6 @@
   font-weight: 900 !important;
   line-height: 1 !important;
   flex-shrink: 0 !important;
-}
-
-.fb-profile-category {
-  font-size: 13px !important;
-  color: #65676b !important;
-  margin: 2px 0 0 0 !important;
-  font-weight: 500 !important;
 }
 
 /* Profile Navigation Tabs (integrated into the light mode design) */
@@ -2769,12 +1613,6 @@
   line-height: 1 !important;
   margin-left: 5px !important;
   vertical-align: middle !important;
-}
-
-.fb-link {
-  color: #385898 !important;
-  text-decoration: none !important;
-  font-weight: 600 !important;
 }
 
 .fb-header-divider {
@@ -2883,11 +1721,6 @@
   align-items: center !important;
   justify-content: center !important;
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.1) !important;
-}
-
-.fb-post-member-glyph {
-  font-size: 72px !important;
-  user-select: none !important;
 }
 
 /* Reactions Summary Bar */
@@ -3092,9 +1925,11 @@
   flex-wrap: nowrap !important;
   height: 100% !important;
   align-items: center !important;
+  /* The TRACK is the only thing GSAP transforms, so it is the only thing that
+     earns a layer. `perspective: 1000px` was doing nothing — there is no 3D
+     child here — but it forced a stacking context and a rendering surface. */
   will-change: transform !important;
   backface-visibility: hidden !important;
-  perspective: 1000px !important;
   background: transparent !important;
   gap: 0px !important;
 }
@@ -3118,6 +1953,8 @@
   border-radius: 4px !important;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.85) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  will-change: transform !important;
-  backface-visibility: hidden !important;
+  /* No `will-change` here. These cards never transform individually — the
+     track above them does. This was pinning one permanent compositor layer per
+     card (four full-width 3:4 images) on the device with the least VRAM to
+     spare, to accelerate an animation that does not exist. */
 }
