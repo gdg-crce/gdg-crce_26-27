@@ -107,7 +107,19 @@ export default function EventsAndCouncilSection({
   const pictureViewerRef = useRef<HTMLDivElement>(null);
   const activeEventRef = useRef(0);
   const carouselTrackRef = useRef<HTMLDivElement>(null);
-  const [activeEvent, setActiveEvent] = useState(0);
+  /* HUD readout, written straight to the DOM.
+     An `activeEvent` state used to be set roughly once per poster as the camera
+     walked. Each of those re-rendered THIS component — and this component's
+     subtree is the whole R3F scene graph, the TheFacebook archive and the
+     picture viewer. React reconciling several hundred three.js nodes to change
+     a two-digit counter is the stall you feel on entering the act, in either
+     direction, because the walk runs at both ends of the pin. Only three text
+     nodes ever read that value, so it takes three refs instead. (The mobile
+     carousel wrote the same state and NOTHING read it — that one was pure
+     waste; it keeps `activeEventRef` alone.) */
+  const eventNumRef = useRef<HTMLSpanElement>(null);
+  const eventTitleRef = useRef<HTMLSpanElement>(null);
+  const eventSubtitleRef = useRef<HTMLSpanElement>(null);
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
@@ -204,14 +216,10 @@ export default function EventsAndCouncilSection({
               }
 
               const totalCards = mobileEvents.length;
-              const closest = Math.min(
+              activeEventRef.current = Math.min(
                 totalCards - 1,
                 Math.round(p * (totalCards - 1))
               );
-              if (closest !== activeEventRef.current) {
-                activeEventRef.current = closest;
-                setActiveEvent(closest);
-              }
             },
           },
         });
@@ -282,7 +290,13 @@ export default function EventsAndCouncilSection({
 
           if (closest !== activeEventRef.current) {
             activeEventRef.current = closest;
-            setActiveEvent(closest);
+            // No setState here — see eventNumRef.
+            const evt = events[closest];
+            if (eventNumRef.current) {
+              eventNumRef.current.textContent = String(closest + 1).padStart(2, '0');
+            }
+            if (eventTitleRef.current) eventTitleRef.current.textContent = evt?.title ?? '';
+            if (eventSubtitleRef.current) eventSubtitleRef.current.textContent = evt?.subtitle ?? '';
           }
 
           /* ── Phase 2 -> 4: Dwell, Windowize & Minimize (0.26 -> 0.50) ────── */
@@ -438,7 +452,6 @@ export default function EventsAndCouncilSection({
     }
   }, [isEventsMinimized, isMobile, mounted, shutdownDrawRef]);
 
-  const current = isMobile ? mobileEvents[activeEvent] : events[activeEvent];
 
   if (mounted && isMobile) {
     return (
@@ -658,7 +671,7 @@ export default function EventsAndCouncilSection({
 
               {/* Attached Member Photo Card */}
               <div className="fb-post-media-container">
-                <MemberPhoto member={member} className="fb-post-member-card" size="full" glyphSize="4rem" />
+                <MemberPhoto member={member} className="fb-post-member-card" size="full" />
               </div>
 
               {/* Reactions summary */}
@@ -814,8 +827,8 @@ export default function EventsAndCouncilSection({
                   <div className="events-hud-bottom">
                     <div className="events-event-info">
                       <div className="events-event-counter">
-                        <span className="events-event-number">
-                          {String(activeEvent + 1).padStart(2, '0')}
+                        <span ref={eventNumRef} className="events-event-number">
+                          01
                         </span>
                         <span className="events-event-divider">/</span>
                         <span className="events-event-total">
@@ -823,9 +836,11 @@ export default function EventsAndCouncilSection({
                         </span>
                       </div>
                       <div className="events-event-meta">
-                        <span className="events-event-title">{current?.title}</span>
-                        <span className="events-event-subtitle">
-                          {current?.subtitle}
+                        <span ref={eventTitleRef} className="events-event-title">
+                          {events[0]?.title}
+                        </span>
+                        <span ref={eventSubtitleRef} className="events-event-subtitle">
+                          {events[0]?.subtitle}
                         </span>
                       </div>
                     </div>

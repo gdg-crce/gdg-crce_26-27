@@ -95,33 +95,6 @@
   padding-bottom: 0.35em;
 }
 
-/* ── menu bar: the navigational map ──────────────────────────────────────
-   Chrome, not navigation. See the note in ContactSection.tsx — every real
-   destination is inside a pinned section, and nothing in this ending is
-   allowed to scroll the page back up. */
-.bios-menu {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 clamp(10px, 2.2vw, 30px);
-  justify-content: center;
-  border-top: 1px solid var(--bios-line);
-  border-bottom: 1px solid var(--bios-line);
-  padding: 0.3em 0;
-}
-
-.bios-tab {
-  color: var(--bios-text);
-  white-space: nowrap;
-}
-
-/* Inverse video: the selected menu on a setup screen was never a colour
-   change, it was the two channels swapping. */
-.bios-tab.is-current {
-  background: var(--bios-sel-bg);
-  color: var(--bios-sel-fg);
-  padding: 0 0.6em;
-}
-
 /* ── body: fields on the left, help on the right ─────────────────────────── */
 .bios-body {
   display: grid;
@@ -236,11 +209,6 @@ a.bios-row {
   margin-bottom: 0.5em;
 }
 
-.bios-help-body {
-  margin: 0;
-  color: var(--bios-text);
-}
-
 /* ── key legend ──────────────────────────────────────────────────────────── */
 .bios-legend {
   border-top: 1px solid var(--bios-line);
@@ -303,13 +271,11 @@ a.bios-row {
 }
 
 @media (max-width: 720px) {
-  .bios-menu {
-    gap: 0 clamp(8px, 3vw, 18px);
-  }
 
   /* Two legend rows wrap into four on a phone and start competing with the
      content they are a footnote to. One row carries the idea. */
   .bios-legend-row:last-child {
     display: none;
   }
+
 }

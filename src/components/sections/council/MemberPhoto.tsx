@@ -7,13 +7,26 @@ import { CouncilMember } from './councilData';
    One member's photograph, everywhere.
 
    Every avatar in the council surfaces — TheFacebook archive, the XP gallery,
-   the mobile feed — goes through here, so the loading and failure behaviour is
+   the mobile feed — goes through here, so loading and failure behaviour is
    defined once instead of at sixteen call sites.
 
-   The department gradient and glyph sit UNDER the photo rather than being
-   replaced by it: that is what fills the frame during the fetch (these are ~1MB
-   camera JPEGs) and what remains if the fetch fails outright. A broken portrait
-   degrades to a department-coloured tile, never to a broken-image icon.
+   ── The placeholder is the background colour, and nothing else ──────────────
+   This used to render `member.avatarIcon` — a camera emoji — in a <span> under
+   the photo. Three things were wrong with it:
+
+     1. You SAW it. These are ~1MB camera JPEGs, so on a cold load every tile
+        showed a camera glyph for a beat before the portrait covered it. A
+        placeholder that announces itself is worse than no placeholder.
+     2. It was painted for every avatar on every one of those call sites and
+        then immediately covered — a full text/emoji raster (emoji are colour
+        bitmap glyphs, not cheap) thrown away on the next frame.
+     3. It was an extra element and an extra layout pass per avatar, purely to
+        show something we did not want shown.
+
+   The department colour already fills the frame, costs one paint of a solid
+   fill, and degrades exactly the same way if the fetch fails outright: a
+   department-coloured tile, never a broken-image icon. That is the whole
+   placeholder now.
 
    Styling is inline rather than a class because the call sites are split
    between global CSS (council.css) and CSS modules, and a shared class would
@@ -25,8 +38,6 @@ interface MemberPhotoProps {
   /** The caller's own frame class — sizing and borders stay with the caller. */
   className?: string;
   style?: React.CSSProperties;
-  /** Size of the fallback glyph while the photo is loading. */
-  glyphSize?: number | string;
   /**
    * Which CDN variant to fetch. Defaults to the 320px thumbnail, because most
    * call sites are grids and rails where many are on screen at once — only the
@@ -42,7 +53,6 @@ export default function MemberPhoto({
   member,
   className,
   style,
-  glyphSize,
   size = 'thumb',
   children,
   title,
@@ -61,9 +71,6 @@ export default function MemberPhoto({
         ...style,
       }}
     >
-      <span aria-hidden style={{ lineHeight: 1, fontSize: glyphSize }}>
-        {member.avatarIcon}
-      </span>
       {/* Plain <img>, not next/image: these are remote ImageKit URLs that would
           otherwise need a remotePatterns entry, and ImageKit is already doing
           the format negotiation via ?tr=f-auto. */}
@@ -74,11 +81,14 @@ export default function MemberPhoto({
         loading="lazy"
         decoding="async"
         draggable={false}
-        // Drop the element entirely on failure so the department tile below is
-        // what shows, rather than the browser's broken-image glyph.
+        // Drop the element on failure so the department tile below is what
+        // shows, rather than the browser's broken-image glyph.
         onError={(e) => {
-          e.currentTarget.style.display = 'none';
+          e.currentTarget.style.visibility = 'hidden';
         }}
+        // Absolute, not static: the call sites size their own frames in wildly
+        // different ways (fixed px, aspect-ratio, flex child), and taking the
+        // photo out of flow is what lets one component serve all of them.
         style={{
           position: 'absolute',
           inset: 0,

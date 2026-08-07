@@ -33,7 +33,7 @@ Preloader → HeroVideoSection → AboutSection → EventsAndCouncilSection
 
 The page (`src/app/page.tsx`) manages two state flags: `loading` and `videoStarted`. The Preloader mounts on top of the main content, calls `onStartTransition` to wake the hero video early (zero-gap handoff), then calls `onComplete` to unmount itself.
 
-> **`src/components/sections/events/EventsSection.tsx` is dead code.** Nothing imports it. Act 3 is `src/components/sections/EventsAndCouncilSection.tsx`, which renders `WallScene` directly. Edits made to `EventsSection.tsx` have no effect on the site — verify with `grep -rn EventsSection src/` before touching it. Delete it when convenient.
+> `src/components/sections/events/EventsSection.tsx` **has been deleted**, along with `council/CouncilSection.tsx`, its `index.ts` barrel, `MSNChatWindow`, `MSNContactListWindow`, `RetroMediaPlayerWindow` and `three/CyberParticles3D.tsx` — nothing imported any of them. Act 3 is `src/components/sections/EventsAndCouncilSection.tsx`, which renders `WallScene` directly.
 
 ### Act 1 — Preloader (`src/components/sections/Preloader.tsx`)
 
@@ -50,7 +50,7 @@ Note that the preloader **does** wait on a user gesture before the hero video ca
 
 ### Act 2 — Hero Video (`src/components/sections/hero-video/HeroVideoSection.tsx`)
 
-Full-viewport `<video>` playing `public/videos/intro.mp4`. Scroll is locked (`overflow: hidden`) for the first 10 seconds of playback, then auto-unlocks. The scroll lock is enforced by a `scroll` event listener that enforces `window.scrollTo(0, 0)` — do not fight this pattern.
+Full-viewport `<video>` playing `public/videos/a.mp4` via the single `HERO_VIDEO_SRC` constant in `src/lib/media.ts` — never inline the path, three elements share that one URL so the browser downloads it once. Scroll is locked (`overflow: hidden`) for the first 10 seconds of playback, then auto-unlocks. The scroll lock is enforced by a `scroll` event listener that enforces `window.scrollTo(0, 0)` — do not fight this pattern.
 
 ### Act 3 — Events Wall + Council (`src/components/sections/EventsAndCouncilSection.tsx`)
 
@@ -199,16 +199,20 @@ Target: **60fps on a mid-range laptop**.
 - The `progressRef` pattern (mutable ref passed into R3F) is intentional — avoids React re-renders on every scroll tick
 - **Canvas texture synthesis blocks the main thread.** Every `getImageData`/`putImageData` pass over a 2048×1024 buffer costs real milliseconds, and the wall builds while the preloader is animating. Prefer a baked image file over generating pixels at runtime; prefer half-res for low-frequency maps (roughness, AO). This is a large part of why the wall is a scan.
 - Textures pack multiple channels where the shader allows it (AO in R + roughness in G) — one request, one upload, half the VRAM
+- **Count the point lights before adding one.** three.js forward-renders: every point light adds per-fragment cost to *every* lit material in the scene. The alley once carried **12**, and cutting it to **3** (plus ambient + directional) took the frame from **254 draw calls to 117**.
+- **Never put `castShadow` on a point light here.** A shadow-casting point light renders a shadow **cube** — six faces, every frame — and if a `useFrame` rewrites its intensity, that cube can never be cached. One such light (the caged lamp's `#FF9A40`) was on its own responsible for more than half the scene's draw calls.
+- **Never put `backdrop-filter` over the WebGL canvas.** It forces the composited backdrop to be read back and re-blurred on every frame the canvas repaints — i.e. every frame of the act. `.events-era-badge` had `blur(6px)` for a chip nobody can see through; a flat fill is identical and costs one paint.
 
 ## Public Assets Layout
 
 ```
 public/
   elements/     # Era props (70s-vinyl-record.png, 80s-cassette.png, etc.) + poster-N.png
-  models/       # Compressed .glb files served at runtime
+  models/       # (empty — both .glb files were unreferenced and removed; recreate when the pipeline below is next used)
   textures/
     wall/       # Baked wall PBR set (ambientCG PaintedPlaster016, CC0) — see Wall Material
-  videos/       # intro.mp4 (pre-buffered in preloader before main sequence starts)
+  videos/       # a.mp4 — the ONLY video; pre-buffered in the preloader. See src/lib/media.ts
+                #   (currently 848x478, which is why the full-screen hero reads soft)
   logo.png      # GDG logo used as VHS play button
 ```
 
