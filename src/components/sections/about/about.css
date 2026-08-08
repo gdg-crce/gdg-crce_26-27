@@ -404,22 +404,22 @@
 
 @media (max-width: 767px), (max-height: 500px) {
   .tt-center {
-    width: calc(var(--label-r, 260px) * 1.65);
+    width: calc(var(--label-r, 260px) * 1.52);
   }
 
   .tt-copy-line {
-    font-size: calc(var(--label-r, 260px) * 0.155);
+    font-size: calc(var(--label-r, 260px) * 0.125);
     letter-spacing: 0.008em;
   }
 
   /* The long vision/mission paragraphs need to run slightly smaller to ensure they don't clip on small screens */
   .tt-copy-para .tt-copy-line {
-    font-size: calc(var(--label-r, 260px) * 0.120);
+    font-size: calc(var(--label-r, 260px) * 0.095);
   }
 
   .tt-copy-brush {
-    font-size: calc(var(--label-r, 260px) * 0.320);
-    margin-bottom: calc(var(--label-r, 260px) * 0.080);
+    font-size: calc(var(--label-r, 260px) * 0.250);
+    margin-bottom: calc(var(--label-r, 260px) * 0.060);
   }
 }
 

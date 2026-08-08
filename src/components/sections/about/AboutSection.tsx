@@ -295,8 +295,8 @@ export default function AboutSection() {
       const useMobileLayout = (vw < vh) || (vw < 768) || (vh < 500);
 
       if (useMobileLayout) {
-        // Mobile / Portrait: Center the spindle and scale based on the smaller viewport dimension to fit the label with margin (zoomed in to hide negative space)
-        s = (1.15 * Math.min(vw, vh)) / (LABEL_R * 2);
+        // Mobile / Portrait: Center the spindle and scale based on the smaller viewport dimension to fit the label with margin
+        s = (0.95 * Math.min(vw, vh)) / (LABEL_R * 2);
         ox = -(REC_CX - STAGE_W / 2);
       } else {
         // Desktop / Landscape: Cover-scale as-authored
