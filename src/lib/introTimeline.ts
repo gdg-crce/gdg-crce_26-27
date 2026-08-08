@@ -52,10 +52,12 @@ export interface IntroPhases {
 
 /** Resolve the timeline against a viewport height (px). */
 export function introPhases(vh: number): IntroPhases {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const zoomVh = isMobile ? 1.0 : ZOOM_VH; // Faster zoom on mobile
   const iris = { start: 0, end: IRIS_VH * vh };
   const title = { start: iris.end, end: iris.end + TITLE_VH * vh };
   const hold = { start: title.end, end: title.end + HOLD_VH * vh };
-  const zoom = { start: hold.end, end: hold.end + ZOOM_VH * vh };
+  const zoom = { start: hold.end, end: hold.end + zoomVh * vh };
   return { iris, title, hold, zoom, total: zoom.end };
 }
 

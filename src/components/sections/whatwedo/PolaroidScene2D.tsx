@@ -184,13 +184,13 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
 
           // Calculate a scale factor based on screen height and width to prevent any overflow/overlap
           // Base height required is roughly:
-          // Title (40) + Gap (20) + Camera height (240*1.5015 = 360) * 0.791 + Ejected photo height (280*1.2 = 336) * 0.95
-          // = 40 + 20 + 284.76 + 319.2 = 663.96px
-          const baseGroupHeight = 664;
+          // Title (40) + Gap (20) + Camera height (240*1.5015 = 360) * 0.791 + Ejected photo height (340*1.2 = 408) * 0.95
+          // = 40 + 20 + 284.76 + 387.6 = 732.36px
+          const baseGroupHeight = 735;
           const heightScale = availableHeight / baseGroupHeight;
           
-          // Width fit: photo width is 280px. With side padding, base is 320px
-          const widthScale = (containerWidth * 0.85) / 280;
+          // Width fit: photo width is 340px. With side padding, base is 380px
+          const widthScale = (containerWidth * 0.85) / 340;
           
           // Determine the scale factor (clamp it to prevent elements from becoming infinitely large)
           const scale = Math.max(0.45, Math.min(1.0, Math.min(heightScale, widthScale)));
@@ -202,8 +202,8 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const cameraWidth = 240 * scale;
           const cameraHeight = cameraWidth * 1.5015;
 
-          // Scaled photo dimensions
-          const photoWidth = 280 * scale;
+          // Scaled photo dimensions (Only the polaroids are made bigger)
+          const photoWidth = 340 * scale;
           const photoHeight = photoWidth * 1.2;
 
           const titleTop = topOffset;
@@ -256,9 +256,9 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             el.style.transform = `translate(-50%, -50%) translate(${currentOffsetX}px, calc(${currentCenterY.toFixed(1)}px + ${ph.offsetY * scale}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
           }
 
-          // Calculate flash opacity based on proximity to photo reveal starts
+          // Calculate flash opacity based on proximity to photo reveal starts (removed the first extra start flash at 0.08)
           let flashOpacity = 0;
-          const flashThresholds = [0.08, 0.26, 0.44, 0.62, 0.80];
+          const flashThresholds = [0.20, 0.36, 0.52, 0.68, 0.84];
           const flashDuration = 0.03;
           
           for (const tVal of flashThresholds) {

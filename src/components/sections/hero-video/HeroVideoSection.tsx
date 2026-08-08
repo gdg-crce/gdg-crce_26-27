@@ -194,6 +194,7 @@ export default function HeroVideoSection({ startPlaying = false, primed = false 
         ref={videoRef}
         src={HERO_VIDEO_SRC}
         preload="auto"
+        autoPlay
         muted
         playsInline
         controls={false}

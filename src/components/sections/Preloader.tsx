@@ -517,6 +517,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
                 className="loader-reveal-portal-video"
                 src={HERO_VIDEO_SRC}
                 preload="auto"
+                autoPlay
                 muted
                 playsInline
                 disablePictureInPicture
