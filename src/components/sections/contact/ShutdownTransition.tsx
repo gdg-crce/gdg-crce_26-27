@@ -233,7 +233,79 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       }
     };
 
-    const render = reduced ? drawReduced : draw;
+    const drawMobile = (p: number) => {
+      const tube = tubeRef.current;
+      const scrim = scrimRef.current;
+      const dialog = dialogRef.current;
+      const field = fieldRef.current;
+      const scan = scanRef.current;
+      const dot = dotRef.current;
+      const term = termRef.current;
+      if (!tube || !scrim || !dialog || !field || !scan || !dot || !term) return;
+
+      const adjustedP = p < 0.15 ? 0 : (p - 0.15) / 0.85;
+      const f = shutdownFrame(adjustedP);
+
+      overlay.classList.toggle('is-active', p > 0.0005);
+      overlay.style.opacity = f.overlayOpacity.toString();
+
+      // Backlight is active during switching off / goodbye, then goes black
+      scrim.style.opacity = (adjustedP < 0.72) ? '1' : '0';
+
+      dialog.style.opacity = f.dialogOpacity.toString();
+      dialog.style.transform = `scale(${f.dialogScale.toFixed(3)})`;
+
+      // Animate progress bar blocks
+      const progressBar = document.querySelector('.sd-phone-progress-bar');
+      if (progressBar) {
+        const totalBlocks = 12;
+        const filled = Math.min(totalBlocks, Math.floor(seg(0.1, 0.65, adjustedP) * totalBlocks));
+        progressBar.textContent = '▰'.repeat(filled) + '▱'.repeat(totalBlocks - filled);
+      }
+
+      // Animate status dots cycle
+      const statusText = document.querySelector('.sd-phone-status');
+      if (statusText) {
+        const dotsCount = Math.floor(seg(0.1, 0.65, adjustedP) * 12) % 4;
+        statusText.textContent = 'Switching Off' + '.'.repeat(dotsCount);
+      }
+
+      field.style.opacity = f.fieldOpacity.toString();
+
+      // CRT screen going black discharge animation
+      tube.style.transform = `scaleY(${f.tubeScaleY.toFixed(4)}) scaleX(${f.tubeScaleX.toFixed(4)})`;
+      tube.style.filter = f.tubeBrightness > 1 ? `brightness(${f.tubeBrightness.toFixed(2)})` : 'none';
+      tube.style.opacity = f.tubeOpacity.toString();
+
+      scan.style.opacity = f.scanOpacity.toString();
+      scan.style.transform = `translate(-50%, -50%) scaleX(${f.scanScaleX.toFixed(3)})`;
+
+      dot.style.opacity = f.dotOpacity.toString();
+      dot.style.transform = `translate(-50%, -50%) scale(${f.dotScale.toFixed(3)})`;
+
+      if (term) {
+        term.style.opacity = f.termOpacity.toString();
+        term.classList.toggle('is-live', f.termOpacity > 0.9);
+      }
+    };
+
+    const drawMobileReduced = (p: number) => {
+      const scrim = scrimRef.current;
+      const term = termRef.current;
+      if (!scrim) return;
+      const adjustedP = p < 0.15 ? 0 : (p - 0.15) / 0.85;
+      overlay.classList.toggle('is-active', p > 0.0005);
+      overlay.style.opacity = seg(0.0, 0.1, adjustedP).toString();
+      scrim.style.opacity = seg(0.1, 0.5, adjustedP).toString();
+      if (term) {
+        term.style.opacity = seg(0.55, 0.8, adjustedP).toString();
+        term.classList.toggle('is-live', adjustedP > 0.78);
+      }
+    };
+
+    const render = mobile
+      ? (reduced ? drawMobileReduced : drawMobile)
+      : (reduced ? drawReduced : draw);
 
     // Land on a correct first frame rather than the CSS defaults.
     render(0);
@@ -254,7 +326,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
 
     const trigger = ScrollTrigger.create({
       trigger: spacer,
-      start: 'top bottom',
+      start: 'top top',
       end: `+=${MOBILE_SCROLL_LEN}`,
       scrub: true,
       // The spacer sits after a long normal-flow feed whose height is not known
@@ -278,36 +350,61 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
           instead, and `visibility: hidden` keeps the whole thing out of the
           tree until the shutdown is actually running. */}
       <div ref={overlayRef} className="sd-overlay">
-        <div ref={tubeRef} className="sd-tube" aria-hidden="true">
-          <div className="sd-wallpaper" />
-          <div ref={scrimRef} className="sd-scrim" />
-
-          <div ref={dialogRef} className="sd-dialog">
-            <div className="sd-dialog-title">Shut Down Windows</div>
-            <div className="sd-dialog-body">
-              <span className="sd-dialog-icon">⏻</span>
-              <div className="sd-dialog-text">
-                <strong>Windows is shutting down...</strong>
-                <span>
-                  Saving your settings. The 2026&ndash;27 council archive has been written to
-                  disk.
-                </span>
+        {mobile ? (
+          <div ref={tubeRef} className="sd-phone-screen" aria-hidden="true">
+            <div ref={scrimRef} className="sd-phone-lcd">
+              <div className="sd-phone-statusbar">
+                <span className="sd-phone-signal">Y╢╢╢╢</span>
+                <span className="sd-phone-operator">GDG Mobile</span>
+                <span className="sd-phone-battery">╢╢╢[ ]</span>
               </div>
-            </div>
-            <div className="sd-progress">
-              <div className="sd-progress-train">
-                {Array.from({ length: 24 }, (_, i) => (
-                  <i key={i} />
-                ))}
+              <div ref={dialogRef} className="sd-phone-content" style={{ opacity: 0 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo.png"
+                  className="sd-phone-logo"
+                  alt="GDG Logo"
+                />
+                <div className="sd-phone-status">Switching Off...</div>
+                <div className="sd-phone-progress-bar">▰▰▰▰▰▰▰▱▱▱▱▱</div>
+              </div>
+              <div ref={fieldRef} className="sd-phone-goodbye" style={{ opacity: 0 }}>
+                <div className="sd-phone-goodbye-text">Goodbye!</div>
               </div>
             </div>
           </div>
+        ) : (
+          <div ref={tubeRef} className="sd-tube" aria-hidden="true">
+            <div className="sd-wallpaper" />
+            <div ref={scrimRef} className="sd-scrim" />
 
-          <div ref={fieldRef} className="sd-field">
-            <div className="sd-field-main">It is now safe to turn off your computer.</div>
-            <div className="sd-field-sub">Everything after this point is happening now.</div>
+            <div ref={dialogRef} className="sd-dialog">
+              <div className="sd-dialog-title">Shut Down Windows</div>
+              <div className="sd-dialog-body">
+                <span className="sd-dialog-icon">⏻</span>
+                <div className="sd-dialog-text">
+                  <strong>Windows is shutting down...</strong>
+                  <span>
+                    Saving your settings. The 2026&ndash;27 council archive has been written to
+                    disk.
+                  </span>
+                </div>
+              </div>
+              <div className="sd-progress">
+                <div className="sd-progress-train">
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <i key={i} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div ref={fieldRef} className="sd-field">
+              <div className="sd-field-main">It is now safe to turn off your computer.</div>
+              <div className="sd-field-sub">Everything after this point is happening now.</div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Siblings of the tube: once it has collapsed there is no element
             left inside it to carry these. */}
@@ -317,7 +414,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
         {/* The text-mode screen under the dead tube. This is the page's last
             frame — nothing follows it, so there is nothing to scroll into. */}
         <div ref={termRef} className="sd-term-host">
-          <ContactSection />
+          <ContactSection isMobile={mobile} />
         </div>
       </div>
 

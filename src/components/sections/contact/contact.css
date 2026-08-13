@@ -279,3 +279,154 @@ a.bios-row {
   }
 
 }
+
+/* ── Retro Mobile Phone Bootloader Menu ──────────────────────────────────── */
+.ct-phone-bootloader {
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', monospace !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  inset: 0 !important;
+}
+
+.phone-bootloader {
+  width: 100%;
+  height: 100%;
+  padding: 32px 20px;
+  background: #000000;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bootloader-header {
+  color: #ff5252; /* Android Red Fastboot Header */
+  font-weight: 800;
+  font-size: 1.3em;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  border-bottom: 2px solid #ff5252;
+  padding-bottom: 4px;
+}
+
+.bootloader-sysinfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.72em;
+  color: #ffffff;
+  margin-bottom: 16px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.bootloader-sysinfo span {
+  font-weight: bold;
+}
+
+.bootloader-sysinfo .val-cyan {
+  color: #00e5ff;
+}
+
+.bootloader-sysinfo .val-green {
+  color: #3ddc84;
+}
+
+.bootloader-sysinfo .val-yellow {
+  color: #ffd600;
+}
+
+.bootloader-sysinfo .val-red {
+  color: #ff5252;
+}
+
+.bootloader-menu-title {
+  color: #ffd600; /* Yellow highlight */
+  font-weight: bold;
+  font-size: 0.8em;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+
+.bootloader-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bootloader-item {
+  margin: 0;
+}
+
+.bootloader-row {
+  display: flex;
+  align-items: center;
+  font-size: 0.78em;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  width: 100%;
+  box-sizing: border-box;
+  background: #111111;
+  font-weight: bold;
+}
+
+.bootloader-arrow {
+  color: #5f6368;
+  transition: color 0.15s ease;
+}
+
+.bootloader-label {
+  flex-grow: 1;
+}
+
+.bootloader-status {
+  color: #3ddc84;
+}
+
+.bootloader-row.is-disabled {
+  color: #5f6368;
+  background: #080808;
+}
+
+.bootloader-row.is-disabled .bootloader-status {
+  color: #5f6368;
+}
+
+a.bootloader-row:hover,
+a.bootloader-row:focus-visible {
+  background: #00e5ff !important; /* Fastboot selection cyan */
+  color: #000000 !important;
+  outline: none;
+  border-color: #ffffff;
+}
+
+a.bootloader-row:hover .bootloader-arrow,
+a.bootloader-row:hover .bootloader-status,
+a.bootloader-row:focus-visible .bootloader-arrow,
+a.bootloader-row:focus-visible .bootloader-status {
+  color: #000000 !important;
+}
+
+.bootloader-footer {
+  border-top: 1px solid #5f6368;
+  color: #7f8c8d;
+  font-size: 0.62em;
+  padding-top: 8px;
+  margin-top: 16px;
+  text-align: center;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  font-weight: bold;
+}

@@ -260,3 +260,89 @@
 .sd-term-host.is-live .ct-term {
   pointer-events: auto;
 }
+
+/* ── Early Smartphone Full-Screen Shutdown ──────────────────────────────── */
+.sd-phone-screen {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: #000;
+  will-change: transform, opacity;
+  overflow: hidden;
+}
+
+.sd-phone-lcd {
+  position: absolute;
+  inset: 0;
+  background: #0c0c0e; /* Dark early smartphone OS background */
+  color: #e2e8f0;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-family: var(--font-jakarta), sans-serif;
+  box-sizing: border-box;
+}
+
+.sd-phone-statusbar {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  border-bottom: 1px solid #2d3135;
+  padding-bottom: 8px;
+  color: #718096;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.sd-phone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  gap: 16px;
+  text-align: center;
+  will-change: transform, opacity;
+}
+
+.sd-phone-logo {
+  width: 140px;
+  height: auto;
+  object-fit: contain;
+}
+
+.sd-phone-status {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.sd-phone-progress-bar {
+  font-size: 13px;
+  color: #38bdf8; /* Modern retro light blue */
+  letter-spacing: 0.08em;
+  font-family: monospace;
+}
+
+.sd-phone-goodbye {
+  position: absolute;
+  inset: 0;
+  background: #0c0c0e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  box-sizing: border-box;
+}
+
+.sd-phone-goodbye-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}

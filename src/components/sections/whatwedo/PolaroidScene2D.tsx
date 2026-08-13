@@ -178,9 +178,9 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const containerHeight = containerRect.height;
           const containerWidth = containerRect.width;
 
-          // Safe space for header navbar (starts around 80px)
-          const topOffset = Math.max(80, containerHeight * 0.1);
-          const availableHeight = containerHeight - topOffset - 24;
+          // Safe space for header navbar (starts around 50px on mobile)
+          const topOffset = Math.max(50, containerHeight * 0.08);
+          const availableHeight = containerHeight - topOffset - 16;
 
           // Calculate a scale factor based on screen height and width to prevent any overflow/overlap
           // Base height required is roughly:
@@ -193,7 +193,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const widthScale = (containerWidth * 0.85) / 340;
           
           // Determine the scale factor (clamp it to prevent elements from becoming infinitely large)
-          const scale = Math.max(0.45, Math.min(1.0, Math.min(heightScale, widthScale)));
+          const scale = Math.max(0.35, Math.min(1.0, Math.min(heightScale, widthScale)));
 
           const titleHeight = 40 * scale;
           const gap = 20 * scale;
@@ -231,7 +231,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
           // Resting center of fully ejected polaroids
-          const restingCenterY = slotY + (photoHeight * 0.45);
+          const restingCenterY = slotY + (photoHeight * 0.20);
 
           // photos: stack on top of each other fanned out
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {
@@ -251,8 +251,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             const rot = lerp(-10, ph.rot, t);
             
             // We apply translate(left, top) relative to the container.
-            // Left is shifted by 16px to the left to match the shifted camera body wrapper
-            const currentOffsetX = ph.offsetX * scale - 16;
+            const currentOffsetX = ph.offsetX * scale;
             el.style.transform = `translate(-50%, -50%) translate(${currentOffsetX}px, calc(${currentCenterY.toFixed(1)}px + ${ph.offsetY * scale}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
           }
 
@@ -269,7 +268,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             }
           }
           if (mobileFlashRef.current) {
-            const cameraLeft = containerWidth * 0.5 - 16 - cameraWidth * 0.5;
+            const cameraLeft = containerWidth * 0.5 - cameraWidth * 0.5;
             const flashCenterX = cameraLeft + cameraWidth * 0.73;
             const flashCenterY = cameraTop + cameraHeight * 0.215;
 

@@ -308,7 +308,7 @@
   width: min(76vw, 280px);
   left: 50%;
   top: 28px;
-  transform: translateX(calc(-50% - 16px));
+  transform: translateX(-50%);
 }
 
 /* Camera body — fills the wrapper, no scale animation so it matches
@@ -333,7 +333,7 @@
   height: auto;
   left: 50%;
   top: 28px;
-  transform: translateX(calc(-50% - 16px));
+  transform: translateX(-50%);
 }
 
 .wwd2d-mobile-photo-wrapper {
@@ -395,7 +395,7 @@
 .wwd-seam-flash {
   position: fixed;
   inset: 0;
-  z-index: 99990;
+  z-index: 99995;
   pointer-events: none;
   opacity: 0;
   background: #ffffff;
@@ -441,6 +441,8 @@
 .fixed-album-wrapper {
   position: fixed;
   inset: 0;
+  height: 100vh;
+  height: 100dvh;
   z-index: 99990;
   pointer-events: none;
   opacity: 0;

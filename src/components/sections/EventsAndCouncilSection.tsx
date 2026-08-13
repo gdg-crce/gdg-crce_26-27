@@ -142,11 +142,16 @@ export default function EventsAndCouncilSection({
   const phaseRef = useRef(0);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [fixedHeight, setFixedHeight] = useState<string>('100vh');
 
   useEffect(() => {
     setMounted(true);
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setFixedHeight(`${window.innerHeight}px`);
+      }
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -509,7 +514,7 @@ export default function EventsAndCouncilSection({
             ref={containerRef}
             style={{
               width: '100%',
-              height: '100vh',
+              height: fixedHeight,
               position: 'relative',
               overflow: 'hidden',
               backgroundImage: ikUrl('/events/eventsmobbg.png'),

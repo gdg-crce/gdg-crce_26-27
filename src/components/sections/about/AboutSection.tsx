@@ -296,7 +296,7 @@ export default function AboutSection() {
 
       if (useMobileLayout) {
         // Mobile / Portrait: Center the spindle and scale based on the smaller viewport dimension to fit the label with margin
-        s = (1.20 * Math.min(vw, vh)) / (LABEL_R * 2);
+        s = (1.45 * Math.min(vw, vh)) / (LABEL_R * 2);
         ox = -(REC_CX - STAGE_W / 2);
       } else {
         // Desktop / Landscape: Cover-scale as-authored

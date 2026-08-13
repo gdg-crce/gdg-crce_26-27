@@ -1901,7 +1901,7 @@
 /* Mobile Events Carousel Styles */
 .mobile-events-header {
   position: absolute !important;
-  top: 90px !important;
+  top: 150px !important;
   left: 0 !important;
   right: 0 !important;
   text-align: center !important;
@@ -1923,8 +1923,8 @@
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
-  height: calc(100% - 130px) !important;
-  margin-top: 130px !important;
+  height: calc(100% - 170px) !important;
+  margin-top: 170px !important;
   align-items: center !important;
   /* The TRACK is the only thing GSAP transforms, so it is the only thing that
      earns a layer. `perspective: 1000px` was doing nothing — there is no 3D
