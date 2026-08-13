@@ -277,6 +277,9 @@ export default function AboutSection() {
   const spinTargetRef = useRef<number | null>(null);
   const lastScrollRef = useRef(-1e9);
   const inViewRef = useRef(false);
+  const fitScaleRef = useRef(1);
+  const fitOxRef = useRef(0);
+  const fitOyRef = useRef(0);
 
   useEffect(() => {
     let lastWidth = 0;
@@ -309,7 +312,7 @@ export default function AboutSection() {
 
       if (useMobileLayout) {
         // Mobile / Portrait: Center the spindle and scale based on the smaller viewport dimension to fit the label with margin
-        s = (1.45 * Math.min(vw, vh)) / (LABEL_R * 2);
+        s = (1.20 * Math.min(vw, vh)) / (LABEL_R * 2);
         ox = -(REC_CX - STAGE_W / 2);
         oy = -(REC_CY - STAGE_H / 2);
       } else {
@@ -319,6 +322,10 @@ export default function AboutSection() {
         ox = -(REC_CX - STAGE_W / 2) * recentre;
         oy = 0;
       }
+
+      fitScaleRef.current = s;
+      fitOxRef.current = ox;
+      fitOyRef.current = oy;
 
       stage.style.transform = `translate(-50%, -50%) scale(${s.toFixed(4)}) translate(${ox.toFixed(1)}px, ${oy.toFixed(1)}px)`;
 
@@ -449,16 +456,23 @@ export default function AboutSection() {
       const playP = clamp01((scrollPx - ph.total) / PLAY_DIST);
 
       const pin = pinRef.current;
-      if (pin) {
+      const stage = stageRef.current;
+      if (pin && stage) {
         pin.style.opacity = '1';
         pin.style.visibility = scrollPx >= ph.hold.start ? 'visible' : 'hidden';
         // The whole pinned frame pushes in to meet the still the next act opens
-        // on — see SEAM_MATCH. The pin rather than the stage, deliberately: the
-        // vignette and the grain are part of the shot, so a camera move has to
-        // take them with it, and scaling one element keeps the stage's own
-        // fit() maths the single owner of layout.
+        // on — see SEAM_MATCH. On mobile, we scale the stage directly to avoid
+        // performance-tearing fixed container rescales on Android.
         const push = 1 + ramp(SEAM_PUSH_START, 1, playP) * (SEAM_MATCH - 1);
-        pin.style.transform = `scale(${push.toFixed(5)})`;
+        
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+          const combinedScale = fitScaleRef.current * push;
+          stage.style.transform = `translate(-50%, -50%) scale(${combinedScale.toFixed(4)}) translate(${fitOxRef.current.toFixed(1)}px, ${fitOyRef.current.toFixed(1)}px)`;
+          pin.style.transform = '';
+        } else {
+          pin.style.transform = `scale(${push.toFixed(5)})`;
+        }
       }
 
       // Phase 2 — turntable playback.
@@ -482,6 +496,22 @@ export default function AboutSection() {
     // 33⅓ and keeps it going. Only ever runs while the section is on screen —
     // an off-screen rAF is a background tax on every other section's frame.
     const stage = stageRef.current;
+    const setSpinAngle = (angleVal: number) => {
+      const angleStr = `${angleVal.toFixed(1)}deg`;
+      stage?.style.setProperty('--spin', angleStr);
+      
+      const disc = stage?.querySelector('.tt-disc') as HTMLElement | null;
+      if (disc) disc.style.transform = `rotate(${angleStr})`;
+
+      const labs = stage?.querySelectorAll('.tt-lab') as NodeListOf<HTMLElement>;
+      labs.forEach((lab) => {
+        lab.style.transform = `rotate(${angleStr})`;
+      });
+
+      const labelPrintSpin = stage?.querySelector('.tt-label-print-spin') as HTMLElement | null;
+      if (labelPrintSpin) labelPrintSpin.style.transform = `rotate(${angleStr})`;
+    };
+
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let raf = 0;
     let last = performance.now();
@@ -531,7 +561,7 @@ export default function AboutSection() {
         angle = total + (spinTargetRef.current - total) * (k * k * (3 - 2 * k));
       }
 
-      stage?.style.setProperty('--spin', `${angle.toFixed(1)}deg`);
+      setSpinAngle(angle);
     };
 
     const startLoop = () => {
@@ -565,7 +595,7 @@ export default function AboutSection() {
     });
 
     onUpdate(0);
-    stage?.style.setProperty('--spin', '0deg');
+    setSpinAngle(0);
     if (presence.isActive) startLoop();
 
     const to = setTimeout(() => ScrollTrigger.refresh(), 180);

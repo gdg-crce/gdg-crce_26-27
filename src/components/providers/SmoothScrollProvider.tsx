@@ -27,7 +27,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       smoothWheel: true,
       syncTouch: true,
       wheelMultiplier: 1,
-      touchMultiplier: 2,
+      touchMultiplier: 1.2,
     });
 
     // Wire Lenis's scroll event directly to GSAP's ScrollTrigger update.

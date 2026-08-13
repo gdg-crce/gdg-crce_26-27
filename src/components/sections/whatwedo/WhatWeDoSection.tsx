@@ -119,13 +119,11 @@ export default function WhatWeDoSection() {
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
               // On mobile, scroll the What We Do section upwards (translateY) out of the viewport
-              const vh = window.innerHeight;
-              const scrollCurrent = self.progress * SCROLL_END;
-              const transitionStart = SCROLL_END - vh;
+              const scrollCurrent = self.scroll() - self.start;
               
               let translateY = 0;
-              if (scrollCurrent > transitionStart) {
-                translateY = -(scrollCurrent - transitionStart);
+              if (scrollCurrent > SCROLL_END) {
+                translateY = -(scrollCurrent - SCROLL_END);
               }
               el.style.transform = `translateY(${translateY}px)`;
               el.style.opacity = '1';

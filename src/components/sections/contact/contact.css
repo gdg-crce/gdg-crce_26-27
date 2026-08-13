@@ -295,6 +295,16 @@ a.bios-row {
   inset: 0 !important;
 }
 
+.phone-bootloader,
+.bootloader-header,
+.bootloader-sysinfo,
+.bootloader-menu-title,
+.bootloader-links,
+.bootloader-row,
+.bootloader-footer {
+  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', monospace !important;
+}
+
 .phone-bootloader {
   width: 100%;
   height: 100%;
