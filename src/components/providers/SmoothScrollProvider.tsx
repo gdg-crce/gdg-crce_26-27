@@ -10,6 +10,9 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
     // Register ScrollTrigger to be safe, though likely registered elsewhere
     gsap.registerPlugin(ScrollTrigger);
 
+    // Prevent ScrollTrigger refreshing on mobile URL address bar show/hide
+    ScrollTrigger.config({ ignoreMobileResize: true });
+
     // Initialize Lenis with cinematic "butter-smooth" settings.
     // autoRaf:false is CRITICAL — GSAP's ticker drives lenis.raf below. Without
     // it, Lenis ALSO runs its own rAF, so lenis.raf fires twice per frame and

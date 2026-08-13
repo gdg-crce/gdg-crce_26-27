@@ -278,9 +278,10 @@ export default function AboutSection() {
   const lastScrollRef = useRef(-1e9);
   const inViewRef = useRef(false);
 
-  /* Cover-scale the design stage to the viewport, then project the label's
-     centre back out into viewport pixels for the (unscaled) text layer. */
   useEffect(() => {
+    let lastWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+    let lastHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+
     const fit = () => {
       const stage = stageRef.current;
       const pin = pinRef.current;
@@ -289,10 +290,21 @@ export default function AboutSection() {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       
+      const isMobileDevice = (vw < vh) || (vw < 768) || (vh < 500);
+      const widthChanged = vw !== lastWidth;
+      const heightChangedSignificant = Math.abs(vh - lastHeight) > 120;
+
+      if (isMobileDevice && !widthChanged && !heightChangedSignificant) {
+        return;
+      }
+
+      lastWidth = vw;
+      lastHeight = vh;
+
       let s;
       let ox;
 
-      const useMobileLayout = (vw < vh) || (vw < 768) || (vh < 500);
+      const useMobileLayout = isMobileDevice;
 
       if (useMobileLayout) {
         // Mobile / Portrait: Center the spindle and scale based on the smaller viewport dimension to fit the label with margin
@@ -455,7 +467,7 @@ export default function AboutSection() {
       pin: pinRef.current,
       start: 0,
       end: () => `+=${currentIntroPhases().total + PLAY_DIST}`,
-      scrub: window.innerWidth < 768 ? 0.5 : 1.5,
+      scrub: 1.5,
       onUpdate: (self) => drive(self.progress),
       onRefresh: (self) => drive(self.progress),
     });

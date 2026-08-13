@@ -9,6 +9,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ik } from '@/lib/imagekit';
 import { HERO_VIDEO_SRC } from '@/lib/media';
+import { councilMembers } from '@/components/sections/council/councilData';
+import { mobileEvents } from '@/components/sections/events/eventData';
 import './xp-loader.css';
 
 const FilmTape = dynamic(() => import('../../../models/reactComponent/FilmTape'), {
@@ -104,10 +106,12 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
   /** The reveal cell's screen rect, measured once during the hold. */
   const revealRectRef = useRef<DOMRect | null>(null);
 
-  // Preload intro video + all 7 preloader event images
+  // Preload intro video + all 7 preloader event images + critical mobile assets
   useEffect(() => {
     let loaded = 0;
-    const preloaderImages = [
+    
+    // Core preloader images
+    const coreImages = [
       ik('/preloader/genesis.jpg'),
       ik('/preloader/unplug.png'),
       ik('/preloader/pitchperf.png'),
@@ -116,7 +120,51 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       ik('/preloader/ideacafe1.png'),
       ik('/preloader/futureforge.png'),
     ];
-    const totalItems = preloaderImages.length + 1; // +1 for hero video
+
+    // Build list of critical mobile assets to preload
+    const criticalMobileAssets = [
+      // About Section Turntable Player
+      ik('/record player/base.png'),
+      ik('/record player/disc.png'),
+      ik('/record player/toneram.png'),
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Orange_record.png?tr=f-auto,q-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Red_record.png?tr=f-auto,q-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Yellow_record.png?tr=f-auto,q-auto',
+      
+      // What We Do Mobile Camera & Prints
+      ik('/whatwedo/mobile/camera.png'),
+      ik('/whatwedo/mobile/cameratop.png'),
+      ik('/whatwedo/mobile/technical.png'),
+      ik('/whatwedo/mobile/content.png'),
+      ik('/whatwedo/mobile/coomunity.png'),
+      ik('/whatwedo/mobile/ml&andro.png'),
+      ik('/whatwedo/mobile/design.png'),
+
+      // Events Section Mobile Background & Logo
+      ik('/events/eventsmobbg.png'),
+      '/_next/image?url=%2Flogo.png&w=96&q=75',
+      '/_next/image?url=%2Flogo.png&w=128&q=75',
+      '/_next/image?url=%2Flogo.png&w=640&q=75',
+    ];
+
+    // Mobile Event Posters
+    mobileEvents.forEach((evt) => {
+      // Next.js optimized responsive sizes
+      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=640&q=75`);
+      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=750&q=75`);
+      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=828&q=75`);
+    });
+
+    // Council Members portraits
+    councilMembers.forEach((member) => {
+      criticalMobileAssets.push(member.photo);
+      criticalMobileAssets.push(member.photoThumb);
+    });
+
+    const allImagesToLoad = [...coreImages, ...criticalMobileAssets];
+    
+    // Total items: images + 1 (hero video) + 1 (GLB file)
+    const totalItems = allImagesToLoad.length + 2;
 
     // The boot screen's bar is a canned XP marquee, not a real progress read —
     // there is nothing to hand a percentage to. Counting into state anyway
@@ -129,7 +177,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       }
     }
 
-    preloaderImages.forEach((src) => {
+    allImagesToLoad.forEach((src) => {
       const img = new Image();
       img.src = src;
       img.onload = img.onerror = checkReady;
@@ -145,6 +193,11 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
     vid.onloadeddata = vid.oncanplay = checkReady;
     vid.onerror = checkReady;
     vid.load();
+
+    // Prefetch GLB file
+    fetch('/models/myModel-v1-transformed.glb')
+      .then(checkReady)
+      .catch(checkReady);
   }, []);
 
   const onStartTransitionRef = useRef(onStartTransition);

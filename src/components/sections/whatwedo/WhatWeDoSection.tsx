@@ -107,7 +107,7 @@ export default function WhatWeDoSection() {
       pin: sentinelRef.current,
       start: 'top bottom',   // Instant handoff — fires the moment About exits
       end: 'bottom top',     // Extended to scrub perfectly until EventsAndCouncilSection is at top top
-      scrub: window.innerWidth < 768 ? 0.5 : 1.5,
+      scrub: 1.5,
       onUpdate: (self) => {
         progressRef.current = self.progress;
         const active = self.progress > 0 && self.progress < 1;
