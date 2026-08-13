@@ -231,7 +231,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
           // Resting center of fully ejected polaroids
-          const restingCenterY = slotY + (photoHeight * 0.20);
+          const restingCenterY = slotY + (photoHeight * 0.08);
 
           // photos: stack on top of each other fanned out
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {

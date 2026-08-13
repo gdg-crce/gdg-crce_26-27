@@ -279,8 +279,8 @@ export default function AboutSection() {
   const inViewRef = useRef(false);
 
   useEffect(() => {
-    let lastWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
-    let lastHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+    let lastWidth = 0;
+    let lastHeight = 0;
 
     const fit = () => {
       const stage = stageRef.current;
@@ -303,6 +303,7 @@ export default function AboutSection() {
 
       let s;
       let ox;
+      let oy;
 
       const useMobileLayout = isMobileDevice;
 
@@ -310,14 +311,16 @@ export default function AboutSection() {
         // Mobile / Portrait: Center the spindle and scale based on the smaller viewport dimension to fit the label with margin
         s = (1.45 * Math.min(vw, vh)) / (LABEL_R * 2);
         ox = -(REC_CX - STAGE_W / 2);
+        oy = -(REC_CY - STAGE_H / 2);
       } else {
         // Desktop / Landscape: Cover-scale as-authored
         s = Math.max(vw / STAGE_W, vh / STAGE_H);
         const recentre = 1 - clamp01((vw / vh - 1.05) / 0.55);
         ox = -(REC_CX - STAGE_W / 2) * recentre;
+        oy = 0;
       }
 
-      stage.style.transform = `translate(-50%, -50%) scale(${s.toFixed(4)}) translate(${ox.toFixed(1)}px, 0px)`;
+      stage.style.transform = `translate(-50%, -50%) scale(${s.toFixed(4)}) translate(${ox.toFixed(1)}px, ${oy.toFixed(1)}px)`;
 
       pin.style.setProperty('--label-cx', `${(vw / 2 + (REC_CX - STAGE_W / 2 + ox) * s).toFixed(1)}px`);
       pin.style.setProperty('--label-cy', `${(vh / 2 + (REC_CY - STAGE_H / 2) * s).toFixed(1)}px`);
