@@ -312,7 +312,7 @@ export default function AboutSection() {
 
       if (useMobileLayout) {
         // Mobile / Portrait: Center the spindle and scale based on the smaller viewport dimension to fit the label with margin
-        s = (1.20 * Math.min(vw, vh)) / (LABEL_R * 2);
+        s = (0.85 * Math.min(vw, vh)) / (LABEL_R * 2);
         ox = -(REC_CX - STAGE_W / 2);
         oy = -(REC_CY - STAGE_H / 2);
       } else {
@@ -465,13 +465,10 @@ export default function AboutSection() {
         // performance-tearing fixed container rescales on Android.
         const push = 1 + ramp(SEAM_PUSH_START, 1, playP) * (SEAM_MATCH - 1);
         
+        pin.style.transform = `scale(${push.toFixed(5)})`;
         const isMobile = window.innerWidth < 768;
         if (isMobile) {
-          const combinedScale = fitScaleRef.current * push;
-          stage.style.transform = `translate(-50%, -50%) scale(${combinedScale.toFixed(4)}) translate(${fitOxRef.current.toFixed(1)}px, ${fitOyRef.current.toFixed(1)}px)`;
-          pin.style.transform = '';
-        } else {
-          pin.style.transform = `scale(${push.toFixed(5)})`;
+          stage.style.transform = `translate(-50%, -50%) scale(${fitScaleRef.current.toFixed(4)}) translate(${fitOxRef.current.toFixed(1)}px, ${fitOyRef.current.toFixed(1)}px)`;
         }
       }
 
@@ -641,8 +638,10 @@ export default function AboutSection() {
               <div
                 key={t.key}
                 ref={(el) => { labRefs.current[i] = el; }}
-                className={`tt-lab tt-lab-${t.key}`}
-              />
+                className={`tt-lab-wrap tt-lab-wrap-${t.key}`}
+              >
+                <div className={`tt-lab tt-lab-${t.key}`} />
+              </div>
             ))}
 
             {/* THE PRINT RING — what actually makes a record look like it is

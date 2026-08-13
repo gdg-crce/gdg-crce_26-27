@@ -342,7 +342,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           </div>
           <div className={styles.identityBadges}>
             <span className={styles.badge} onClick={() => go({ view: 'members', team: 'All Tracks' })} role="button">
-              <FolderIcon /> View all 14 members
+              <FolderIcon /> View all {councilMembers.length} members
             </span>
             <span className={styles.badge}>
               <FloppyIcon /> Save Profile
@@ -361,7 +361,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         </div>
         <div className={styles.acctGrid}>
           <div><span className={styles.acctKey}>Networks:</span> CRCE, Mumbai · GDG on Campus</div>
-          <div><span className={styles.acctKey}>Members:</span> 14 · 5 teams</div>
+          <div><span className={styles.acctKey}>Members:</span> {councilMembers.length} · 5 teams</div>
           <div><span className={styles.acctKey}>Member since:</span> January 2026</div>
           <div><span className={styles.acctKey}>Status:</span> Compiling at 60 FPS</div>
         </div>
@@ -420,7 +420,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <FolderIcon size={13} /> Friends · The Wall
           </span>
           <span className={styles.panelMeta} onClick={() => go({ view: 'members', team: 'All Tracks' })} role="button">
-            See All (14)
+            See All ({councilMembers.length})
           </span>
         </div>
         <div className={styles.socialGrid}>
@@ -614,7 +614,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div><span className={styles.acctKey}>Networks:</span> CRCE, Mumbai</div>
             <div><span className={styles.acctKey}>Member since:</span> January 2026</div>
             <div><span className={styles.acctKey}>Contact:</span> council@gdgfrcrce.com</div>
-            <div><span className={styles.acctKey}>Registered:</span> 14 members</div>
+            <div><span className={styles.acctKey}>Registered:</span> {councilMembers.length} members</div>
             <div><span className={styles.acctKey}>Screen name:</span> gdg_crce_2026</div>
           </div>
         </div>

@@ -203,11 +203,18 @@
    record, so it rotates by the same --spin as the printed ring above it. The
    centred-circle clip is rotation-invariant, so the wipe still floods from the
    spindle while the disc spins underneath it. */
-.tt-lab {
+.tt-lab-wrap {
   position: absolute;
   inset: 0;
   border-radius: 50%;
   clip-path: circle(calc(var(--wipe, 60) * 1%) at 50% 50%);
+  pointer-events: none;
+}
+
+.tt-lab {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
   /* Zoomed ~16% past the label rim: the scans carry a ragged dark vinyl fringe
      in their corners, and this pushes it outside the label circle so the paint
      runs edge to edge. Bumping this crops the teal flecks near the rim — don't

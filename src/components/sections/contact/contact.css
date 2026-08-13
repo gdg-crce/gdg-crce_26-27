@@ -209,6 +209,18 @@ a.bios-row {
   margin-bottom: 0.5em;
 }
 
+.bios-help-map {
+  width: 100%;
+  height: 200px;
+}
+
+@media (min-width: 901px) {
+  .bios-help-map {
+    height: 100%;
+    min-height: 350px;
+  }
+}
+
 /* ── key legend ──────────────────────────────────────────────────────────── */
 .bios-legend {
   border-top: 1px solid var(--bios-line);
@@ -280,163 +292,64 @@ a.bios-row {
 
 }
 
-/* ── Retro Mobile Phone Bootloader Menu ──────────────────────────────────── */
-.ct-phone-bootloader {
-  background: #000000 !important;
-  color: #ffffff !important;
-  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', monospace !important;
-  display: flex !important;
-  align-items: stretch !important;
-  justify-content: stretch !important;
-  padding: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute !important;
-  inset: 0 !important;
-}
+@media (max-width: 767px) {
+  .ct-term {
+    padding: 6px !important;
+    font-size: clamp(10px, 3vh, 15px) !important;
+    line-height: 1.4 !important;
+  }
 
-.phone-bootloader,
-.bootloader-header,
-.bootloader-sysinfo,
-.bootloader-menu-title,
-.bootloader-links,
-.bootloader-row,
-.bootloader-footer {
-  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', monospace !important;
-}
+  .bios {
+    padding: 10px 14px !important;
+    border: 2px double var(--bios-line) !important;
+  }
 
-.phone-bootloader {
-  width: 100%;
-  height: 100%;
-  padding: 32px 20px;
-  background: #000000;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
+  .bios-title {
+    font-size: 1.05em !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 4px !important;
+  }
 
-.bootloader-header {
-  color: #ff5252; /* Android Red Fastboot Header */
-  font-weight: 800;
-  font-size: 1.3em;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
-  border-bottom: 2px solid #ff5252;
-  padding-bottom: 4px;
-}
+  .bios-body {
+    gap: 8px !important;
+    padding: 4px 0 !important;
+  }
 
-.bootloader-sysinfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 0.72em;
-  color: #ffffff;
-  margin-bottom: 16px;
-  line-height: 1.4;
-  font-weight: 500;
-}
+  .bios-group {
+    font-size: 0.95em !important;
+    margin-bottom: 0.1em !important;
+  }
 
-.bootloader-sysinfo span {
-  font-weight: bold;
-}
+  .bios-group:not(:first-child) {
+    margin-top: 0.6em !important;
+  }
 
-.bootloader-sysinfo .val-cyan {
-  color: #00e5ff;
-}
+  .bios-row {
+    grid-template-columns: 1fr !important;
+    gap: 2px !important;
+    padding: 4px 6px !important;
+    border-bottom: 1px dotted rgba(168, 168, 168, 0.25) !important;
+  }
 
-.bootloader-sysinfo .val-green {
-  color: #3ddc84;
-}
+  .bios-dots {
+    display: none !important;
+  }
 
-.bootloader-sysinfo .val-yellow {
-  color: #ffd600;
-}
+  .bios-value {
+    padding-left: 10px !important;
+    font-size: 0.95em !important;
+  }
 
-.bootloader-sysinfo .val-red {
-  color: #ff5252;
-}
+  .bios-help {
+    padding-top: 0.4em !important;
+  }
 
-.bootloader-menu-title {
-  color: #ffd600; /* Yellow highlight */
-  font-weight: bold;
-  font-size: 0.8em;
-  margin-bottom: 8px;
-  letter-spacing: 0.05em;
-}
+  .bios-help-title {
+    font-size: 0.95em !important;
+    margin-bottom: 0.3em !important;
+  }
 
-.bootloader-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.bootloader-item {
-  margin: 0;
-}
-
-.bootloader-row {
-  display: flex;
-  align-items: center;
-  font-size: 0.78em;
-  color: #ffffff;
-  text-decoration: none;
-  padding: 6px 8px;
-  border: 1px solid transparent;
-  width: 100%;
-  box-sizing: border-box;
-  background: #111111;
-  font-weight: bold;
-}
-
-.bootloader-arrow {
-  color: #5f6368;
-  transition: color 0.15s ease;
-}
-
-.bootloader-label {
-  flex-grow: 1;
-}
-
-.bootloader-status {
-  color: #3ddc84;
-}
-
-.bootloader-row.is-disabled {
-  color: #5f6368;
-  background: #080808;
-}
-
-.bootloader-row.is-disabled .bootloader-status {
-  color: #5f6368;
-}
-
-a.bootloader-row:hover,
-a.bootloader-row:focus-visible {
-  background: #00e5ff !important; /* Fastboot selection cyan */
-  color: #000000 !important;
-  outline: none;
-  border-color: #ffffff;
-}
-
-a.bootloader-row:hover .bootloader-arrow,
-a.bootloader-row:hover .bootloader-status,
-a.bootloader-row:focus-visible .bootloader-arrow,
-a.bootloader-row:focus-visible .bootloader-status {
-  color: #000000 !important;
-}
-
-.bootloader-footer {
-  border-top: 1px solid #5f6368;
-  color: #7f8c8d;
-  font-size: 0.62em;
-  padding-top: 8px;
-  margin-top: 16px;
-  text-align: center;
-  line-height: 1.3;
-  letter-spacing: 0.02em;
-  font-weight: bold;
+  .bios-help-map {
+    height: 160px !important;
+  }
 }

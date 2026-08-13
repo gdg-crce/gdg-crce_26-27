@@ -129,6 +129,18 @@ const ROSTER: RosterEntry[] = [
   { slug: 'mehta', name: 'Mehta', team: 'Core Team' },
   { slug: 'joshua', name: 'Joshua', team: 'Core Team' },
   { slug: 'simardeep', name: 'Simardeep', team: 'Core Team' },
+
+  { slug: 'aarav', name: 'Aarav Sharma', team: 'Core Team', role: 'Co-Lead & Strategy Head' },
+  { slug: 'ananya', name: 'Ananya Iyer', team: 'Technical', role: 'AI & ML Lead' },
+  { slug: 'karan', name: 'Karan Patel', team: 'Technical', role: 'App Development Lead' },
+  { slug: 'priya', name: 'Priya Nair', team: 'Technical', role: 'Cloud & DevOps Lead' },
+  { slug: 'sneha', name: 'Sneha Kulkarni', team: 'Design', role: 'UI/UX & Creative Head' },
+  { slug: 'devraj', name: 'Devraj Singh', team: 'Design', role: '3D & Motion Specialist' },
+  { slug: 'vikram', name: 'Vikram Deshmukh', team: 'Core Team', role: 'Events & Operations Lead' },
+  { slug: 'nisha', name: 'Nisha Gupta', team: 'Core Team', role: 'Operations & Sponsorship Head' },
+  { slug: 'aditya', name: 'Aditya Verma', team: 'Outreach', role: 'PR & Outreach Lead' },
+  { slug: 'tanvi', name: 'Tanvi Joshi', team: 'Social Media', role: 'Social Media & Editorial Lead' },
+  { slug: 'siddharth', name: 'Siddharth Rao', team: 'Technical', role: 'Open Source & Community Mentor' },
 ];
 
 /* Bio / quote copy is deliberately factual and department-derived. These are

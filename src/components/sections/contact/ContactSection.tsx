@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import './contact.css';
 
 /* -----------------------------------------------------------------------------
@@ -111,71 +111,8 @@ interface ContactSectionProps {
 }
 
 export default function ContactSection({ isMobile = false }: ContactSectionProps) {
-  if (isMobile) {
-    return (
-      <section className="ct-term ct-phone-bootloader" aria-label="Contact GDG on Campus CRCE">
-        <div className="phone-bootloader">
-          <div className="bootloader-header">
-            FASTBOOT MODE
-          </div>
-          <div className="bootloader-sysinfo">
-            <div>PRODUCT NAME - <span className="val-cyan">gdg_crce</span></div>
-            <div>VARIANT - <span className="val-cyan">26-27_council</span></div>
-            <div>HW VERSION - <span className="val-cyan">v16.2.10</span></div>
-            <div>BOOTLOADER VERSION - <span className="val-cyan">GDG_v2.6</span></div>
-            <div>BASEBAND - <span className="val-green">GDG-NETWORK_OK</span></div>
-            <div>SERIAL NUMBER - <span className="val-yellow">982766DD0C74</span></div>
-            <div>SECURE BOOT - <span className="val-green">ENABLED</span></div>
-            <div>DEVICE STATE - <span className="val-red">UNLOCKED</span></div>
-          </div>
-
-          <div className="bootloader-menu-title">
-            [BOOT MENU - SELECT LINK]
-          </div>
-
-          <ul className="bootloader-links">
-            {FIELDS.map((f, i) => {
-              const live = Boolean(f.href);
-              const content = (
-                <>
-                  <span className="bootloader-arrow">&gt;&nbsp;</span>
-                  <span className="bootloader-label">{f.label.toUpperCase()}</span>
-                  <span className="bootloader-status">[{live ? 'START' : 'N/A'}]</span>
-                </>
-              );
-
-              return (
-                <li key={f.id} className="bootloader-item">
-                  {live ? (
-                    <a
-                      className="bootloader-row"
-                      href={f.href}
-                      {...(f.href.startsWith('mailto:')
-                        ? {}
-                        : { target: '_blank', rel: 'noopener noreferrer' })}
-                    >
-                      {content}
-                    </a>
-                  ) : (
-                    <span className="bootloader-row is-disabled">
-                      {content}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="bootloader-footer">
-            PRESS VOLUME KEYS TO CYCLE, POWER KEY TO SELECT
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="ct-term" aria-label="Contact GDG on Campus CRCE">
+    <section className={`ct-term ${isMobile ? 'ct-term-mobile' : ''}`} aria-label="Contact GDG on Campus CRCE">
       <div className="bios">
         <div className="bios-title">GDG CRCE BIOS Setup Utility</div>
 
@@ -217,7 +154,7 @@ export default function ContactSection({ isMobile = false }: ContactSectionProps
 
           <div className="bios-help">
             <div className="bios-help-title">Location Map</div>
-            <div className="bios-help-map" style={{ width: '100%', height: '100%', minHeight: '350px' }}>
+            <div className="bios-help-map">
               <iframe 
                 src="https://maps.google.com/maps?q=Fr.%20C.%20Rodrigues%20College%20of%20Engineering&t=k&z=16&ie=UTF8&iwloc=&output=embed" 
                 width="100%" 
