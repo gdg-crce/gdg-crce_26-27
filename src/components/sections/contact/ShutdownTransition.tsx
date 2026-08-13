@@ -326,7 +326,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
 
     const trigger = ScrollTrigger.create({
       trigger: spacer,
-      start: 'top top',
+      start: mobile ? 'top bottom' : 'top top',
       end: `+=${MOBILE_SCROLL_LEN}`,
       scrub: true,
       // The spacer sits after a long normal-flow feed whose height is not known

@@ -22,6 +22,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
+      syncTouch: true,
       wheelMultiplier: 1,
       touchMultiplier: 2,
     });

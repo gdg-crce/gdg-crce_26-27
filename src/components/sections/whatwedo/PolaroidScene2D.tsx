@@ -193,7 +193,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const widthScale = (containerWidth * 0.85) / 340;
           
           // Determine the scale factor (clamp it to prevent elements from becoming infinitely large)
-          const scale = Math.max(0.35, Math.min(1.0, Math.min(heightScale, widthScale)));
+          const scale = Math.max(0.2, Math.min(1.0, Math.min(heightScale, widthScale)));
 
           const titleHeight = 40 * scale;
           const gap = 20 * scale;

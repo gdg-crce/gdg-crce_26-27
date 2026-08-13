@@ -27,7 +27,7 @@
 .tt-section {
   position: relative;
   width: 100%;
-  background: #0a0908;
+  background: #050403;
 }
 
 .tt-pin {
@@ -36,7 +36,7 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: #0a0908;
+  background: #050403;
   /* Sits over the fixed hero video, which fades out beneath it. */
   z-index: 9995;
   /* Driven by the approach ScrollTrigger as the section rises into view. */

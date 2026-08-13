@@ -395,6 +395,14 @@ export default function AboutSection() {
           side.style.transform = `translateY(${((1 - v) * -18).toFixed(1)}px)`;
         }
       }
+
+      // ── seam flash fade-in on mobile ─────────────────────────────────
+      const flashEl = document.querySelector('.wwd-seam-flash') as HTMLElement | null;
+      if (flashEl && window.innerWidth < 768) {
+        // Fade in the flash over the last 15% of the AboutSection scroll
+        const flashOp = ramp(0.85, 1.0, p);
+        flashEl.style.opacity = flashOp.toFixed(3);
+      }
     };
 
     // One ScrollTrigger pins the turntable from scroll 0. The first phase of
@@ -447,7 +455,7 @@ export default function AboutSection() {
       pin: pinRef.current,
       start: 0,
       end: () => `+=${currentIntroPhases().total + PLAY_DIST}`,
-      scrub: 1.5,
+      scrub: window.innerWidth < 768 ? 0.5 : 1.5,
       onUpdate: (self) => drive(self.progress),
       onRefresh: (self) => drive(self.progress),
     });

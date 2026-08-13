@@ -59,6 +59,7 @@ export default function WhatWeDoSection() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
   const REVEAL_PX = 800;
+  const shutterPlayedRef = useRef(false);
 
   // Which scene to mount. `mounted` gates the ssr:false scenes until we know the
   // real viewport (no hydration mismatch); `isMobile` picks the 2D camera scene
@@ -106,7 +107,7 @@ export default function WhatWeDoSection() {
       pin: sentinelRef.current,
       start: 'top bottom',   // Instant handoff — fires the moment About exits
       end: 'bottom top',     // Extended to scrub perfectly until EventsAndCouncilSection is at top top
-      scrub: 1.5,
+      scrub: window.innerWidth < 768 ? 0.5 : 1.5,
       onUpdate: (self) => {
         progressRef.current = self.progress;
         const active = self.progress > 0 && self.progress < 1;
@@ -118,13 +119,34 @@ export default function WhatWeDoSection() {
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
               // On mobile, scroll the What We Do section upwards (translateY) out of the viewport
+              const vh = window.innerHeight;
+              const scrollCurrent = self.progress * SCROLL_END;
+              const transitionStart = SCROLL_END - vh;
+              
               let translateY = 0;
-              if (self.progress > 0.90) {
-                const factor = (self.progress - 0.90) / 0.10;
-                translateY = -factor * 100;
+              if (scrollCurrent > transitionStart) {
+                translateY = -(scrollCurrent - transitionStart);
               }
-              el.style.transform = `translateY(${translateY}%)`;
+              el.style.transform = `translateY(${translateY}px)`;
               el.style.opacity = '1';
+
+              // Synchronized seam flash fade-out
+              const flashEl = flashRef.current;
+              if (flashEl) {
+                let flashOp = 1;
+                if (self.progress > 0) {
+                  flashOp = 1 - clamp01(self.progress / 0.10);
+                }
+                flashEl.style.opacity = flashOp.toFixed(3);
+              }
+
+              // Play shutter sound exactly once when entering WhatWeDoSection
+              if (self.progress > 0 && self.progress < 0.10 && !shutterPlayedRef.current) {
+                playShutter();
+                shutterPlayedRef.current = true;
+              } else if (self.progress === 0) {
+                shutterPlayedRef.current = false;
+              }
             } else {
               // Desktop version uses the original opacity fade
               let opacity = 1;
@@ -141,53 +163,6 @@ export default function WhatWeDoSection() {
       onLeave: () => setActive(false),
       onEnterBack: () => setActive(true),
       onLeaveBack: () => setActive(false),
-    });
-
-    const getRevealPx = () => (window.innerWidth < 768 ? 500 : REVEAL_PX);
-
-    // ── SEAM FLASH ──────────────────────────────────────────────────────────
-    // The fixed whiteout that masks the About→WhatWeDo hand-off. It lives
-    // OUTSIDE the pinned stage (position:fixed), so it blankets the viewport
-    // across the seam where the two pinned sections swap. Rises to solid white
-    // over the tail of the About turntable, HOLDS white while the sections slide
-    // behind it, then clears once we are pinned — so the lens is revealed
-    // through the flash and never visibly scrolls up.
-    //
-    // Not pinned, and its end is a pixel length, so it scrubs straight through
-    // the seam and on into the start of the pin without touching the pin's own
-    // scrub math. Function start/end re-resolve against innerHeight on refresh.
-    let flashPrev = -1;
-    const flash = ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: () => `top bottom+=${Math.round(window.innerHeight * 0.6)}`,
-      end: () => `+=${Math.round(window.innerHeight * 1.6 + getRevealPx())}`,
-      scrub: 1.5,
-      onUpdate: (self) => {
-        if (window.innerWidth >= 768) {
-          if (flashRef.current) flashRef.current.style.opacity = '0';
-          return;
-        }
-
-        const p = self.progress;
-        const vh = window.innerHeight;
-        const revealPx = getRevealPx();
-        const total = vh * 1.6 + revealPx;
-        const riseEnd = (vh * 0.6) / total; // solid white by the start of the seam
-        const holdEnd = (vh * 1.6) / total; // hold white until the pin engages
-        let op: number;
-        
-        // Custom ramp function for smooth fading
-        const ramp = (start: number, end: number, val: number) => clamp01((val - start) / (end - start));
-        
-        if (p <= riseEnd) op = ramp(0, riseEnd, p);
-        else if (p <= holdEnd) op = 1;
-        else op = 1 - ramp(holdEnd, 1, p);
-        if (flashRef.current) flashRef.current.style.opacity = op.toFixed(3);
-
-        // shutter click fires once, on the forward crossing into full white
-        if (flashPrev >= 0 && flashPrev < riseEnd && p >= riseEnd) playShutter();
-        flashPrev = p;
-      },
     });
 
     // Unlock audio on the first real gesture
@@ -211,11 +186,6 @@ export default function WhatWeDoSection() {
       window.removeEventListener('wheel', unlock);
       window.removeEventListener('touchstart', unlock);
       trigger.kill();
-      // The seam flash was created and never killed. Every remount — StrictMode
-      // in dev, any HMR edit to this file — left another live ScrollTrigger
-      // behind, each one running its callback on every scroll event for the
-      // rest of the session.
-      flash.kill();
     };
   }, []);
 
