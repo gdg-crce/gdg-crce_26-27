@@ -207,8 +207,9 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  clip-path: circle(calc(var(--wipe, 60) * 1%) at 50% 50%);
   pointer-events: none;
+  transform: scale(calc(var(--wipe, 60) / 60));
+  will-change: transform;
 }
 
 .tt-lab {

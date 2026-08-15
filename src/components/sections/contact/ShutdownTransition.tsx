@@ -243,7 +243,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const term = termRef.current;
       if (!tube || !scrim || !dialog || !field || !scan || !dot || !term) return;
 
-      const adjustedP = p < 0.15 ? 0 : (p - 0.15) / 0.85;
+      const adjustedP = p < 0.05 ? 0 : (p - 0.05) / 0.95;
       const f = shutdownFrame(adjustedP);
 
       overlay.classList.toggle('is-active', p > 0.0005);
@@ -293,7 +293,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const scrim = scrimRef.current;
       const term = termRef.current;
       if (!scrim) return;
-      const adjustedP = p < 0.15 ? 0 : (p - 0.15) / 0.85;
+      const adjustedP = p < 0.05 ? 0 : (p - 0.05) / 0.95;
       overlay.classList.toggle('is-active', p > 0.0005);
       overlay.style.opacity = seg(0.0, 0.1, adjustedP).toString();
       scrim.style.opacity = seg(0.1, 0.5, adjustedP).toString();
@@ -327,7 +327,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
     const trigger = ScrollTrigger.create({
       trigger: spacer,
       start: 'top top',
-      end: `+=${MOBILE_SCROLL_LEN}`,
+      end: 'bottom bottom',
       scrub: true,
       // The spacer sits after a long normal-flow feed whose height is not known
       // until its images have laid out.
