@@ -2268,3 +2268,52 @@ button.fb-tab-item.active::after {
   color: #1c1e21 !important;
   line-height: 1.4 !important;
 }
+
+/* Facebook Page Admins / Council Roster list in About Tab */
+.fb-about-admin-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+  margin-top: 6px !important;
+}
+
+.fb-about-admin-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 8px !important;
+  background-color: #f7f8fa !important;
+  border-radius: 8px !important;
+  border: 1px solid #e5e6e9 !important;
+}
+
+.fb-about-admin-avatar {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+.fb-about-admin-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+}
+
+.fb-about-admin-name {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #050505 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.fb-about-admin-role {
+  font-size: 10.5px !important;
+  color: #65676b !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}

@@ -297,8 +297,8 @@ a.bios-row {
 
 @media (max-width: 767px) {
   .ct-term {
-    padding: 4px !important;
-    font-size: clamp(10px, 3vh, 15px) !important;
+    padding: 85px 4px 4px 4px !important;
+    font-size: clamp(10px, 3vh, 14px) !important;
     line-height: 1.4 !important;
   }
 

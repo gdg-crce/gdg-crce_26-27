@@ -247,6 +247,21 @@ export default function EventsAndCouncilSection({
   const [selectedPhoto, setSelectedPhoto] = useState<{ src: string; title: string; tag: string; caption: string } | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<{ title: string; meta: string; desc: string; thumb: string } | null>(null);
 
+  const handleMobileTabChange = useCallback((tab: 'posts' | 'about' | 'videos' | 'photos') => {
+    setMobileTab(tab);
+    if (typeof window !== 'undefined') {
+      const container = document.getElementById('mobile-council');
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const targetY = window.scrollY + rect.top;
+        window.scrollTo({ top: targetY, behavior: 'instant' });
+      }
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 50);
+    }
+  }, []);
+
   useEffect(() => {
     setMounted(true);
     const handleResize = () => {
@@ -714,40 +729,28 @@ export default function EventsAndCouncilSection({
               <button
                 type="button"
                 className={`fb-tab-item ${mobileTab === 'posts' ? 'active' : ''}`}
-                onClick={() => {
-                  setMobileTab('posts');
-                  setTimeout(() => ScrollTrigger.refresh(), 80);
-                }}
+                onClick={() => handleMobileTabChange('posts')}
               >
                 Posts
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${mobileTab === 'about' ? 'active' : ''}`}
-                onClick={() => {
-                  setMobileTab('about');
-                  setTimeout(() => ScrollTrigger.refresh(), 80);
-                }}
+                onClick={() => handleMobileTabChange('about')}
               >
                 About
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${mobileTab === 'videos' ? 'active' : ''}`}
-                onClick={() => {
-                  setMobileTab('videos');
-                  setTimeout(() => ScrollTrigger.refresh(), 80);
-                }}
+                onClick={() => handleMobileTabChange('videos')}
               >
                 Videos
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${mobileTab === 'photos' ? 'active' : ''}`}
-                onClick={() => {
-                  setMobileTab('photos');
-                  setTimeout(() => ScrollTrigger.refresh(), 80);
-                }}
+                onClick={() => handleMobileTabChange('photos')}
               >
                 Photos
               </button>
@@ -928,87 +931,59 @@ export default function EventsAndCouncilSection({
             </>
           )}
 
-          {/* TAB 2: ABOUT */}
+          {/* TAB 2: ABOUT (Facebook Profile Page Design) */}
           {mobileTab === 'about' && (
             <>
               <div className="fb-about-container">
+                {/* Intro & Bio Card */}
                 <div className="fb-about-card">
-                  <h3 className="fb-about-card-title">About GDG CRCE</h3>
+                  <h3 className="fb-about-card-title">Intro & Profile Details</h3>
+                  <p style={{ color: '#050505', fontSize: '13px', lineHeight: '1.45', margin: '0 0 10px' }}>
+                    Official Google Developer Groups on Campus page for Fr. Conceicao Rodrigues College of Engineering. Building real-world software, AI/ML models & cloud solutions! 🚀
+                  </p>
                   <div className="fb-about-row">
                     <span className="fb-about-icon">🎓</span>
                     <div>
-                      <strong>Google Developer Groups on Campus — CRCE</strong>
-                      <p style={{ margin: '4px 0 0', color: '#65676b', fontSize: '12.5px' }}>
-                        Official student developer community at Fr. Conceicao Rodrigues College of Engineering, Bandra, Mumbai.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="fb-about-row">
-                    <span className="fb-about-icon">🎯</span>
-                    <div>
-                      <strong>Our Mission</strong>
-                      <p style={{ margin: '4px 0 0', color: '#65676b', fontSize: '12.5px' }}>
-                        Empowering students to build real-world software, master cloud technologies, design intuitive UI/UX, and contribute to open source.
-                      </p>
+                      <strong>Community Organization</strong>
+                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>Google Developer Groups on Campus</p>
                     </div>
                   </div>
                   <div className="fb-about-row">
                     <span className="fb-about-icon">📍</span>
                     <div>
                       <strong>Location</strong>
-                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12.5px' }}>
-                        Fr. Conceicao Rodrigues College of Engineering, Father Agnel Ashram, Bandra West, Mumbai 400050.
-                      </p>
+                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>Fr. Conceicao Rodrigues College of Engineering, Father Agnel Ashram, Bandra (W), Mumbai 400050</p>
+                    </div>
+                  </div>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">🌐</span>
+                    <div>
+                      <strong>Website & Web App</strong>
+                      <p style={{ margin: '2px 0 0', color: '#1877f2', fontSize: '12px' }}>gdg-crce.vercel.app</p>
+                    </div>
+                  </div>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">📧</span>
+                    <div>
+                      <strong>Email Contact</strong>
+                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>gdg.crce@gmail.com</p>
                     </div>
                   </div>
                 </div>
 
+                {/* Team Roster Card (Facebook Page Admins Grid) */}
                 <div className="fb-about-card">
-                  <h3 className="fb-about-card-title">Council Tracks & Domains</h3>
-                  <div className="fb-about-row">
-                    <span className="fb-about-icon">💻</span>
-                    <div>
-                      <strong>Technical Track</strong>
-                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                        React, Next.js, Node.js, Python, TensorFlow, Kotlin & GCP.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="fb-about-row">
-                    <span className="fb-about-icon">🎨</span>
-                    <div>
-                      <strong>Design Track</strong>
-                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                        UI/UX Interfaces, Figma Prototyping, 3D Assets & Branding.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="fb-about-row">
-                    <span className="fb-about-icon">📸</span>
-                    <div>
-                      <strong>Social Media Track</strong>
-                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                        Content Creation, Video Editing & Digital Community Engagement.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="fb-about-row">
-                    <span className="fb-about-icon">📣</span>
-                    <div>
-                      <strong>Outreach Track</strong>
-                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                        Sponsorships, Public Relations & Speaker Management.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="fb-about-row">
-                    <span className="fb-about-icon">⭐</span>
-                    <div>
-                      <strong>Core Executive Team</strong>
-                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                        Strategic Direction, Hackathon Operations & Event Execution.
-                      </p>
-                    </div>
+                  <h3 className="fb-about-card-title">Council Members & Page Admins ({councilMembers.length})</h3>
+                  <div className="fb-about-admin-grid">
+                    {councilMembers.map((m) => (
+                      <div key={m.id} className="fb-about-admin-item">
+                        <MemberPhoto member={m} className="fb-about-admin-avatar" />
+                        <div className="fb-about-admin-meta">
+                          <span className="fb-about-admin-name">{m.name}</span>
+                          <span className="fb-about-admin-role">{m.role}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1016,54 +991,167 @@ export default function EventsAndCouncilSection({
             </>
           )}
 
-          {/* TAB 3: VIDEOS */}
+          {/* TAB 3: VIDEOS (Facebook Video Feed Posts) */}
           {mobileTab === 'videos' && (
             <>
-              <div className="fb-video-container">
-                {MOBILE_VIDEOS.map((vid) => (
-                  <div key={vid.id} className="fb-video-card">
-                    <div
-                      className="fb-video-thumbnail-wrap"
-                      onClick={() => setSelectedVideo(vid)}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={vid.thumb} alt={vid.title} />
-                      <div className="fb-video-play-badge">▶</div>
+              {MOBILE_VIDEOS.map((vid) => (
+                <div key={vid.id} className="fb-post-card">
+                  {/* Post Header */}
+                  <div className="fb-post-header">
+                    <div className="fb-post-avatar page-avatar">
+                      <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
                     </div>
-                    <div className="fb-video-info">
-                      <h4 className="fb-video-title">{vid.title}</h4>
-                      <div className="fb-video-meta">{vid.meta}</div>
-                      <p className="fb-video-desc">{vid.desc}</p>
+                    <div className="fb-post-author-info">
+                      <span className="fb-post-author-name">
+                        GDG CRCE
+                        <span className="fb-verified-badge-small">✓</span>
+                      </span>
+                      <span className="fb-post-meta">{vid.meta} • 🌐</span>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  {/* Post content */}
+                  <div className="fb-post-content">
+                    <p className="fb-post-text">
+                      <strong>{vid.title}</strong>
+                      <br />
+                      {vid.desc}
+                    </p>
+                  </div>
+
+                  {/* Attached Video Media */}
+                  <div
+                    className="fb-post-media-container"
+                    onClick={() => setSelectedVideo(vid)}
+                    style={{ cursor: 'pointer', position: 'relative' }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={vid.thumb} className="fb-post-img" alt={vid.title} />
+                    <div className="fb-video-play-badge" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+                      ▶
+                    </div>
+                  </div>
+
+                  {/* Reactions bar */}
+                  <div className="fb-post-reactions-bar">
+                    <div className="fb-reaction-icons">
+                      <span className="reaction-bubble blue-bubble">👍</span>
+                      <span className="reaction-bubble yellow-bubble">😮</span>
+                    </div>
+                    <span className="fb-reaction-text">Liked by Movin and 142 others</span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="fb-post-actions">
+                    <button type="button" className="fb-action-btn">
+                      <span className="btn-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
+                        </svg>
+                      </span>
+                      Like
+                    </button>
+                    <div className="fb-action-separator" />
+                    <button type="button" className="fb-action-btn">
+                      <span className="btn-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                      </span>
+                      Comment
+                    </button>
+                    <div className="fb-action-separator" />
+                    <button type="button" className="fb-action-btn">
+                      <span className="btn-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
+                          <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
+                        </svg>
+                      </span>
+                      Share
+                    </button>
+                  </div>
+                </div>
+              ))}
               <div className="mobile-council-end-buffer" style={{ height: '110vh', width: '100%', pointerEvents: 'none' }} />
             </>
           )}
 
-          {/* TAB 4: PHOTOS */}
+          {/* TAB 4: PHOTOS (Facebook Photo Gallery Posts Feed) */}
           {mobileTab === 'photos' && (
             <>
-              <div className="fb-photos-container">
-                <div className="fb-photos-header">
-                  <span>What We Do & Gallery Photos ({WHAT_WE_DO_PHOTOS.length})</span>
-                </div>
-                <div className="fb-photos-grid">
-                  {WHAT_WE_DO_PHOTOS.map((ph) => (
-                    <div
-                      key={ph.id}
-                      className="fb-photo-card"
-                      onClick={() => setSelectedPhoto(ph)}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={ph.src} alt={ph.title} />
-                      <span className="fb-photo-tag">{ph.tag}</span>
-                      <div className="fb-photo-title-bar">{ph.title}</div>
+              {WHAT_WE_DO_PHOTOS.map((ph) => (
+                <div key={ph.id} className="fb-post-card">
+                  {/* Post Header */}
+                  <div className="fb-post-header">
+                    <div className="fb-post-avatar page-avatar">
+                      <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
                     </div>
-                  ))}
+                    <div className="fb-post-author-info">
+                      <span className="fb-post-author-name">
+                        GDG CRCE
+                        <span className="fb-verified-badge-small">✓</span>
+                      </span>
+                      <span className="fb-post-meta">{ph.tag} • Photo Gallery • 🌐</span>
+                    </div>
+                  </div>
+
+                  {/* Post content */}
+                  <div className="fb-post-content">
+                    <p className="fb-post-text">
+                      <strong>{ph.title}</strong> — {ph.caption}
+                    </p>
+                  </div>
+
+                  {/* Attached Media */}
+                  <div
+                    className="fb-post-media-container"
+                    onClick={() => setSelectedPhoto(ph)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={ph.src} className="fb-post-img" alt={ph.title} />
+                  </div>
+
+                  {/* Reactions summary */}
+                  <div className="fb-post-reactions-bar">
+                    <div className="fb-reaction-icons">
+                      <span className="reaction-bubble blue-bubble">👍</span>
+                      <span className="reaction-bubble red-bubble">❤️</span>
+                    </div>
+                    <span className="fb-reaction-text">Liked by Sir Harvey York and 156 others</span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="fb-post-actions">
+                    <button type="button" className="fb-action-btn">
+                      <span className="btn-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
+                        </svg>
+                      </span>
+                      Like
+                    </button>
+                    <div className="fb-action-separator" />
+                    <button type="button" className="fb-action-btn">
+                      <span className="btn-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                      </span>
+                      Comment
+                    </button>
+                    <div className="fb-action-separator" />
+                    <button type="button" className="fb-action-btn">
+                      <span className="btn-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
+                          <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
+                        </svg>
+                      </span>
+                      Share
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ))}
               <div className="mobile-council-end-buffer" style={{ height: '110vh', width: '100%', pointerEvents: 'none' }} />
             </>
           )}
