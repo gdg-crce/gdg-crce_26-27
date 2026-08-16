@@ -21,10 +21,8 @@ import { mulberry32 } from './wallMaterial';
 export interface PaperMaps {
   /** Tangent-space normal carrying wrinkles, bubbles and edge cockle */
   wrinkleNormal: THREE.CanvasTexture;
-  /** Tear/edge silhouette in the GREEN channel (three's alphaMap reads .g) */
+  /** Edge silhouette in the GREEN channel (three's alphaMap reads .g) */
   tearMasks: THREE.CanvasTexture[];
-  /** Paste bleed, damp blotching and print mottle — multiplied into albedo */
-  grimeMap: THREE.CanvasTexture;
 }
 
 let cached: PaperMaps | null = null;
@@ -147,22 +145,51 @@ export function buildPaperMaps(): PaperMaps {
   wrinkleNormal.wrapS = wrinkleNormal.wrapT = THREE.ClampToEdgeWrapping;
   wrinkleNormal.anisotropy = 8;
 
-  /* ── 2. Tear masks ───────────────────────────────────────────────────────
-     Four silhouettes: irregular torn borders, the odd missing corner, and
-     nibbled bites out of the edge. A poster that has been up for years is not
-     a rectangle, and a perfect rectangle is one of the loudest CG tells on a
-     street wall. Green channel, because three's alphaMap samples .g          */
+  /* ── 2. Edge masks ───────────────────────────────────────────────────────
+     A hand-trimmed sheet, not a shredded one.
+
+     This used to destroy 8–13% of every poster and it did it with CIRCLES: 22
+     `arc()` bites of up to 26px radius walked around the border, which at this
+     resolution is a 5%-of-the-sheet scallop each. Rendered, that is not a torn
+     edge — it is a doily. On top of that went a polygonal corner bite of up to
+     120px radius (nearly a quarter of the sheet), 26 pinholes and 12 slits
+     punched clean through the artwork, so the wall showed through the print.
+
+     None of it survived contact with the real posters. These are current event
+     designs with the club's logo and legible titles — a sheet that has been
+     chewed for twenty years is the wrong story for artwork that went up this
+     term, and the holes were landing on type.
+
+     What is left is the one cue actually worth having: the edge is not a
+     ruled line. A shallow random walk, roughly a centimetre of wander at wall
+     scale, so the silhouette reads as paper cut by hand and pasted rather than
+     as a texture-mapped quad. Nothing is punched through the face, no corner
+     is missing, and no shape here is a recognisable circle. ~99% of every
+     sheet survives.
+
+     Green channel, because three's alphaMap samples .g                        */
   const tearMasks: THREE.CanvasTexture[] = [];
   for (let v = 0; v < 4; v++) {
-    const c = document.createElement('canvas');
-    c.width = S;
-    c.height = S;
-    const cx = c.getContext('2d')!;
-    cx.fillStyle = '#000';
-    cx.fillRect(0, 0, S, S);
+    /* Drawn on a scratch canvas first, then composited through a blur onto the
+       real one. The blur is the point — see FEATHER below. */
+    const tmp = document.createElement('canvas');
+    tmp.width = S;
+    tmp.height = S;
+    const tx = tmp.getContext('2d')!;
+    tx.fillStyle = '#000';
+    tx.fillRect(0, 0, S, S);
 
-    // Ragged border walk — a torn edge is a random walk with a small step
-    const inset = 6 + rnd() * 10;
+    /* Inset is tiny — 2–5px of 512, i.e. under a centimetre on a 3.4m sheet. */
+    const inset = 2 + rnd() * 3;
+
+    /* BLUNT CORNERS. The four edge walks used to meet at hard 90° points, so
+       every sheet ended in four needle-sharp corners — the giveaway that this
+       is a mapped quad and not a piece of paper. A real pasted corner is blunt:
+       it gets knocked, rubbed and softened by the paste long before anything
+       else on the sheet does. R is 14–26px of 512, i.e. roughly a 10–18cm
+       radius at wall scale. */
+    const R = 14 + rnd() * 12;
+
     const pts: [number, number][] = [];
     const walk = (
       fromX: number,
@@ -171,82 +198,159 @@ export function buildPaperMaps(): PaperMaps {
       toY: number,
       jitter: number
     ) => {
-      const steps = 26;
+      /* Many small deviations read as a fibrous paper edge; a few large ones
+         read as a zigzag. Each step is damped against the previous one so the
+         line wanders rather than alternating side to side. */
+      const steps = 34;
+      let prevJx = 0;
+      let prevJy = 0;
       for (let i = 0; i <= steps; i++) {
         const t = i / steps;
-        const jx = (rnd() - 0.5) * jitter;
-        const jy = (rnd() - 0.5) * jitter;
-        pts.push([fromX + (toX - fromX) * t + jx, fromY + (toY - fromY) * t + jy]);
+        // Taper to zero at both ends so the wander dies out before the corner
+        // arc takes over — otherwise the jitter fights the rounding.
+        const taper = Math.min(1, Math.min(t, 1 - t) * 5);
+        prevJx = prevJx * 0.55 + (rnd() - 0.5) * jitter * 0.45;
+        prevJy = prevJy * 0.55 + (rnd() - 0.5) * jitter * 0.45;
+        pts.push([
+          fromX + (toX - fromX) * t + prevJx * taper,
+          fromY + (toY - fromY) * t + prevJy * taper,
+        ]);
       }
     };
-    // Top edge is usually the most chewed (weather + people grabbing at it)
-    walk(inset, inset, S - inset, inset, 16);
-    walk(S - inset, inset, S - inset, S - inset, 9);
-    walk(S - inset, S - inset, inset, S - inset, 13);
-    walk(inset, S - inset, inset, inset, 9);
 
-    cx.fillStyle = '#fff';
-    cx.beginPath();
-    cx.moveTo(pts[0][0], pts[0][1]);
-    for (const p of pts) cx.lineTo(p[0], p[1]);
-    cx.closePath();
-    cx.fill();
+    const a = inset;
+    const b = S - inset;
+    /* Each edge now stops R short of the corner; the gap is bridged by a
+       quadratic through the corner point, which is what rounds it off. Top
+       edge still wanders most — weather and hands both work from the top. */
+    walk(a + R, a, b - R, a, 4.0);
+    walk(b, a + R, b, b - R, 2.4);
+    walk(b - R, b, a + R, b, 3.0);
+    walk(a, b - R, a, a + R, 2.4);
 
-    // Bite a corner off entirely on some variants
-    cx.globalCompositeOperation = 'destination-out';
-    if (v % 2 === 0) {
-      const corners: [number, number][] = [
-        [0, 0],
-        [S, 0],
-        [0, S],
-        [S, S],
-      ];
-      const [ccx, ccy] = corners[Math.floor(rnd() * 4)];
-      const r = 40 + rnd() * 80;
-      cx.beginPath();
-      cx.moveTo(ccx, ccy);
-      for (let i = 0; i <= 10; i++) {
-        const a = (i / 10) * Math.PI * 2;
-        cx.lineTo(ccx + Math.cos(a) * r * (0.6 + rnd() * 0.7), ccy + Math.sin(a) * r * (0.6 + rnd() * 0.7));
-      }
-      cx.closePath();
-      cx.fill();
+    const nEdge = 35; // steps + 1, i.e. one edge's worth of points
+    const edge = (i: number) => pts.slice(i * nEdge, (i + 1) * nEdge);
+
+    tx.fillStyle = '#fff';
+    tx.beginPath();
+    const e0 = edge(0);
+    tx.moveTo(e0[0][0], e0[0][1]);
+    for (const p of e0) tx.lineTo(p[0], p[1]);
+    tx.quadraticCurveTo(b, a, edge(1)[0][0], edge(1)[0][1]);
+    for (const p of edge(1)) tx.lineTo(p[0], p[1]);
+    tx.quadraticCurveTo(b, b, edge(2)[0][0], edge(2)[0][1]);
+    for (const p of edge(2)) tx.lineTo(p[0], p[1]);
+    tx.quadraticCurveTo(a, b, edge(3)[0][0], edge(3)[0][1]);
+    for (const p of edge(3)) tx.lineTo(p[0], p[1]);
+    tx.quadraticCurveTo(a, a, e0[0][0], e0[0][1]);
+    tx.closePath();
+    tx.fill();
+
+    /* ── Age: small chips and splits, edges only ────────────────────────────
+       A sheet that has been up for years loses its edges first — the paste
+       holds the middle long after the perimeter has been knocked, picked at
+       and frozen. So the damage goes HERE, on the border, and never on the
+       face: the earlier version punched pinholes and slits through the middle
+       of the artwork, which landed on the type and is a different (wrong)
+       story.
+
+       The shapes matter as much as the size. The version before that cut 22
+       `arc()` bites of up to 26px — circles, which read as a scalloped doily,
+       not as damage. These are wedges and hairlines: a chip is a splinter of
+       paper breaking away, and a split is a crack running a short distance in
+       from the edge before it stops. Both are a few centimetres at wall scale,
+       against the 20cm scallops.
+
+       Cut BEFORE the feather blur below, deliberately — the chips get the same
+       soft edge as the rest of the border, so they read as worn rather than
+       laser-cut. */
+    tx.globalCompositeOperation = 'destination-out';
+
+    /** A point on the border, plus the inward normal and the tangent. */
+    const edgePoint = (e: number, t: number): [number, number, number, number] => {
+      const span = b - a;
+      if (e === 0) return [a + span * t, a, 0, 1];
+      if (e === 1) return [b, a + span * t, -1, 0];
+      if (e === 2) return [b - span * t, b, 0, -1];
+      return [a, b - span * t, 1, 0];
+    };
+
+    // Chips: shallow wedges out of the border. Kept off the rounded corners
+    // (t stays in 0.10–0.90) so they never eat the bluntness back off.
+    for (let i = 0; i < 13; i++) {
+      const [px, py, nx, ny] = edgePoint(i % 4, 0.1 + rnd() * 0.8);
+      const tanX = -ny;
+      const tanY = nx;
+      /* 2–6cm of edge taken, 3–9cm inward. Sized so a chip is still legible
+         after the 2.8px feather: at 1.6/2.4 the blur swallowed most of them and
+         only the sharper splits showed, which read as scratches rather than as
+         a sheet that has been up for years. Still an order of magnitude under
+         the 20cm scallops this replaced. */
+      const halfW = 2.4 + rnd() * 5.4;
+      const depth = 4.0 + rnd() * 8.0;
+      // Base sits slightly OUTSIDE the sheet so the cut always breaks the edge
+      // rather than leaving a hairline of paper across its mouth.
+      const bx = px - nx * 2;
+      const by = py - ny * 2;
+      tx.beginPath();
+      tx.moveTo(bx - tanX * halfW, by - tanY * halfW);
+      // Apex offset along the edge as well as inward, so no chip is a
+      // symmetrical triangle — real ones break along the grain, off-square.
+      tx.lineTo(
+        px + nx * depth + tanX * (rnd() - 0.5) * halfW * 1.4,
+        py + ny * depth + tanY * (rnd() - 0.5) * halfW * 1.4
+      );
+      tx.lineTo(bx + tanX * halfW, by + tanY * halfW);
+      tx.closePath();
+      tx.fill();
     }
-    // Pinholes and small punctures — staples, thumbtacks, thrown gravel, and
-    // twenty years of people picking at a corner in passing.
-    for (let i = 0; i < 26; i++) {
-      const hx2 = 20 + rnd() * (S - 40);
-      const hy2 = 20 + rnd() * (S - 40);
-      cx.beginPath();
-      cx.arc(hx2, hy2, 0.9 + rnd() * 3.4, 0, Math.PI * 2);
-      cx.fill();
+
+    // Splits: hairline cracks running in from the edge and stopping. Wider
+    // than a true hairline (1.4–3px) on purpose — the feather below softens
+    // everything by 2.8px, and a 1px crack simply disappears into it.
+    for (let i = 0; i < 7; i++) {
+      const [px, py, nx, ny] = edgePoint((i + 2) % 4, 0.12 + rnd() * 0.76);
+      const tanX = -ny;
+      const tanY = nx;
+      const len = 7 + rnd() * 15;
+      const drift = (rnd() - 0.5) * 0.8; // wanders off straight-in
+      const midX = px + nx * len * 0.5 + tanX * len * drift * 0.5;
+      const midY = py + ny * len * 0.5 + tanY * len * drift * 0.5;
+      const endX = px + nx * len + tanX * len * drift;
+      const endY = py + ny * len + tanY * len * drift;
+      tx.lineWidth = 1.4 + rnd() * 1.6;
+      tx.lineCap = 'round';
+      tx.beginPath();
+      tx.moveTo(px - nx * 2, py - ny * 2);
+      tx.quadraticCurveTo(midX, midY, endX, endY);
+      tx.stroke();
     }
-    // Tiny internal tears — short slits where the sheet has split along a
-    // wrinkle and never repaired
-    for (let i = 0; i < 12; i++) {
-      const tx2 = 30 + rnd() * (S - 60);
-      const ty2 = 30 + rnd() * (S - 60);
-      const tl = 6 + rnd() * 30;
-      const ta = rnd() * Math.PI;
-      cx.lineWidth = 1 + rnd() * 2.4;
-      cx.strokeStyle = '#fff';
-      cx.beginPath();
-      cx.moveTo(tx2, ty2);
-      cx.lineTo(tx2 + Math.cos(ta) * tl, ty2 + Math.sin(ta) * tl);
-      cx.stroke();
-    }
-    // Nibbles out of the edges
-    for (let i = 0; i < 22; i++) {
-      const edge = Math.floor(rnd() * 4);
-      const t = rnd() * S;
-      const r = 4 + rnd() * 26;
-      const ex = edge === 0 ? t : edge === 1 ? S : edge === 2 ? t : 0;
-      const ey = edge === 0 ? 0 : edge === 1 ? t : edge === 2 ? S : t;
-      cx.beginPath();
-      cx.arc(ex, ey, r, 0, Math.PI * 2);
-      cx.fill();
-    }
-    cx.globalCompositeOperation = 'source-over';
+
+    tx.globalCompositeOperation = 'source-over';
+
+    /* FEATHER. The mask was a hard black/white step, and `alphaTest` turns a
+       step into a razor: every edge pixel is either fully paper or fully gone,
+       so the border rendered as a stencilled vector cut with visible stair-
+       stepping on the diagonals. Paper has thickness and frayed fibres — its
+       edge is soft at this scale, not a knife line.
+
+       Blurring the mask hands the material a RAMP instead of a step, which
+       `alphaToCoverage` (see EventPoster3D) then resolves across the canvas's
+       MSAA samples. 2.8px of 512 is about 2cm of softness on the sheet: enough
+       to blunt the cut and kill the aliasing, not enough to look out of focus.
+       Blur also rounds the corners a touch further, which is the same thing
+       paste and weather do. */
+    const FEATHER = 2.8;
+    const c = document.createElement('canvas');
+    c.width = S;
+    c.height = S;
+    const cx = c.getContext('2d')!;
+    cx.filter = `blur(${FEATHER}px)`;
+    cx.drawImage(tmp, 0, 0);
+    cx.filter = 'none';
+
+    /* Still nothing through the FACE — no pinholes, no internal slits, no
+       corner bites. All the wear lives on the border, above. */
 
     const t = new THREE.CanvasTexture(c);
     t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
@@ -254,54 +358,16 @@ export function buildPaperMaps(): PaperMaps {
     tearMasks.push(t);
   }
 
-  /* ── 3. Paste bleed / damp blotch / print mottle ────────────────────── */
-  const gC = document.createElement('canvas');
-  gC.width = S;
-  gC.height = S;
-  const gx = gC.getContext('2d')!;
-  gx.fillStyle = '#ffffff';
-  gx.fillRect(0, 0, S, S);
+  /* There was a third map here — `grimeMap`: paste bleed haloes, an edge-dirt
+     gradient and sixteen rain streaks running down the face. NOTHING SAMPLED
+     IT. EventPoster3D takes `wrinkleNormal` and `tearMasks` and has never
+     referenced it, so this was 38 gradient fills over a 512² buffer plus a GPU
+     upload, on the main thread, while the preloader is animating — for a
+     texture that never reached a shader. Removed rather than wired up: dark
+     streaks and edge grime over live event artwork are the opposite of what
+     these sheets are for (see the fade note in EventPoster3D). */
 
-  // Paste bleeds through the sheet and dries in translucent haloes
-  for (let i = 0; i < 22; i++) {
-    const bx = rnd() * S;
-    const by = rnd() * S;
-    const br = 30 + rnd() * 110;
-    const g = gx.createRadialGradient(bx, by, 4, bx, by, br);
-    g.addColorStop(0, `rgba(150,142,120,${0.1 + rnd() * 0.16})`);
-    g.addColorStop(1, 'rgba(150,142,120,0)');
-    gx.fillStyle = g;
-    gx.beginPath();
-    gx.arc(bx, by, br, 0, Math.PI * 2);
-    gx.fill();
-  }
-
-  // Grime creeps in from the edges — dirt collects where paper meets wall
-  const dg = gx.createLinearGradient(0, 0, 0, S);
-  dg.addColorStop(0, 'rgba(96,88,74,0.4)');
-  dg.addColorStop(0.18, 'rgba(255,255,255,0)');
-  dg.addColorStop(0.7, 'rgba(255,255,255,0)');
-  dg.addColorStop(1, 'rgba(72,66,56,0.55)');
-  gx.fillStyle = dg;
-  gx.fillRect(0, 0, S, S);
-
-  // Rain streaks running down the face
-  for (let i = 0; i < 16; i++) {
-    const sx = rnd() * S;
-    const sw = 2 + rnd() * 9;
-    const g = gx.createLinearGradient(0, 0, 0, S);
-    g.addColorStop(0, `rgba(110,102,88,${0.12 + rnd() * 0.14})`);
-    g.addColorStop(1, 'rgba(110,102,88,0)');
-    gx.fillStyle = g;
-    gx.fillRect(sx, rnd() * S * 0.4, sw, S);
-  }
-
-  const grimeMap = new THREE.CanvasTexture(gC);
-  grimeMap.wrapS = grimeMap.wrapT = THREE.ClampToEdgeWrapping;
-  grimeMap.colorSpace = THREE.SRGBColorSpace;
-  grimeMap.anisotropy = 4;
-
-  cached = { wrinkleNormal, tearMasks, grimeMap };
+  cached = { wrinkleNormal, tearMasks };
   return cached;
 }
 

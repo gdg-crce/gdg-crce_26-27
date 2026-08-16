@@ -158,16 +158,9 @@
   overflow-wrap: anywhere;
 }
 
-/* Firmware-detected values are not settings, so they get no brackets. */
-.bios-value.is-plain {
-  color: var(--bios-text);
-}
-
-/* Firmware-detected rows are readouts, not fields: no hover rule below ever
-   matches them, so they never invert and never look selectable. */
-.bios-row.is-static {
-  cursor: default;
-}
+/* `.bios-value.is-plain` and `.bios-row.is-static` were removed — nothing in
+   ContactSection carries either class. The only modifier the markup actually
+   applies is `.is-unset`, styled just below. */
 
 /* A field with no address on record. Listed and describable, but dim, and
    visibly not something you can open. */

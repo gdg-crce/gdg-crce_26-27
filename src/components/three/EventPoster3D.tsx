@@ -103,18 +103,21 @@ export default function EventPoster3D({
       const s = Math.sin(n * 127.1 + variant * 311.7) * 43758.5453;
       return s - Math.floor(s);
     };
-    // Which of the four corners have let go, and by how much. Indices 0/1 are
-    // the bottom pair, 2/3 the top — and the top always wins, because that is
-    // where the sheet's own weight hangs off paste that gave up years ago.
-    // Held to 1.5–6.5cm at the top: enough to read clearly at five metres and
-    // to catch the flashlight on its underside, but a corner peeling further
-    // than a hand's width stops being weathering and starts being a paper
-    // aeroplane taped to a wall.
+    /* Corner lift, now barely there: 2–7mm at the top, 1–3mm at the bottom.
+       It was 1.5–6.5cm at the top, which is a corner standing a finger's width
+       off the wall — under a raking view that silhouettes against the plaster
+       and is the single loudest "this is a floating quad" cue in the frame.
+       The brief is a sheet that is STUCK to the wall, so the paste wins: what
+       is left is just enough that the outline is not perfectly straight when
+       the light rakes across it. The flashlight this was originally tuned to
+       catch does not exist any more either (see the lighting notes in
+       CLAUDE.md) — under a flat overcast dome a big curl gains nothing and
+       only breaks the contact. */
     const curl = [
-      rnd(1) * 0.018 + 0.005,
-      rnd(2) * 0.018 + 0.005,
-      rnd(3) * 0.05 + 0.015,
-      rnd(4) * 0.05 + 0.015,
+      rnd(1) * 0.002 + 0.001,
+      rnd(2) * 0.002 + 0.001,
+      rnd(3) * 0.005 + 0.002,
+      rnd(4) * 0.005 + 0.002,
     ];
 
     for (let i = 0; i < pos.count; i++) {
@@ -132,11 +135,14 @@ export default function EventPoster3D({
         z += d * d * d * curl[c];
       }
 
-      // Slow sheet bow — paper never lies perfectly flat over old plaster
-      z += Math.sin(u * 3.1 + variant) * Math.cos(v * 2.3 + variant * 0.7) * 0.016;
-      // Cockle ridges — the buckling that paste leaves behind, at sheet scale
-      z += Math.sin(u * 11.0 + variant * 2.1) * 0.005;
-      z += Math.cos(v * 8.3 + variant * 1.7) * 0.004;
+      /* Sheet bow and cockle, halved along with the curl. Paper still does not
+         lie perfectly flat over old plaster, but at 1.6cm the bow was lifting
+         the middle of the sheet clear of the wall; 7mm keeps the ripple without
+         breaking contact. The fine cockle stays — that is surface, not lift,
+         and it is what stops the sheet reading as a printed decal. */
+      z += Math.sin(u * 3.1 + variant) * Math.cos(v * 2.3 + variant * 0.7) * 0.007;
+      z += Math.sin(u * 11.0 + variant * 2.1) * 0.0035;
+      z += Math.cos(v * 8.3 + variant * 1.7) * 0.003;
 
       pos.setZ(i, z);
     }
@@ -151,10 +157,25 @@ export default function EventPoster3D({
       alphaMap: tearMask,
       normalMap: wrinkle,
       normalScale: new THREE.Vector2(1.0, 1.0),
-      // Cutout, not blending: writes depth, needs no sorting, and is cheaper
-      // than the transparent stack this replaces.
+      /* Cutout, not blending: writes depth, needs no sorting, and is cheaper
+         than the transparent stack this replaces.
+
+         `alphaToCoverage` is what makes the edge blunt rather than stencilled.
+         The mask is now feathered (see FEATHER in posterPaper), but a plain
+         `alphaTest` throws that away — it is a step function, so every pixel in
+         the soft band still resolves to fully-there or fully-gone and the
+         border comes out as a razor-sharp vector cut with stair-stepping on
+         every diagonal. A2C instead maps the alpha ramp onto the MSAA sample
+         mask, so the feather survives as a genuinely antialiased, slightly soft
+         edge. It costs nothing extra: the canvas already runs `antialias: true`
+         (see WallScene), so the samples are being paid for either way.
+
+         alphaTest drops to 0.02 — just enough to discard the fully transparent
+         outside so it never writes depth, while leaving the whole soft band for
+         A2C to resolve. At 0.5 the test would clip the feather back off. */
       transparent: false,
-      alphaTest: 0.5,
+      alphaTest: 0.02,
+      alphaToCoverage: true,
       // Paper is matte but not dead — old print keeps a faint tooth, and the
       // ink sits slightly glossier than the stock around it.
       roughness: 0.88,
@@ -206,23 +227,29 @@ export default function EventPoster3D({
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      {/* Contact shadow. Paper casts no drop shadow, but where its torn edge
-          meets the wall there is a hairline of dirt and occlusion — the thing
-          that actually reads as "stuck down" rather than "hovering". */}
-      <mesh position={[0, 0, -0.004]} renderOrder={-1}>
-        {/* ~2cm of ring, not 6 — contact darkening is a hairline, and anything
-            wider starts reading as the drop shadow this replaces. */}
-        <planeGeometry args={[w * 1.012, h * 1.012]} />
-        <meshBasicMaterial
-          color="#0B0908"
-          transparent
-          opacity={0.4}
-          alphaMap={tearMask}
-          depthWrite={false}
-        />
-      </mesh>
+      {/* There is no shadow plane here any more, and there should not be one.
 
-      {/* No castShadow — paper on a wall throws nothing. */}
+          It was a near-black quad (#0B0908 at 0.4 opacity) sitting 4mm behind
+          the sheet, scaled to 1.012 and masked with the SAME tear mask. Two
+          things came out of that, both of them the "shadows on the posters"
+          complaint:
+
+          1. Around the border it drew a dark outline 1.2% larger than the
+             sheet. That is a drop shadow — exactly what the comment above it
+             claimed it was replacing — and on a torn edge it traced every
+             notch, which is what made the silhouette read as ragged and dirty.
+          2. The old mask punched pinholes and slits through the artwork, and
+             this plane sat behind them at a slightly different scale, so the
+             holes did not line up and each one showed a black crescent. Dark
+             speckles scattered across the print, over the type.
+
+          Paper pasted flat to a wall under an even overcast sky has no
+          shadow to cast: the sheet is 0.1mm thick and there is no gap for
+          light to skip. What sells "stuck down" is the absence of a gap — the
+          sheet sits at z=0.012 with almost no curl, so nothing separates it
+          from the plaster — plus the wall's own ambient occlusion, which the
+          scene already renders. Adding darkness by hand is what made it look
+          stuck ON rather than stuck TO. */}
       <mesh geometry={geometry} material={material} receiveShadow />
     </group>
   );

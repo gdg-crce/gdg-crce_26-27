@@ -246,12 +246,6 @@
   background: linear-gradient(180deg, #ffffff 0%, #d2e2f6 100%);
 }
 
-.linksLabel {
-  font-size: 12px;
-  color: #4a4a4a;
-  white-space: nowrap;
-}
-
 /* -----------------------------------------------------------------------------
    2. BROWSER PAGE (the rendered "TheFacebook" document)
    -------------------------------------------------------------------------- */
@@ -308,26 +302,6 @@
   font-weight: 400;
 }
 
-.fbNavLinks {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.fbNavLink {
-  padding: 3px 8px;
-  color: #cdd6ea;
-  font-size: 11px;
-  border: 1px solid transparent;
-  cursor: default;
-}
-
-.fbNavLink:hover {
-  color: #fff;
-  border-color: var(--fb-blue-mid);
-  background: #34497e;
-}
-
 /* --- Page body wrapper --- */
 .fbBody {
   padding: 14px;
@@ -343,47 +317,27 @@
   margin-bottom: 14px;
 }
 
+/* The cover photo. `aspect-ratio` rather than a fixed height, matching the
+   artwork's own 1200x400, so the whole banner is always visible — no crop and
+   no letterbox at any window width. At a fixed 150px the 3:1 art would have
+   been cover-cropped by roughly a third of its height, taking the printed
+   college name off the bottom and slicing the logo.
+
+   `overflow` is deliberately NOT hidden: the profile photo hangs off the bottom
+   edge from inside here. A background image is already clipped to the padding
+   box, so there is nothing else that needs clipping. */
 .banner {
   position: relative;
-  height: 150px;
-  overflow: hidden;
-  background:
-    linear-gradient(120deg, rgba(59, 89, 152, 0.92) 0%, rgba(43, 58, 99, 0.92) 100%),
-    repeating-linear-gradient(90deg, #4a69ad 0 38px, #3b5998 38px 40px);
+  aspect-ratio: 3 / 1;
+  background-color: #0b0a18;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   border-bottom: 1px solid var(--fb-blue-soft);
 }
 
-.bannerGrid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.14) 1px, transparent 1px);
-  background-size: 20px 20px;
-  opacity: 0.6;
-}
-
-.bannerText {
-  position: absolute;
-  top: 22px;
-  right: 22px;
-  text-align: right;
-  color: #fff;
-}
-
-.bannerTitle {
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
-}
-
-.bannerSub {
-  margin-top: 4px;
-  font-size: 11px;
-  letter-spacing: 4px;
-  color: #cdd6ea;
-}
+/* `.bannerGrid`, `.bannerText`, `.bannerTitle` and `.bannerSub` were removed
+   with the markup they styled — the artwork carries its own type now. */
 
 .bannerCursor {
   position: absolute;
@@ -393,21 +347,28 @@
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.4));
 }
 
-/* Square profile photo overlapping the bottom-left corner of the banner */
+/* Square profile photo overlapping the bottom-left corner of the banner.
+   Anchored to the banner's BOTTOM rather than a magic `top: 92px` — that value
+   only worked while the banner was locked at 150px, and it is now sized from
+   the artwork. -58px reproduces the original overlap exactly: 58px of the
+   116px tile sat on the banner, 58px hung below it. */
 .profilePhoto {
   position: absolute;
   left: 16px;
-  top: 92px;
+  bottom: -58px;
   width: 116px;
   height: 116px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 52px;
-  color: #fff;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  overflow: hidden;
+  background: #0b0a18;
   border: 3px solid #fff;
   box-shadow: 0 0 0 1px var(--hair), 3px 3px 0 rgba(0, 0, 0, 0.22);
+}
+
+.profilePhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .profileIdentity {
@@ -471,34 +432,6 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.4px;
-}
-
-.sideBody {
-  padding: 10px;
-}
-
-.infoRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  padding: 6px 0;
-  border-bottom: 1px dashed #cdd3e2;
-  font-size: 11px;
-  color: #333;
-}
-
-.infoRow:last-child {
-  border-bottom: 0;
-}
-
-.infoKey {
-  color: var(--fb-blue);
-  font-weight: 700;
-}
-
-.infoVal {
-  color: #333;
-  line-height: 1.45;
 }
 
 /* --- Main column --- */
@@ -618,76 +551,131 @@
 }
 
 /* -----------------------------------------------------------------------------
-   6. SOCIAL GRID — precise 2x2 grid with centered caption tags
-   -------------------------------------------------------------------------- */
-.socialGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  padding: 16px;
-}
+   6. THE WALL — posts (one photo, two clips)
 
-.gridCell {
+   Replaced the .socialGrid 2×2 of department leads (.gridCell / .gridSquare /
+   .gridSlot / .gridCaption / .gridName, all removed with it).
+   -------------------------------------------------------------------------- */
+.wallPosts {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font-family: inherit;
-  color: inherit;
-  cursor: pointer;
+  gap: 12px;
+  padding: 14px 16px 16px;
 }
 
-.gridCell:hover .gridSquare {
-  filter: brightness(1.06);
-}
-.gridCell:hover .gridName {
-  color: var(--fb-blue);
-  text-decoration: underline;
+.wallPost {
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
 }
 
-.gridSquare {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
+.wallPostHead {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 46px;
-  color: #fff;
+  align-items: baseline;
+  gap: 7px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--hair);
+}
+
+.wallPostAuthor {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fb-blue);
+}
+
+.wallPostMeta {
+  font-size: 10px;
+  color: #6a7186;
+}
+
+.wallPostText {
+  margin: 8px 0;
+  font-size: 12px;
+  color: #21395f;
+}
+
+.wallPostPhoto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
   border: 1px solid var(--hair);
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.12);
 }
 
-.gridSlot {
+/* 16:9 because that is what BOTH clips actually contain — clip-1 only reports
+   368x400 because it carries baked-in black bars. The aspect is a constant, so
+   the frame is laid out correctly on first paint and never reflows when video
+   metadata lands (a late reflow inside a pinned ScrollTrigger fights its
+   measurements). See the note in src/lib/media.ts. */
+.wallVideoFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0d1220;
+  border: 1px solid var(--hair);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+/* The poster and the video MUST share these two rules. The poster is the clip's
+   own first frame at full source size, so an identical cover + object-position
+   is what makes the switch to playback invisible — and what crops clip-1's dead
+   bars off both. `--focus` is set per clip on .wallVideoFrame. */
+.wallVideo,
+.wallVideoPoster {
   position: absolute;
-  top: 5px;
-  left: 6px;
-  padding: 1px 5px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% var(--focus, 50%);
+  background: #0d1220;
 }
 
-.gridCaption {
-  margin-top: 8px;
-  padding: 3px 9px;
-  font-size: 11px;
-  font-weight: 600;
-  text-align: center;
-  color: #21395f;
-  background: var(--fb-blue-pale);
-  border: 1px solid var(--fb-blue-soft);
+.wallVideoFacade {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
 }
 
-.gridName {
-  margin-top: 5px;
+/* Sits between the still and the play button so white footage (clip-2 is a
+   near-white graphic) cannot swallow the control. A flat gradient, NOT a
+   backdrop-filter: this is over the WebGL canvas, and reading the backdrop back
+   would repaint every frame the canvas does — same rule as .events-era-badge. */
+.wallVideoScrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(9, 14, 28, 0.12) 0%, rgba(9, 14, 28, 0.52) 100%);
+}
+
+.wallVideoFacade:hover .wallVideoPlay {
+  transform: scale(1.08);
+}
+
+.wallVideoPlay {
+  position: relative;
+  display: flex;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.55));
+  transition: transform 0.15s ease-out;
+}
+
+.wallVideoLabel {
+  position: relative;
   font-size: 10px;
-  text-align: center;
-  color: #6a7186;
+  letter-spacing: 0.04em;
+  color: #eaf0ff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 /* -----------------------------------------------------------------------------
@@ -900,13 +888,16 @@
   width: 42px;
   height: 42px;
   flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  color: #fff;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  overflow: hidden;
+  background: #0b0a18;
   border: 1px solid var(--hair);
+}
+
+.miniAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .miniName {
@@ -1185,39 +1176,9 @@
   box-shadow: 0 0 0 1px var(--hair), 3px 3px 0 rgba(0, 0, 0, 0.2);
 }
 
-.detailActions {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.actionBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 5px 8px;
-  border: 1px solid var(--fb-blue-soft);
-  background: linear-gradient(180deg, #ffffff, #eef1f8);
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  color: #21395f;
-  cursor: pointer;
-}
-
-.actionBtn:hover {
-  background: linear-gradient(180deg, #ffffff, #dfe3ee);
-}
-
-.actionPrimary {
-  background: var(--fb-blue);
-  border-color: var(--fb-blue);
-  color: #fff;
-}
-.actionPrimary:hover {
-  background: #34497e;
-}
+/* .detailActions / .actionBtn / .actionPrimary lived here for the Poke,
+   Message and Add to Friends buttons. Those are gone from the profile — see the
+   note in Y2KArchiveSystem.tsx — and so are their rules. */
 
 .socialRow {
   display: flex;
@@ -1426,13 +1387,51 @@
   color: #6a7186;
 }
 
-.groupAvatars {
+/* A named roster instead of a row of anonymous avatars. Wraps rather than
+   scrolling — the largest group is four people, so there is no case where this
+   grows tall enough to need its own scroller. */
+.groupRoster {
   display: flex;
-  gap: 4px;
-  margin-top: 7px;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.groupMember {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 3px;
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.groupMember:hover {
+  background: var(--fb-blue-pale);
+}
+
+.groupMember:hover .groupMemberName {
+  text-decoration: underline;
+}
+
+.groupMemberName {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fb-blue);
+  white-space: nowrap;
+}
+
+.groupMemberRole {
+  font-size: 10px;
+  color: #6a7186;
+  white-space: nowrap;
 }
 
 .groupAvatar {
+  flex: 0 0 auto;
   width: 26px;
   height: 26px;
   display: flex;
@@ -1528,22 +1527,14 @@
   .columns {
     grid-template-columns: 1fr;
   }
-  .bannerTitle {
-    font-size: 22px;
-  }
   .titleText {
     font-size: 11px;
   }
 }
 
-@media (max-width: 520px) {
-  .socialGrid {
-    grid-template-columns: 1fr;
-  }
-  .bannerText {
-    right: 12px;
-  }
-}
+/* The 520px block held only `.socialGrid` (deleted with the Wall grid) and
+   `.bannerText` (deleted with the banner overlay), so it is gone entirely.
+   The banner needs no breakpoint now — its aspect-ratio scales it. */
 
 
 /* ── the club's photo album ───────────────────────────────────────────────

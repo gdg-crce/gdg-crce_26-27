@@ -38,10 +38,16 @@ const SLIDE_MS = 2800;
 const FOLDER = 'Council 2026-27';
 const ADDRESS = `C:\\Documents and Settings\\GDG CRCE\\My Documents\\My Pictures\\${FOLDER}`;
 
-/* The real filename off the CDN, not a synthesised one — the tile caption is
-   meant to read like a folder listing, and these are the actual files. */
-const fileNameFor = (m: CouncilMember) =>
-  decodeURIComponent(m.photo.split('?')[0].split('/').pop() ?? `${m.name}.JPG`);
+/* Captions are the PERSON, never the file.
+
+   This used to decode the real filename off the CDN so the grid read like a
+   folder listing. That worked while every upload happened to be `<name>.JPG`.
+   The 2026-27 set is not: it holds `ll.jpeg`, `souymya.png`, `metha.png` and
+   two raw `Screenshot 2026-08-16 125215.png` exports, so the "listing" was
+   labelling people with a typo of someone else's nickname or with a screenshot
+   timestamp. A caption that is wrong is worse than one that is unstylish —
+   the caption is the only place most of these faces are named. */
+const captionFor = (m: CouncilMember) => m.name;
 
 /* -----------------------------------------------------------------------------
    Icons — 16×16 Luna pictograms. Flat fills, 1px outlines, no soft shadows:
@@ -495,7 +501,7 @@ export default function WindowsPictureViewer({
                         }}
                       />
                     </span>
-                    <span className="xp-pv-tile-name">{fileNameFor(m)}</span>
+                    <span className="xp-pv-tile-name">{captionFor(m)}</span>
                   </button>
                 );
               })}
@@ -505,7 +511,9 @@ export default function WindowsPictureViewer({
               <div className="xp-pv-preview">
                 <div className="xp-pv-photo-shell" style={{ transform: `rotate(${rotation}deg)` }}>
                   <MemberPhoto member={current} className="xp-pv-photo" size="full">
-                    <span className="xp-pv-photo-team">{current.team}</span>
+                    <span className="xp-pv-photo-team">
+                      {current.name} — {current.role}
+                    </span>
                   </MemberPhoto>
                 </div>
               </div>
@@ -520,7 +528,7 @@ export default function WindowsPictureViewer({
                       setIndex(i);
                       setRotation(0);
                     }}
-                    title={fileNameFor(m)}
+                    title={`${m.name} — ${m.role}`}
                   >
                     <MemberPhoto member={m} className="xp-pv-frame-photo" />
                   </button>
@@ -549,15 +557,23 @@ export default function WindowsPictureViewer({
                 <div className="xp-pv-info-preview">
                   <MemberPhoto member={current} className="xp-pv-info-photo" size="full" />
                 </div>
-                <div className="xp-pv-info-file">{fileNameFor(current)}</div>
+                {/* The headline under the preview is the full name and the post
+                    — the two things the pane exists to answer. It used to be
+                    the CDN filename, which named nobody. */}
+                <div className="xp-pv-info-file">{current.name}</div>
+                <div className="xp-pv-info-post">{current.role}</div>
 
                 <dl className="xp-pv-info-fields">
                   <dt>Name</dt>
                   <dd>{current.name}</dd>
                   <dt>Post</dt>
                   <dd>{current.role}</dd>
+                  <dt>Council</dt>
+                  <dd>{current.tier}</dd>
                   <dt>Department</dt>
                   <dd>{current.team}</dd>
+                  <dt>Class</dt>
+                  <dd>{current.branch}</dd>
                 </dl>
 
                 <div className="xp-pv-info-section">About</div>

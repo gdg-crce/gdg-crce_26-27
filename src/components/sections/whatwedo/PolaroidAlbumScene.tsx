@@ -22,6 +22,30 @@ const PAGE_PHOTOS = [
   'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(4).png?tr=f-auto,q-auto',
 ];
 
+/* The final frame — the album's back board, and the shot the deep-dive zoom
+   flies INTO to hand over to the events act.
+
+   Its real pixel size lives here because two places need to agree about it and
+   they were previously allowed to disagree: the <Image> that renders it, and
+   the `targetScale` maths in the frame loop, which works out how far to zoom so
+   the photo exactly covers the viewport at the moment the next section takes
+   over.
+
+   That maths used a hardcoded 9/16 while the artwork has never been 16:9 — the
+   previous file was 2.090:1, this one is 2.196:1. Because the photo is much
+   wider than 16:9, its real height is much smaller than the maths assumed, so
+   the computed scale fell short: measured at 1280×720, 1920×1080 and 1440×900,
+   the photo reached only 81% of the viewport height at the hand-off — a strip
+   of album cover left showing along the top and bottom at the exact moment the
+   events act is supposed to take over. Driving it from the aspect below puts
+   that at 1.000 on every one of those viewports. */
+const FINAL_PHOTO = {
+  src: '/transition/image.png',
+  width: 1915,
+  height: 872,
+};
+const FINAL_PHOTO_ASPECT = FINAL_PHOTO.width / FINAL_PHOTO.height;
+
 /* Flip cascade, in units of `p` (the 0 → 0.80 morph/flip phase remapped to
    0 → 1). FLIP_START clears the opening morph, which owns 0 → 0.20. The
    stagger is whatever is left over once the last leaf's own travel is
@@ -128,8 +152,8 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
       const zoomCurve = zoomP * zoomP * zoomP; // Cubic ease-in for dramatic acceleration
       
       // Calculate precise scale needed to make the image cover the screen (like object-fit: cover)
-      const photoWidth = Math.min(vw * 0.85, 1000); // 85% width, max 1000px
-      const photoHeight = photoWidth * (9 / 16);
+      const photoWidth = Math.min(vw * 0.85, 1000); // 85% width, max 1000px — matches .final-event-photo
+      const photoHeight = photoWidth / FINAL_PHOTO_ASPECT;
       // We perfectly match the max scale to the screen so it aligns flawlessly with the next section without overshooting
       const targetScale = Math.max(vw / photoWidth, vh / photoHeight);
       
@@ -331,7 +355,22 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
                   hero video in the network queue on first paint. The overlay is
                   fixed and full-viewport, so the lazy loader fetches it early
                   regardless — we just stop it competing with the opening. */}
-              <Image src="/transition/event.png" alt="Event" width={1000} height={562} className="final-event-photo" draggable={false} />
+              <Image
+                src={FINAL_PHOTO.src}
+                alt="Event"
+                /* The artwork's real pixels. These were 1000×562 (16:9), which
+                   matched neither this file nor the one before it. It did not
+                   distort anything — the browser lays the box out from the
+                   image's natural aspect regardless, measured at 1000×455
+                   either way — but it reserved the wrong space before the image
+                   decoded, and it was the number someone would reach for when
+                   they needed the aspect. Which is exactly what happened in the
+                   zoom maths below. */
+                width={FINAL_PHOTO.width}
+                height={FINAL_PHOTO.height}
+                className="final-event-photo"
+                draggable={false}
+              />
             </div>
 
             {/* Photo pages. Rendered deepest-first so the DOM order matches the

@@ -59,7 +59,6 @@ export default function WhatWeDoSection() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
   const REVEAL_PX = 800;
-  const shutterPlayedRef = useRef(false);
 
   // Which scene to mount. `mounted` gates the ssr:false scenes until we know the
   // real viewport (no hydration mismatch); `isMobile` picks the 2D camera scene
@@ -92,12 +91,30 @@ export default function WhatWeDoSection() {
       const el = overlayRef.current;
       if (!el || on === activeNow) return;
       activeNow = on;
-      if (!on) {
-        el.style.opacity = '0';
-        el.style.transform = '';
-      }
+      el.style.opacity = on ? '1' : '0';
       el.style.pointerEvents = on ? 'auto' : 'none';
       el.classList.toggle('is-active', on);
+    };
+
+    /* Same shape as the events act: one pure function of progress, reachable
+       from every path that can change where we are.
+
+       This matters more here than anywhere else on the page, because when the
+       album is "on" it is a `position: fixed` overlay at z-index 99990 — the
+       full viewport, above everything. Leave it on by mistake and it does not
+       look like a stuck album; it looks like THE NEXT SECTION FAILED TO LOAD,
+       because the events act is rendering perfectly underneath a white sheet.
+
+       `setActive` was previously only reachable from `onUpdate` and the four
+       enter/leave callbacks. Those cover scrolling, but not a
+       `ScrollTrigger.refresh()` — which re-measures and can restore the scroll
+       position without firing any of them, and which fires on every resize and
+       on late fonts and images. Land in that gap and the overlay keeps whatever
+       state it last had. `setActive` already no-ops when the value has not
+       changed (`on === activeNow`), so calling it from refresh is free. */
+    const applyAlbumState = (progress: number) => {
+      progressRef.current = progress;
+      setActive(progress > 0 && progress < 1);
     };
 
     const trigger = ScrollTrigger.create({
@@ -105,61 +122,77 @@ export default function WhatWeDoSection() {
       // Pin a 0-height sentinel so GSAP uses the section as the scroll region
       // but does NOT push the page down with a pin-spacer of its own.
       pin: sentinelRef.current,
-      pinSpacing: false,
       start: 'top bottom',   // Instant handoff — fires the moment About exits
       end: 'bottom top',     // Extended to scrub perfectly until EventsAndCouncilSection is at top top
-      scrub: 1.5,
-      onUpdate: (self) => {
-        progressRef.current = self.progress;
-        const active = self.progress > 0 && self.progress < 1;
-        setActive(active);
-
-        if (active) {
-          const el = overlayRef.current;
-          if (el) {
-            const isMobile = window.innerWidth < 768;
-            if (isMobile) {
-              let opacity = 1;
-              if (self.progress > 0.88) {
-                opacity = 1 - (self.progress - 0.88) / 0.12;
-              }
-              el.style.opacity = opacity.toFixed(3);
-              el.style.transform = '';
-
-              // Synchronized seam flash fade-out
-              const flashEl = flashRef.current;
-              if (flashEl) {
-                let flashOp = 1;
-                if (self.progress > 0) {
-                  flashOp = 1 - clamp01(self.progress / 0.10);
-                }
-                flashEl.style.opacity = flashOp.toFixed(3);
-              }
-
-              // Play shutter sound exactly once when entering WhatWeDoSection
-              if (self.progress > 0 && self.progress < 0.10 && !shutterPlayedRef.current) {
-                playShutter();
-                shutterPlayedRef.current = true;
-              } else if (self.progress === 0) {
-                shutterPlayedRef.current = false;
-              }
-            } else {
-              // Desktop version uses the original opacity fade
-              let opacity = 1;
-              if (self.progress > 0.90) {
-                opacity = 1 - (self.progress - 0.90) / 0.10;
-              }
-              el.style.opacity = opacity.toFixed(3);
-              el.style.transform = '';
-            }
-          }
-        }
-      },
+      scrub: true,
+      onUpdate: (self) => applyAlbumState(self.progress),
+      onRefresh: (self) => applyAlbumState(self.progress),
       // Also hide on leave so it doesn't persist after scrolling past
       onLeave: () => setActive(false),
       onEnterBack: () => setActive(true),
       onLeaveBack: () => setActive(false),
     });
+
+    applyAlbumState(trigger.progress);
+
+    const getRevealPx = () => (window.innerWidth < 768 ? 500 : REVEAL_PX);
+
+    // ── SEAM FLASH ──────────────────────────────────────────────────────────
+    // The fixed whiteout that masks the About→WhatWeDo hand-off. It lives
+    // OUTSIDE the pinned stage (position:fixed), so it blankets the viewport
+    // across the seam where the two pinned sections swap. Rises to solid white
+    // over the tail of the About turntable, HOLDS white while the sections slide
+    // behind it, then clears once we are pinned — so the lens is revealed
+    // through the flash and never visibly scrolls up.
+    //
+    // Not pinned, and its end is a pixel length, so it scrubs straight through
+    // the seam and on into the start of the pin without touching the pin's own
+    // scrub math. Function start/end re-resolve against innerHeight on refresh.
+    let flashPrev = -1;
+    /* Same treatment as the album overlay above, for the same reason: this is
+       another fixed, full-viewport sheet — and this one is SOLID WHITE at the
+       top of its ramp. Desktop short-circuits it to 0 on the next line so it
+       cannot strand there, but on mobile a refresh landing inside the hold
+       would leave a white screen over the events act with no tick coming to
+       clear it. `playShutter` is deliberately NOT reachable from the refresh
+       path: it is an edge-triggered sound, and re-running it on a re-measure
+       would fire the camera click at nothing. */
+    const applyFlash = (p: number, allowSound: boolean) => {
+        if (window.innerWidth >= 768) {
+          if (flashRef.current) flashRef.current.style.opacity = '0';
+          return;
+        }
+
+        const vh = window.innerHeight;
+        const revealPx = getRevealPx();
+        const total = vh * 1.6 + revealPx;
+        const riseEnd = (vh * 0.6) / total; // solid white by the start of the seam
+        const holdEnd = (vh * 1.6) / total; // hold white until the pin engages
+        let op: number;
+        
+        // Custom ramp function for smooth fading
+        const ramp = (start: number, end: number, val: number) => clamp01((val - start) / (end - start));
+        
+        if (p <= riseEnd) op = ramp(0, riseEnd, p);
+        else if (p <= holdEnd) op = 1;
+        else op = 1 - ramp(holdEnd, 1, p);
+        if (flashRef.current) flashRef.current.style.opacity = op.toFixed(3);
+
+        // shutter click fires once, on the forward crossing into full white
+        if (allowSound && flashPrev >= 0 && flashPrev < riseEnd && p >= riseEnd) playShutter();
+        flashPrev = p;
+    };
+
+    const flash = ScrollTrigger.create({
+      trigger: sectionRef.current,
+      start: () => `top bottom+=${Math.round(window.innerHeight * 0.6)}`,
+      end: () => `+=${Math.round(window.innerHeight * 1.6 + getRevealPx())}`,
+      scrub: 1.5,
+      onUpdate: (self) => applyFlash(self.progress, true),
+      onRefresh: (self) => applyFlash(self.progress, false),
+    });
+
+    applyFlash(flash.progress, false);
 
     // Unlock audio on the first real gesture
     const unlock = () => {
@@ -182,6 +215,11 @@ export default function WhatWeDoSection() {
       window.removeEventListener('wheel', unlock);
       window.removeEventListener('touchstart', unlock);
       trigger.kill();
+      // The seam flash was created and never killed. Every remount — StrictMode
+      // in dev, any HMR edit to this file — left another live ScrollTrigger
+      // behind, each one running its callback on every scroll event for the
+      // rest of the session.
+      flash.kill();
     };
   }, []);
 

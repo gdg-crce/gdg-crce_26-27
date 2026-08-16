@@ -2,8 +2,19 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styles from './Y2KArchiveSystem.module.css';
-import { councilMembers, teamsList, wallPhotos, CouncilMember } from './councilData';
+import {
+  councilMembers,
+  teamsList,
+  departmentsList,
+  membersByTeam,
+  leadOf,
+  wallPhotos,
+  groupPhoto,
+  CouncilMember,
+} from './councilData';
 import MemberPhoto from './MemberPhoto';
+import { COUNCIL_CLIPS } from '@/lib/media';
+import { ik } from '@/lib/imagekit';
 
 /* =============================================================================
    Y2KArchiveSystem
@@ -39,6 +50,16 @@ interface Y2KArchiveSystemProps {
 }
 
 const HOST = 'http://www.GDGFRCRCE.com';
+
+/* The profile's own artwork.
+   Both go through ik(), so they pick up f-auto/q-auto and a width — the logo is
+   a 1600² master and the mini avatar renders it at 42px, which is a 38x
+   over-fetch if it is served raw. The logo's filename has spaces in it;
+   `ik()` runs encodeURI, which is what turns those into %20 to match the
+   uploaded path. */
+const FB_BANNER = ik('/transition/3.png', 'w-1200');
+const FB_LOGO_LG = ik('/transition/WhatsApp Image 2026-08-16 at 3.31.51 PM.jpeg', 'w-256');
+const FB_LOGO_SM = ik('/transition/WhatsApp Image 2026-08-16 at 3.31.51 PM.jpeg', 'w-96');
 
 /* -----------------------------------------------------------------------------
    16-bit pixel-art icons — drawn on a 16px grid with shapeRendering="crispEdges"
@@ -80,15 +101,6 @@ function StarIcon({ size = 16 }: IconProps) {
   return (
     <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
       <polygon points="8,1 10,6 15,6 11,9.5 12.5,15 8,11.5 3.5,15 5,9.5 1,6 6,6" fill="#f2c200" stroke="#b58a00" />
-    </svg>
-  );
-}
-
-function MailIcon({ size = 16 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <rect x="1" y="3" width="14" height="10" fill="#fff" stroke="#5a6b8c" />
-      <polyline points="1,3 8,9 15,3" fill="none" stroke="#5a6b8c" strokeWidth="1.2" />
     </svg>
   );
 }
@@ -152,16 +164,6 @@ function PadlockIcon({ size = 12 }: IconProps) {
   );
 }
 
-function PokeIcon({ size = 13 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <rect x="7" y="2" width="3" height="7" fill="#f4c9a8" stroke="#a9743f" />
-      <rect x="4" y="7" width="9" height="6" rx="1" fill="#f4c9a8" stroke="#a9743f" />
-      <rect x="4" y="7" width="3" height="3" fill="#f4c9a8" stroke="#a9743f" />
-    </svg>
-  );
-}
-
 /* A tiny colored square used as a social-link bullet. */
 function PixelDot({ color, size = 10 }: { color: string; size?: number }) {
   return (
@@ -178,7 +180,14 @@ function PixelDot({ color, size = 10 }: { color: string; size?: number }) {
 const memberById = (id: number): CouncilMember =>
   councilMembers.find((m) => m.id === id) as CouncilMember;
 
-const teams = teamsList.filter((t) => t !== 'All Tracks');
+const teams = departmentsList;
+
+/** Headline figures, counted rather than typed — see the note on `pinnedPeople`. */
+const TOTAL_MEMBERS = councilMembers.length;
+const TOTAL_TEAMS = teams.length;
+
+const seniorCouncil = councilMembers.filter((m) => m.tier === 'Senior Council');
+const juniorCouncil = councilMembers.filter((m) => m.tier === 'Junior Council');
 
 const SOCIAL_META: Record<string, { label: string; color: string }> = {
   github: { label: 'github', color: '#2b2b2b' },
@@ -187,18 +196,142 @@ const SOCIAL_META: Record<string, { label: string; color: string }> = {
   email: { label: 'e-mail', color: '#3b5998' },
 };
 
-const pinnedPeople = [
-  { m: memberById(1), tag: 'LEAD', role: 'Council Lead · System Architect' },
-  { m: memberById(2), tag: 'MASCOT LEAD', role: 'Barkend Dev · Morale Uptime 99.9%' },
-  { m: memberById(3), tag: 'STRATEGY HEAD', role: 'Co-Lead · Community Strategy' },
-];
+/* Pinned People is DERIVED, not hand-listed.
 
-const featuredGrid = [
-  { slot: 'f1', m: memberById(4), caption: 'Tech & Web Lead' },
-  { slot: 'f2', m: memberById(8), caption: 'UI/UX & Creative' },
-  { slot: 'f3', m: memberById(10), caption: 'Events & Ops Lead' },
-  { slot: 'f4', m: memberById(12), caption: 'PR & Outreach Lead' },
-];
+   It used to be a literal array of `memberById(2)` with a caption typed
+   alongside — so the caption and the person it labelled were two independent
+   facts, and reordering the roster silently relabelled the rows. It now reads
+   off the roster's own tier field: the top of the Senior Council, in roster
+   order. Nothing here can disagree with councilData.ts.
+
+   The "Friends · The Wall" 2×2 grid of department leads that used to sit
+   alongside it is gone; the Wall is now actual posts (see `renderWall`). */
+const pinnedPeople = seniorCouncil.slice(0, 3);
+
+/* -----------------------------------------------------------------------------
+   Wall video post — a click-to-play FACADE, not a <video> tag.
+
+   This is the only moving picture on a page that is already stacked on top of a
+   live WebGL scene inside a pinned ScrollTrigger, so the cost model matters more
+   than the markup:
+
+   1. **Nothing is requested until the click.** Before `armed` there is no
+      <video> element in the tree at all — not a hidden one, not one with
+      `preload="none"`. A `preload="none"` element is cheap but not free (the
+      browser still creates a media element and, on some versions, still opens a
+      connection on first layout); no element is actually free. Both clips
+      together are 5.2 MB, and on a visit where nobody presses play that is 0 KB
+      and zero decoder allocations.
+   2. **One clip decodes at a time.** `activeClip` below is module-level on
+      purpose: pressing play on the second post pauses the first. Two <video>
+      elements decoding simultaneously over a running three.js canvas is the
+      specific thing that would drop frames here, and it is exactly what a user
+      does when they want to compare two clips.
+   3. **The poster and the video are the same picture, cropped the same way.**
+      The facade shows the clip's own first frame (see COUNCIL_CLIPS), and both
+      the <img> and the <video> get `object-fit: cover` with the SAME
+      `--focus` object-position. That is what stops the frame sliding or
+      resizing at the instant playback begins — the first video frame lands
+      exactly where the poster already was. It also crops clip-1's baked-in
+      black bars off both, so the placeholder is the footage rather than a
+      letterbox. The frame's aspect is a constant, so it is laid out correctly
+      on first paint and never reflows when metadata arrives — which matters
+      inside a pinned section, where a late reflow fights ScrollTrigger's
+      measurements.
+
+   The <video> also carries `poster`, so on the slower clip the same still holds
+   the frame while the first bytes arrive instead of flashing black.
+
+   `muted` is enforced on the element rather than left to the attribute: React
+   sets `muted` as a DOM property and it is the one media attribute that has
+   historically failed to apply on mount. The clips are meant to be silent.
+   -------------------------------------------------------------------------- */
+
+/** The clip currently playing, so a second play() can pause the first. */
+let activeClip: HTMLVideoElement | null = null;
+
+interface WallVideoPostProps {
+  src: string;
+  poster: string;
+  caption: string;
+  focusY: number;
+}
+
+function WallVideoPost({ src, poster, caption, focusY }: WallVideoPostProps) {
+  const [armed, setArmed] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (armed && videoRef.current) videoRef.current.muted = true;
+  }, [armed]);
+
+  // Never leave a pointer to an unmounted element in the module-level slot.
+  useEffect(() => {
+    const el = videoRef.current;
+    return () => {
+      if (activeClip === el) activeClip = null;
+    };
+  }, [armed]);
+
+  return (
+    <article className={styles.wallPost}>
+      <div className={styles.wallPostHead}>
+        <span className={styles.wallPostAuthor}>GDG on Campus · CRCE</span>
+        <span className={styles.wallPostMeta}>posted a video</span>
+      </div>
+      <p className={styles.wallPostText}>{caption}</p>
+
+      <div
+        className={styles.wallVideoFrame}
+        style={{ ['--focus' as string]: `${(focusY * 100).toFixed(1)}%` }}
+      >
+        {armed ? (
+          <video
+            ref={videoRef}
+            className={styles.wallVideo}
+            src={src}
+            poster={poster}
+            muted
+            playsInline
+            autoPlay
+            controls
+            preload="auto"
+            onPlay={() => {
+              const el = videoRef.current;
+              if (activeClip && activeClip !== el) activeClip.pause();
+              activeClip = el;
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            className={styles.wallVideoFacade}
+            onClick={() => setArmed(true)}
+            aria-label={`Play video: ${caption}`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className={styles.wallVideoPoster}
+              src={poster}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
+            <span className={styles.wallVideoScrim} />
+            <span className={styles.wallVideoPlay}>
+              <svg width="46" height="46" viewBox="0 0 34 34" aria-hidden="true">
+                <circle cx="17" cy="17" r="16" fill="rgba(59,89,152,0.92)" stroke="#fff" strokeWidth="1.5" />
+                <polygon points="13,9 26,17 13,25" fill="#fff" />
+              </svg>
+            </span>
+            <span className={styles.wallVideoLabel}>click to play · no sound</span>
+          </button>
+        )}
+      </div>
+    </article>
+  );
+}
 
 /* -----------------------------------------------------------------------------
    Navigation model
@@ -312,7 +445,9 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
       <div className={styles.memberCardBody}>
         <div className={styles.memberCardName}>{m.name}</div>
         <div className={styles.memberCardRole}>{m.role}</div>
-        <div className={styles.memberCardTeam}>{m.team}</div>
+        <div className={styles.memberCardTeam}>
+          {m.team} · {m.branch}
+        </div>
       </div>
       <span className={styles.memberCardView}>view profile ▸</span>
     </button>
@@ -322,17 +457,26 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
   const renderProfile = () => (
     <>
       <div className={styles.profileHeader}>
-        <div className={styles.banner}>
-          <div className={styles.bannerGrid} />
-          <div className={styles.bannerText}>
-            <div className={styles.bannerTitle}>GDG FR CRCE</div>
-            <div className={styles.bannerSub}>COUNCIL ARCHIVE // 2026</div>
+        {/* The cover art carries its own typography — the GDG mark and
+            "On Campus · Fr. Conceicao Rodrigues College of Engineering" are
+            printed into it. The `bannerGrid` scanline overlay and the
+            `bannerText` title block that used to sit on top are gone: the grid
+            veiled the artwork, and the title landed straight across the logo
+            while repeating what the identity block below already says. */}
+        <div className={styles.banner} style={{ backgroundImage: `url(${FB_BANNER})` }}>
+          {/* The profile photo lives INSIDE the banner now, hanging off its
+              bottom edge, so it stays pinned to that edge whatever height the
+              banner resolves to. It used to be a sibling at a hardcoded
+              `top: 92px`, which only lined up while the banner was locked to
+              150px — and the banner is now sized by the artwork's aspect. */}
+          <div className={styles.profilePhoto}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={FB_LOGO_LG} alt="GDG on Campus CRCE" draggable={false} />
           </div>
           <span className={styles.bannerCursor}>
             <CursorIcon size={22} />
           </span>
         </div>
-        <div className={styles.profilePhoto}>⚡</div>
         <div className={styles.profileIdentity}>
           <div className={styles.identityName}>GDG on Campus · CRCE</div>
           <div className={styles.identityMeta}>
@@ -342,7 +486,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           </div>
           <div className={styles.identityBadges}>
             <span className={styles.badge} onClick={() => go({ view: 'members', team: 'All Tracks' })} role="button">
-              <FolderIcon /> View all {councilMembers.length} members
+              <FolderIcon /> View all {TOTAL_MEMBERS} members
             </span>
             <span className={styles.badge}>
               <FloppyIcon /> Save Profile
@@ -361,7 +505,8 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         </div>
         <div className={styles.acctGrid}>
           <div><span className={styles.acctKey}>Networks:</span> CRCE, Mumbai · GDG on Campus</div>
-          <div><span className={styles.acctKey}>Members:</span> {councilMembers.length} · 5 teams</div>
+          <div><span className={styles.acctKey}>Members:</span> {TOTAL_MEMBERS} · {TOTAL_TEAMS} teams</div>
+          <div><span className={styles.acctKey}>Council:</span> {seniorCouncil.length} senior · {juniorCouncil.length} junior</div>
           <div><span className={styles.acctKey}>Member since:</span> January 2026</div>
           <div><span className={styles.acctKey}>Status:</span> Compiling at 60 FPS</div>
         </div>
@@ -372,23 +517,25 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           <span className={styles.panelTitle}>
             <CursorIcon size={13} /> Pinned People
           </span>
-          <span className={styles.panelMeta}>Core Leadership</span>
+          <span className={styles.panelMeta}>Senior Council</span>
         </div>
         <div className={styles.pinnedList}>
           {pinnedPeople.map((p, i) => (
             <button
               type="button"
-              key={p.m.id}
+              key={p.id}
               className={styles.pinnedRow}
-              onClick={() => go({ view: 'member', memberId: p.m.id })}
+              onClick={() => go({ view: 'member', memberId: p.id })}
             >
               <span className={styles.pinNum}>{String(i + 1).padStart(2, '0')}</span>
-              <MemberPhoto member={p.m} className={styles.pinnedPhoto} />
+              <MemberPhoto member={p} className={styles.pinnedPhoto} />
               <div className={styles.pinnedInfo}>
-                <div className={styles.pinnedName}>{p.m.name}</div>
-                <div className={styles.pinnedRole}>{p.role}</div>
+                <div className={styles.pinnedName}>{p.name}</div>
+                <div className={styles.pinnedRole}>
+                  {p.role} · {p.branch}
+                </div>
               </div>
-              <span className={styles.pinnedTag}>{p.tag}</span>
+              <span className={styles.pinnedTag}>SENIOR</span>
             </button>
           ))}
         </div>
@@ -414,24 +561,43 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         </div>
       </section>
 
+      {/* The Wall — actual posts. This replaced a 2×2 grid of department leads
+          that duplicated Pinned People directly above it and the members
+          directory one click away. */}
       <section className={styles.panel}>
         <div className={styles.panelHead}>
           <span className={styles.panelTitle}>
-            <FolderIcon size={13} /> Friends · The Wall
+            <CursorIcon size={13} /> The Wall
           </span>
-          <span className={styles.panelMeta} onClick={() => go({ view: 'members', team: 'All Tracks' })} role="button">
-            See All ({councilMembers.length})
-          </span>
+          <span className={styles.panelMeta}>{1 + COUNCIL_CLIPS.length} posts</span>
         </div>
-        <div className={styles.socialGrid}>
-          {featuredGrid.map((g) => (
-            <button type="button" key={g.slot} className={styles.gridCell} onClick={() => go({ view: 'member', memberId: g.m.id })}>
-              <MemberPhoto member={g.m} className={styles.gridSquare}>
-                <span className={styles.gridSlot}>{g.slot}</span>
-              </MemberPhoto>
-              <div className={styles.gridCaption}>{g.caption}</div>
-              <div className={styles.gridName}>{g.m.name}</div>
-            </button>
+
+        <div className={styles.wallPosts}>
+          <article className={styles.wallPost}>
+            <div className={styles.wallPostHead}>
+              <span className={styles.wallPostAuthor}>GDG on Campus · CRCE</span>
+              <span className={styles.wallPostMeta}>wrote on the wall</span>
+            </div>
+            <p className={styles.wallPostText}>{groupPhoto.caption}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className={styles.wallPostPhoto}
+              src={groupPhoto.src}
+              alt={groupPhoto.caption}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
+          </article>
+
+          {COUNCIL_CLIPS.map((clip) => (
+            <WallVideoPost
+              key={clip.src}
+              src={clip.src}
+              poster={clip.poster}
+              caption={clip.caption}
+              focusY={clip.focusY}
+            />
           ))}
         </div>
       </section>
@@ -482,17 +648,10 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         <div className={styles.detailTop}>
           <div className={styles.detailLeft}>
             <MemberPhoto member={m} className={styles.detailAvatar} />
-            <div className={styles.detailActions}>
-              <button type="button" className={styles.actionBtn}>
-                <PokeIcon /> Poke
-              </button>
-              <button type="button" className={styles.actionBtn}>
-                <MailIcon size={13} /> Message
-              </button>
-              <button type="button" className={`${styles.actionBtn} ${styles.actionPrimary}`}>
-                + Add to Friends
-              </button>
-            </div>
+            {/* No Poke / Message / Add to Friends row. They were period-correct
+                set dressing, but they are buttons on a real person's page that
+                do nothing when pressed — the profile is an archive card, not an
+                account someone can be contacted through. */}
             <SocialLinks m={m} />
           </div>
 
@@ -501,7 +660,8 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div className={styles.detailRole}>{m.role}</div>
             <div className={styles.detailMetaRow}>
               <span className={styles.teamBadge}>{m.team}</span>
-              <span className={styles.detailMeta}>Member since Jan 2026</span>
+              <span className={styles.detailMeta}>{m.branch}</span>
+              <span className={styles.detailMeta}>{m.tier}</span>
               <span className={styles.detailMeta}>
                 <span className={styles.onlineDot} /> online now
               </span>
@@ -510,9 +670,10 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div className={styles.dPanel}>
               <div className={styles.dPanelHead}>Account Info</div>
               <div className={styles.dPanelBody}>
-                <div><span className={styles.acctKey}>Featured Track:</span> {m.trackTitle}</div>
-                <div><span className={styles.acctKey}>Track Length:</span> {m.duration}</div>
+                <div><span className={styles.acctKey}>Post:</span> {m.role}</div>
+                <div><span className={styles.acctKey}>Council:</span> {m.tier}</div>
                 <div><span className={styles.acctKey}>Team:</span> {m.team}</div>
+                <div><span className={styles.acctKey}>Class:</span> {m.branch}</div>
               </div>
             </div>
 
@@ -522,7 +683,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             </div>
 
             <div className={styles.dPanel}>
-              <div className={styles.dPanelHead}>Tech Stack</div>
+              <div className={styles.dPanelHead}>Groups</div>
               <div className={styles.dPanelBody}>
                 <div className={styles.techChips}>
                   {m.techStack.map((t) => (
@@ -573,7 +734,8 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
       </div>
       <div className={styles.groupList}>
         {teams.map((t) => {
-          const members = councilMembers.filter((m) => m.team === t);
+          const members = membersByTeam(t);
+          const lead = leadOf(t);
           return (
             <div key={t} className={styles.groupItem}>
               <span className={styles.groupIcon}>
@@ -581,10 +743,29 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
               </span>
               <div className={styles.groupInfo}>
                 <div className={styles.groupName}>{t}</div>
-                <div className={styles.groupCount}>{members.length} members</div>
-                <div className={styles.groupAvatars}>
-                  {members.slice(0, 6).map((m) => (
-                    <MemberPhoto key={m.id} member={m} className={styles.groupAvatar} title={m.name} />
+                <div className={styles.groupCount}>
+                  {members.length} {members.length === 1 ? 'member' : 'members'}
+                  {/* Events, Social Media and Outreach have no Senior Council
+                      post on the roster, so this line reports that instead of
+                      inventing one. */}
+                  {lead ? ` · led by ${lead.name} (${lead.role})` : ' · junior-run'}
+                </div>
+                {/* Names, not just faces. A row of unlabelled 24px avatars told
+                    you a group had six people and nothing about who they were,
+                    which is the one thing a directory owes you. */}
+                <div className={styles.groupRoster}>
+                  {members.map((m) => (
+                    <button
+                      type="button"
+                      key={m.id}
+                      className={styles.groupMember}
+                      onClick={() => go({ view: 'member', memberId: m.id })}
+                      title={`${m.name} — ${m.role} · ${m.branch}`}
+                    >
+                      <MemberPhoto member={m} className={styles.groupAvatar} />
+                      <span className={styles.groupMemberName}>{m.name}</span>
+                      <span className={styles.groupMemberRole}>{m.role}</span>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -614,7 +795,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div><span className={styles.acctKey}>Networks:</span> CRCE, Mumbai</div>
             <div><span className={styles.acctKey}>Member since:</span> January 2026</div>
             <div><span className={styles.acctKey}>Contact:</span> council@gdgfrcrce.com</div>
-            <div><span className={styles.acctKey}>Registered:</span> {councilMembers.length} members</div>
+            <div><span className={styles.acctKey}>Registered:</span> {TOTAL_MEMBERS} members</div>
             <div><span className={styles.acctKey}>Screen name:</span> gdg_crce_2026</div>
           </div>
         </div>
@@ -768,7 +949,10 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
               {/* Left rail: mini profile + quick links + period ad */}
               <aside className={styles.sidebar}>
                 <div className={styles.miniProfile}>
-                  <div className={styles.miniAvatar}>⚡</div>
+                  <div className={styles.miniAvatar}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={FB_LOGO_SM} alt="" draggable={false} />
+                  </div>
                   <div>
                     <div className={styles.miniName}>GDG · CRCE</div>
                     <div className={styles.miniStatus}>

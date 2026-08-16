@@ -1,3 +1,22 @@
+/* ── Replacing framer-motion ──────────────────────────────────────────────
+   See the note at the top of Preloader.tsx for why the library went.
+
+   The loader's own entrance fade is NOT reproduced here, on purpose. It was
+   `initial={{opacity:0}} → animate={{opacity:1}}` over 500ms, and it ran
+   between the page background (#0a0807) and the loader's first layer (#080706)
+   — two shades of near-black. Nobody has ever seen it.
+
+   It also had a failure mode worth being rid of: an entrance that starts at
+   opacity 0 leaves the very first thing on screen INVISIBLE for as long as the
+   animation fails to advance. Measured in a backgrounded tab, a CSS animation
+   sits at `playState: running` with `currentTime: 0` indefinitely — so the
+   element holds its `from` keyframe and the site looks broken rather than slow.
+   No entrance animation means the loader is simply there, which is the correct
+   degradation for a loading screen.
+
+   The boot screen's exit stays, because that one is visible (black panel over
+   the film strip) and it is a TRANSITION rather than an animation — if it never
+   runs the element just holds its current opacity, which is on-screen. */
 .xp-boot-screen {
   position: fixed;
   inset: 0;
@@ -11,6 +30,18 @@
   color: white;
   user-select: none;
   cursor: wait;
+  opacity: 1;
+  transition: opacity 400ms ease-in-out;
+}
+
+/* Set the instant the assets are ready; the element unmounts 420ms later. */
+.xp-boot-screen.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-boot-screen { transition-duration: 1ms; }
 }
 
 .xp-center-content {
