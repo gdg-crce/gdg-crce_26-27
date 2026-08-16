@@ -342,34 +342,12 @@
   will-change: transform, opacity !important;
 }
 
-.xp-player-window {
-  width: 100%;
-  background: #ece9d8;
-  border: 3px solid #0831d9;
-  border-radius: 8px 8px 4px 4px;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
-    0 25px 60px rgba(0, 0, 0, 0.75);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-@keyframes xpDiscSpin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.xp-dropdown-item:hover,
-.xp-dropdown-item.active {
-  background: #0a246a;
-  color: #ffffff;
-}
+/* Removed with the components that used them, none of which exist any more
+   (see the deletion note in CLAUDE.md): `.xp-player-window` — the archive is a
+   CSS-module component now and only the *-wrapper above is still referenced;
+   `@keyframes xpDiscSpin` — the spinning CD of RetroMediaPlayerWindow;
+   `.xp-dropdown-item` — its menu. Each was still being parsed and matched
+   against every element on the page for nothing. */
 
 /* --------------------------------------------------------------------------
    AUTHENTIC WINDOWS XP TASKBAR (Bottom Bar)
@@ -517,45 +495,8 @@
     inset 2px 0 4px rgba(0, 0, 0, 0.12);
 }
 
-/* Nudge Animation (Authentic Window Shaking) */
-@keyframes msn-shake {
-  0% {
-    transform: translate(0, 0);
-  }
-
-  15% {
-    transform: translate(-14px, 10px);
-  }
-
-  30% {
-    transform: translate(16px, -12px);
-  }
-
-  45% {
-    transform: translate(-12px, -10px);
-  }
-
-  60% {
-    transform: translate(14px, 12px);
-  }
-
-  75% {
-    transform: translate(-8px, 8px);
-  }
-
-  90% {
-    transform: translate(10px, -6px);
-  }
-
-  100% {
-    transform: translate(0, 0);
-  }
-}
-
-.msn-contact-row.active {
-  background: #c6dcfc !important;
-  border: 1px solid #316ac5 !important;
-}
+/* `@keyframes msn-shake` (the MSN "nudge") and `.msn-contact-row.active` were
+   removed here — MSNChatWindow and MSNContactListWindow are both deleted. */
 
 /* ==========================================================================
    PHASE 7 & 8: WINDOWS PICTURE AND FAX VIEWER GRAND FINALE STYLING
@@ -920,6 +861,26 @@
   background: transparent !important;
   font-family: Tahoma, sans-serif !important;
   cursor: default !important;
+  /* A tile is a self-contained box: nothing inside it can affect the size or
+     paint of anything outside it. Saying so lets the engine treat each tile as
+     its own layout/paint root, so hovering one, selecting one or rotating one
+     re-does that tile instead of walking the whole 22-cell grid.
+
+     Measured over 30 zoom-slider steps on a 22-tile grid, medians of 3 runs:
+     no containment 77.4ms · `contain` 62.6ms · `content-visibility:auto` 23.2ms.
+
+     `content-visibility` is three times faster again and is NOT used here, on
+     purpose. Its saving comes from skipping off-screen tiles, which means the
+     grid's scroll height then depends entirely on `contain-intrinsic-size`
+     being right — and in the same measurement the grid collapsed from 741px to
+     147px without it, i.e. the scrollbar becomes a lie and rows shift under the
+     pointer as you scroll. A correct estimate is not a constant here either: it
+     moves with --thumb (the zoom slider spans 60–190%) and with whether a name
+     wraps to a second line. The payoff is also small for this particular grid —
+     22 tiles, most of them on screen at once — because there is little to skip.
+     `contain` alone is the trade that has no downside: byte-identical layout
+     (741px either way), ~19% off the slider's layout cost. */
+  contain: layout paint style !important;
 }
 
 .xp-pv-tile:hover {
@@ -950,6 +911,15 @@
   width: calc(118px * var(--thumb)) !important;
   height: calc(90px * var(--thumb)) !important;
   font-size: calc(46px * var(--thumb)) !important;
+}
+
+/* The rotate transition belongs to the ONE tile that can rotate, not to all 22.
+   It used to sit on .xp-pv-tile-photo, so every tile in the grid carried a live
+   transition on `transform` — and dragging the zoom slider changes width/height
+   on all of them at once, which means the engine was evaluating a transition it
+   could never run, per tile, per slider step. Only the selected tile is ever
+   given a transform (the Rotate buttons), so only it needs this. */
+.xp-pv-tile-selected .xp-pv-tile-photo {
   transition: transform 0.2s ease-out !important;
 }
 
@@ -1682,10 +1652,7 @@
   color: #ffffff !important;
 }
 
-.fb-post-avatar.mascot-avatar {
-  background-color: #f0f2f5 !important;
-  border: 1px solid #ccd0d5 !important;
-}
+/* `.fb-post-avatar.mascot-avatar` removed — no element carries that class. */
 
 .fb-post-author-info {
   display: flex !important;

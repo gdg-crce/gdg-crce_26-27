@@ -124,6 +124,22 @@ export default function EventsAndCouncilSection({
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
+  /* Read by the scroll callback instead of the state value.
+
+     This flag used to be a dependency of the effect that builds the pinned
+     ScrollTrigger, so clicking the taskbar's .avi button KILLED the pin and
+     built a new one — mid-scroll, halfway through an 14.5k-pixel pin. A pinned
+     ScrollTrigger re-measures the document and re-applies its pin spacer on
+     creation, so tearing one down while the user is inside it can shift the
+     scroll position under them and leaves every layer holding whatever inline
+     styles the old instance last wrote, with no tick scheduled to correct them.
+     That is a good candidate for "coming back up from the council, the events
+     section sometimes doesn't show".
+
+     The trigger is now built exactly once per layout mode. The toggle writes
+     here and calls ScrollTrigger.update(), which re-runs the callback below
+     against the live flag — same result, no teardown. */
+  const isEventsMinimizedRef = useRef(false);
   /**
    * The act's coarse phase — NOT its scroll progress.
    *
@@ -172,8 +188,10 @@ export default function EventsAndCouncilSection({
   const handleToggleEventsMinimize = useCallback(() => {
     setIsEventsMinimized((prev) => {
       const next = !prev;
-      // Force ScrollTrigger to apply the changes without waiting for a scroll event
-      setTimeout(() => ScrollTrigger.update(), 50);
+      // The callback reads the ref, so update it here rather than waiting for
+      // the render+effect round trip, then re-run the callback against it.
+      isEventsMinimizedRef.current = next;
+      ScrollTrigger.update();
       return next;
     });
   }, []);
@@ -373,7 +391,7 @@ export default function EventsAndCouncilSection({
               }
             };
 
-            if (isEventsMinimized || p >= MINIMIZE_END) {
+            if (isEventsMinimizedRef.current || p >= MINIMIZE_END) {
               eventsWindowRef.current.style.opacity = '0';
               eventsWindowRef.current.style.pointerEvents = 'none';
             } else if (p < DWELL_END) {
@@ -401,6 +419,24 @@ export default function EventsAndCouncilSection({
               eventsWindowRef.current.style.pointerEvents = 'none';
               showChrome(true);
             }
+
+            /* The archive and the gallery already do this; this layer did not,
+               and it is the one that sits ON TOP of the archive (z-index 40 vs
+               30). `opacity: 0` hides a thing but leaves it in the hit-test, so
+               the only thing stopping a full-screen invisible pane from eating
+               every click on TheFacebook window was the inline pointer-events
+               written on the line above — and `.xp-events-transition-window`
+               sets `pointer-events: auto` in CSS, so any path that reaches this
+               phase without a scroll tick having written that inline style
+               leaves the pane live. That is the "cursor goes to a plain arrow
+               and nothing on the Facebook page is clickable" bug.
+
+               `visibility: hidden` is the robust form: it removes the subtree
+               from hit-testing outright, so a child re-enabling pointer-events
+               cannot bring it back. It also stops the browser painting and
+               compositing the whole 3D window while it is not on screen. */
+            eventsWindowRef.current.style.visibility =
+              parseFloat(eventsWindowRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
           }
 
           /* ── Phase 5 -> Phase 7: Student Council TheFacebook Archive Window (0.48 -> 0.96) ── */
@@ -503,7 +539,10 @@ export default function EventsAndCouncilSection({
         trigger.kill();
       };
     }
-  }, [isEventsMinimized, isMobile, mounted, shutdownDrawRef]);
+    // `isEventsMinimized` is deliberately NOT a dependency — see the note on
+    // isEventsMinimizedRef. Rebuilding a pinned trigger mid-scroll is the bug,
+    // not the fix.
+  }, [isMobile, mounted, shutdownDrawRef]);
 
 
   if (mounted && isMobile) {
