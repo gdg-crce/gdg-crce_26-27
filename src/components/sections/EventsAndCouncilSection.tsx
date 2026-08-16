@@ -307,14 +307,40 @@ export default function EventsAndCouncilSection({
         }
       };
     } else {
-      // Desktop ScrollTrigger (identically preserved)
-      const trigger = ScrollTrigger.create({
-        trigger: sectionRef.current,
-        pin: containerRef.current,
-        start: 'top top',
-        end: `+=${PIN_LEN}`,
-        scrub: 0.8,
-        onUpdate: (self) => {
+      /* THE SINGLE SOURCE OF TRUTH FOR WHAT IS ON SCREEN.
+         ─────────────────────────────────────────────────────────────────────
+         Everything this act shows — the events window's opacity, visibility and
+         transform, the archive, the picture viewer, the camera's position along
+         the wall — lives ONLY as inline styles written from here. Nothing else
+         in the component ever writes them.
+
+         That used to be `onUpdate`'s body, and being reachable ONLY from
+         `onUpdate` is what made the section intermittently come up blank. The
+         DOM was correct only if a scroll tick had happened to fire at the
+         current position; arrive any other way and the elements kept whatever
+         the LAST tick wrote. If that was somewhere in the council, the events
+         window is still sitting at `opacity: 0; visibility: hidden` — a section
+         that "doesn't load".
+
+         There are several ways in with no tick, which is why it was rare rather
+         than never, and why it hit entering from the album AND reversing back
+         from the council:
+
+           · ScrollTrigger.refresh() — fired by a resize, a late font or image,
+             and explicitly on a 150ms timer below. A refresh rebuilds the pin
+             and can restore the scroll position without producing an update.
+           · the pin being created or rebuilt at all.
+           · the browser restoring a scroll position on reload.
+           · a fast scroll that crosses the trigger's whole active range between
+             two ticks — exactly the "sometimes, on a quick move" case.
+
+         The body was already a pure function of progress — every branch sets
+         every property it touches, and the two guarded bits (`phase`, the HUD
+         text) compare before writing — so it is safe and idempotent to call as
+         often as we like. It now runs on refresh and once at setup as well.
+         This costs nothing per frame: it is the same code on the same tick, plus
+         a handful of discrete calls. */
+      const applyProgress = (progress: number) => {
           /* One clock, two rulers.
              `px` is the position along the whole pin. `p` re-normalises it onto
              the council choreography so every threshold below is still a
@@ -322,7 +348,7 @@ export default function EventsAndCouncilSection({
              1 for the gallery hold and the shutdown, which is precisely what
              leaves the Picture and Fax Viewer open and motionless underneath
              them instead of still fading in while the screen goes dark. */
-          const px = self.progress * PIN_LEN;
+          const px = progress * PIN_LEN;
           const p = Math.min(1, px / ACT3_LEN);
 
           // 0 walking · 1 dwelling on the last poster · 2 windowed · 3 minimized
@@ -527,8 +553,24 @@ export default function EventsAndCouncilSection({
             const sp = (px - ACT3_LEN - GALLERY_HOLD) / SHUTDOWN_LEN;
             shutdownDrawRef.current?.(Math.min(1, Math.max(0, sp)));
           }
-        },
+      };
+
+      const trigger = ScrollTrigger.create({
+        trigger: sectionRef.current,
+        pin: containerRef.current,
+        start: 'top top',
+        end: `+=${PIN_LEN}`,
+        scrub: 0.8,
+        onUpdate: (self) => applyProgress(self.progress),
+        /* The fix for the blank section. A refresh re-measures and can restore
+           the scroll position without ever producing an update tick, so without
+           this the DOM keeps the styles from wherever the user last WAS. */
+        onRefresh: (self) => applyProgress(self.progress),
       });
+
+      /* And once now, so the section is correct from the moment the trigger
+         exists rather than from the first time the user happens to move. */
+      applyProgress(trigger.progress);
 
       const timeout = setTimeout(() => {
         ScrollTrigger.refresh();
