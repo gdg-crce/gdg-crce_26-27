@@ -325,9 +325,9 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
     gsap.registerPlugin(ScrollTrigger);
 
     const trigger = ScrollTrigger.create({
-      trigger: '#mobile-council',
-      start: 'bottom top',
-      end: () => `bottom+=${MOBILE_SCROLL_LEN} top`,
+      trigger: spacer,
+      start: 'top top',
+      end: 'bottom bottom',
       scrub: true,
       // The spacer sits after a long normal-flow feed whose height is not known
       // until its images have laid out.
@@ -338,18 +338,28 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
     // Use ResizeObserver to refresh ScrollTrigger dynamically when images or content changes layout heights
     let resizeObserver: ResizeObserver | null = null;
     if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
+      let rafId: number | null = null;
       resizeObserver = new ResizeObserver(() => {
-        ScrollTrigger.refresh();
+        // Debounce to avoid calling refresh on every single pixel change
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          ScrollTrigger.refresh();
+        });
       });
       resizeObserver.observe(document.body);
     }
 
-    const refreshTimeout = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 200);
+    // Multiple staggered refreshes to catch images that load at different times
+    const t1 = setTimeout(() => ScrollTrigger.refresh(), 300);
+    const t2 = setTimeout(() => ScrollTrigger.refresh(), 1000);
+    const t3 = setTimeout(() => ScrollTrigger.refresh(), 3000);
+    const t4 = setTimeout(() => ScrollTrigger.refresh(), 6000);
 
     return () => {
-      clearTimeout(refreshTimeout);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }

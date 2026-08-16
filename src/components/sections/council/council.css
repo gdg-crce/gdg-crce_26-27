@@ -1413,6 +1413,8 @@
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
+  -webkit-overflow-scrolling: touch !important;
+  scroll-behavior: smooth !important;
 }
 
 /* Sticky Header styling */

@@ -179,13 +179,13 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const containerWidth = containerRect.width;
 
           // Safe space for header navbar (starts around 50px on mobile)
-          const topOffset = Math.max(50, containerHeight * 0.08);
-          const availableHeight = containerHeight - topOffset - 16;
+          const topOffset = 20;
+          const availableHeight = containerHeight - topOffset - 8;
 
           // Base height required is roughly:
-          // Title (40) + Gap (20) + Camera height (405.4) - Overlap (100) + Ejected photo height (432)
-          // = 40 + 20 + 405.4 - 100 + 432 = 797.4px
-          const baseGroupHeight = 800;
+          // Title (32) + Gap (8) + Camera height (405) - Overlap (160) + Ejected photo height (432)
+          // ≈ 717px
+          const baseGroupHeight = 720;
           const heightScale = availableHeight / baseGroupHeight;
           
           // Width fit: photo width is 340px. With side padding, base is 380px
@@ -194,8 +194,8 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           // Determine the scale factor (clamp it to prevent elements from becoming infinitely large)
           const scale = Math.max(0.2, Math.min(1.0, Math.min(heightScale, widthScale)));
 
-          const titleHeight = 40 * scale;
-          const gap = 20 * scale;
+          const titleHeight = 32 * scale;
+          const gap = 8 * scale;
 
           // Scaled camera dimensions
           const cameraWidth = 270 * scale;
@@ -229,8 +229,8 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           // Scaled height is 0.4 * photoHeight.
           const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
-          // Resting center of fully ejected polaroids (overlapping the camera body to move them upwards)
-          const restingCenterY = cameraTop + cameraHeight - 100 * scale + photoHeight / 2;
+          // Resting center of fully ejected polaroids (overlapping the camera body significantly to move them upwards)
+          const restingCenterY = cameraTop + cameraHeight - 160 * scale + photoHeight / 2;
 
           // photos: stack on top of each other fanned out
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {

@@ -65,7 +65,7 @@ const ARM_LEN = 748;
  */
 const TONEARM_IMG_W = 960;
 const TONEARM_IMG_H = TONEARM_IMG_W * (1024 / 1536);
-const TONEARM_RAW_PIVOT_X = 319; 
+const TONEARM_RAW_PIVOT_X = 319;
 const TONEARM_RAW_PIVOT_Y = 460;
 const TONEARM_X = PIVOT_X - (TONEARM_RAW_PIVOT_X / 1536) * TONEARM_IMG_W;
 const TONEARM_Y = PIVOT_Y - (TONEARM_RAW_PIVOT_Y / 1024) * TONEARM_IMG_H;
@@ -292,7 +292,7 @@ export default function AboutSection() {
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      
+
       const isMobileDevice = (vw < vh) || (vw < 768) || (vh < 500);
       const widthChanged = vw !== lastWidth;
       const heightChangedSignificant = Math.abs(vh - lastHeight) > 120;
@@ -464,7 +464,7 @@ export default function AboutSection() {
         // on — see SEAM_MATCH. On mobile, we scale the stage directly to avoid
         // performance-tearing fixed container rescales on Android.
         const push = 1 + ramp(SEAM_PUSH_START, 1, playP) * (SEAM_MATCH - 1);
-        
+
         pin.style.transform = `scale(${push.toFixed(5)})`;
         const isMobile = window.innerWidth < 768;
         if (isMobile) {
@@ -496,7 +496,7 @@ export default function AboutSection() {
     const setSpinAngle = (angleVal: number) => {
       const angleStr = `${angleVal.toFixed(1)}deg`;
       stage?.style.setProperty('--spin', angleStr);
-      
+
       const disc = stage?.querySelector('.tt-disc') as HTMLElement | null;
       if (disc) disc.style.transform = `rotate(${angleStr})`;
 
@@ -698,7 +698,7 @@ export default function AboutSection() {
               rotated about (146, 84) from the scroll callback. */}
           <svg className="tt-hardware" viewBox="0 0 1600 900" fill="none" aria-hidden="true">
             <g ref={armRef} className="tt-arm-swing">
-              <image 
+              <image
                 href={ik('/record player/toneram.png')}
                 x={TONEARM_X.toFixed(1)}
                 y={TONEARM_Y.toFixed(1)}
