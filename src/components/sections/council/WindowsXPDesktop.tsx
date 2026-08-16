@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { departmentsList } from './councilData';
 
 interface WindowsXPDesktopProps {
   activeTeamIndex: number;
@@ -34,38 +35,38 @@ export default function WindowsXPDesktop({
     return () => clearInterval(interval);
   }, []);
 
+  /* Shortcut labels are short for the 74px icon caption; the `team` beside each
+     is the real Department string.
+
+     Those two were once independent: the shortcuts read 'Tech & Web',
+     'UI/UX & Design', 'Events & Ops', 'PR & Outreach' and 'Core Leadership',
+     none of which was ever a value of Department. `onSelectTeam` fed them
+     straight into `m.team === selectedTeam`, so every one of those five icons
+     filtered the gallery to nothing and opened "This folder is empty." The list
+     is derived from departmentsList now, which makes that class of drift
+     impossible — a renamed department renames its shortcut. */
+  const SHORT_LABEL: Record<string, string> = {
+    'Design & Creatives': 'Design',
+    'Public Relations': 'PR & Comms',
+    'Social Media': 'Social',
+  };
+
   const desktopIcons = [
-    {
-      label: 'My Computer',
-      team: 'All Tracks',
-      svg: <Image src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" width={34} height={34} sizes="34px" />,
-    },
-    {
-      label: 'Core Council',
-      team: 'Core Leadership',
-      svg: <Image src="/about.webp" className="xp-desktop-icon-svg" alt="About" width={34} height={34} sizes="34px" />,
-    },
-    {
-      label: 'Tech & Web',
-      team: 'Tech & Web',
-      svg: <Image src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" width={34} height={34} sizes="34px" />,
-    },
-    {
-      label: 'UI/UX Design',
-      team: 'UI/UX & Design',
-      svg: <Image src="/about.webp" className="xp-desktop-icon-svg" alt="About" width={34} height={34} sizes="34px" />,
-    },
-    {
-      label: 'Events & Ops',
-      team: 'Events & Ops',
-      svg: <Image src="/contact.webp" className="xp-desktop-icon-svg" alt="Contact" width={34} height={34} sizes="34px" />,
-    },
-    {
-      label: 'PR Outreach',
-      team: 'PR & Outreach',
-      svg: <Image src="/about.webp" className="xp-desktop-icon-svg" alt="About" width={34} height={34} sizes="34px" />,
-    },
-  ];
+    { label: 'My Computer', team: 'All Tracks' },
+    ...departmentsList.map((team) => ({ label: SHORT_LABEL[team] ?? team, team })),
+  ].map((item, i) => ({
+    ...item,
+    svg: (
+      <Image
+        src={i % 2 === 0 ? '/contact.webp' : '/about.webp'}
+        className="xp-desktop-icon-svg"
+        alt=""
+        width={34}
+        height={34}
+        sizes="34px"
+      />
+    ),
+  }));
 
   return (
     <div className="xp-desktop-canvas">

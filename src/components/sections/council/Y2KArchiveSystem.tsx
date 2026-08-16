@@ -2,7 +2,15 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styles from './Y2KArchiveSystem.module.css';
-import { councilMembers, teamsList, wallPhotos, CouncilMember } from './councilData';
+import {
+  councilMembers,
+  teamsList,
+  departmentsList,
+  membersByTeam,
+  leadOf,
+  wallPhotos,
+  CouncilMember,
+} from './councilData';
 import MemberPhoto from './MemberPhoto';
 
 /* =============================================================================
@@ -84,15 +92,6 @@ function StarIcon({ size = 16 }: IconProps) {
   );
 }
 
-function MailIcon({ size = 16 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <rect x="1" y="3" width="14" height="10" fill="#fff" stroke="#5a6b8c" />
-      <polyline points="1,3 8,9 15,3" fill="none" stroke="#5a6b8c" strokeWidth="1.2" />
-    </svg>
-  );
-}
-
 function FloppyIcon({ size = 14 }: IconProps) {
   return (
     <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
@@ -152,16 +151,6 @@ function PadlockIcon({ size = 12 }: IconProps) {
   );
 }
 
-function PokeIcon({ size = 13 }: IconProps) {
-  return (
-    <svg className={styles.pixel} width={size} height={size} viewBox="0 0 16 16" shapeRendering="crispEdges">
-      <rect x="7" y="2" width="3" height="7" fill="#f4c9a8" stroke="#a9743f" />
-      <rect x="4" y="7" width="9" height="6" rx="1" fill="#f4c9a8" stroke="#a9743f" />
-      <rect x="4" y="7" width="3" height="3" fill="#f4c9a8" stroke="#a9743f" />
-    </svg>
-  );
-}
-
 /* A tiny colored square used as a social-link bullet. */
 function PixelDot({ color, size = 10 }: { color: string; size?: number }) {
   return (
@@ -178,7 +167,14 @@ function PixelDot({ color, size = 10 }: { color: string; size?: number }) {
 const memberById = (id: number): CouncilMember =>
   councilMembers.find((m) => m.id === id) as CouncilMember;
 
-const teams = teamsList.filter((t) => t !== 'All Tracks');
+const teams = departmentsList;
+
+/** Headline figures, counted rather than typed — see the note on `pinnedPeople`. */
+const TOTAL_MEMBERS = councilMembers.length;
+const TOTAL_TEAMS = teams.length;
+
+const seniorCouncil = councilMembers.filter((m) => m.tier === 'Senior Council');
+const juniorCouncil = councilMembers.filter((m) => m.tier === 'Junior Council');
 
 const SOCIAL_META: Record<string, { label: string; color: string }> = {
   github: { label: 'github', color: '#2b2b2b' },
@@ -187,18 +183,23 @@ const SOCIAL_META: Record<string, { label: string; color: string }> = {
   email: { label: 'e-mail', color: '#3b5998' },
 };
 
-const pinnedPeople = [
-  { m: memberById(1), tag: 'LEAD', role: 'Council Lead · System Architect' },
-  { m: memberById(2), tag: 'MASCOT LEAD', role: 'Barkend Dev · Morale Uptime 99.9%' },
-  { m: memberById(3), tag: 'STRATEGY HEAD', role: 'Co-Lead · Community Strategy' },
-];
+/* Pinned People and the Wall grid are DERIVED, not hand-listed.
 
-const featuredGrid = [
-  { slot: 'f1', m: memberById(4), caption: 'Tech & Web Lead' },
-  { slot: 'f2', m: memberById(8), caption: 'UI/UX & Creative' },
-  { slot: 'f3', m: memberById(10), caption: 'Events & Ops Lead' },
-  { slot: 'f4', m: memberById(12), caption: 'PR & Outreach Lead' },
-];
+   Both used to be literal arrays of `memberById(2)` with a caption typed
+   alongside — so the caption and the person it labelled were two independent
+   facts, and reordering the roster silently relabelled four faces. They are now
+   read off the roster's own tier/post fields: the pinned rows are the top of the
+   Senior Council in roster order, and the Wall grid is the four department
+   leads. Nothing here can disagree with councilData.ts. */
+const pinnedPeople = seniorCouncil.slice(0, 3);
+
+const FEATURED_TEAMS = ['Technical', 'Design & Creatives', 'Marketing', 'Public Relations'] as const;
+
+const featuredGrid = FEATURED_TEAMS.map((team, i) => ({
+  slot: `f${i + 1}`,
+  m: leadOf(team) ?? membersByTeam(team)[0],
+  caption: (leadOf(team) ?? membersByTeam(team)[0]).role,
+})).filter((g) => Boolean(g.m));
 
 /* -----------------------------------------------------------------------------
    Navigation model
@@ -312,7 +313,9 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
       <div className={styles.memberCardBody}>
         <div className={styles.memberCardName}>{m.name}</div>
         <div className={styles.memberCardRole}>{m.role}</div>
-        <div className={styles.memberCardTeam}>{m.team}</div>
+        <div className={styles.memberCardTeam}>
+          {m.team} · {m.branch}
+        </div>
       </div>
       <span className={styles.memberCardView}>view profile ▸</span>
     </button>
@@ -342,7 +345,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           </div>
           <div className={styles.identityBadges}>
             <span className={styles.badge} onClick={() => go({ view: 'members', team: 'All Tracks' })} role="button">
-              <FolderIcon /> View all {councilMembers.length} members
+              <FolderIcon /> View all {TOTAL_MEMBERS} members
             </span>
             <span className={styles.badge}>
               <FloppyIcon /> Save Profile
@@ -361,7 +364,8 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         </div>
         <div className={styles.acctGrid}>
           <div><span className={styles.acctKey}>Networks:</span> CRCE, Mumbai · GDG on Campus</div>
-          <div><span className={styles.acctKey}>Members:</span> {councilMembers.length} · 5 teams</div>
+          <div><span className={styles.acctKey}>Members:</span> {TOTAL_MEMBERS} · {TOTAL_TEAMS} teams</div>
+          <div><span className={styles.acctKey}>Council:</span> {seniorCouncil.length} senior · {juniorCouncil.length} junior</div>
           <div><span className={styles.acctKey}>Member since:</span> January 2026</div>
           <div><span className={styles.acctKey}>Status:</span> Compiling at 60 FPS</div>
         </div>
@@ -372,23 +376,25 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           <span className={styles.panelTitle}>
             <CursorIcon size={13} /> Pinned People
           </span>
-          <span className={styles.panelMeta}>Core Leadership</span>
+          <span className={styles.panelMeta}>Senior Council</span>
         </div>
         <div className={styles.pinnedList}>
           {pinnedPeople.map((p, i) => (
             <button
               type="button"
-              key={p.m.id}
+              key={p.id}
               className={styles.pinnedRow}
-              onClick={() => go({ view: 'member', memberId: p.m.id })}
+              onClick={() => go({ view: 'member', memberId: p.id })}
             >
               <span className={styles.pinNum}>{String(i + 1).padStart(2, '0')}</span>
-              <MemberPhoto member={p.m} className={styles.pinnedPhoto} />
+              <MemberPhoto member={p} className={styles.pinnedPhoto} />
               <div className={styles.pinnedInfo}>
-                <div className={styles.pinnedName}>{p.m.name}</div>
-                <div className={styles.pinnedRole}>{p.role}</div>
+                <div className={styles.pinnedName}>{p.name}</div>
+                <div className={styles.pinnedRole}>
+                  {p.role} · {p.branch}
+                </div>
               </div>
-              <span className={styles.pinnedTag}>{p.tag}</span>
+              <span className={styles.pinnedTag}>SENIOR</span>
             </button>
           ))}
         </div>
@@ -420,7 +426,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <FolderIcon size={13} /> Friends · The Wall
           </span>
           <span className={styles.panelMeta} onClick={() => go({ view: 'members', team: 'All Tracks' })} role="button">
-            See All ({councilMembers.length})
+            See All ({TOTAL_MEMBERS})
           </span>
         </div>
         <div className={styles.socialGrid}>
@@ -482,17 +488,10 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         <div className={styles.detailTop}>
           <div className={styles.detailLeft}>
             <MemberPhoto member={m} className={styles.detailAvatar} />
-            <div className={styles.detailActions}>
-              <button type="button" className={styles.actionBtn}>
-                <PokeIcon /> Poke
-              </button>
-              <button type="button" className={styles.actionBtn}>
-                <MailIcon size={13} /> Message
-              </button>
-              <button type="button" className={`${styles.actionBtn} ${styles.actionPrimary}`}>
-                + Add to Friends
-              </button>
-            </div>
+            {/* No Poke / Message / Add to Friends row. They were period-correct
+                set dressing, but they are buttons on a real person's page that
+                do nothing when pressed — the profile is an archive card, not an
+                account someone can be contacted through. */}
             <SocialLinks m={m} />
           </div>
 
@@ -501,7 +500,8 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div className={styles.detailRole}>{m.role}</div>
             <div className={styles.detailMetaRow}>
               <span className={styles.teamBadge}>{m.team}</span>
-              <span className={styles.detailMeta}>Member since Jan 2026</span>
+              <span className={styles.detailMeta}>{m.branch}</span>
+              <span className={styles.detailMeta}>{m.tier}</span>
               <span className={styles.detailMeta}>
                 <span className={styles.onlineDot} /> online now
               </span>
@@ -510,9 +510,10 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div className={styles.dPanel}>
               <div className={styles.dPanelHead}>Account Info</div>
               <div className={styles.dPanelBody}>
-                <div><span className={styles.acctKey}>Featured Track:</span> {m.trackTitle}</div>
-                <div><span className={styles.acctKey}>Track Length:</span> {m.duration}</div>
+                <div><span className={styles.acctKey}>Post:</span> {m.role}</div>
+                <div><span className={styles.acctKey}>Council:</span> {m.tier}</div>
                 <div><span className={styles.acctKey}>Team:</span> {m.team}</div>
+                <div><span className={styles.acctKey}>Class:</span> {m.branch}</div>
               </div>
             </div>
 
@@ -522,7 +523,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             </div>
 
             <div className={styles.dPanel}>
-              <div className={styles.dPanelHead}>Tech Stack</div>
+              <div className={styles.dPanelHead}>Groups</div>
               <div className={styles.dPanelBody}>
                 <div className={styles.techChips}>
                   {m.techStack.map((t) => (
@@ -573,7 +574,8 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
       </div>
       <div className={styles.groupList}>
         {teams.map((t) => {
-          const members = councilMembers.filter((m) => m.team === t);
+          const members = membersByTeam(t);
+          const lead = leadOf(t);
           return (
             <div key={t} className={styles.groupItem}>
               <span className={styles.groupIcon}>
@@ -581,10 +583,29 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
               </span>
               <div className={styles.groupInfo}>
                 <div className={styles.groupName}>{t}</div>
-                <div className={styles.groupCount}>{members.length} members</div>
-                <div className={styles.groupAvatars}>
-                  {members.slice(0, 6).map((m) => (
-                    <MemberPhoto key={m.id} member={m} className={styles.groupAvatar} title={m.name} />
+                <div className={styles.groupCount}>
+                  {members.length} {members.length === 1 ? 'member' : 'members'}
+                  {/* Events, Social Media and Outreach have no Senior Council
+                      post on the roster, so this line reports that instead of
+                      inventing one. */}
+                  {lead ? ` · led by ${lead.name} (${lead.role})` : ' · junior-run'}
+                </div>
+                {/* Names, not just faces. A row of unlabelled 24px avatars told
+                    you a group had six people and nothing about who they were,
+                    which is the one thing a directory owes you. */}
+                <div className={styles.groupRoster}>
+                  {members.map((m) => (
+                    <button
+                      type="button"
+                      key={m.id}
+                      className={styles.groupMember}
+                      onClick={() => go({ view: 'member', memberId: m.id })}
+                      title={`${m.name} — ${m.role} · ${m.branch}`}
+                    >
+                      <MemberPhoto member={m} className={styles.groupAvatar} />
+                      <span className={styles.groupMemberName}>{m.name}</span>
+                      <span className={styles.groupMemberRole}>{m.role}</span>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -614,7 +635,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div><span className={styles.acctKey}>Networks:</span> CRCE, Mumbai</div>
             <div><span className={styles.acctKey}>Member since:</span> January 2026</div>
             <div><span className={styles.acctKey}>Contact:</span> council@gdgfrcrce.com</div>
-            <div><span className={styles.acctKey}>Registered:</span> {councilMembers.length} members</div>
+            <div><span className={styles.acctKey}>Registered:</span> {TOTAL_MEMBERS} members</div>
             <div><span className={styles.acctKey}>Screen name:</span> gdg_crce_2026</div>
           </div>
         </div>

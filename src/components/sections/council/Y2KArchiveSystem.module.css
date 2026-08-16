@@ -1185,39 +1185,9 @@
   box-shadow: 0 0 0 1px var(--hair), 3px 3px 0 rgba(0, 0, 0, 0.2);
 }
 
-.detailActions {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.actionBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 5px 8px;
-  border: 1px solid var(--fb-blue-soft);
-  background: linear-gradient(180deg, #ffffff, #eef1f8);
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  color: #21395f;
-  cursor: pointer;
-}
-
-.actionBtn:hover {
-  background: linear-gradient(180deg, #ffffff, #dfe3ee);
-}
-
-.actionPrimary {
-  background: var(--fb-blue);
-  border-color: var(--fb-blue);
-  color: #fff;
-}
-.actionPrimary:hover {
-  background: #34497e;
-}
+/* .detailActions / .actionBtn / .actionPrimary lived here for the Poke,
+   Message and Add to Friends buttons. Those are gone from the profile — see the
+   note in Y2KArchiveSystem.tsx — and so are their rules. */
 
 .socialRow {
   display: flex;
@@ -1432,7 +1402,51 @@
   margin-top: 7px;
 }
 
+/* A named roster instead of a row of anonymous avatars. Wraps rather than
+   scrolling — the largest group is four people, so there is no case where this
+   grows tall enough to need its own scroller. */
+.groupRoster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.groupMember {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 3px;
+  background: #fff;
+  border: 1px solid var(--fb-blue-soft);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.groupMember:hover {
+  background: var(--fb-blue-pale);
+}
+
+.groupMember:hover .groupMemberName {
+  text-decoration: underline;
+}
+
+.groupMemberName {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fb-blue);
+  white-space: nowrap;
+}
+
+.groupMemberRole {
+  font-size: 10px;
+  color: #6a7186;
+  white-space: nowrap;
+}
+
 .groupAvatar {
+  flex: 0 0 auto;
   width: 26px;
   height: 26px;
   display: flex;
