@@ -49,3 +49,40 @@
  */
 
 export const HERO_VIDEO_SRC = '/videos/a.mp4';
+
+/**
+ * The two council clips on TheFacebook wall (Y2KArchiveSystem).
+ *
+ * Unlike the hero, these are NOT preloaded and NOT part of the critical path.
+ * They are behind a click-to-play facade: nothing is requested until the user
+ * presses play, so their combined 5.2 MB costs exactly zero bytes on a visit
+ * where nobody clicks. That is the entire reason they can live inside Act 3 at
+ * all — the archive window sits over a running WebGL scene, and a second video
+ * decoding uninvited is precisely the kind of thing that costs frames there.
+ *
+ * Verified before shipping (boxes parsed, not assumed — there is no ffmpeg on
+ * this machine):
+ *
+ *              bytes      codecs        pixels    aspect   duration   bitrate
+ *   clip-1   1,329,064    avc1 + mp4a   368x400   0.920    10.2s      ~1.04 Mbps
+ *   clip-2   4,158,791    avc1 + mp4a   848x478   1.774    26.7s      ~1.25 Mbps
+ *
+ * `moov` sits before `mdat` in both, i.e. they are already faststart, so
+ * playback begins after the first few KB rather than after the whole file.
+ * H.264/AAC, so they decode in every current browser. There is nothing to gain
+ * from re-encoding them and no transcode step to keep working; drop
+ * replacements at these same paths and nothing else changes.
+ *
+ * Note the two aspects: one is nearly square and one is 16:9. That is why the
+ * wall renders them into a FIXED 4:3 frame with `object-fit: contain` instead
+ * of sizing to the source — sizing to the source would reflow the page twice,
+ * differently, as each clip's metadata arrived.
+ *
+ * They arrived as `WhatsApp Video 2026-08-15 at 11.07.08 PM.mp4` and friends.
+ * The spaces and dots made for URLs that need encoding at every call site, so
+ * they were renamed once, here, where the rename is recorded.
+ */
+export const COUNCIL_CLIPS = [
+  { src: '/videos/facebookVideo/clip-1.mp4', caption: 'council, off the clock' },
+  { src: '/videos/facebookVideo/clip-2.mp4', caption: 'behind the scenes' },
+] as const;

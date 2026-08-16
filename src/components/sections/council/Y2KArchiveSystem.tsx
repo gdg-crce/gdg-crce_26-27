@@ -9,9 +9,11 @@ import {
   membersByTeam,
   leadOf,
   wallPhotos,
+  groupPhoto,
   CouncilMember,
 } from './councilData';
 import MemberPhoto from './MemberPhoto';
+import { COUNCIL_CLIPS } from '@/lib/media';
 
 /* =============================================================================
    Y2KArchiveSystem
@@ -183,23 +185,113 @@ const SOCIAL_META: Record<string, { label: string; color: string }> = {
   email: { label: 'e-mail', color: '#3b5998' },
 };
 
-/* Pinned People and the Wall grid are DERIVED, not hand-listed.
+/* Pinned People is DERIVED, not hand-listed.
 
-   Both used to be literal arrays of `memberById(2)` with a caption typed
+   It used to be a literal array of `memberById(2)` with a caption typed
    alongside — so the caption and the person it labelled were two independent
-   facts, and reordering the roster silently relabelled four faces. They are now
-   read off the roster's own tier/post fields: the pinned rows are the top of the
-   Senior Council in roster order, and the Wall grid is the four department
-   leads. Nothing here can disagree with councilData.ts. */
+   facts, and reordering the roster silently relabelled the rows. It now reads
+   off the roster's own tier field: the top of the Senior Council, in roster
+   order. Nothing here can disagree with councilData.ts.
+
+   The "Friends · The Wall" 2×2 grid of department leads that used to sit
+   alongside it is gone; the Wall is now actual posts (see `renderWall`). */
 const pinnedPeople = seniorCouncil.slice(0, 3);
 
-const FEATURED_TEAMS = ['Technical', 'Design & Creatives', 'Marketing', 'Public Relations'] as const;
+/* -----------------------------------------------------------------------------
+   Wall video post — a click-to-play FACADE, not a <video> tag.
 
-const featuredGrid = FEATURED_TEAMS.map((team, i) => ({
-  slot: `f${i + 1}`,
-  m: leadOf(team) ?? membersByTeam(team)[0],
-  caption: (leadOf(team) ?? membersByTeam(team)[0]).role,
-})).filter((g) => Boolean(g.m));
+   This is the only moving picture on a page that is already stacked on top of a
+   live WebGL scene inside a pinned ScrollTrigger, so the cost model matters more
+   than the markup:
+
+   1. **Nothing is requested until the click.** Before `armed` there is no
+      <video> element in the tree at all — not a hidden one, not one with
+      `preload="none"`. A `preload="none"` element is cheap but not free (the
+      browser still creates a media element and, on some versions, still opens a
+      connection on first layout); no element is actually free. Both clips
+      together are 5.2 MB, and on a visit where nobody presses play that is 0 KB
+      and zero decoder allocations.
+   2. **One clip decodes at a time.** `activeClip` below is module-level on
+      purpose: pressing play on the second post pauses the first. Two <video>
+      elements decoding simultaneously over a running three.js canvas is the
+      specific thing that would drop frames here, and it is exactly what a user
+      does when they want to compare two clips.
+   3. **The box never resizes.** The facade and the video occupy the same fixed
+      4:3 frame with the video `object-fit: contain` inside it. These are phone
+      clips of unknown orientation, so anything that sized itself to the source
+      would shift the whole page layout the moment metadata arrived — mid-scroll,
+      inside a pinned section, which would fight ScrollTrigger's measurements.
+      Letterboxing into a known box costs nothing and cannot reflow.
+
+   `muted` is enforced on the element rather than left to the attribute: React
+   sets `muted` as a DOM property and it is the one media attribute that has
+   historically failed to apply on mount. The clips are meant to be silent.
+   -------------------------------------------------------------------------- */
+
+/** The clip currently playing, so a second play() can pause the first. */
+let activeClip: HTMLVideoElement | null = null;
+
+function WallVideoPost({ src, caption }: { src: string; caption: string }) {
+  const [armed, setArmed] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (armed && videoRef.current) videoRef.current.muted = true;
+  }, [armed]);
+
+  // Never leave a pointer to an unmounted element in the module-level slot.
+  useEffect(() => {
+    const el = videoRef.current;
+    return () => {
+      if (activeClip === el) activeClip = null;
+    };
+  }, [armed]);
+
+  return (
+    <article className={styles.wallPost}>
+      <div className={styles.wallPostHead}>
+        <span className={styles.wallPostAuthor}>GDG on Campus · CRCE</span>
+        <span className={styles.wallPostMeta}>posted a video</span>
+      </div>
+      <p className={styles.wallPostText}>{caption}</p>
+
+      <div className={styles.wallVideoFrame}>
+        {armed ? (
+          <video
+            ref={videoRef}
+            className={styles.wallVideo}
+            src={src}
+            muted
+            playsInline
+            autoPlay
+            controls
+            preload="auto"
+            onPlay={() => {
+              const el = videoRef.current;
+              if (activeClip && activeClip !== el) activeClip.pause();
+              activeClip = el;
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            className={styles.wallVideoFacade}
+            onClick={() => setArmed(true)}
+            aria-label={`Play video: ${caption}`}
+          >
+            <span className={styles.wallVideoPlay}>
+              <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+                <circle cx="17" cy="17" r="16" fill="#3b5998" stroke="#1d2f5c" />
+                <polygon points="13,9 26,17 13,25" fill="#fff" />
+              </svg>
+            </span>
+            <span className={styles.wallVideoLabel}>click to play · no sound</span>
+          </button>
+        )}
+      </div>
+    </article>
+  );
+}
 
 /* -----------------------------------------------------------------------------
    Navigation model
@@ -420,24 +512,37 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
         </div>
       </section>
 
+      {/* The Wall — actual posts. This replaced a 2×2 grid of department leads
+          that duplicated Pinned People directly above it and the members
+          directory one click away. */}
       <section className={styles.panel}>
         <div className={styles.panelHead}>
           <span className={styles.panelTitle}>
-            <FolderIcon size={13} /> Friends · The Wall
+            <CursorIcon size={13} /> The Wall
           </span>
-          <span className={styles.panelMeta} onClick={() => go({ view: 'members', team: 'All Tracks' })} role="button">
-            See All ({TOTAL_MEMBERS})
-          </span>
+          <span className={styles.panelMeta}>{1 + COUNCIL_CLIPS.length} posts</span>
         </div>
-        <div className={styles.socialGrid}>
-          {featuredGrid.map((g) => (
-            <button type="button" key={g.slot} className={styles.gridCell} onClick={() => go({ view: 'member', memberId: g.m.id })}>
-              <MemberPhoto member={g.m} className={styles.gridSquare}>
-                <span className={styles.gridSlot}>{g.slot}</span>
-              </MemberPhoto>
-              <div className={styles.gridCaption}>{g.caption}</div>
-              <div className={styles.gridName}>{g.m.name}</div>
-            </button>
+
+        <div className={styles.wallPosts}>
+          <article className={styles.wallPost}>
+            <div className={styles.wallPostHead}>
+              <span className={styles.wallPostAuthor}>GDG on Campus · CRCE</span>
+              <span className={styles.wallPostMeta}>wrote on the wall</span>
+            </div>
+            <p className={styles.wallPostText}>{groupPhoto.caption}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className={styles.wallPostPhoto}
+              src={groupPhoto.src}
+              alt={groupPhoto.caption}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
+          </article>
+
+          {COUNCIL_CLIPS.map((clip) => (
+            <WallVideoPost key={clip.src} src={clip.src} caption={clip.caption} />
           ))}
         </div>
       </section>

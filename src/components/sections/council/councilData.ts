@@ -399,6 +399,18 @@ export interface WallPhoto {
   caption: string;
 }
 
+/**
+ * The whole council in one frame — the wall's headline post.
+ *
+ * Kept separate from `wallPhotos` because it is not an album thumbnail: it is
+ * shown large and on its own. 4:3 at source, which is the aspect every other
+ * image box on this page already uses, so it needs no crop.
+ */
+export const groupPhoto = {
+  src: albumPhoto('WhatsApp%20Image%202026-08-16%20at%2012.44.58%20PM.jpeg'),
+  caption: 'all of us together',
+};
+
 export const wallPhotos: WallPhoto[] = [
   { id: 'fb1', src: albumPhoto('facebook1.JPG'), caption: 'the council, assembled' },
   { id: 'fb2', src: albumPhoto('facebook2.JPG'), caption: 'session day' },
