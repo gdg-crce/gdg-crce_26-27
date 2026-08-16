@@ -60,6 +60,103 @@ const GALLERY_HOLD = 900;
 const SHUTDOWN_LEN = 2600;
 const PIN_LEN = ACT3_LEN + GALLERY_HOLD + SHUTDOWN_LEN;
 
+const WHAT_WE_DO_PHOTOS = [
+  {
+    id: 'wwd-1',
+    src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(2).png?tr=f-auto,q-auto',
+    title: 'Community & Collaborative Workshops',
+    tag: 'What We Do',
+    caption: 'Organizing workshops, hackathons, and tech talks that foster innovation and collaboration among tech enthusiasts.',
+  },
+  {
+    id: 'wwd-2',
+    src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(3).png?tr=f-auto,q-auto',
+    title: 'ML & Smart Android Solutions',
+    tag: 'What We Do',
+    caption: 'Building smart mobile applications powered by machine learning, Kotlin, and Google ML Kit.',
+  },
+  {
+    id: 'wwd-3',
+    src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech.png?tr=f-auto,q-auto',
+    title: 'Technical Projects & Open Source',
+    tag: 'What We Do',
+    caption: 'Engineering scalable web, mobile, and cloud solutions built with React, Node.js, Flutter, and modern DevOps.',
+  },
+  {
+    id: 'wwd-4',
+    src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(1).png?tr=f-auto,q-auto',
+    title: 'Content & Educational Resources',
+    tag: 'What We Do',
+    caption: 'Creating engaging technical content and educational resources, making complex topics accessible for everyone.',
+  },
+  {
+    id: 'wwd-5',
+    src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(4).png?tr=f-auto,q-auto',
+    title: 'UI/UX Design & Motion Graphics',
+    tag: 'What We Do',
+    caption: 'Crafting intuitive user interfaces and digital experiences using Figma, Adobe Suite, and design thinking.',
+  },
+  {
+    id: 'fb-1',
+    src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook1.JPG?tr=w-800,q-75,f-auto',
+    title: 'The Council Assembled',
+    tag: 'Council Photo',
+    caption: 'The GDG CRCE 2026-27 Student Council gathered together.',
+  },
+  {
+    id: 'fb-2',
+    src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook2.JPG?tr=w-800,q-75,f-auto',
+    title: 'Session Day & Demos',
+    tag: 'Event Photo',
+    caption: 'Interactive coding demonstrations and student presentations.',
+  },
+  {
+    id: 'fb-3',
+    src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook3.JPG?tr=w-800,q-75,f-auto',
+    title: 'Behind the Scenes',
+    tag: 'Behind The Scenes',
+    caption: 'Sprint sessions, late-night code reviews, and event prep.',
+  },
+  {
+    id: 'fb-4',
+    src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook4.JPG?tr=w-800,q-75,f-auto',
+    title: 'After Event Celebration',
+    tag: 'Team Moments',
+    caption: 'Celebrating another successful workshop with team zoomies.',
+  },
+];
+
+const MOBILE_VIDEOS = [
+  {
+    id: 'vid-1',
+    title: 'GDG CRCE 2026-27 Orientation & Genesis',
+    meta: 'Posted by Sir Harvey York • 1.4k Views • 2:45',
+    desc: 'Zoomies before duties! Watch our annual council orientation and group photo highlights.',
+    thumb: '/preloader/genesis.jpg',
+  },
+  {
+    id: 'vid-2',
+    title: 'Hands-on AI & Machine Learning Workshop',
+    meta: 'Posted by Ananya Iyer • 920 Views • 4:10',
+    desc: 'Live demonstration of building and deploying ML models with TensorFlow and Python.',
+    thumb: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook2.JPG?tr=w-800,q-75,f-auto',
+  },
+  {
+    id: 'vid-3',
+    title: 'Annual Hackathon & Project Showcase',
+    meta: 'Posted by Movin • 2.8k Views • 6:15',
+    desc: 'Students showcase innovative projects built over 24 hours of non-stop coding.',
+    thumb: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook1.JPG?tr=w-800,q-75,f-auto',
+  },
+  {
+    id: 'vid-4',
+    title: 'UI/UX & 3D Motion Design Showcase',
+    meta: 'Posted by Sneha Kulkarni • 680 Views • 3:30',
+    desc: 'Creating high-fidelity 3D assets and responsive interfaces in Figma and Spline.',
+    thumb: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook3.JPG?tr=w-800,q-75,f-auto',
+  },
+];
+
 export interface EventsAndCouncilSectionProps {
   /**
    * ShutdownTransition parks its draw function here.
@@ -144,6 +241,11 @@ export default function EventsAndCouncilSection({
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [fixedHeight, setFixedHeight] = useState<string>('100vh');
+
+  /* Mobile Council Facebook Profile Navigation Tabs & Modal States */
+  const [mobileTab, setMobileTab] = useState<'posts' | 'about' | 'videos' | 'photos'>('posts');
+  const [selectedPhoto, setSelectedPhoto] = useState<{ src: string; title: string; tag: string; caption: string } | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<{ title: string; meta: string; desc: string; thumb: string } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -609,182 +711,392 @@ export default function EventsAndCouncilSection({
 
             {/* Profile Navigation Tabs (Posts, About, Videos, Photos) */}
             <div className="fb-profile-tabs-menu">
-              <span className="fb-tab-item active">Posts</span>
-              <span className="fb-tab-item">About</span>
-              <span className="fb-tab-item">Videos</span>
-              <span className="fb-tab-item">Photos</span>
+              <button
+                type="button"
+                className={`fb-tab-item ${mobileTab === 'posts' ? 'active' : ''}`}
+                onClick={() => setMobileTab('posts')}
+              >
+                Posts
+              </button>
+              <button
+                type="button"
+                className={`fb-tab-item ${mobileTab === 'about' ? 'active' : ''}`}
+                onClick={() => setMobileTab('about')}
+              >
+                About
+              </button>
+              <button
+                type="button"
+                className={`fb-tab-item ${mobileTab === 'videos' ? 'active' : ''}`}
+                onClick={() => setMobileTab('videos')}
+              >
+                Videos
+              </button>
+              <button
+                type="button"
+                className={`fb-tab-item ${mobileTab === 'photos' ? 'active' : ''}`}
+                onClick={() => setMobileTab('photos')}
+              >
+                Photos
+              </button>
             </div>
           </div>
           <div className="fb-header-divider" />
         </div>
 
-        {/* Scrollable post feed */}
+        {/* Scrollable feed / tab container */}
         <div className="fb-feed-container">
-          {/* Post 1: Welcome post from GDG CRCE */}
-          <div className="fb-post-card pinned-post">
-            {/* Post Header */}
-            <div className="fb-post-header">
-              <div className="fb-post-avatar page-avatar">
-                <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
-              </div>
-              <div className="fb-post-author-info">
-                <span className="fb-post-author-name">
-                  GDG CRCE
-                  <span className="fb-verified-badge-small">✓</span>
-                </span>
-                <span className="fb-post-meta">Posted by Sir Harvey York • Pinned Post • 🌐</span>
-              </div>
-            </div>
+          {/* TAB 1: POSTS */}
+          {mobileTab === 'posts' && (
+            <>
+              {/* Post 1: Welcome post from GDG CRCE */}
+              <div className="fb-post-card pinned-post">
+                {/* Post Header */}
+                <div className="fb-post-header">
+                  <div className="fb-post-avatar page-avatar">
+                    <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
+                  </div>
+                  <div className="fb-post-author-info">
+                    <span className="fb-post-author-name">
+                      GDG CRCE
+                      <span className="fb-verified-badge-small">✓</span>
+                    </span>
+                    <span className="fb-post-meta">Posted by Sir Harvey York • Pinned Post • 🌐</span>
+                  </div>
+                </div>
 
-            {/* Post content */}
-            <div className="fb-post-content">
-              <p className="fb-post-text">
-                Zoomies before duties. Paws-ing for a group photo before we start building! 🐾
-              </p>
-            </div>
+                {/* Post content */}
+                <div className="fb-post-content">
+                  <p className="fb-post-text">
+                    Zoomies before duties. Paws-ing for a group photo before we start building! 🐾
+                  </p>
+                </div>
 
-            {/* Attached Photo */}
-            <div className="fb-post-media-container">
-              <Image src="/preloader/genesis.jpg" className="fb-post-img" alt="Genesis Welcome" width={1280} height={960} sizes="(max-width: 600px) 100vw, 500px" />
-            </div>
+                {/* Attached Photo */}
+                <div className="fb-post-media-container">
+                  <Image src="/preloader/genesis.jpg" className="fb-post-img" alt="Genesis Welcome" width={1280} height={960} sizes="(max-width: 600px) 100vw, 500px" />
+                </div>
 
-            {/* Reactions summary */}
-            <div className="fb-post-reactions-bar">
-              <div className="fb-reaction-icons">
-                <span className="reaction-bubble blue-bubble">👍</span>
-                <span className="reaction-bubble red-bubble">❤️</span>
-              </div>
-              <span className="fb-reaction-text">You, Movin and 87 others</span>
-            </div>
+                {/* Reactions summary */}
+                <div className="fb-post-reactions-bar">
+                  <div className="fb-reaction-icons">
+                    <span className="reaction-bubble blue-bubble">👍</span>
+                    <span className="reaction-bubble red-bubble">❤️</span>
+                  </div>
+                  <span className="fb-reaction-text">You, Movin and 87 others</span>
+                </div>
 
-            {/* Post Action Buttons */}
-            <div className="fb-post-actions">
-              <button type="button" className="fb-action-btn">
-                <span className="btn-icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
-                  </svg>
-                </span>
-                Like
-              </button>
-              <div className="fb-action-separator" />
-              <button type="button" className="fb-action-btn">
-                <span className="btn-icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                </span>
-                Comment
-              </button>
-              <div className="fb-action-separator" />
-              <button type="button" className="fb-action-btn">
-                <span className="btn-icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
-                    <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
-                  </svg>
-                </span>
-                Share
-              </button>
-            </div>
+                {/* Post Action Buttons */}
+                <div className="fb-post-actions">
+                  <button type="button" className="fb-action-btn">
+                    <span className="btn-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
+                      </svg>
+                    </span>
+                    Like
+                  </button>
+                  <div className="fb-action-separator" />
+                  <button type="button" className="fb-action-btn">
+                    <span className="btn-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                    </span>
+                    Comment
+                  </button>
+                  <div className="fb-action-separator" />
+                  <button type="button" className="fb-action-btn">
+                    <span className="btn-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
+                        <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
+                      </svg>
+                    </span>
+                    Share
+                  </button>
+                </div>
 
-            {/* Comments block */}
-            <div className="fb-comments-section">
-              <div className="fb-comment-item">
-                <span className="comment-avatar">💻</span>
-                <div className="comment-bubble">
-                  <span className="comment-author">Movin</span>
-                  <span className="comment-text">Barkend Developer looks good! 🐶</span>
+                {/* Comments block */}
+                <div className="fb-comments-section">
+                  <div className="fb-comment-item">
+                    <span className="comment-avatar">💻</span>
+                    <div className="comment-bubble">
+                      <span className="comment-author">Movin</span>
+                      <span className="comment-text">Barkend Developer looks good! 🐶</span>
+                    </div>
+                  </div>
+                  <div className="fb-comment-item">
+                    <span className="comment-avatar">🐶</span>
+                    <div className="comment-bubble">
+                      <span className="comment-author">Sir Harvey York</span>
+                      <span className="comment-text">Woof! 🐾</span>
+                    </div>
+                  </div>
+                  
+                  {/* Comment Input Box */}
+                  <div className="fb-comment-input-row">
+                    <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
+                    <span className="comment-camera-icon">📷</span>
+                  </div>
                 </div>
               </div>
-              <div className="fb-comment-item">
-                <span className="comment-avatar">🐶</span>
-                <div className="comment-bubble">
-                  <span className="comment-author">Sir Harvey York</span>
-                  <span className="comment-text">Woof! 🐾</span>
+
+              {/* Loop over actual council members */}
+              {councilMembers.map((member) => (
+                <div key={member.id} className="fb-post-card">
+                  {/* Post Header */}
+                  <div className="fb-post-header">
+                    <MemberPhoto member={member} className="fb-post-avatar" />
+                    <div className="fb-post-author-info">
+                      <span className="fb-post-author-name">{member.name}</span>
+                      <span className="fb-post-meta">{member.role} • 2 hrs ago • 👥</span>
+                    </div>
+                  </div>
+
+                  {/* Post content */}
+                  <div className="fb-post-content">
+                    <p className="fb-post-text">{member.quote}</p>
+                  </div>
+
+                  {/* Attached Member Photo Card */}
+                  <div className="fb-post-media-container">
+                    <MemberPhoto member={member} className="fb-post-member-card" size="full" />
+                  </div>
+
+                  {/* Reactions summary */}
+                  <div className="fb-post-reactions-bar">
+                    <div className="fb-reaction-icons">
+                      <span className="reaction-bubble blue-bubble">👍</span>
+                      <span className="reaction-bubble yellow-bubble">😊</span>
+                    </div>
+                    <span className="fb-reaction-text">Liked by Sir Harvey York and 42 others</span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="fb-post-actions">
+                    <button type="button" className="fb-action-btn">
+                      <span className="btn-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
+                        </svg>
+                      </span>
+                      Like
+                    </button>
+                    <div className="fb-action-separator" />
+                    <button type="button" className="fb-action-btn">
+                      <span className="btn-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                      </span>
+                      Comment
+                    </button>
+                    <div className="fb-action-separator" />
+                    <button type="button" className="fb-action-btn">
+                      <span className="btn-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
+                          <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
+                        </svg>
+                      </span>
+                      Share
+                    </button>
+                  </div>
+
+                  {/* Comments Input */}
+                  <div className="fb-comments-section">
+                    <div className="fb-comment-input-row">
+                      <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
+                      <span className="comment-camera-icon">📷</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {/* Buffer gap to ensure the 25th council member scrolls completely out of the viewport before shutdown starts */}
+              <div className="mobile-council-end-buffer" style={{ height: '110vh', width: '100%', pointerEvents: 'none' }} />
+            </>
+          )}
+
+          {/* TAB 2: ABOUT */}
+          {mobileTab === 'about' && (
+            <div className="fb-about-container">
+              <div className="fb-about-card">
+                <h3 className="fb-about-card-title">About GDG CRCE</h3>
+                <div className="fb-about-row">
+                  <span className="fb-about-icon">🎓</span>
+                  <div>
+                    <strong>Google Developer Groups on Campus — CRCE</strong>
+                    <p style={{ margin: '4px 0 0', color: '#65676b', fontSize: '12.5px' }}>
+                      Official student developer community at Fr. Conceicao Rodrigues College of Engineering, Bandra, Mumbai.
+                    </p>
+                  </div>
+                </div>
+                <div className="fb-about-row">
+                  <span className="fb-about-icon">🎯</span>
+                  <div>
+                    <strong>Our Mission</strong>
+                    <p style={{ margin: '4px 0 0', color: '#65676b', fontSize: '12.5px' }}>
+                      Empowering students to build real-world software, master cloud technologies, design intuitive UI/UX, and contribute to open source.
+                    </p>
+                  </div>
+                </div>
+                <div className="fb-about-row">
+                  <span className="fb-about-icon">📍</span>
+                  <div>
+                    <strong>Location</strong>
+                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12.5px' }}>
+                      Fr. Conceicao Rodrigues College of Engineering, Father Agnel Ashram, Bandra West, Mumbai 400050.
+                    </p>
+                  </div>
                 </div>
               </div>
-              
-              {/* Comment Input Box */}
-              <div className="fb-comment-input-row">
-                <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
-                <span className="comment-camera-icon">📷</span>
+
+              <div className="fb-about-card">
+                <h3 className="fb-about-card-title">Council Tracks & Domains</h3>
+                <div className="fb-about-row">
+                  <span className="fb-about-icon">💻</span>
+                  <div>
+                    <strong>Technical Track</strong>
+                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                      React, Next.js, Node.js, Python, TensorFlow, Kotlin & GCP.
+                    </p>
+                  </div>
+                </div>
+                <div className="fb-about-row">
+                  <span className="fb-about-icon">🎨</span>
+                  <div>
+                    <strong>Design Track</strong>
+                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                      UI/UX Interfaces, Figma Prototyping, 3D Assets & Branding.
+                    </p>
+                  </div>
+                </div>
+                <div className="fb-about-row">
+                  <span className="fb-about-icon">📸</span>
+                  <div>
+                    <strong>Social Media Track</strong>
+                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                      Content Creation, Video Editing & Digital Community Engagement.
+                    </p>
+                  </div>
+                </div>
+                <div className="fb-about-row">
+                  <span className="fb-about-icon">📣</span>
+                  <div>
+                    <strong>Outreach Track</strong>
+                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                      Sponsorships, Public Relations & Speaker Management.
+                    </p>
+                  </div>
+                </div>
+                <div className="fb-about-row">
+                  <span className="fb-about-icon">⭐</span>
+                  <div>
+                    <strong>Core Executive Team</strong>
+                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                      Strategic Direction, Hackathon Operations & Event Execution.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: VIDEOS */}
+          {mobileTab === 'videos' && (
+            <div className="fb-video-container">
+              {MOBILE_VIDEOS.map((vid) => (
+                <div key={vid.id} className="fb-video-card">
+                  <div
+                    className="fb-video-thumbnail-wrap"
+                    onClick={() => setSelectedVideo(vid)}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={vid.thumb} alt={vid.title} />
+                    <div className="fb-video-play-badge">▶</div>
+                  </div>
+                  <div className="fb-video-info">
+                    <h4 className="fb-video-title">{vid.title}</h4>
+                    <div className="fb-video-meta">{vid.meta}</div>
+                    <p className="fb-video-desc">{vid.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* TAB 4: PHOTOS */}
+          {mobileTab === 'photos' && (
+            <div className="fb-photos-container">
+              <div className="fb-photos-header">
+                <span>What We Do & Gallery Photos ({WHAT_WE_DO_PHOTOS.length})</span>
+              </div>
+              <div className="fb-photos-grid">
+                {WHAT_WE_DO_PHOTOS.map((ph) => (
+                  <div
+                    key={ph.id}
+                    className="fb-photo-card"
+                    onClick={() => setSelectedPhoto(ph)}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={ph.src} alt={ph.title} />
+                    <span className="fb-photo-tag">{ph.tag}</span>
+                    <div className="fb-photo-title-bar">{ph.title}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* PHOTO LIGHTBOX MODAL */}
+        {selectedPhoto && (
+          <div className="fb-photo-modal-overlay" onClick={() => setSelectedPhoto(null)}>
+            <div className="fb-photo-modal-content" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="fb-photo-modal-close"
+                onClick={() => setSelectedPhoto(null)}
+                aria-label="Close photo"
+              >
+                ✕
+              </button>
+              <div className="fb-photo-modal-img-wrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={selectedPhoto.src} alt={selectedPhoto.title} />
+              </div>
+              <div className="fb-photo-modal-meta">
+                <div className="fb-photo-modal-title">{selectedPhoto.title}</div>
+                <div className="fb-photo-modal-caption">{selectedPhoto.caption}</div>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Loop over actual council members */}
-          {councilMembers.map((member) => (
-            <div key={member.id} className="fb-post-card">
-              {/* Post Header */}
-              <div className="fb-post-header">
-                <MemberPhoto member={member} className="fb-post-avatar" />
-                <div className="fb-post-author-info">
-                  <span className="fb-post-author-name">{member.name}</span>
-                  <span className="fb-post-meta">{member.role} • 2 hrs ago • 👥</span>
-                </div>
+        {/* VIDEO PREVIEW MODAL */}
+        {selectedVideo && (
+          <div className="fb-photo-modal-overlay" onClick={() => setSelectedVideo(null)}>
+            <div className="fb-photo-modal-content" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="fb-photo-modal-close"
+                onClick={() => setSelectedVideo(null)}
+                aria-label="Close video"
+              >
+                ✕
+              </button>
+              <div className="fb-video-thumbnail-wrap" style={{ maxHeight: '55vh' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={selectedVideo.thumb} alt={selectedVideo.title} />
+                <div className="fb-video-play-badge">▶</div>
               </div>
-
-              {/* Post content */}
-              <div className="fb-post-content">
-                <p className="fb-post-text">{member.quote}</p>
-              </div>
-
-              {/* Attached Member Photo Card */}
-              <div className="fb-post-media-container">
-                <MemberPhoto member={member} className="fb-post-member-card" size="full" />
-              </div>
-
-              {/* Reactions summary */}
-              <div className="fb-post-reactions-bar">
-                <div className="fb-reaction-icons">
-                  <span className="reaction-bubble blue-bubble">👍</span>
-                  <span className="reaction-bubble yellow-bubble">😊</span>
-                </div>
-                <span className="fb-reaction-text">Liked by Sir Harvey York and 42 others</span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="fb-post-actions">
-                <button type="button" className="fb-action-btn">
-                  <span className="btn-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
-                    </svg>
-                  </span>
-                  Like
-                </button>
-                <div className="fb-action-separator" />
-                <button type="button" className="fb-action-btn">
-                  <span className="btn-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                  </span>
-                  Comment
-                </button>
-                <div className="fb-action-separator" />
-                <button type="button" className="fb-action-btn">
-                  <span className="btn-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
-                      <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
-                    </svg>
-                  </span>
-                  Share
-                </button>
-              </div>
-
-              {/* Comments Input */}
-              <div className="fb-comments-section">
-                <div className="fb-comment-input-row">
-                  <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
-                  <span className="comment-camera-icon">📷</span>
-                </div>
+              <div className="fb-video-info" style={{ background: '#18191a', color: '#e4e6eb' }}>
+                <h4 className="fb-video-title" style={{ color: '#fff' }}>{selectedVideo.title}</h4>
+                <div className="fb-video-meta" style={{ color: '#b0b3b8' }}>{selectedVideo.meta}</div>
+                <p className="fb-video-desc" style={{ color: '#e4e6eb' }}>{selectedVideo.desc}</p>
               </div>
             </div>
-          ))}
-          {/* Buffer gap to ensure the 25th council member scrolls completely out of the viewport before shutdown starts */}
-          <div className="mobile-council-end-buffer" style={{ height: '110vh', width: '100%', pointerEvents: 'none' }} />
-        </div>
+          </div>
+        )}
         </section>
       </div>
     );
