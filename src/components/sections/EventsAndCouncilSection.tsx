@@ -584,8 +584,12 @@ export default function EventsAndCouncilSection({
                     src={evt.posterImage}
                     alt={evt.title}
                     className="mobile-event-image-raw"
-                    width={1179}
-                    height={1579}
+                    /* The artwork's real pixels — 1574² square. These were
+                       1179×1579 for the previous portrait set; leaving them
+                       would declare the wrong intrinsic ratio and reserve a
+                       portrait box for a square image. */
+                    width={1574}
+                    height={1574}
                     sizes="(max-width: 400px) 82vw, 320px"
                     draggable={false}
                   />

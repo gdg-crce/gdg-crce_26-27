@@ -1946,7 +1946,12 @@
   width: 82vw !important;
   max-width: 320px !important;
   height: auto !important;
-  aspect-ratio: 3 / 4 !important;
+  /* Square, because the artwork is: the posters are 1574×1574. This was 3/4,
+     matching the old 1179×1579 portrait set, and `object-fit: cover` on a
+     square image in a 3:4 box crops a quarter of the width off — straight
+     through the event title on most of these designs. Keep this in step with
+     the art; `cover` only stays harmless while the two agree. */
+  aspect-ratio: 1 / 1 !important;
   object-fit: cover !important;
   border-radius: 4px !important;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.85) !important;

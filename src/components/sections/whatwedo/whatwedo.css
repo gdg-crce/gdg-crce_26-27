@@ -416,6 +416,12 @@
   left: 50%;
   width: 85%;
   max-width: 1000px;
+  /* Explicit, though the browser already resolves it this way — measured at
+     1000×455 with or without it. It is here to state the contract: this box is
+     the ARTWORK's aspect, and the deep-dive zoom computes how far to scale from
+     the same number (FINAL_PHOTO_ASPECT in PolaroidAlbumScene). If a future
+     edit pins a height here, that zoom silently stops covering the screen. */
+  height: auto;
   transform: translate(-50%, -50%);
   display: block;
 }
