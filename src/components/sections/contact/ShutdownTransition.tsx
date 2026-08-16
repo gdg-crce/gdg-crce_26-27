@@ -325,9 +325,9 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
     gsap.registerPlugin(ScrollTrigger);
 
     const trigger = ScrollTrigger.create({
-      trigger: spacer,
-      start: 'top top',
-      end: 'bottom bottom',
+      trigger: '#mobile-council',
+      start: 'bottom top',
+      end: () => `bottom+=${MOBILE_SCROLL_LEN} top`,
       scrub: true,
       // The spacer sits after a long normal-flow feed whose height is not known
       // until its images have laid out.
@@ -335,12 +335,24 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       onUpdate: (self) => render(self.progress),
     });
 
+    // Use ResizeObserver to refresh ScrollTrigger dynamically when images or content changes layout heights
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
+      resizeObserver = new ResizeObserver(() => {
+        ScrollTrigger.refresh();
+      });
+      resizeObserver.observe(document.body);
+    }
+
     const refreshTimeout = setTimeout(() => {
       ScrollTrigger.refresh();
     }, 200);
 
     return () => {
       clearTimeout(refreshTimeout);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       trigger.kill();
     };
   }, [mobile, drawRef]);

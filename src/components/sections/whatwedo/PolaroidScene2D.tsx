@@ -183,9 +183,9 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const availableHeight = containerHeight - topOffset - 16;
 
           // Base height required is roughly:
-          // Title (40) + Gap (20) + Camera height (405.4) - Overlap (60) + Ejected photo height (432)
-          // = 40 + 20 + 405.4 - 60 + 432 = 837.4px
-          const baseGroupHeight = 840;
+          // Title (40) + Gap (20) + Camera height (405.4) - Overlap (100) + Ejected photo height (432)
+          // = 40 + 20 + 405.4 - 100 + 432 = 797.4px
+          const baseGroupHeight = 800;
           const heightScale = availableHeight / baseGroupHeight;
           
           // Width fit: photo width is 340px. With side padding, base is 380px
@@ -230,7 +230,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
           // Resting center of fully ejected polaroids (overlapping the camera body to move them upwards)
-          const restingCenterY = cameraTop + cameraHeight - 60 * scale + photoHeight / 2;
+          const restingCenterY = cameraTop + cameraHeight - 100 * scale + photoHeight / 2;
 
           // photos: stack on top of each other fanned out
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {

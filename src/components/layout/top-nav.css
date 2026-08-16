@@ -122,6 +122,7 @@
   opacity: 0;
   transform: rotate(-90deg);
   transition: opacity 420ms ease;
+  display: none !important;
 }
 
 .tnav-shell[data-collapsed='true'] .tnav-ring {
