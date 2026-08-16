@@ -192,8 +192,8 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const titleHeight = 28 * scale;
           const gap = 8 * scale;
 
-          // Scaled camera dimensions (slightly smaller)
-          const cameraWidth = 205 * scale;
+          // Scaled camera dimensions (slightly bigger camera)
+          const cameraWidth = 235 * scale;
           const cameraHeight = cameraWidth * 1.5015;
 
           // Scaled photo dimensions (slightly bigger polaroids)

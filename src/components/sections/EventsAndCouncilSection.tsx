@@ -714,28 +714,40 @@ export default function EventsAndCouncilSection({
               <button
                 type="button"
                 className={`fb-tab-item ${mobileTab === 'posts' ? 'active' : ''}`}
-                onClick={() => setMobileTab('posts')}
+                onClick={() => {
+                  setMobileTab('posts');
+                  setTimeout(() => ScrollTrigger.refresh(), 80);
+                }}
               >
                 Posts
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${mobileTab === 'about' ? 'active' : ''}`}
-                onClick={() => setMobileTab('about')}
+                onClick={() => {
+                  setMobileTab('about');
+                  setTimeout(() => ScrollTrigger.refresh(), 80);
+                }}
               >
                 About
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${mobileTab === 'videos' ? 'active' : ''}`}
-                onClick={() => setMobileTab('videos')}
+                onClick={() => {
+                  setMobileTab('videos');
+                  setTimeout(() => ScrollTrigger.refresh(), 80);
+                }}
               >
                 Videos
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${mobileTab === 'photos' ? 'active' : ''}`}
-                onClick={() => setMobileTab('photos')}
+                onClick={() => {
+                  setMobileTab('photos');
+                  setTimeout(() => ScrollTrigger.refresh(), 80);
+                }}
               >
                 Photos
               </button>
@@ -911,140 +923,149 @@ export default function EventsAndCouncilSection({
                   </div>
                 </div>
               ))}
-              {/* Buffer gap to ensure the 25th council member scrolls completely out of the viewport before shutdown starts */}
+              {/* Buffer gap to ensure content scrolls completely out of the viewport before shutdown starts */}
               <div className="mobile-council-end-buffer" style={{ height: '110vh', width: '100%', pointerEvents: 'none' }} />
             </>
           )}
 
           {/* TAB 2: ABOUT */}
           {mobileTab === 'about' && (
-            <div className="fb-about-container">
-              <div className="fb-about-card">
-                <h3 className="fb-about-card-title">About GDG CRCE</h3>
-                <div className="fb-about-row">
-                  <span className="fb-about-icon">🎓</span>
-                  <div>
-                    <strong>Google Developer Groups on Campus — CRCE</strong>
-                    <p style={{ margin: '4px 0 0', color: '#65676b', fontSize: '12.5px' }}>
-                      Official student developer community at Fr. Conceicao Rodrigues College of Engineering, Bandra, Mumbai.
-                    </p>
+            <>
+              <div className="fb-about-container">
+                <div className="fb-about-card">
+                  <h3 className="fb-about-card-title">About GDG CRCE</h3>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">🎓</span>
+                    <div>
+                      <strong>Google Developer Groups on Campus — CRCE</strong>
+                      <p style={{ margin: '4px 0 0', color: '#65676b', fontSize: '12.5px' }}>
+                        Official student developer community at Fr. Conceicao Rodrigues College of Engineering, Bandra, Mumbai.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">🎯</span>
+                    <div>
+                      <strong>Our Mission</strong>
+                      <p style={{ margin: '4px 0 0', color: '#65676b', fontSize: '12.5px' }}>
+                        Empowering students to build real-world software, master cloud technologies, design intuitive UI/UX, and contribute to open source.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">📍</span>
+                    <div>
+                      <strong>Location</strong>
+                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12.5px' }}>
+                        Fr. Conceicao Rodrigues College of Engineering, Father Agnel Ashram, Bandra West, Mumbai 400050.
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="fb-about-row">
-                  <span className="fb-about-icon">🎯</span>
-                  <div>
-                    <strong>Our Mission</strong>
-                    <p style={{ margin: '4px 0 0', color: '#65676b', fontSize: '12.5px' }}>
-                      Empowering students to build real-world software, master cloud technologies, design intuitive UI/UX, and contribute to open source.
-                    </p>
-                  </div>
-                </div>
-                <div className="fb-about-row">
-                  <span className="fb-about-icon">📍</span>
-                  <div>
-                    <strong>Location</strong>
-                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12.5px' }}>
-                      Fr. Conceicao Rodrigues College of Engineering, Father Agnel Ashram, Bandra West, Mumbai 400050.
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="fb-about-card">
-                <h3 className="fb-about-card-title">Council Tracks & Domains</h3>
-                <div className="fb-about-row">
-                  <span className="fb-about-icon">💻</span>
-                  <div>
-                    <strong>Technical Track</strong>
-                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                      React, Next.js, Node.js, Python, TensorFlow, Kotlin & GCP.
-                    </p>
+                <div className="fb-about-card">
+                  <h3 className="fb-about-card-title">Council Tracks & Domains</h3>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">💻</span>
+                    <div>
+                      <strong>Technical Track</strong>
+                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                        React, Next.js, Node.js, Python, TensorFlow, Kotlin & GCP.
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="fb-about-row">
-                  <span className="fb-about-icon">🎨</span>
-                  <div>
-                    <strong>Design Track</strong>
-                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                      UI/UX Interfaces, Figma Prototyping, 3D Assets & Branding.
-                    </p>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">🎨</span>
+                    <div>
+                      <strong>Design Track</strong>
+                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                        UI/UX Interfaces, Figma Prototyping, 3D Assets & Branding.
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="fb-about-row">
-                  <span className="fb-about-icon">📸</span>
-                  <div>
-                    <strong>Social Media Track</strong>
-                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                      Content Creation, Video Editing & Digital Community Engagement.
-                    </p>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">📸</span>
+                    <div>
+                      <strong>Social Media Track</strong>
+                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                        Content Creation, Video Editing & Digital Community Engagement.
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="fb-about-row">
-                  <span className="fb-about-icon">📣</span>
-                  <div>
-                    <strong>Outreach Track</strong>
-                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                      Sponsorships, Public Relations & Speaker Management.
-                    </p>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">📣</span>
+                    <div>
+                      <strong>Outreach Track</strong>
+                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                        Sponsorships, Public Relations & Speaker Management.
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="fb-about-row">
-                  <span className="fb-about-icon">⭐</span>
-                  <div>
-                    <strong>Core Executive Team</strong>
-                    <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
-                      Strategic Direction, Hackathon Operations & Event Execution.
-                    </p>
+                  <div className="fb-about-row">
+                    <span className="fb-about-icon">⭐</span>
+                    <div>
+                      <strong>Core Executive Team</strong>
+                      <p style={{ margin: '2px 0 0', color: '#65676b', fontSize: '12px' }}>
+                        Strategic Direction, Hackathon Operations & Event Execution.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+              <div className="mobile-council-end-buffer" style={{ height: '110vh', width: '100%', pointerEvents: 'none' }} />
+            </>
           )}
 
           {/* TAB 3: VIDEOS */}
           {mobileTab === 'videos' && (
-            <div className="fb-video-container">
-              {MOBILE_VIDEOS.map((vid) => (
-                <div key={vid.id} className="fb-video-card">
-                  <div
-                    className="fb-video-thumbnail-wrap"
-                    onClick={() => setSelectedVideo(vid)}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={vid.thumb} alt={vid.title} />
-                    <div className="fb-video-play-badge">▶</div>
+            <>
+              <div className="fb-video-container">
+                {MOBILE_VIDEOS.map((vid) => (
+                  <div key={vid.id} className="fb-video-card">
+                    <div
+                      className="fb-video-thumbnail-wrap"
+                      onClick={() => setSelectedVideo(vid)}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={vid.thumb} alt={vid.title} />
+                      <div className="fb-video-play-badge">▶</div>
+                    </div>
+                    <div className="fb-video-info">
+                      <h4 className="fb-video-title">{vid.title}</h4>
+                      <div className="fb-video-meta">{vid.meta}</div>
+                      <p className="fb-video-desc">{vid.desc}</p>
+                    </div>
                   </div>
-                  <div className="fb-video-info">
-                    <h4 className="fb-video-title">{vid.title}</h4>
-                    <div className="fb-video-meta">{vid.meta}</div>
-                    <p className="fb-video-desc">{vid.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              <div className="mobile-council-end-buffer" style={{ height: '110vh', width: '100%', pointerEvents: 'none' }} />
+            </>
           )}
 
           {/* TAB 4: PHOTOS */}
           {mobileTab === 'photos' && (
-            <div className="fb-photos-container">
-              <div className="fb-photos-header">
-                <span>What We Do & Gallery Photos ({WHAT_WE_DO_PHOTOS.length})</span>
+            <>
+              <div className="fb-photos-container">
+                <div className="fb-photos-header">
+                  <span>What We Do & Gallery Photos ({WHAT_WE_DO_PHOTOS.length})</span>
+                </div>
+                <div className="fb-photos-grid">
+                  {WHAT_WE_DO_PHOTOS.map((ph) => (
+                    <div
+                      key={ph.id}
+                      className="fb-photo-card"
+                      onClick={() => setSelectedPhoto(ph)}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={ph.src} alt={ph.title} />
+                      <span className="fb-photo-tag">{ph.tag}</span>
+                      <div className="fb-photo-title-bar">{ph.title}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="fb-photos-grid">
-                {WHAT_WE_DO_PHOTOS.map((ph) => (
-                  <div
-                    key={ph.id}
-                    className="fb-photo-card"
-                    onClick={() => setSelectedPhoto(ph)}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={ph.src} alt={ph.title} />
-                    <span className="fb-photo-tag">{ph.tag}</span>
-                    <div className="fb-photo-title-bar">{ph.title}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+              <div className="mobile-council-end-buffer" style={{ height: '110vh', width: '100%', pointerEvents: 'none' }} />
+            </>
           )}
         </div>
 
