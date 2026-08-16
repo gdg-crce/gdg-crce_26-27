@@ -73,16 +73,47 @@ export const HERO_VIDEO_SRC = '/videos/a.mp4';
  * from re-encoding them and no transcode step to keep working; drop
  * replacements at these same paths and nothing else changes.
  *
- * Note the two aspects: one is nearly square and one is 16:9. That is why the
- * wall renders them into a FIXED 4:3 frame with `object-fit: contain` instead
- * of sizing to the source — sizing to the source would reflow the page twice,
- * differently, as each clip's metadata arrived.
+ * ── Both clips are 16:9 CONTENT, and clip-1 lies about it ──────────────────
+ * clip-2 is 848x478 (1.774) and means it. clip-1 reports 368x400 — nearly
+ * square — but 101px of that height at the top and 88px at the bottom are HARD
+ * BLACK, baked into the frames by whatever exported it. Its real content is
+ * 368x211, i.e. 1.744: the same 16:9 as the other clip.
+ *
+ * Measured, not eyeballed — row luminance means across the decoded frames put
+ * the content at rows 101..311 on every frame sampled. So the wall frames both
+ * clips at 16:9 and `object-fit: cover`s them, which crops clip-1's dead bars
+ * away instead of dutifully framing them. `focusY` is where that crop window
+ * sits: 0.531 for clip-1 because its content band is NOT vertically centred
+ * (101px above it, 88px below), 0.5 for clip-2 which needs no correction.
+ *
+ * Because the aspect is a known constant rather than something read off the
+ * element, the frame lays out at its final size on the first paint — no reflow
+ * when metadata arrives, which matters inside a pinned ScrollTrigger.
+ *
+ * ── The posters ─────────────────────────────────────────────────────────────
+ * `poster` is the clip's own first frame, captured by decoding the video in a
+ * browser and reading frame 0 off a 2D canvas, because there is no ffmpeg here.
+ * They are the FULL source frame, black bars and all, deliberately NOT
+ * pre-cropped: poster and <video> then share one object-fit/object-position
+ * rule, so the picture cannot shift or jump at the moment playback starts. The
+ * bars cost almost nothing — flat black is nearly free in JPEG, and the two
+ * posters are 12.3 KB and 7.3 KB.
  *
  * They arrived as `WhatsApp Video 2026-08-15 at 11.07.08 PM.mp4` and friends.
  * The spaces and dots made for URLs that need encoding at every call site, so
  * they were renamed once, here, where the rename is recorded.
  */
 export const COUNCIL_CLIPS = [
-  { src: '/videos/facebookVideo/clip-1.mp4', caption: 'council, off the clock' },
-  { src: '/videos/facebookVideo/clip-2.mp4', caption: 'behind the scenes' },
+  {
+    src: '/videos/facebookVideo/clip-1.mp4',
+    poster: '/videos/facebookVideo/clip-1-poster.jpg',
+    caption: 'council, off the clock',
+    focusY: 0.531,
+  },
+  {
+    src: '/videos/facebookVideo/clip-2.mp4',
+    poster: '/videos/facebookVideo/clip-2-poster.jpg',
+    caption: 'behind the scenes',
+    focusY: 0.5,
+  },
 ] as const;

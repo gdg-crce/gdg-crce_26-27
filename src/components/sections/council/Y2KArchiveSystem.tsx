@@ -216,12 +216,20 @@ const pinnedPeople = seniorCouncil.slice(0, 3);
       elements decoding simultaneously over a running three.js canvas is the
       specific thing that would drop frames here, and it is exactly what a user
       does when they want to compare two clips.
-   3. **The box never resizes.** The facade and the video occupy the same fixed
-      4:3 frame with the video `object-fit: contain` inside it. These are phone
-      clips of unknown orientation, so anything that sized itself to the source
-      would shift the whole page layout the moment metadata arrived — mid-scroll,
-      inside a pinned section, which would fight ScrollTrigger's measurements.
-      Letterboxing into a known box costs nothing and cannot reflow.
+   3. **The poster and the video are the same picture, cropped the same way.**
+      The facade shows the clip's own first frame (see COUNCIL_CLIPS), and both
+      the <img> and the <video> get `object-fit: cover` with the SAME
+      `--focus` object-position. That is what stops the frame sliding or
+      resizing at the instant playback begins — the first video frame lands
+      exactly where the poster already was. It also crops clip-1's baked-in
+      black bars off both, so the placeholder is the footage rather than a
+      letterbox. The frame's aspect is a constant, so it is laid out correctly
+      on first paint and never reflows when metadata arrives — which matters
+      inside a pinned section, where a late reflow fights ScrollTrigger's
+      measurements.
+
+   The <video> also carries `poster`, so on the slower clip the same still holds
+   the frame while the first bytes arrive instead of flashing black.
 
    `muted` is enforced on the element rather than left to the attribute: React
    sets `muted` as a DOM property and it is the one media attribute that has
@@ -231,7 +239,14 @@ const pinnedPeople = seniorCouncil.slice(0, 3);
 /** The clip currently playing, so a second play() can pause the first. */
 let activeClip: HTMLVideoElement | null = null;
 
-function WallVideoPost({ src, caption }: { src: string; caption: string }) {
+interface WallVideoPostProps {
+  src: string;
+  poster: string;
+  caption: string;
+  focusY: number;
+}
+
+function WallVideoPost({ src, poster, caption, focusY }: WallVideoPostProps) {
   const [armed, setArmed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -255,12 +270,16 @@ function WallVideoPost({ src, caption }: { src: string; caption: string }) {
       </div>
       <p className={styles.wallPostText}>{caption}</p>
 
-      <div className={styles.wallVideoFrame}>
+      <div
+        className={styles.wallVideoFrame}
+        style={{ ['--focus' as string]: `${(focusY * 100).toFixed(1)}%` }}
+      >
         {armed ? (
           <video
             ref={videoRef}
             className={styles.wallVideo}
             src={src}
+            poster={poster}
             muted
             playsInline
             autoPlay
@@ -279,9 +298,19 @@ function WallVideoPost({ src, caption }: { src: string; caption: string }) {
             onClick={() => setArmed(true)}
             aria-label={`Play video: ${caption}`}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className={styles.wallVideoPoster}
+              src={poster}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
+            <span className={styles.wallVideoScrim} />
             <span className={styles.wallVideoPlay}>
-              <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
-                <circle cx="17" cy="17" r="16" fill="#3b5998" stroke="#1d2f5c" />
+              <svg width="46" height="46" viewBox="0 0 34 34" aria-hidden="true">
+                <circle cx="17" cy="17" r="16" fill="rgba(59,89,152,0.92)" stroke="#fff" strokeWidth="1.5" />
                 <polygon points="13,9 26,17 13,25" fill="#fff" />
               </svg>
             </span>
@@ -542,7 +571,13 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           </article>
 
           {COUNCIL_CLIPS.map((clip) => (
-            <WallVideoPost key={clip.src} src={clip.src} caption={clip.caption} />
+            <WallVideoPost
+              key={clip.src}
+              src={clip.src}
+              poster={clip.poster}
+              caption={clip.caption}
+              focusY={clip.focusY}
+            />
           ))}
         </div>
       </section>
