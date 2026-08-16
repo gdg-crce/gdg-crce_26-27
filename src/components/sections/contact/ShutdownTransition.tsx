@@ -246,7 +246,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const adjustedP = p < 0.15 ? 0 : (p - 0.15) / 0.85;
       const f = shutdownFrame(adjustedP);
 
-      overlay.classList.toggle('is-active', p > 0.0005);
+      overlay.classList.toggle('is-active', p > 0.005);
       overlay.style.opacity = f.overlayOpacity.toString();
 
       // Backlight is active during switching off / goodbye, then goes black

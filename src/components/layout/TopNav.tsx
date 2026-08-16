@@ -282,18 +282,6 @@ export default function TopNav({ ready }: { ready: boolean }) {
           aria-expanded={!isCollapsed}
         >
           <Image src="/logo.png" alt="GDG CRCE" width={60} height={40} draggable={false} priority />
-          <svg className="tnav-ring" viewBox="0 0 58 58" aria-hidden="true">
-            <circle className="tnav-ring-track" cx="29" cy="29" r={RING_R} />
-            <circle
-              ref={ringRef}
-              className="tnav-ring-fill"
-              cx="29"
-              cy="29"
-              r={RING_R}
-              strokeDasharray={RING_C}
-              strokeDashoffset={RING_C}
-            />
-          </svg>
         </button>
 
         <div className="tnav-links">

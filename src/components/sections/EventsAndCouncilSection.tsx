@@ -782,6 +782,8 @@ export default function EventsAndCouncilSection({
               </div>
             </div>
           ))}
+          {/* Buffer gap to ensure the 25th council member scrolls completely out of the viewport before shutdown starts */}
+          <div className="mobile-council-end-buffer" style={{ height: '110vh', width: '100%', pointerEvents: 'none' }} />
         </div>
         </section>
       </div>

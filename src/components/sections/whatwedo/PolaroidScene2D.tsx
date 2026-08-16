@@ -178,39 +178,34 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const containerHeight = containerRect.height;
           const containerWidth = containerRect.width;
 
-          // Safe space for header navbar (starts around 50px on mobile)
-          const topOffset = 20;
-          const availableHeight = containerHeight - topOffset - 8;
+          // Safe space for header navbar (TopNav is at top: 20px, height 58px -> 78px bottom)
+          const topOffset = 82;
+          const availableHeight = containerHeight - topOffset - 16;
 
-          // Base height required is roughly:
-          // Title (32) + Gap (8) + Camera height (405) - Overlap (160) + Ejected photo height (432)
-          // ≈ 717px
-          const baseGroupHeight = 720;
+          // Scale factor calculated to fit title, camera, and full polaroids inside available height & width
+          const baseGroupHeight = 560;
           const heightScale = availableHeight / baseGroupHeight;
+          const widthScale = (containerWidth * 0.90) / 340;
           
-          // Width fit: photo width is 340px. With side padding, base is 380px
-          const widthScale = (containerWidth * 0.85) / 340;
-          
-          // Determine the scale factor (clamp it to prevent elements from becoming infinitely large)
-          const scale = Math.max(0.2, Math.min(1.0, Math.min(heightScale, widthScale)));
+          const scale = Math.max(0.3, Math.min(1.0, Math.min(heightScale, widthScale)));
 
-          const titleHeight = 32 * scale;
+          const titleHeight = 28 * scale;
           const gap = 8 * scale;
 
-          // Scaled camera dimensions
-          const cameraWidth = 270 * scale;
+          // Scaled camera dimensions (slightly smaller)
+          const cameraWidth = 205 * scale;
           const cameraHeight = cameraWidth * 1.5015;
 
-          // Scaled photo dimensions (Only the polaroids are made bigger)
-          const photoWidth = 360 * scale;
-          const photoHeight = photoWidth * 1.2;
+          // Scaled photo dimensions (slightly bigger polaroids)
+          const photoWidth = Math.min(containerWidth * 0.88, 340 * scale);
+          const photoHeight = photoWidth * 1.25;
 
           const titleTop = topOffset;
           const cameraTop = titleTop + titleHeight + gap;
 
           if (mobileTitleRef.current) {
             mobileTitleRef.current.style.top = `${titleTop}px`;
-            mobileTitleRef.current.style.fontSize = `calc(2rem * ${scale})`;
+            mobileTitleRef.current.style.fontSize = `calc(1.8rem * ${scale})`;
           }
 
           if (mobileCameraWrapperRef.current) {
@@ -225,12 +220,11 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           // Slot Y relative to container top (79.1% from the top of the camera)
           const slotY = cameraTop + cameraHeight * 0.791;
 
-          // At t = 0, photo starts inside the new camera slot.
-          // Scaled height is 0.4 * photoHeight.
+          // At t = 0, photo starts inside camera slot
           const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
-          // Resting center of fully ejected polaroids (overlapping the camera body significantly to move them upwards)
-          const restingCenterY = cameraTop + cameraHeight - 160 * scale + photoHeight / 2;
+          // Resting center of fully ejected polaroid (positioned so the full polaroid card fits cleanly on screen)
+          const restingCenterY = cameraTop + cameraHeight * 0.32 + photoHeight / 2;
 
           // photos: stack on top of each other fanned out
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {

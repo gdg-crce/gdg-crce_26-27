@@ -368,7 +368,6 @@
 
 .wwd2d-mobile-title {
   position: absolute !important;
-  top: 20px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   width: max-content !important;

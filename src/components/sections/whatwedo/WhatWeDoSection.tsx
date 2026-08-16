@@ -119,15 +119,12 @@ export default function WhatWeDoSection() {
           if (el) {
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
-              // On mobile, scroll the What We Do section upwards (translateY) out of the viewport
-              const scrollCurrent = self.scroll() - self.start;
-              
-              let translateY = 0;
-              if (scrollCurrent > SCROLL_END) {
-                translateY = -(scrollCurrent - SCROLL_END);
+              let opacity = 1;
+              if (self.progress > 0.88) {
+                opacity = 1 - (self.progress - 0.88) / 0.12;
               }
-              el.style.transform = `translateY(${translateY}px)`;
-              el.style.opacity = '1';
+              el.style.opacity = opacity.toFixed(3);
+              el.style.transform = '';
 
               // Synchronized seam flash fade-out
               const flashEl = flashRef.current;
