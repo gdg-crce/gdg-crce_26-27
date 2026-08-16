@@ -5,13 +5,31 @@ import dynamic from 'next/dynamic';
 // preloading, which a bare `Image` import from next/image would shadow.
 import NextImage from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ik } from '@/lib/imagekit';
 import { HERO_VIDEO_SRC } from '@/lib/media';
 import { councilMembers } from '@/components/sections/council/councilData';
 import { mobileEvents } from '@/components/sections/events/eventData';
 import './xp-loader.css';
+
+/* ── No framer-motion here, deliberately ───────────────────────────────────
+   This module imported `AnimatePresence` and `motion` to do exactly two things:
+   fade the loader in on mount, and fade the boot screen out when the assets
+   were ready. Two opacity ramps.
+
+   framer-motion is ~5.5 MB on disk and pulls its whole animation runtime into
+   the FIRST chunk the site evaluates — the preloader is the very first thing
+   that renders, so it was on the critical path, ahead of the hero video it is
+   supposed to be buying time for.
+
+   Worse, half of what it was there for could never even run. The exit
+   animation on the outer wrapper is unreachable: `complete()` calls
+   `onComplete`, which sets `loading = false` in page.tsx and unmounts this
+   component outright, so React removes the tree before AnimatePresence gets to
+   play anything out. It was paying for an exit that never happened.
+
+   Both fades are now CSS (see `.preloader-root` / `.xp-boot-screen.is-leaving`
+   in xp-loader.css), which the compositor runs off the main thread. */
 
 const FilmTape = dynamic(() => import('../../../models/reactComponent/FilmTape'), {
   ssr: false,
@@ -91,6 +109,15 @@ const STRIP_FADE = 0.5;
 export default function Preloader({ onComplete, onStartTransition, onPrimeHero }: PreloaderProps) {
   const [completed, setCompleted] = useState(false);
   const [assetsReady, setAssetsReady] = useState(false);
+  /* Unmount of the boot screen, one tick after its CSS fade-out finishes.
+     This is the job AnimatePresence used to do; it is two state writes for the
+     whole component's lifetime, against a full animation runtime. */
+  const [bootGone, setBootGone] = useState(false);
+  useEffect(() => {
+    if (!assetsReady) return;
+    const t = window.setTimeout(() => setBootGone(true), 420);
+    return () => window.clearTimeout(t);
+  }, [assetsReady]);
 
   const completedRef = useRef(false);
   const activeFrameRef = useRef<FilmFrame>('2020s');
@@ -199,6 +226,61 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       .then(checkReady)
       .catch(checkReady);
   }, []);
+
+  /* ── Warm the cache for the acts that come AFTER the loader ───────────────
+     The sequence runs for about eight seconds and, until now, spent all of it
+     fetching only its own seven stills. Everything the rest of the site needs
+     was fetched later, at the moment it was first shown — which is why the
+     wall renders untextured for a beat when Act 3 opens (its textures load
+     through a bare `loader.load()` with no Suspense) and why the first posters
+     pop in as you walk past them.
+
+     Two rules make this a win rather than a new problem:
+
+     1. It NEVER blocks. The gate above still waits on exactly the loader's own
+        stills plus the hero film. This runs separately and nothing waits on it,
+        so a slow connection delays the wall's textures, not the show.
+     2. It starts only once that gate has opened, and inside `requestIdleCallback`
+        — so it cannot compete with the hero video for bandwidth or with the
+        first frames of the animation for main thread. Cache warming that
+        stutters the thing it is warming for is worse than none.
+
+     Ordered by when each asset is first needed. `fetch` with low priority
+     rather than `new Image()`: these go into the HTTP cache, and the three
+     wall textures are consumed by three.js's loader, not by an <img>. */
+  useEffect(() => {
+    if (!assetsReady) return;
+
+    const warm = [
+      // Act 3 opens on the wall. These are the biggest and the most visibly
+      // late — the scan set is ~820KB across three files.
+      '/textures/wall/plaster_color.jpg',
+      '/textures/wall/plaster_normal.jpg',
+      '/textures/wall/plaster_ao_rough.jpg',
+      // Then the posters, in the order the camera walks past them.
+      ...Array.from({ length: 7 }, (_, i) => ik(`/posters/${i + 1}.png`, 'w-1024')),
+    ];
+
+    let cancelled = false;
+    const run = () => {
+      if (cancelled) return;
+      for (const url of warm) {
+        // `priority: 'low'` keeps these behind anything the visible page asks
+        // for. Errors are swallowed on purpose: a warm that fails just means
+        // the asset is fetched normally later, which is the old behaviour.
+        fetch(url, { priority: 'low', mode: 'no-cors' } as RequestInit).catch(() => {});
+      }
+    };
+
+    const idle = window.requestIdleCallback
+      ? window.requestIdleCallback(run, { timeout: 2500 })
+      : window.setTimeout(run, 1200);
+
+    return () => {
+      cancelled = true;
+      if (window.cancelIdleCallback && typeof idle === 'number') window.cancelIdleCallback(idle);
+    };
+  }, [assetsReady]);
 
   const onStartTransitionRef = useRef(onStartTransition);
   const onCompleteRef = useRef(onComplete);
@@ -458,26 +540,15 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
   }, [assetsReady, complete]);
 
   return (
-    <AnimatePresence>
+    <>
       {!completed && (
-        <motion.div
-          key="rewind-preloader"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.4, ease: 'easeOut' } }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="fixed inset-0 z-[9999] isolate overflow-hidden text-neutral-200"
+        <div
+          className="preloader-root fixed inset-0 z-[9999] isolate overflow-hidden text-neutral-200"
           role="status"
           aria-label="GDG FRCRCE rewind loader"
         >
-          <AnimatePresence>
-            {!assetsReady && (
-              <motion.div
-                key="xp-asset-buffer-loader"
-                initial={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.4, ease: 'easeInOut' } }}
-                className="xp-boot-screen"
-              >
+          {!bootGone && (
+            <div className={`xp-boot-screen${assetsReady ? ' is-leaving' : ''}`}>
                 <div className="xp-center-content">
                   {/* GDSC Logo */}
                   <div className="xp-logo-container">
@@ -505,9 +576,8 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
                   For the best experience<br />
                   Enter Full Screen (F11)
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            </div>
+          )}
 
           <div className="relative h-screen w-full">
             <div ref={bgLayersRef}>
@@ -589,15 +659,21 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
                   e.stopPropagation();
                   complete();
                 }}
-                className="cursor-pointer flex items-center gap-2 rounded-full border border-amber-400/35 bg-black/70 px-4 py-2.5 text-xs font-mono uppercase tracking-wider text-amber-300/90 shadow-lg backdrop-blur-md transition hover:border-amber-400 hover:bg-amber-400/20 hover:text-white"
+                /* `backdrop-blur-md` removed. A backdrop-filter forces the
+                   compositor to read back and re-blur whatever is behind it on
+                   every frame that region repaints — and behind this button, for
+                   the loader's whole eight seconds, a 17,000px-wide film strip
+                   is translating. The fill is opaque enough that the blur was
+                   doing nothing visible anyway. */
+                className="cursor-pointer flex items-center gap-2 rounded-full border border-amber-400/35 bg-black/85 px-4 py-2.5 text-xs font-mono uppercase tracking-wider text-amber-300/90 shadow-lg transition hover:border-amber-400 hover:bg-amber-400/20 hover:text-white"
               >
                 <span>SKIP &gt;&gt;</span>
               </button>
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 

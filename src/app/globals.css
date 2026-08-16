@@ -545,12 +545,10 @@ body {
    90s MTV POSTER WALL — Events Section
    ═══════════════════════════════════════════════════════════════ */
 
-.events-section {
-  position: relative;
-  height: 400vh;
-  background: #1A1618;
-  width: 100%;
-}
+/* `.events-section { height: 400vh }` was here and nothing has carried that
+   class since the act was rewritten — the section's height comes from
+   ScrollTrigger's pin spacer now. Left in place it was a 400vh rule one typo
+   away from fighting the pin. */
 
 /* ── Loading state ── */
 

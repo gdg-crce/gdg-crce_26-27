@@ -14,6 +14,7 @@ import {
 } from './councilData';
 import MemberPhoto from './MemberPhoto';
 import { COUNCIL_CLIPS } from '@/lib/media';
+import { ik } from '@/lib/imagekit';
 
 /* =============================================================================
    Y2KArchiveSystem
@@ -49,6 +50,16 @@ interface Y2KArchiveSystemProps {
 }
 
 const HOST = 'http://www.GDGFRCRCE.com';
+
+/* The profile's own artwork.
+   Both go through ik(), so they pick up f-auto/q-auto and a width — the logo is
+   a 1600² master and the mini avatar renders it at 42px, which is a 38x
+   over-fetch if it is served raw. The logo's filename has spaces in it;
+   `ik()` runs encodeURI, which is what turns those into %20 to match the
+   uploaded path. */
+const FB_BANNER = ik('/transition/3.png', 'w-1200');
+const FB_LOGO_LG = ik('/transition/WhatsApp Image 2026-08-16 at 3.31.51 PM.jpeg', 'w-256');
+const FB_LOGO_SM = ik('/transition/WhatsApp Image 2026-08-16 at 3.31.51 PM.jpeg', 'w-96');
 
 /* -----------------------------------------------------------------------------
    16-bit pixel-art icons — drawn on a 16px grid with shapeRendering="crispEdges"
@@ -446,17 +457,26 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
   const renderProfile = () => (
     <>
       <div className={styles.profileHeader}>
-        <div className={styles.banner}>
-          <div className={styles.bannerGrid} />
-          <div className={styles.bannerText}>
-            <div className={styles.bannerTitle}>GDG FR CRCE</div>
-            <div className={styles.bannerSub}>COUNCIL ARCHIVE // 2026</div>
+        {/* The cover art carries its own typography — the GDG mark and
+            "On Campus · Fr. Conceicao Rodrigues College of Engineering" are
+            printed into it. The `bannerGrid` scanline overlay and the
+            `bannerText` title block that used to sit on top are gone: the grid
+            veiled the artwork, and the title landed straight across the logo
+            while repeating what the identity block below already says. */}
+        <div className={styles.banner} style={{ backgroundImage: `url(${FB_BANNER})` }}>
+          {/* The profile photo lives INSIDE the banner now, hanging off its
+              bottom edge, so it stays pinned to that edge whatever height the
+              banner resolves to. It used to be a sibling at a hardcoded
+              `top: 92px`, which only lined up while the banner was locked to
+              150px — and the banner is now sized by the artwork's aspect. */}
+          <div className={styles.profilePhoto}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={FB_LOGO_LG} alt="GDG on Campus CRCE" draggable={false} />
           </div>
           <span className={styles.bannerCursor}>
             <CursorIcon size={22} />
           </span>
         </div>
-        <div className={styles.profilePhoto}>⚡</div>
         <div className={styles.profileIdentity}>
           <div className={styles.identityName}>GDG on Campus · CRCE</div>
           <div className={styles.identityMeta}>
@@ -929,7 +949,10 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
               {/* Left rail: mini profile + quick links + period ad */}
               <aside className={styles.sidebar}>
                 <div className={styles.miniProfile}>
-                  <div className={styles.miniAvatar}>⚡</div>
+                  <div className={styles.miniAvatar}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={FB_LOGO_SM} alt="" draggable={false} />
+                  </div>
                   <div>
                     <div className={styles.miniName}>GDG · CRCE</div>
                     <div className={styles.miniStatus}>

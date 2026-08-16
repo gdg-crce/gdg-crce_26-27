@@ -56,9 +56,21 @@
   overflow: hidden;
   pointer-events: auto;
 
-  background: rgba(13, 14, 17, 0.6);
-  -webkit-backdrop-filter: blur(22px) saturate(165%);
-  backdrop-filter: blur(22px) saturate(165%);
+  /* An opaque graded fill, NOT `backdrop-filter: blur(22px) saturate(165%)`.
+
+     This is the one element on the site that is fixed above EVERY act, and
+     Act 3 is a full-screen WebGL canvas repainting every frame. A
+     backdrop-filter has to read the composited backdrop back and re-blur it
+     each time the region under it repaints — so this nav was forcing a 22px
+     blur of a 660px-wide strip of the canvas, sixty times a second, for the
+     entire eleven-thousand-pixel scroll of the events act. It is the same
+     trap already documented for `.events-era-badge` in globals.css; this one
+     is worse because the nav is on screen the whole time.
+
+     The gradient keeps the glass read — a lighter top edge falling to a darker
+     base is what the blur was mostly doing anyway against these dark scenes —
+     and costs exactly one paint, once, because the fill never changes. */
+  background: linear-gradient(180deg, rgba(28, 30, 36, 0.94) 0%, rgba(13, 14, 17, 0.96) 100%);
   /* A hairline plus a top-edge highlight — the thing that makes glass read as
      a physical object rather than a translucent rectangle. */
   box-shadow:
@@ -75,7 +87,7 @@
 
 .tnav-shell[data-collapsed='true'] .tnav {
   width: var(--tnav-size);
-  background: rgba(13, 14, 17, 0.52);
+  background: linear-gradient(180deg, rgba(26, 28, 34, 0.92) 0%, rgba(13, 14, 17, 0.95) 100%);
 }
 
 /* ── the mark ──────────────────────────────────────────────────────────── */
