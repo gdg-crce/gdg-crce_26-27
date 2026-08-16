@@ -87,20 +87,11 @@ const SYSTEM: Array<{ label: string; value: string }> = [
   { label: 'Council Term', value: '2026 - 27' },
 ];
 
-/**
- * The navigational map, as the setup utility's menu bar.
- *
- * Deliberately NOT links — the same rule the rest of this ending runs on. Every
- * destination lives inside a ScrollTrigger-pinned section, where an element's
- * document position has nothing to do with the scroll offset that puts it on
- * screen, so an anchor jump lands in the wrong place; and anything here that
- * scrolls the page back up is the one thing this ending exists to prevent.
- * It is a "you are here", drawn the way firmware draws one.
- */
-const MENU = ['Home', 'About', 'What We Do', 'Events', 'Council', 'Contact'];
-
-const DEFAULT_HELP =
-  'Use the pointer to select a field. Fields shown in full brightness are live; dimmed fields have no address on record yet.';
+/* There was a `MENU` const here — a Home/About/What We Do/… bar drawn as the
+   setup utility's menu strip. It is removed rather than left unrendered: it had
+   sat here unused (and in the lint output) for a while, and it is not wanted on
+   this screen. `DEFAULT_HELP` went the same way; the right-hand column is the
+   Location Map, which needs no instructions. */
 
 /* NOTE — deliberately no id="contact" on the root below. TopNav navigates by
    measured scroll offsets, not by anchors, and this element lives inside a
@@ -149,6 +140,23 @@ export default function ContactSection({ isMobile = false }: ContactSectionProps
                   </li>
                 );
               })}
+            </ul>
+
+            {/* Firmware-detected block. Also written and never rendered — this
+                is the real content that belongs in the empty half of this
+                column, rather than stretching four rows to fill it. Read-only,
+                so the values carry no brackets and no hover state. */}
+            <h2 className="bios-group">System Information</h2>
+            <ul className="bios-fields">
+              {SYSTEM.map((s) => (
+                <li key={s.label}>
+                  <span className="bios-row is-readonly">
+                    <span className="bios-label">{s.label}</span>
+                    <span className="bios-dots" aria-hidden="true" />
+                    <span className="bios-value">{s.value}</span>
+                  </span>
+                </li>
+              ))}
             </ul>
           </div>
 

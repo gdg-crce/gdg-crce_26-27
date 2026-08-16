@@ -159,15 +159,9 @@ export function WallDecalsAndGrime() {
     const gpCtx = gpCanvas.getContext('2d')!;
     gpCtx.clearRect(0, 0, 512, 256);
 
-    // Cyan spray tag (left)
-    gpCtx.font = 'italic 900 58px Impact, sans-serif';
-    gpCtx.fillStyle = '#00C8BA';
-    gpCtx.fillText('CRCE 94', 40, 110);
-
-    // Rust-red spray tag (right)
-    gpCtx.font = 'italic 900 52px Impact, sans-serif';
-    gpCtx.fillStyle = '#A83B2C';
-    gpCtx.fillText('LEGACY', 270, 165);
+    /* The "CRCE 94" and "LEGACY" spray tags that were painted here are removed.
+       The canvas stays — it is still the peeling-stucco panel, and the material
+       below expects a texture — it just carries no lettering now. */
 
     const gpTex = new THREE.CanvasTexture(gpCanvas);
 

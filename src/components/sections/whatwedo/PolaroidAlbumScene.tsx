@@ -15,11 +15,14 @@ const smooth = (a: number, b: number, x: number) => {
    Add a URL and the page appears; the flip schedule below is derived from the
    list's length, so nothing else needs touching. */
 const PAGE_PHOTOS = [
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(2).png?tr=f-auto,q-auto',
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(3).png?tr=f-auto,q-auto',
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech.png?tr=f-auto,q-auto',
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(1).png?tr=f-auto,q-auto',
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/tech%20(4).png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/1.png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/2.png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/31.png',
+  // The last leaf you turn — it lies directly on the back board, so this and
+  // FINAL_PHOTO below are the two frames the hand-off to the events act is cut
+  // between. Was whatwedo/tech (4).png.
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/4.png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/5.png?tr=f-auto,q-auto',
 ];
 
 /* The final frame — the album's back board, and the shot the deep-dive zoom
@@ -141,28 +144,28 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
       const maxStartScale = Math.max(vw / boxW, vh / boxH);
 
       const morphProgress = smooth(0.0, 0.20, p);
-      
+
       // Cinematic easing curve (Cubic in-out) for a magical, breathless float
       const easeInOutCubic = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
       const cinematicMorph = easeInOutCubic(morphProgress);
-      
+
       const morphScale = maxStartScale - cinematicMorph * (maxStartScale - 1.0);
-      
+
       // Phase 3: The Deep Dive Zoom (runs concurrently after 0.80)
       const zoomCurve = zoomP * zoomP * zoomP; // Cubic ease-in for dramatic acceleration
-      
+
       // Calculate precise scale needed to make the image cover the screen (like object-fit: cover)
       const photoWidth = Math.min(vw * 0.85, 1000); // 85% width, max 1000px — matches .final-event-photo
       const photoHeight = photoWidth / FINAL_PHOTO_ASPECT;
       // We perfectly match the max scale to the screen so it aligns flawlessly with the next section without overshooting
       const targetScale = Math.max(vw / photoWidth, vh / photoHeight);
-      
+
       const finalScale = morphScale + zoomCurve * (targetScale - 1.0);
-      
+
       if (scalerRef.current) {
         scalerRef.current.style.transform = `scale(${finalScale.toFixed(3)})`;
       }
-      
+
       if (container) {
         if (p < 0.20) {
           if (animState !== 'none') { container.style.animation = 'none'; animState = 'none'; }
@@ -325,10 +328,10 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
       <div className="album-overlay">
         <div className="dust"></div>
       </div>
-      
+
       {/* The 3D Book Container wrapped in scaler and rotator */}
       <div ref={scalerRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', willChange: 'transform' }}>
-        
+
         {/* Hardware-accelerated fake shadow that doesn't trigger layout repaints or expensive SVG filters */}
         <div ref={shadowRef} style={{
           position: 'absolute',
@@ -344,7 +347,7 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
 
         <div ref={rotatorRef} className="album-container-wrapper" style={{ transformStyle: 'preserve-3d', willChange: 'transform' }}>
           <div className="album-container">
-            
+
             {/* High-Definition Metallic Spiral Binder (Top Edge) */}
             <div className="spiral-binder" />
 
@@ -400,7 +403,7 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
               <div className="cover-front">
                 {/* Cinematic light flare overlay */}
                 <div className="cover-glare" style={{
-                  position: 'absolute', inset: 0, 
+                  position: 'absolute', inset: 0,
                   backgroundImage: 'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.05) 55%, transparent 70%)',
                   backgroundSize: '300% 100%',
                   pointerEvents: 'none',
@@ -411,7 +414,7 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
               </div>
               <div className="cover-back"></div>
             </div>
-            
+
           </div>
         </div>
       </div>

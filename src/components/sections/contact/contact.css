@@ -110,8 +110,16 @@
   min-width: 0;
 }
 
+/* Column header, LEFT. Its box must match `.bios-help-title` exactly — the two
+   sit side by side at the top of the same grid row, and they were 44.8px and
+   52.6px tall, which pushed the field list and the map 16px out of step with
+   each other. Same padding, same margin, same rule underneath: they now read as
+   a matched pair of section headers and everything below them starts on the
+   same line. Measured before/after. */
 .bios-group {
-  margin: 0 0 0.2em;
+  margin: 0 0 0.5em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--bios-line);
   font-size: 1em;
   font-weight: 400;
   color: var(--bios-cyan);
@@ -122,10 +130,33 @@
   margin-top: 0.9em;
 }
 
+/* ONE grid for the whole field list, with every row borrowing its tracks.
+
+   The rows used to be independent grids — `.bios-row { display: grid;
+   grid-template-columns: max-content 1fr max-content }` on each `<a>`/`<span>`.
+   `max-content` is then resolved PER ROW, so the label column was as wide as
+   that row's own label and the value column as wide as that row's own value.
+   Nothing lined up between rows: every leader-dot run started at a different x
+   and every value started at a different x. The comment on `.bios-row` claimed
+   the opposite ("so every value starts on the same column") — it was the
+   intent, but a per-row grid cannot do it.
+
+   `subgrid` is the fix that keeps the row a real box: the tracks are measured
+   once here across all rows, and each row adopts them. `display: contents`
+   would also align them but would delete the row's own box, and the row needs
+   one to paint the inverse-video selection on hover. */
 .bios-fields {
   margin: 0;
   padding: 0;
   list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(1.5em, 1fr) minmax(0, max-content);
+}
+
+.bios-fields > li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
 }
 
 /* The leader-dot row: label, a dotted run to the right margin, then the value
@@ -133,10 +164,17 @@
    — a setup screen is a character grid and ragged values read as a web page. */
 .bios-row {
   display: grid;
-  grid-template-columns: minmax(0, max-content) minmax(1.5em, 1fr) minmax(0, max-content);
+  /* Adopts the three tracks measured on .bios-fields, so labels, leader dots
+     and values line up down the whole list. */
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: baseline;
   gap: 0 0.5em;
-  padding: 0 0.4em;
+  /* Was `padding: 0 0.4em`, which inset each row's grid by 0.4em on both
+     sides. With shared tracks that padding would push every row's columns
+     inward by a different amount than the container's, so the inset moves to
+     the list and the row keeps only the selection highlight's bleed. */
+  padding: 0;
   color: inherit;
   text-decoration: none;
 }
@@ -166,6 +204,17 @@
    visibly not something you can open. */
 .bios-row.is-unset .bios-value {
   color: var(--bios-dim);
+}
+
+/* Firmware-detected rows: readouts, not fields. No brackets in the markup, no
+   hover rule matches them (the inverse-video rules below target `a.bios-row`
+   and `.is-unset` only), so they never light up or look selectable. */
+.bios-row.is-readonly {
+  cursor: default;
+}
+
+.bios-row.is-readonly .bios-value {
+  color: var(--bios-text);
 }
 
 /* Selection. Inverse video across the whole row, exactly as the real thing —
@@ -211,9 +260,24 @@ a.bios-row {
 }
 
 @media (min-width: 901px) {
+  /* Fill the column rather than force it taller. `min-height: 400px` made the
+     grid row 400px+ regardless of the field list, so the right column ran ~108px
+     past the bottom of the left one and the two never squared up. The map now
+     takes whatever height the fields set, with a floor low enough that it is a
+     usable map but never the thing driving the row. */
   .bios-help-map {
     height: 100%;
-    min-height: 400px;
+    min-height: 240px;
+  }
+
+  /* The map's own column stretches, so the map can fill it. */
+  .bios-help {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bios-help .bios-help-map {
+    flex: 1;
   }
 }
 

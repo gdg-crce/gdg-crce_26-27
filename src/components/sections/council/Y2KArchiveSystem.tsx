@@ -182,7 +182,7 @@ const memberById = (id: number): CouncilMember =>
 
 const teams = departmentsList;
 
-/** Headline figures, counted rather than typed — see the note on `pinnedPeople`. */
+/** Headline figures, counted rather than typed, so they cannot drift. */
 const TOTAL_MEMBERS = councilMembers.length;
 const TOTAL_TEAMS = teams.length;
 
@@ -196,17 +196,12 @@ const SOCIAL_META: Record<string, { label: string; color: string }> = {
   email: { label: 'e-mail', color: '#3b5998' },
 };
 
-/* Pinned People is DERIVED, not hand-listed.
-
-   It used to be a literal array of `memberById(2)` with a caption typed
-   alongside — so the caption and the person it labelled were two independent
-   facts, and reordering the roster silently relabelled the rows. It now reads
-   off the roster's own tier field: the top of the Senior Council, in roster
-   order. Nothing here can disagree with councilData.ts.
-
-   The "Friends · The Wall" 2×2 grid of department leads that used to sit
-   alongside it is gone; the Wall is now actual posts (see `renderWall`). */
-const pinnedPeople = seniorCouncil.slice(0, 3);
+/* The "Pinned People" panel (top three of the Senior Council) is gone, as is
+   the "Friends · The Wall" 2×2 grid of department leads that used to sit beside
+   it. Both were picking three or four names out of a roster of twenty-two and
+   presenting them as the headline — the members directory is one click away and
+   shows everyone, in order, without playing favourites. The Wall is real posts
+   now; see `renderWall`. */
 
 /* -----------------------------------------------------------------------------
    Wall video post — a click-to-play FACADE, not a <video> tag.
@@ -509,35 +504,6 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           <div><span className={styles.acctKey}>Council:</span> {seniorCouncil.length} senior · {juniorCouncil.length} junior</div>
           <div><span className={styles.acctKey}>Member since:</span> January 2026</div>
           <div><span className={styles.acctKey}>Status:</span> Compiling at 60 FPS</div>
-        </div>
-      </section>
-
-      <section className={styles.panel}>
-        <div className={styles.panelHead}>
-          <span className={styles.panelTitle}>
-            <CursorIcon size={13} /> Pinned People
-          </span>
-          <span className={styles.panelMeta}>Senior Council</span>
-        </div>
-        <div className={styles.pinnedList}>
-          {pinnedPeople.map((p, i) => (
-            <button
-              type="button"
-              key={p.id}
-              className={styles.pinnedRow}
-              onClick={() => go({ view: 'member', memberId: p.id })}
-            >
-              <span className={styles.pinNum}>{String(i + 1).padStart(2, '0')}</span>
-              <MemberPhoto member={p} className={styles.pinnedPhoto} />
-              <div className={styles.pinnedInfo}>
-                <div className={styles.pinnedName}>{p.name}</div>
-                <div className={styles.pinnedRole}>
-                  {p.role} · {p.branch}
-                </div>
-              </div>
-              <span className={styles.pinnedTag}>SENIOR</span>
-            </button>
-          ))}
         </div>
       </section>
 

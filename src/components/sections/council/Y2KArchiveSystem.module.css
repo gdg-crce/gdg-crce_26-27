@@ -469,86 +469,9 @@
   color: #cdd6ea;
 }
 
-/* -----------------------------------------------------------------------------
-   5. PINNED PEOPLE — vertical stack of three blocks
-   -------------------------------------------------------------------------- */
-.pinnedList {
-  display: flex;
-  flex-direction: column;
-}
-
-.pinnedRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 11px 12px;
-  border: 0;
-  border-bottom: 1px solid var(--fb-blue-pale);
-  background: #fff;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.pinnedRow:last-child {
-  border-bottom: 0;
-}
-
-.pinnedRow:hover {
-  background: #f5f7fc;
-}
-
-.pinnedPhoto {
-  width: 58px;
-  height: 58px;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 27px;
-  color: #fff;
-  border: 1px solid var(--hair);
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.12);
-}
-
-.pinnedInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.pinnedName {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--fb-blue);
-}
-
-.pinnedRole {
-  margin-top: 2px;
-  font-size: 11px;
-  color: #47506a;
-  line-height: 1.45;
-}
-
-.pinnedTag {
-  align-self: center;
-  padding: 3px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  background: var(--fb-blue-mid);
-  border: 1px solid var(--fb-blue);
-  white-space: nowrap;
-}
-
-.pinNum {
-  font-size: 10px;
-  color: var(--fb-blue-soft);
-  font-weight: 700;
-  width: 20px;
-  text-align: center;
-  flex: 0 0 auto;
-}
+/* Section 5 was PINNED PEOPLE (.pinnedList / .pinnedRow / .pinnedPhoto /
+   .pinnedInfo / .pinnedName / .pinnedRole / .pinnedTag / .pinNum). The panel is
+   gone — see the note in Y2KArchiveSystem.tsx — and so are its rules. */
 
 /* -----------------------------------------------------------------------------
    6. THE WALL — posts (one photo, two clips)

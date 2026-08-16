@@ -197,6 +197,13 @@ type Track = {
   /** Brush-script line, theme card only. */
   brush?: string;
   lines: string[];
+  /**
+   * The text printed around the label's rim, swapped when this track's record
+   * comes up. It is stretched to close the ring exactly (`textLength`), so
+   * these should stay within a few characters of each other — a short string
+   * gets spaced out until it reads as a different typeface.
+   */
+  ring: string;
 };
 
 const TRACKS: Track[] = [
@@ -205,6 +212,7 @@ const TRACKS: Track[] = [
     word: 'Theme',
     brush: 'Synécheia:',
     lines: ['What continues,', 'becomes greater.'],
+    ring: 'OUR TEAM · GDG ON CAMPUS CRCE · OUR TEAM · SYNÉCHEIA · 33⅓ RPM ·',
   },
   {
     key: 'vision',
@@ -218,6 +226,7 @@ const TRACKS: Track[] = [
       'as we learn, build, and',
       'shape what comes next.',
     ],
+    ring: 'WE BUILD · ANDROID · WEB · CLOUD · AI & ML · WE SHIP · 33⅓ RPM ·',
   },
   {
     key: 'mission',
@@ -231,6 +240,7 @@ const TRACKS: Track[] = [
       'every batch begins where',
       'the last one reached.',
     ],
+    ring: 'BUILD IN THE OPEN · TEACH WHAT WE LEARN · GIVE BACK · 33⅓ RPM ·',
   },
 ];
 
@@ -259,6 +269,9 @@ export default function AboutSection() {
   const labelRef = useRef<HTMLDivElement>(null);
   const bandRef = useRef<HTMLDivElement>(null);
   const labRefs = useRef<(HTMLDivElement | null)[]>([]);
+  /** The rim text, and which track's copy is currently in it. */
+  const ringTextRef = useRef<SVGTextPathElement | null>(null);
+  const ringIdxRef = useRef(0);
   const copyRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -396,6 +409,25 @@ export default function AboutSection() {
       labRefs.current[0]?.style.setProperty('--wipe', '60');
       labRefs.current[1]?.style.setProperty('--wipe', (sw1 * 60).toFixed(2));
       labRefs.current[2]?.style.setProperty('--wipe', (sw2 * 60).toFixed(2));
+
+      /* The printed rim text belongs to whichever record is on top, so it is
+         swapped here off the same two wipes that reveal the labels.
+
+         One shared <textPath> rather than one per track: the labels crossfade
+         by SCALING a circle from the centre (`--wipe`), which is a radial paint
+         reveal and exactly right for a disc — but applied to type it would zoom
+         the lettering instead of wiping it. So the ring stays a single element
+         and only its content changes.
+
+         Threshold at the wipe's halfway point, where the incoming label has
+         covered the rim the text sits on (r=264 of a 308 radius). Guarded by
+         `ringIdxRef` so this writes on the two frames the record actually
+         changes, not on every tick. */
+      const ringIdx = sw2 > 0.5 ? 2 : sw1 > 0.5 ? 1 : 0;
+      if (ringIdx !== ringIdxRef.current) {
+        ringIdxRef.current = ringIdx;
+        if (ringTextRef.current) ringTextRef.current.textContent = TRACKS[ringIdx].ring;
+      }
 
       // ── copy ─────────────────────────────────────────────────────────
       const vis = [
@@ -683,8 +715,17 @@ export default function AboutSection() {
                   {/* textLength forces the string to close the ring exactly
                       (2π·264 ≈ 1659), so there is never a bald patch drifting
                       past to give the trick away */}
-                  <textPath href="#ttRimPath" startOffset="0" textLength="1659" lengthAdjust="spacing">
-                    GDG CRCE · SYNÉCHEIA · WHAT CONTINUES, BECOMES GREATER · 33⅓ RPM ·
+                  {/* Content is swapped per record from the scroll callback —
+                      see `ringIdxRef`. This initial value is TRACKS[0].ring, so
+                      the first paint already matches the first label. */}
+                  <textPath
+                    ref={ringTextRef}
+                    href="#ttRimPath"
+                    startOffset="0"
+                    textLength="1659"
+                    lengthAdjust="spacing"
+                  >
+                    {TRACKS[0].ring}
                   </textPath>
                 </text>
               </g>

@@ -201,7 +201,7 @@ function NeonAlleySign3D() {
     ctx.shadowColor = '#FF0055';
     ctx.shadowBlur = 10;
     ctx.fillStyle = '#FF2277';
-    ctx.fillText('MTV // LIVE 90s', 256, 64);
+    ctx.fillText('WHAT IF', 256, 64);
 
     cachedSignTexture = new THREE.CanvasTexture(canvas);
     return cachedSignTexture;
@@ -1103,8 +1103,12 @@ function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<num
       <GraffitiTag text="EVENTS" subtext="UNDERGROUND TECH ARCHIVE // EST. 1994" color="#4E9AA4" accentColor="#37727E" position={[-26.0, 2.4, 0.010]} rotation={[0, 0, -0.02]} tagScale={0.86} />
       <GraffitiTag text="GDG" subtext="CRCE // SYNÉCHEIA // ALL ERAS" color="#B04A6B" accentColor="#6E2A42" position={[-14.5, 2.45, 0.010]} rotation={[0, 0, 0.03]} tagScale={0.86} />
       <GraffitiTag text="MTV" subtext="UNPLUGGED // ARCHIVE SER. 04" color="#4E9AA4" accentColor="#2F5A68" position={[-3.8, 2.4, 0.010]} rotation={[0, 0, -0.03]} tagScale={0.86} />
-      <GraffitiTag text="90s" subtext="CONTINUITY // EVOLUTION // LEGACY" color="#C29A46" accentColor="#7E4E22" position={[7.35, 2.45, 0.010]} rotation={[0, 0, 0.04]} tagScale={0.84} />
-      <GraffitiTag text="HACK" subtext="BYTE CLUB // OPEN SYNDICATE" color="#7F519B" accentColor="#43265C" position={[18.65, 2.4, 0.010]} rotation={[0, 0, -0.03]} tagScale={0.84} />
+      {/* The "90s" tag that used to sit at x = 7.35 is gone. The UNPLUG poster
+          is pasted at x = 7.1 and is 3.4m wide, so the tag was landing directly
+          across the artwork — graffiti UNDER a poster is history, graffiti ON
+          TOP of one is just something covering the thing you came to read.
+          x = 7.1 ± 1.7 is now kept clear. */}
+      <GraffitiTag text="BIT N BUILD" subtext="INTERNATIONAL HACKATHON" color="#7F519B" accentColor="#43265C" position={[18.65, 2.4, 0.010]} rotation={[0, 0, -0.03]} tagScale={0.62} />
 
       {/* Airborne dust. Was 75 motes at size 1.8 / opacity 0.25 in near-white —
           which reads as fairy sparkles, an asset-store tell. Real dust is only
@@ -1139,20 +1143,44 @@ export default function WallScene({ progressRef, snapToTarget }: WallSceneProps)
   const maxDpr = useRef(typeof window !== 'undefined' ? Math.min(1.5, window.devicePixelRatio || 1) : 1.5);
   const [dpr, setDpr] = useState(maxDpr.current);
 
-  // Pause the whole WebGL frame loop while the Events act is off screen. The
-  // Canvas otherwise renders continuously from page load — burning GPU through
-  // Hero/About/WhatWeDo where it isn't even visible. rootMargin activates it
-  // just before it scrolls in, so the fullscreen-wall entrance is never blank.
-  const [active, setActive] = useState(true);
+  /* Pause the whole WebGL frame loop while the Events act is off screen. The
+     Canvas otherwise renders continuously from page load — burning GPU through
+     Hero/About/WhatWeDo where it isn't even visible. The margin wakes it before
+     it scrolls in, so the fullscreen-wall entrance is never blank.
+
+     ── Why the wake is in two stages ──────────────────────────────────────
+     A single 600px margin put the whole scene at full rate straight into the
+     album act's hand-off. The album's deep-dive zoom occupies the last ~800px
+     of its spacer, and that spacer ends where this section begins — so the wall
+     was rendering at full DPR, every frame, for the entire zoom, completely
+     hidden behind the album's opaque full-viewport overlay. Two heavy things
+     animating at once, one of them invisible, exactly where the transition
+     feels heavy.
+
+     `warm` still fires 600px out and still mounts, compiles and uploads
+     everything, so nothing is blank on entry — but `visible` (no margin) is
+     what grants full resolution. Off-screen warm-up frames render at a floor
+     DPR, which is a quarter of the pixels or less. `Math.min` with the adaptive
+     ceiling means PerformanceMonitor can still step quality DOWN from here; it
+     can never step it above the device cap. */
+  const [warm, setWarm] = useState(true);
+  const [visible, setVisible] = useState(true);
   useEffect(() => {
     const el = hostRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setActive(e.isIntersecting), {
+    const warmIo = new IntersectionObserver(([e]) => setWarm(e.isIntersecting), {
       rootMargin: '600px 0px',
     });
-    io.observe(el);
-    return () => io.disconnect();
+    const visIo = new IntersectionObserver(([e]) => setVisible(e.isIntersecting));
+    warmIo.observe(el);
+    visIo.observe(el);
+    return () => {
+      warmIo.disconnect();
+      visIo.disconnect();
+    };
   }, []);
+  const active = warm;
+  const effectiveDpr = visible ? dpr : Math.min(dpr, 0.6);
 
   return (
     <div ref={hostRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
@@ -1200,7 +1228,7 @@ export default function WallScene({ progressRef, snapToTarget }: WallSceneProps)
            the L came back. It costs nothing to read offsetWidth instead. */
         resize={{ scroll: false, offsetSize: true, debounce: { scroll: 0, resize: 0 } }}
         camera={{ position: [-26, 2.1, 4.4], fov: 62 }}
-        dpr={dpr}
+        dpr={effectiveDpr}
         shadows="soft"
         /* Exposure 1.15 → 1.22. Measured, not guessed: the tone curve rolls off
            so hard up here that the frame's brightest pixel moves 236 → 237 out

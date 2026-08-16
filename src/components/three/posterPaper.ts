@@ -179,70 +179,115 @@ export function buildPaperMaps(): PaperMaps {
     tx.fillStyle = '#000';
     tx.fillRect(0, 0, S, S);
 
-    /* Inset is tiny — 2–5px of 512, i.e. under a centimetre on a 3.4m sheet. */
-    const inset = 2 + rnd() * 3;
+    /* The walk starts on the sheet's true corners; all inset comes from the
+       one-sided tear below, so nothing shrinks the poster uniformly. */
+    const a = 0;
+    const b = S;
+    /** Fibre teeth present along the whole edge, in px of 512 (~3cm at wall). */
+    const TOOTH = 4;
 
-    /* BLUNT CORNERS. The four edge walks used to meet at hard 90° points, so
-       every sheet ended in four needle-sharp corners — the giveaway that this
-       is a mapped quad and not a piece of paper. A real pasted corner is blunt:
-       it gets knocked, rubbed and softened by the paste long before anything
-       else on the sheet does. R is 14–26px of 512, i.e. roughly a 10–18cm
-       radius at wall scale. */
-    const R = 14 + rnd() * 12;
+    /* ── A TORN edge, not a wavy one ────────────────────────────────────────
+       The previous version produced smooth curves, and three things caused it:
+
+         · the walk was DAMPED (`prev * 0.55 + …`), which is a low-pass filter.
+           Filtering a random walk is exactly how you get gentle waves, and
+           gentle waves are what a rounded CSS blob looks like.
+         · the four corners were literal `quadraticCurveTo` arcs, R = 14–26px.
+         · a 2.8px blur on top rounded off whatever angularity was left.
+
+       Torn paper is the opposite of filtered. It is fibrous: high-frequency,
+       angular, with the amplitude varying along the edge so some stretches are
+       nearly clean and others are chewed. So the offset here is the sum of two
+       octaves and is NOT damped —
+
+         wander  a slow value-noise, the overall shape of the tear
+         tooth   per-step white noise, undamped, the fibre teeth
+         envelope a slower noise again that scales BOTH, so the edge is torn in
+                  patches rather than uniformly all the way round
+
+       and the edge is biased inward so tearing erodes the sheet rather than
+       growing it past its own rectangle. */
+
+    /** Smooth 1-D value noise in [0,1), from `n` random anchors. */
+    const noise1 = (n: number) => {
+      const anchors = Array.from({ length: n + 1 }, () => rnd());
+      return (t: number) => {
+        const x = Math.min(0.9999, Math.max(0, t)) * n;
+        const i = Math.floor(x);
+        const f = x - i;
+        const s = f * f * (3 - 2 * f);
+        return anchors[i] * (1 - s) + anchors[i + 1] * s;
+      };
+    };
 
     const pts: [number, number][] = [];
-    const walk = (
-      fromX: number,
-      fromY: number,
-      toX: number,
-      toY: number,
-      jitter: number
-    ) => {
-      /* Many small deviations read as a fibrous paper edge; a few large ones
-         read as a zigzag. Each step is damped against the previous one so the
-         line wanders rather than alternating side to side. */
-      const steps = 34;
-      let prevJx = 0;
-      let prevJy = 0;
+    const walk = (fromX: number, fromY: number, toX: number, toY: number, amp: number) => {
+      /* THE OFFSET IS ONE-SIDED — always inward, never outward.
+
+         This is the correction that finally made the tear visible. The previous
+         version offset the edge by a SIGNED amount around the rectangle, and
+         that is wrong twice over. It swings outward as often as inward, so the
+         two cancel and the sheet's area barely moves — measured, raising the
+         amplitude nearly 4x changed survival only 99.7% → 99.4%. And the
+         outward swings cross the neighbouring edges, so the polygon
+         self-intersects and canvas's nonzero fill rule welds the notches shut.
+         The result was a sheet that was mathematically "torn" and visually a
+         clean rectangle, which is exactly what shipped.
+
+         Paper does not grow when it tears. `d >= 0` always.
+
+         The shape is a BITE plus a TOOTH, not one noise:
+
+           bite   pow(noise, 3) — near zero along most of the run, with one or
+                  two places per edge where it approaches 1. That is what makes
+                  a chunk missing HERE and an almost-straight edge THERE, which
+                  is what torn paper actually looks like. A single mid-range
+                  noise just insets the whole edge evenly, and an evenly inset
+                  edge reads as a smaller clean rectangle — measured that too:
+                  92.3% survived and it still looked untorn.
+           tooth  a few px of fibre everywhere, so no run is ever a ruled line. */
+      const steps = 170;
+      const bite = noise1(5);
+      const fine = noise1(40);
+      const dx = toX - fromX;
+      const dy = toY - fromY;
+      const len = Math.hypot(dx, dy) || 1;
+      // Inward normal, given the corner-to-corner walk order below.
+      const ux = -dy / len;
+      const uy = dx / len;
       for (let i = 0; i <= steps; i++) {
         const t = i / steps;
-        // Taper to zero at both ends so the wander dies out before the corner
-        // arc takes over — otherwise the jitter fights the rounding.
-        const taper = Math.min(1, Math.min(t, 1 - t) * 5);
-        prevJx = prevJx * 0.55 + (rnd() - 0.5) * jitter * 0.45;
-        prevJy = prevJy * 0.55 + (rnd() - 0.5) * jitter * 0.45;
-        pts.push([
-          fromX + (toX - fromX) * t + prevJx * taper,
-          fromY + (toY - fromY) * t + prevJy * taper,
-        ]);
+        const B = Math.pow(bite(t), 3);
+        const tooth = TOOTH * (0.25 + 0.75 * fine(t)) + TOOTH * 0.5 * rnd();
+        const d = 1 + amp * B * (0.55 + 0.45 * rnd()) + tooth;
+        pts.push([fromX + dx * t + ux * d, fromY + dy * t + uy * d]);
       }
     };
 
-    const a = inset;
-    const b = S - inset;
-    /* Each edge now stops R short of the corner; the gap is bridged by a
-       quadratic through the corner point, which is what rounds it off. Top
-       edge still wanders most — weather and hands both work from the top. */
-    walk(a + R, a, b - R, a, 4.0);
-    walk(b, a + R, b, b - R, 2.4);
-    walk(b - R, b, a + R, b, 3.0);
-    walk(a, b - R, a, a + R, 2.4);
+    /* Corner to corner, with NO arc between them. The noise runs at full
+       amplitude straight through each corner, so corners come out irregular and
+       chipped — which is what a torn corner is — instead of either a needle
+       point or a drawn radius.
 
-    const nEdge = 35; // steps + 1, i.e. one edge's worth of points
-    const edge = (i: number) => pts.slice(i * nEdge, (i + 1) * nEdge);
+       Top edge tears most: weather runs down it and hands reach it first.
+
+       Amplitudes are the DEEPEST a bite can go, in px of 512 — so 60 is about
+       40cm at wall scale, and `pow(bite, 3)` means only one or two spots per
+       edge get anywhere near it. Chosen off a rendered sweep at 26 / 60 / 85 /
+       110 composited over a wall tone, judged with the mask converted to real
+       alpha (see the note on that below): 26 still read as a rectangle, 85
+       started clipping the GDG logo, and 110 ate into the title. 60 leaves
+       every poster's type and logo intact while the silhouette is unmistakably
+       torn — roughly 92% of the sheet survives. */
+    walk(a, a, b, a, 60.0);
+    walk(b, a, b, b, 44.0);
+    walk(b, b, a, b, 52.0);
+    walk(a, b, a, a, 44.0);
 
     tx.fillStyle = '#fff';
     tx.beginPath();
-    const e0 = edge(0);
-    tx.moveTo(e0[0][0], e0[0][1]);
-    for (const p of e0) tx.lineTo(p[0], p[1]);
-    tx.quadraticCurveTo(b, a, edge(1)[0][0], edge(1)[0][1]);
-    for (const p of edge(1)) tx.lineTo(p[0], p[1]);
-    tx.quadraticCurveTo(b, b, edge(2)[0][0], edge(2)[0][1]);
-    for (const p of edge(2)) tx.lineTo(p[0], p[1]);
-    tx.quadraticCurveTo(a, b, edge(3)[0][0], edge(3)[0][1]);
-    for (const p of edge(3)) tx.lineTo(p[0], p[1]);
-    tx.quadraticCurveTo(a, a, e0[0][0], e0[0][1]);
+    tx.moveTo(pts[0][0], pts[0][1]);
+    for (const p of pts) tx.lineTo(p[0], p[1]);
     tx.closePath();
     tx.fill();
 
@@ -275,54 +320,38 @@ export function buildPaperMaps(): PaperMaps {
       return [a, b - span * t, 1, 0];
     };
 
-    // Chips: shallow wedges out of the border. Kept off the rounded corners
-    // (t stays in 0.10–0.90) so they never eat the bluntness back off.
-    for (let i = 0; i < 13; i++) {
-      const [px, py, nx, ny] = edgePoint(i % 4, 0.1 + rnd() * 0.8);
-      const tanX = -ny;
-      const tanY = nx;
-      /* 2–6cm of edge taken, 3–9cm inward. Sized so a chip is still legible
-         after the 2.8px feather: at 1.6/2.4 the blur swallowed most of them and
-         only the sharper splits showed, which read as scratches rather than as
-         a sheet that has been up for years. Still an order of magnitude under
-         the 20cm scallops this replaced. */
-      const halfW = 2.4 + rnd() * 5.4;
-      const depth = 4.0 + rnd() * 8.0;
-      // Base sits slightly OUTSIDE the sheet so the cut always breaks the edge
-      // rather than leaving a hairline of paper across its mouth.
-      const bx = px - nx * 2;
-      const by = py - ny * 2;
-      tx.beginPath();
-      tx.moveTo(bx - tanX * halfW, by - tanY * halfW);
-      // Apex offset along the edge as well as inward, so no chip is a
-      // symmetrical triangle — real ones break along the grain, off-square.
-      tx.lineTo(
-        px + nx * depth + tanX * (rnd() - 0.5) * halfW * 1.4,
-        py + ny * depth + tanY * (rnd() - 0.5) * halfW * 1.4
-      );
-      tx.lineTo(bx + tanX * halfW, by + tanY * halfW);
-      tx.closePath();
-      tx.fill();
-    }
+    /* NO chips. There used to be 13 wedges cut out of the border, up to 12px
+       deep — and a 12px bite out of a 512px edge is a ~9cm notch on the real
+       sheet. Zoomed in that is the single deep cut that reads as a glitch
+       rather than as damage, because nothing else on the edge is anywhere near
+       that scale. The torn walk above now carries all the erosion, at a
+       consistent size, everywhere — which is what makes it read as one torn
+       edge instead of a clean edge with bites taken out of it. */
 
-    // Splits: hairline cracks running in from the edge and stopping. Wider
-    // than a true hairline (1.4–3px) on purpose — the feather below softens
-    // everything by 2.8px, and a 1px crack simply disappears into it.
-    for (let i = 0; i < 7; i++) {
+    // Splits: hairline cracks running in from the edge and stopping. These are
+    // fine, and stay — they are age, not damage, and they never break the
+    // silhouette the way a chip does.
+    for (let i = 0; i < 6; i++) {
       const [px, py, nx, ny] = edgePoint((i + 2) % 4, 0.12 + rnd() * 0.76);
       const tanX = -ny;
       const tanY = nx;
-      const len = 7 + rnd() * 15;
+      const len = 6 + rnd() * 11;
       const drift = (rnd() - 0.5) * 0.8; // wanders off straight-in
-      const midX = px + nx * len * 0.5 + tanX * len * drift * 0.5;
-      const midY = py + ny * len * 0.5 + tanY * len * drift * 0.5;
       const endX = px + nx * len + tanX * len * drift;
       const endY = py + ny * len + tanY * len * drift;
-      tx.lineWidth = 1.4 + rnd() * 1.6;
+      // Straight, not a quadratic. A split follows the paper's grain and runs
+      // in a line; curving it was one more source of the roundness this pass
+      // is removing. Thinner too, now that the feather is 1.1px not 2.8px.
+      tx.lineWidth = 0.9 + rnd() * 1.1;
       tx.lineCap = 'round';
       tx.beginPath();
-      tx.moveTo(px - nx * 2, py - ny * 2);
-      tx.quadraticCurveTo(midX, midY, endX, endY);
+      /* Start INSIDE the torn edge, not on the original rectangle. `edgePoint`
+         walks the untorn a/b box, and the tear above now eats up to ~64px in
+         from it — so a split beginning at `-nx * 2` would usually be drawn in
+         paper that is already gone, and never show. 12px in puts it on surviving
+         sheet while still reading as a crack that runs from the edge. */
+      tx.moveTo(px + nx * 12, py + ny * 12);
+      tx.lineTo(endX, endY);
       tx.stroke();
     }
 
@@ -336,11 +365,16 @@ export function buildPaperMaps(): PaperMaps {
 
        Blurring the mask hands the material a RAMP instead of a step, which
        `alphaToCoverage` (see EventPoster3D) then resolves across the canvas's
-       MSAA samples. 2.8px of 512 is about 2cm of softness on the sheet: enough
-       to blunt the cut and kill the aliasing, not enough to look out of focus.
-       Blur also rounds the corners a touch further, which is the same thing
-       paste and weather do. */
-    const FEATHER = 2.8;
+       MSAA samples.
+
+       1.1px, down from 2.8. 2.8 was tuned when the edge was a smooth curve and
+       the blur was doing double duty as a corner-rounder — but a blur is a
+       low-pass filter, and the torn walk above is built entirely out of the
+       high frequencies it removes. At 2.8 the fibre teeth were smeared back
+       into the soft wave this pass exists to get rid of. 1.1px is enough to
+       give A2C a ramp to resolve and kill the stair-stepping, and small enough
+       that a ~4.5px tooth survives it intact. */
+    const FEATHER = 1.1;
     const c = document.createElement('canvas');
     c.width = S;
     c.height = S;
@@ -352,6 +386,18 @@ export function buildPaperMaps(): PaperMaps {
     /* Still nothing through the FACE — no pinholes, no internal slits, no
        corner bites. All the wear lives on the border, above. */
 
+    /* ⚠ If you preview this mask in a 2D canvas, convert LUMINANCE TO ALPHA
+       first. The canvas here is opaque black-and-white — three reads the green
+       channel as alpha (`alphaMap` samples `.g`), it does not read the canvas's
+       own alpha, which is 255 everywhere including the "missing" paper. So
+       compositing the mask over artwork with `globalCompositeOperation =
+       'destination-in'` keeps EVERYTHING and shows an untorn rectangle no
+       matter how aggressive the tear is. That false negative is why several
+       rounds of tuning here looked like they were doing nothing. Do:
+           const im = ctx.getImageData(0, 0, S, S);
+           for (let i = 0; i < im.data.length; i += 4) im.data[i+3] = im.data[i+1];
+           ctx.putImageData(im, 0, 0);
+       before using it as a mask. */
     const t = new THREE.CanvasTexture(c);
     t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
     t.anisotropy = 4;
