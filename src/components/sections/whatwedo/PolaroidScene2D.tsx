@@ -62,7 +62,7 @@ const PHOTOS: Photo[] = [
     src: ik('/whatwedo/ml-android.webp'),
     alt: 'ML & Android — smart Android apps powered by machine learning, built with TensorFlow, Kotlin, and Google ML Kit to learn and adapt to user behavior.',
     left: 18,
-    top: 75,
+    top: 67,
     z: 6,
     start: 0.46,
     spin: -9,
@@ -71,7 +71,7 @@ const PHOTOS: Photo[] = [
     src: ik('/whatwedo/design.webp'),
     alt: 'Design — intuitive interfaces, compelling visuals, designed with Figma, Adobe Creative Suite, and design thinking to create experiences users love.',
     left: 82,
-    top: 78,
+    top: 70,
     z: 7,
     start: 0.59,
     spin: 12,
@@ -80,7 +80,7 @@ const PHOTOS: Photo[] = [
     src: ik('/whatwedo/techinical.PNG'),
     alt: 'Technical — Scalable web, mobile, and cloud solutions built with React, Node.js, Flutter, and modern DevOps, engineered for performance and digital transformation.',
     left: 50,
-    top: 77,
+    top: 69,
     z: 8,
     start: 0.72,
     spin: -4,
@@ -183,9 +183,9 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const availableHeight = containerHeight - topOffset - 16;
 
           // Base height required is roughly:
-          // Title (40) + Gap (20) + Camera height (405.4) + Gap between (15) + Ejected photo height (432)
-          // = 40 + 20 + 405.4 + 15 + 432 = 912.4px
-          const baseGroupHeight = 930;
+          // Title (40) + Gap (20) + Camera height (405.4) - Overlap (60) + Ejected photo height (432)
+          // = 40 + 20 + 405.4 - 60 + 432 = 837.4px
+          const baseGroupHeight = 840;
           const heightScale = availableHeight / baseGroupHeight;
           
           // Width fit: photo width is 340px. With side padding, base is 380px
@@ -229,8 +229,8 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           // Scaled height is 0.4 * photoHeight.
           const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
-          // Resting center of fully ejected polaroids (leaving a 15px scaled gap below the camera bottom)
-          const restingCenterY = cameraTop + cameraHeight + 15 * scale + photoHeight / 2;
+          // Resting center of fully ejected polaroids (overlapping the camera body to move them upwards)
+          const restingCenterY = cameraTop + cameraHeight - 60 * scale + photoHeight / 2;
 
           // photos: stack on top of each other fanned out
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {

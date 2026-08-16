@@ -105,6 +105,7 @@ export default function WhatWeDoSection() {
       // Pin a 0-height sentinel so GSAP uses the section as the scroll region
       // but does NOT push the page down with a pin-spacer of its own.
       pin: sentinelRef.current,
+      pinSpacing: false,
       start: 'top bottom',   // Instant handoff — fires the moment About exits
       end: 'bottom top',     // Extended to scrub perfectly until EventsAndCouncilSection is at top top
       scrub: 1.5,

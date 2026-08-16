@@ -1963,3 +1963,10 @@
      card (four full-width 3:4 images) on the device with the least VRAM to
      spare, to accelerate an animation that does not exist. */
 }
+
+.mobile-unified-container {
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+  position: relative !important;
+}

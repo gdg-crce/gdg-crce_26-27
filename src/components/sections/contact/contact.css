@@ -40,6 +40,7 @@
   align-items: center;
   justify-content: center;
   padding: clamp(4px, 1.5vw, 16px);
+  padding-top: 90px !important;
   /* NO `opacity: 0` here. The fade belongs to `.sd-term-host`, which is what
      the shutdown's draw loop holds a ref to and writes. When both carried it,
      the effective opacity was host(0 → 1) × this(0) = 0 at every scroll
@@ -213,13 +214,13 @@ a.bios-row {
 
 .bios-help-map {
   width: 100%;
-  height: 200px;
+  height: 260px;
 }
 
 @media (min-width: 901px) {
   .bios-help-map {
     height: 100%;
-    min-height: 350px;
+    min-height: 400px;
   }
 }
 
@@ -362,6 +363,6 @@ a.bios-row {
   }
 
   .bios-help-map {
-    height: 160px !important;
+    height: 220px !important;
   }
 }
