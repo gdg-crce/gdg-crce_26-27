@@ -104,7 +104,7 @@ const MOBILE_PHOTOS: MobilePhoto[] = [
     src: ik('/whatwedo/mobile/technical.png'),
     alt: 'Technical — Scalable web, mobile, and cloud solutions built with React, Node.js, Flutter, and modern DevOps, engineered for performance and digital transformation.',
     z: 16,
-    start: 0.22,
+    start: 0.20,
     rot: -1.5,
     offsetX: -5,
     offsetY: 3,
@@ -113,7 +113,7 @@ const MOBILE_PHOTOS: MobilePhoto[] = [
     src: ik('/whatwedo/mobile/content.png'),
     alt: 'Content — engaging technical content and educational resources, from blog posts to video tutorials, making complex topics accessible for everyone.',
     z: 17,
-    start: 0.38,
+    start: 0.32,
     rot: 3,
     offsetX: 6,
     offsetY: -3,
@@ -122,7 +122,7 @@ const MOBILE_PHOTOS: MobilePhoto[] = [
     src: ik('/whatwedo/mobile/coomunity.png'),
     alt: 'Community — organizing workshops, hackathons, and tech talks that foster innovation and collaboration among tech enthusiasts.',
     z: 18,
-    start: 0.54,
+    start: 0.44,
     rot: -3.5,
     offsetX: -6,
     offsetY: -6,
@@ -131,7 +131,7 @@ const MOBILE_PHOTOS: MobilePhoto[] = [
     src: ik('/whatwedo/mobile/ml&andro.png'),
     alt: 'ML & Android — smart Android apps powered by machine learning, built with TensorFlow, Kotlin, and Google ML Kit to learn and adapt to user behavior.',
     z: 19,
-    start: 0.70,
+    start: 0.56,
     rot: 2,
     offsetX: 4,
     offsetY: 3,
@@ -140,7 +140,7 @@ const MOBILE_PHOTOS: MobilePhoto[] = [
     src: ik('/whatwedo/mobile/design.png'),
     alt: 'Design — intuitive interfaces, compelling visuals, designed with Figma, Adobe Creative Suite, and design thinking to create experiences users love.',
     z: 20,
-    start: 0.86,
+    start: 0.68,
     rot: -2,
     offsetX: -3,
     offsetY: 1,
@@ -182,11 +182,10 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const topOffset = Math.max(50, containerHeight * 0.08);
           const availableHeight = containerHeight - topOffset - 16;
 
-          // Calculate a scale factor based on screen height and width to prevent any overflow/overlap
           // Base height required is roughly:
-          // Title (40) + Gap (20) + Camera height (270*1.5015 = 405) * 0.791 + Ejected photo height (360*1.2 = 432) * 1.48
-          // = 40 + 20 + 320.36 + 639.36 = 1019.72px
-          const baseGroupHeight = 840;
+          // Title (40) + Gap (20) + Camera height (405.4) + Gap between (15) + Ejected photo height (432)
+          // = 40 + 20 + 405.4 + 15 + 432 = 912.4px
+          const baseGroupHeight = 930;
           const heightScale = availableHeight / baseGroupHeight;
           
           // Width fit: photo width is 340px. With side padding, base is 380px
@@ -230,8 +229,8 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           // Scaled height is 0.4 * photoHeight.
           const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
-          // Resting center of fully ejected polaroids
-          const restingCenterY = slotY + (photoHeight * 0.48);
+          // Resting center of fully ejected polaroids (leaving a 15px scaled gap below the camera bottom)
+          const restingCenterY = cameraTop + cameraHeight + 15 * scale + photoHeight / 2;
 
           // photos: stack on top of each other fanned out
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {
@@ -255,9 +254,9 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             el.style.transform = `translate(-50%, -50%) translate(${currentOffsetX}px, calc(${currentCenterY.toFixed(1)}px + ${ph.offsetY * scale}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
           }
 
-          // Calculate flash opacity based on proximity to photo reveal starts (removed the first extra start flash at 0.08)
+          // Calculate flash opacity based on proximity to photo reveal starts
           let flashOpacity = 0;
-          const flashThresholds = [0.20, 0.36, 0.52, 0.68, 0.84];
+          const flashThresholds = [0.18, 0.30, 0.42, 0.54, 0.66];
           const flashDuration = 0.03;
           
           for (const tVal of flashThresholds) {

@@ -243,7 +243,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const term = termRef.current;
       if (!tube || !scrim || !dialog || !field || !scan || !dot || !term) return;
 
-      const adjustedP = p < 0.05 ? 0 : (p - 0.05) / 0.95;
+      const adjustedP = p < 0.15 ? 0 : (p - 0.15) / 0.85;
       const f = shutdownFrame(adjustedP);
 
       overlay.classList.toggle('is-active', p > 0.0005);
@@ -293,7 +293,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const scrim = scrimRef.current;
       const term = termRef.current;
       if (!scrim) return;
-      const adjustedP = p < 0.05 ? 0 : (p - 0.05) / 0.95;
+      const adjustedP = p < 0.15 ? 0 : (p - 0.15) / 0.85;
       overlay.classList.toggle('is-active', p > 0.0005);
       overlay.style.opacity = seg(0.0, 0.1, adjustedP).toString();
       scrim.style.opacity = seg(0.1, 0.5, adjustedP).toString();
@@ -335,7 +335,12 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       onUpdate: (self) => render(self.progress),
     });
 
+    const refreshTimeout = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 200);
+
     return () => {
+      clearTimeout(refreshTimeout);
       trigger.kill();
     };
   }, [mobile, drawRef]);

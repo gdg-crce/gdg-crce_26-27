@@ -74,6 +74,9 @@
 /* ── the utility ──────────────────────────────────────────────────────────
    One double rule around the whole screen, the way setup drew its frame. */
 .bios {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   width: 100%;
   height: 100%;
   max-width: 100%;
@@ -81,6 +84,7 @@
   border: 3px double var(--bios-line);
   padding: clamp(12px, 2vw, 24px) clamp(16px, 3vw, 36px);
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .bios-title {
@@ -93,6 +97,8 @@
 
 /* ── body: fields on the left, help on the right ─────────────────────────── */
 .bios-body {
+  flex: 1;
+  align-content: center;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
   gap: clamp(10px, 2vw, 26px);
@@ -296,12 +302,16 @@ a.bios-row {
   }
 
   .bios {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
     width: 100% !important;
     height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
     padding: 10px 14px !important;
     border: 2px double var(--bios-line) !important;
+    box-sizing: border-box !important;
   }
 
   .bios-title {
@@ -311,6 +321,8 @@ a.bios-row {
   }
 
   .bios-body {
+    flex: 1 !important;
+    align-content: center !important;
     gap: 8px !important;
     padding: 4px 0 !important;
   }

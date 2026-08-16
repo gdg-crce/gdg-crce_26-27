@@ -27,6 +27,7 @@ interface WindowsPictureViewerProps {
   allMembers: CouncilMember[];
   onClose?: () => void;
   onMinimize?: () => void;
+  scrollProgressRef?: React.RefObject<number>;
 }
 
 type ViewMode = 'gallery' | 'filmstrip';
@@ -272,6 +273,7 @@ export default function WindowsPictureViewer({
   allMembers,
   onClose,
   onMinimize,
+  scrollProgressRef,
 }: WindowsPictureViewerProps) {
   const members = allMembers;
   const total = members.length;
@@ -322,6 +324,27 @@ export default function WindowsPictureViewer({
     const t = window.setInterval(() => step(1), SLIDE_MS);
     return () => window.clearInterval(t);
   }, [playing, step, total]);
+
+  // Drive the grid container's scroll position based on scrollProgressRef
+  useEffect(() => {
+    if (!scrollProgressRef) return;
+    let raf = 0;
+    let lastP = -1;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const p = scrollProgressRef.current ?? 0;
+      if (p === lastP) return;
+      lastP = p;
+      const el = gridRef.current;
+      if (!el) return;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll > 0) {
+        el.scrollTop = p * maxScroll;
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [scrollProgressRef]);
 
   // Keep the current picture in view in whichever rail is on screen.
   useEffect(() => {

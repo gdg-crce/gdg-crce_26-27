@@ -101,6 +101,7 @@ export default function EventsAndCouncilSection({
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<number>(0);
   const archiveScrollRef = useRef<number>(0);
+  const pvScrollProgressRef = useRef<number>(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const eventsWindowRef = useRef<HTMLDivElement>(null);
   const playerWrapperRef = useRef<HTMLDivElement>(null);
@@ -427,7 +428,8 @@ export default function EventsAndCouncilSection({
               playerWrapperRef.current.style.opacity = '1';
               playerWrapperRef.current.style.pointerEvents = 'auto';
               playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
-              archiveScrollRef.current = Math.min(1, Math.max(0, (p - MEMBERS_START) / (MEMBERS_END - MEMBERS_START)));
+              const scrollEnd = 0.88;
+              archiveScrollRef.current = Math.min(1, Math.max(0, (p - MEMBERS_START) / (scrollEnd - MEMBERS_START)));
             } else if (p < ARCHIVE_MIN_END) {
               // Genie minimize animation down into bottom taskbar
               const t = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
@@ -454,6 +456,10 @@ export default function EventsAndCouncilSection({
 
           /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
           const PV_START = 0.96;
+          const pvScrollStart = 10560; // px when Picture Viewer starts opening (11000 * 0.96)
+          const pvScrollEnd = 11900;   // px when shutdown starts
+          pvScrollProgressRef.current = Math.min(1, Math.max(0, (px - pvScrollStart) / (pvScrollEnd - pvScrollStart)));
+
           if (pictureViewerRef.current) {
             if (p < PV_START) {
               pictureViewerRef.current.style.opacity = '0';
@@ -938,7 +944,7 @@ export default function EventsAndCouncilSection({
             className="xp-picture-viewer-wrapper"
             style={{ opacity: 0, pointerEvents: 'none', visibility: 'hidden', transform: 'scale(0.85) translateY(25px)' }}
           >
-            <WindowsPictureViewer allMembers={filteredMembers} />
+            <WindowsPictureViewer allMembers={filteredMembers} scrollProgressRef={pvScrollProgressRef} />
           </div>
         </WindowsXPDesktop>
       </div>
