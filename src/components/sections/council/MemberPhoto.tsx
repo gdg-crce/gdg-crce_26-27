@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CouncilMember } from './councilData';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 /* -----------------------------------------------------------------------------
    One member's photograph, everywhere.
@@ -85,6 +86,16 @@ export default function MemberPhoto({
         // shows, rather than the browser's broken-image glyph.
         onError={(e) => {
           e.currentTarget.style.visibility = 'hidden';
+        }}
+        // Refresh ScrollTrigger when images load to update heights and avoid trigger offset shifts on mobile
+        onLoad={() => {
+          if (typeof window !== 'undefined') {
+            const timer = (window as any)._stRefreshTimer;
+            if (timer) clearTimeout(timer);
+            (window as any)._stRefreshTimer = setTimeout(() => {
+              ScrollTrigger.refresh();
+            }, 150);
+          }
         }}
         // Absolute, not static: the call sites size their own frames in wildly
         // different ways (fixed px, aspect-ratio, flex child), and taking the

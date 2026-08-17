@@ -9,12 +9,13 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 // mobile carousel used to carry its own copy of the list, which is how the two
 // views ended up showing different posters for the same four events.
 import { events, mobileEvents } from './events/eventData';
-import { councilMembers } from './council/councilData';
+import { councilMembers, membersByTeam } from './council/councilData';
 import WindowsXPDesktop from './council/WindowsXPDesktop';
 import Y2KArchiveSystem from './council/Y2KArchiveSystem';
 import WindowsPictureViewer from './council/WindowsPictureViewer';
 import MemberPhoto from './council/MemberPhoto';
 import { ikUrl } from '@/lib/imagekit';
+import { COUNCIL_CLIPS } from '@/lib/media';
 import './council/council.css';
 
 /* Dynamically import the R3F scene — no SSR for WebGL */
@@ -124,6 +125,7 @@ export default function EventsAndCouncilSection({
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState<'posts' | 'about' | 'videos' | 'photos'>('posts');
   /* Read by the scroll callback instead of the state value.
 
      This flag used to be a dependency of the effect that builds the pinned
@@ -175,9 +177,17 @@ export default function EventsAndCouncilSection({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    if (isMobile) {
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 100);
+    }
+  }, [activeMobileTab, isMobile]);
+
   const filteredMembers = useMemo(() => {
     if (selectedTeam === 'All Tracks') return councilMembers;
-    return councilMembers.filter((m) => m.team === selectedTeam);
+    return membersByTeam(selectedTeam as any);
   }, [selectedTeam]);
 
   const handleSelectTeam = useCallback((team: string) => {
@@ -490,8 +500,9 @@ export default function EventsAndCouncilSection({
               playerWrapperRef.current.style.opacity = '1';
               playerWrapperRef.current.style.pointerEvents = 'auto';
               playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
-              const scrollEnd = 0.88;
-              archiveScrollRef.current = Math.min(1, Math.max(0, (p - MEMBERS_START) / (scrollEnd - MEMBERS_START)));
+              const scrollStart = MEMBERS_START;
+              const scrollEnd = MEMBERS_END;
+              archiveScrollRef.current = Math.min(1, Math.max(0, (p - scrollStart) / (scrollEnd - scrollStart)));
             } else if (p < ARCHIVE_MIN_END) {
               // Genie minimize animation down into bottom taskbar
               const t = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
@@ -519,8 +530,12 @@ export default function EventsAndCouncilSection({
           /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
           const PV_START = 0.96;
           const pvScrollStart = 10560; // px when Picture Viewer starts opening (11000 * 0.96)
-          const pvScrollEnd = 11900;   // px when shutdown starts
-          pvScrollProgressRef.current = Math.min(1, Math.max(0, (px - pvScrollStart) / (pvScrollEnd - pvScrollStart)));
+          const pvScrollEnd = 11400;   // px when scrolling finishes, leaving a 500px hold before shutdown at 11900
+          const pvRaw = Math.min(1, Math.max(0, (px - pvScrollStart) / (pvScrollEnd - pvScrollStart)));
+          const pvHoldThreshold = 0.45;
+          pvScrollProgressRef.current = pvRaw <= pvHoldThreshold
+            ? 0
+            : (pvRaw - pvHoldThreshold) / (1 - pvHoldThreshold);
 
           if (pictureViewerRef.current) {
             if (p < PV_START) {
@@ -694,143 +709,80 @@ export default function EventsAndCouncilSection({
 
             {/* Profile Navigation Tabs (Posts, About, Videos, Photos) */}
             <div className="fb-profile-tabs-menu">
-              <span className="fb-tab-item active">Posts</span>
-              <span className="fb-tab-item">About</span>
-              <span className="fb-tab-item">Videos</span>
-              <span className="fb-tab-item">Photos</span>
+              <button
+                type="button"
+                className={`fb-tab-item ${activeMobileTab === 'posts' ? 'active' : ''}`}
+                onClick={() => setActiveMobileTab('posts')}
+              >
+                Posts
+              </button>
+              <button
+                type="button"
+                className={`fb-tab-item ${activeMobileTab === 'about' ? 'active' : ''}`}
+                onClick={() => setActiveMobileTab('about')}
+              >
+                About
+              </button>
+              <button
+                type="button"
+                className={`fb-tab-item ${activeMobileTab === 'videos' ? 'active' : ''}`}
+                onClick={() => setActiveMobileTab('videos')}
+              >
+                Videos
+              </button>
+              <button
+                type="button"
+                className={`fb-tab-item ${activeMobileTab === 'photos' ? 'active' : ''}`}
+                onClick={() => setActiveMobileTab('photos')}
+              >
+                Photos
+              </button>
             </div>
           </div>
           <div className="fb-header-divider" />
         </div>
 
         {/* Scrollable post feed */}
-        <div className="fb-feed-container">
-          {/* Post 1: Welcome post from GDG CRCE */}
-          <div className="fb-post-card pinned-post">
-            {/* Post Header */}
-            <div className="fb-post-header">
-              <div className="fb-post-avatar page-avatar">
-                <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
-              </div>
-              <div className="fb-post-author-info">
-                <span className="fb-post-author-name">
-                  GDG CRCE
-                  <span className="fb-verified-badge-small">✓</span>
-                </span>
-                <span className="fb-post-meta">Posted by Sir Harvey York • Pinned Post • 🌐</span>
-              </div>
-            </div>
-
-            {/* Post content */}
-            <div className="fb-post-content">
-              <p className="fb-post-text">
-                Zoomies before duties. Paws-ing for a group photo before we start building! 🐾
-              </p>
-            </div>
-
-            {/* Attached Photo */}
-            <div className="fb-post-media-container">
-              <Image src="/preloader/genesis.jpg" className="fb-post-img" alt="Genesis Welcome" width={1280} height={960} sizes="(max-width: 600px) 100vw, 500px" />
-            </div>
-
-            {/* Reactions summary */}
-            <div className="fb-post-reactions-bar">
-              <div className="fb-reaction-icons">
-                <span className="reaction-bubble blue-bubble">👍</span>
-                <span className="reaction-bubble red-bubble">❤️</span>
-              </div>
-              <span className="fb-reaction-text">You, Movin and 87 others</span>
-            </div>
-
-            {/* Post Action Buttons */}
-            <div className="fb-post-actions">
-              <button type="button" className="fb-action-btn">
-                <span className="btn-icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
-                  </svg>
-                </span>
-                Like
-              </button>
-              <div className="fb-action-separator" />
-              <button type="button" className="fb-action-btn">
-                <span className="btn-icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                </span>
-                Comment
-              </button>
-              <div className="fb-action-separator" />
-              <button type="button" className="fb-action-btn">
-                <span className="btn-icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
-                    <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
-                  </svg>
-                </span>
-                Share
-              </button>
-            </div>
-
-            {/* Comments block */}
-            <div className="fb-comments-section">
-              <div className="fb-comment-item">
-                <span className="comment-avatar">💻</span>
-                <div className="comment-bubble">
-                  <span className="comment-author">Movin</span>
-                  <span className="comment-text">Barkend Developer looks good! 🐶</span>
-                </div>
-              </div>
-              <div className="fb-comment-item">
-                <span className="comment-avatar">🐶</span>
-                <div className="comment-bubble">
-                  <span className="comment-author">Sir Harvey York</span>
-                  <span className="comment-text">Woof! 🐾</span>
-                </div>
-              </div>
-              
-              {/* Comment Input Box */}
-              <div className="fb-comment-input-row">
-                <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
-                <span className="comment-camera-icon">📷</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Loop over actual council members */}
-          {councilMembers.map((member) => (
-            <div key={member.id} className="fb-post-card">
+        {activeMobileTab === 'posts' && (
+          <div className="fb-feed-container">
+            {/* Post 1: Welcome post from GDG CRCE */}
+            <div className="fb-post-card pinned-post">
               {/* Post Header */}
               <div className="fb-post-header">
-                <MemberPhoto member={member} className="fb-post-avatar" />
+                <div className="fb-post-avatar page-avatar">
+                  <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
+                </div>
                 <div className="fb-post-author-info">
-                  <span className="fb-post-author-name">{member.name}</span>
-                  <span className="fb-post-meta">
-                    {member.role} • {member.branch} • {member.tier}
+                  <span className="fb-post-author-name">
+                    GDG CRCE
+                    <span className="fb-verified-badge-small">✓</span>
                   </span>
+                  <span className="fb-post-meta">Posted by Sir Harvey York • Pinned Post • 🌐</span>
                 </div>
               </div>
 
               {/* Post content */}
               <div className="fb-post-content">
-                <p className="fb-post-text">{member.quote}</p>
+                <p className="fb-post-text">
+                  Zoomies before duties. Paws-ing for a group photo before we start building! 🐾
+                </p>
               </div>
 
-              {/* Attached Member Photo Card */}
+              {/* Attached Photo */}
               <div className="fb-post-media-container">
-                <MemberPhoto member={member} className="fb-post-member-card" size="full" />
+                <Image src="/preloader/genesis.jpg" className="fb-post-img" alt="Genesis Welcome" width={1280} height={960} sizes="(max-width: 600px) 100vw, 500px" />
               </div>
 
               {/* Reactions summary */}
               <div className="fb-post-reactions-bar">
                 <div className="fb-reaction-icons">
                   <span className="reaction-bubble blue-bubble">👍</span>
-                  <span className="reaction-bubble yellow-bubble">😊</span>
+                  <span className="reaction-bubble red-bubble">❤️</span>
                 </div>
-                <span className="fb-reaction-text">Liked by Sir Harvey York and 42 others</span>
+                <span className="fb-reaction-text">You, Movin and 87 others</span>
               </div>
 
-              {/* Action Buttons */}
+              {/* Post Action Buttons */}
               <div className="fb-post-actions">
                 <button type="button" className="fb-action-btn">
                   <span className="btn-icon">
@@ -860,16 +812,223 @@ export default function EventsAndCouncilSection({
                 </button>
               </div>
 
-              {/* Comments Input */}
+              {/* Comments block */}
               <div className="fb-comments-section">
+                <div className="fb-comment-item">
+                  <span className="comment-avatar">💻</span>
+                  <div className="comment-bubble">
+                    <span className="comment-author">Movin</span>
+                    <span className="comment-text">Barkend Developer looks good! 🐶</span>
+                  </div>
+                </div>
+                <div className="fb-comment-item">
+                  <span className="comment-avatar">🐶</span>
+                  <div className="comment-bubble">
+                    <span className="comment-author">Sir Harvey York</span>
+                    <span className="comment-text">Woof! 🐾</span>
+                  </div>
+                </div>
+                
+                {/* Comment Input Box */}
                 <div className="fb-comment-input-row">
                   <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
                   <span className="comment-camera-icon">📷</span>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* Loop over actual council members */}
+            {councilMembers.map((member) => (
+              <div key={member.id} className="fb-post-card">
+                {/* Post Header */}
+                <div className="fb-post-header">
+                  <MemberPhoto member={member} className="fb-post-avatar" />
+                  <div className="fb-post-author-info">
+                    <span className="fb-post-author-name">{member.name}</span>
+                    <span className="fb-post-meta">
+                      {member.role} • {member.branch} • {member.tier}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Post content */}
+                <div className="fb-post-content">
+                  <p className="fb-post-text">{member.quote}</p>
+                </div>
+
+                {/* Attached Member Photo Card */}
+                <div className="fb-post-media-container">
+                  <MemberPhoto member={member} className="fb-post-member-card" size="full" />
+                </div>
+
+                {/* Reactions summary */}
+                <div className="fb-post-reactions-bar">
+                  <div className="fb-reaction-icons">
+                    <span className="reaction-bubble blue-bubble">👍</span>
+                    <span className="reaction-bubble yellow-bubble">😊</span>
+                  </div>
+                  <span className="fb-reaction-text">Liked by Sir Harvey York and 42 others</span>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="fb-post-actions">
+                  <button type="button" className="fb-action-btn">
+                    <span className="btn-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
+                      </svg>
+                    </span>
+                    Like
+                  </button>
+                  <div className="fb-action-separator" />
+                  <button type="button" className="fb-action-btn">
+                    <span className="btn-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                    </span>
+                    Comment
+                  </button>
+                  <div className="fb-action-separator" />
+                  <button type="button" className="fb-action-btn">
+                    <span className="btn-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
+                        <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
+                      </svg>
+                    </span>
+                    Share
+                  </button>
+                </div>
+
+                {/* Comments Input */}
+                <div className="fb-comments-section">
+                  <div className="fb-comment-input-row">
+                    <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
+                    <span className="comment-camera-icon">📷</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeMobileTab === 'about' && (
+          <div className="fb-feed-container">
+            <div className="fb-post-card">
+              <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: '#1877f2' }}>About GDG on Campus CRCE</h3>
+              <p style={{ fontSize: '13px', lineHeight: '1.6', color: '#4b4f56', marginBottom: '12px' }}>
+                Google Developer Group on Campus at Fr. Conceicao Rodrigues College of Engineering is a vibrant community of tech enthusiasts, designers, and managers aiming to learn, collaborate, and build solutions together.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #e5e6e9', paddingTop: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#65676b' }}>Networks:</span>
+                  <span style={{ color: '#1c1e21' }}>CRCE, Mumbai · GDG on Campus</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#65676b' }}>Total Members:</span>
+                  <span style={{ color: '#1c1e21' }}>{councilMembers.length} Members</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#65676b' }}>Structure:</span>
+                  <span style={{ color: '#1c1e21' }}>8 Tracks · Senior & Junior Council</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#65676b' }}>Status:</span>
+                  <span style={{ color: '#00a400', fontWeight: 'bold' }}>Online & Active</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeMobileTab === 'videos' && (
+          <div className="fb-feed-container">
+            {COUNCIL_CLIPS.map((clip) => (
+              <div key={clip.src} className="fb-post-card">
+                {/* Post Header */}
+                <div className="fb-post-header">
+                  <div className="fb-post-avatar page-avatar">
+                    <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
+                  </div>
+                  <div className="fb-post-author-info">
+                    <span className="fb-post-author-name">
+                      GDG CRCE
+                      <span className="fb-verified-badge-small">✓</span>
+                    </span>
+                    <span className="fb-post-meta">Posted • Video • 🌐</span>
+                  </div>
+                </div>
+
+                {/* Post content */}
+                <div className="fb-post-content">
+                  <p className="fb-post-text">{clip.caption}</p>
+                </div>
+
+                {/* Video Block */}
+                <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', background: '#000' }}>
+                  <video
+                    src={clip.src}
+                    poster={clip.poster}
+                    controls
+                    playsInline
+                    muted
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeMobileTab === 'photos' && (
+          <div className="fb-feed-container">
+            <div className="fb-post-card">
+              <div className="fb-post-header">
+                <div className="fb-post-avatar page-avatar">
+                  <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
+                </div>
+                <div className="fb-post-author-info">
+                  <span className="fb-post-author-name">
+                    GDG CRCE
+                    <span className="fb-verified-badge-small">✓</span>
+                  </span>
+                  <span className="fb-post-meta">Posted • Photo • 🌐</span>
+                </div>
+              </div>
+              <div className="fb-post-content">
+                <p className="fb-post-text">all of us together</p>
+              </div>
+              <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', overflow: 'hidden', border: '1px solid #e5e6e9' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/WhatsApp%20Image%202026-08-16%20at%2012.44.58%20PM.jpeg?tr=w-800,q-75,f-auto"
+                  alt="Group Photo"
+                  style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
+                />
+              </div>
+            </div>
+
+            <div className="fb-post-card">
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px', color: '#1877f2' }}>Wall Photos</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                {[
+                  { id: 'fb1', src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook1.JPG?tr=w-800,q-75,f-auto', caption: 'the council, assembled' },
+                  { id: 'fb2', src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook2.JPG?tr=w-800,q-75,f-auto', caption: 'session day' },
+                  { id: 'fb3', src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook3.JPG?tr=w-800,q-75,f-auto', caption: 'behind the scenes' },
+                  { id: 'fb4', src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook4.JPG?tr=w-800,q-75,f-auto', caption: 'after the event' },
+                ].map((p) => (
+                  <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', border: '1px solid #e5e6e9' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.src} alt={p.caption} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <span style={{ fontSize: '10px', color: '#65676b', textAlign: 'center' }}>{p.caption}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         </section>
       </div>
     );

@@ -535,9 +535,9 @@
      Shrinking the WINDOW was the wrong lever for "it looks too zoomed in": the
      complaint was the thumbnails, so that is what moved (see .xp-pv-tile-photo).
      Leave this big. */
-  width: 97% !important;
-  max-width: 1320px !important;
-  height: clamp(620px, 86vh, 880px) !important;
+  width: 99% !important;
+  max-width: 1400px !important;
+  height: clamp(700px, 90vh, 940px) !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
@@ -851,7 +851,20 @@
   gap: 10px !important;
   align-content: start !important;
   padding: 16px !important;
-  background: #ffffff !important;
+}
+
+.xp-pv-group-title {
+  grid-column: 1 / -1 !important;
+  font-family: 'Tahoma', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  color: #0054e3 !important;
+  border-bottom: 1px solid #aca899 !important;
+  padding-bottom: 4px !important;
+  margin-top: 15px !important;
+  margin-bottom: 10px !important;
+  text-align: left !important;
+  width: 100% !important;
 }
 
 .xp-pv-tile {
@@ -1409,8 +1422,6 @@
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
-  -webkit-overflow-scrolling: touch !important;
-  scroll-behavior: smooth !important;
 }
 
 /* Sticky Header styling */

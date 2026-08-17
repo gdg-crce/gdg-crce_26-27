@@ -7,6 +7,7 @@ import {
   teamsList,
   departmentsList,
   membersByTeam,
+  getMemberDepartments,
   leadOf,
   wallPhotos,
   groupPhoto,
@@ -390,7 +391,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
   }, [scrollProgressRef]);
 
   // Browser history stack — kept so the address bar reflects where you are.
-  const [stack, setStack] = useState<Entry[]>([{ view: 'profile' }]);
+  const [stack, setStack] = useState<Entry[]>([{ view: 'members', team: 'All Tracks' }]);
   const [idx, setIdx] = useState(0);
   const cur = stack[idx];
 
@@ -573,7 +574,9 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
   const renderMembers = () => {
     const activeTeam = cur.team ?? 'All Tracks';
     const list =
-      activeTeam === 'All Tracks' ? councilMembers : councilMembers.filter((m) => m.team === activeTeam);
+      activeTeam === 'All Tracks' ? councilMembers : membersByTeam(activeTeam as any);
+    const seniors = list.filter((m) => m.tier === 'Senior Council');
+    const juniors = list.filter((m) => m.tier === 'Junior Council');
     return (
       <>
         <div className={styles.dirHead}>
@@ -594,18 +597,33 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             </button>
           ))}
         </div>
-        <div className={styles.memberGrid}>
-          {list.map((m) => (
-            <MemberCard key={m.id} m={m} />
-          ))}
-        </div>
+        {seniors.length > 0 && (
+          <>
+            <div className={styles.tierTitle}>Senior Council</div>
+            <div className={styles.memberGrid}>
+              {seniors.map((m) => (
+                <MemberCard key={m.id} m={m} />
+              ))}
+            </div>
+          </>
+        )}
+        {juniors.length > 0 && (
+          <>
+            <div className={styles.tierTitle}>Junior Council</div>
+            <div className={styles.memberGrid}>
+              {juniors.map((m) => (
+                <MemberCard key={m.id} m={m} />
+              ))}
+            </div>
+          </>
+        )}
       </>
     );
   };
 
   const renderMemberDetail = () => {
     const m = memberById(cur.memberId ?? 1);
-    const teammates = councilMembers.filter((x) => x.team === m.team && x.id !== m.id);
+    const teammates = membersByTeam(m.team).filter((x) => x.id !== m.id);
     return (
       <>
         <button type="button" className={styles.detailBack} onClick={back}>
@@ -625,7 +643,11 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div className={styles.detailName}>{m.name}</div>
             <div className={styles.detailRole}>{m.role}</div>
             <div className={styles.detailMetaRow}>
-              <span className={styles.teamBadge}>{m.team}</span>
+              {getMemberDepartments(m).map((t) => (
+                <span key={t} className={styles.teamBadge}>
+                  {t}
+                </span>
+              ))}
               <span className={styles.detailMeta}>{m.branch}</span>
               <span className={styles.detailMeta}>{m.tier}</span>
               <span className={styles.detailMeta}>
@@ -638,7 +660,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
               <div className={styles.dPanelBody}>
                 <div><span className={styles.acctKey}>Post:</span> {m.role}</div>
                 <div><span className={styles.acctKey}>Council:</span> {m.tier}</div>
-                <div><span className={styles.acctKey}>Team:</span> {m.team}</div>
+                <div><span className={styles.acctKey}>Domains:</span> {getMemberDepartments(m).join(' and ')}</div>
                 <div><span className={styles.acctKey}>Class:</span> {m.branch}</div>
               </div>
             </div>
@@ -805,9 +827,8 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
   };
 
   const TABS: Array<{ key: ViewName; label: string; entry: Entry }> = [
-    // No 'members' tab — the directory is reached from the profile and groups
-    // pages instead, which keeps the strip down to the three top-level places.
     { key: 'profile', label: 'my profile', entry: { view: 'profile' } },
+    { key: 'members', label: 'members', entry: { view: 'members', team: 'All Tracks' } },
     { key: 'groups', label: 'groups', entry: { view: 'groups' } },
     { key: 'account', label: 'my account', entry: { view: 'account' } },
   ];
@@ -935,6 +956,13 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
                     onClick={() => go({ view: 'profile' })}
                   >
                     <FolderIcon /> my profile
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.quickLink} ${activeTab === 'members' ? styles.quickLinkActive : ''}`}
+                    onClick={() => go({ view: 'members', team: 'All Tracks' })}
+                  >
+                    <FolderIcon /> members
                   </button>
                 </div>
 

@@ -366,11 +366,25 @@ export const departmentsList: Department[] = [
 
 export const teamsList = ['All Tracks', ...departmentsList] as const;
 
+const EXTRA_MEMBERSHIP: Record<Department, string[]> = {
+  Leadership: ['Abhishek Roy Jose', 'Johann Joseph', 'Scarlett Menezes', 'Aditi Pawar'],
+  'Social Media': ['Scarlett Menezes'],
+  Outreach: ['Varad Joshi'],
+  Events: ['Laksh Shivalkar'],
+  Technical: [],
+  'Design & Creatives': [],
+  Marketing: [],
+  'Public Relations': [],
+};
+
 /** Everyone on a tier, in roster order. */
 export const membersByTier = (tier: Tier) => councilMembers.filter((m) => m.tier === tier);
 
 /** Everyone in a department, in roster order — the senior lead comes first. */
-export const membersByTeam = (team: Department) => councilMembers.filter((m) => m.team === team);
+export const membersByTeam = (team: Department) => {
+  const extra = EXTRA_MEMBERSHIP[team] || [];
+  return councilMembers.filter((m) => m.team === team || extra.includes(m.name));
+};
 
 /**
  * The Senior Council member who leads a department, if there is one.
@@ -378,6 +392,16 @@ export const membersByTeam = (team: Department) => councilMembers.filter((m) => 
  */
 export const leadOf = (team: Department) =>
   councilMembers.find((m) => m.team === team && m.tier === 'Senior Council');
+
+export const getMemberDepartments = (member: CouncilMember): Department[] => {
+  const list: Department[] = [member.team];
+  (Object.keys(EXTRA_MEMBERSHIP) as Department[]).forEach((team) => {
+    if (EXTRA_MEMBERSHIP[team].includes(member.name) && !list.includes(team)) {
+      list.push(team);
+    }
+  });
+  return list;
+};
 
 /* -----------------------------------------------------------------------------
    Wall snapshots.

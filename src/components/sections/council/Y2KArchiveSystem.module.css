@@ -58,7 +58,7 @@
    -------------------------------------------------------------------------- */
 .ieWindow {
   width: 100%;
-  max-width: 960px;
+  max-width: 1120px;
   background: var(--luna);
   border: 1px solid #0a246a;
   border-radius: 8px 8px 0 0;
@@ -250,7 +250,7 @@
    2. BROWSER PAGE (the rendered "TheFacebook" document)
    -------------------------------------------------------------------------- */
 .page {
-  height: 560px;
+  height: 680px;
   overflow-y: auto;
   background: var(--fb-bg);
   border-top: 1px solid #ffffff;
@@ -987,6 +987,18 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 12px;
+}
+
+.tierTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fb-blue);
+  border-bottom: 2px solid var(--fb-blue);
+  padding: 4px 6px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .memberCard {

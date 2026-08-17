@@ -20,7 +20,7 @@
    -------------------------------------------------------------------------- */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CouncilMember } from './councilData';
+import { CouncilMember, getMemberDepartments } from './councilData';
 import MemberPhoto from './MemberPhoto';
 
 interface WindowsPictureViewerProps {
@@ -283,6 +283,8 @@ export default function WindowsPictureViewer({
 }: WindowsPictureViewerProps) {
   const members = allMembers;
   const total = members.length;
+  const seniors = useMemo(() => members.filter((m) => m.tier === 'Senior Council'), [members]);
+  const juniors = useMemo(() => members.filter((m) => m.tier === 'Junior Council'), [members]);
 
   const [index, setIndex] = useState(0);
   // Nothing is selected on open, so the gallery gets the full width — every
@@ -481,30 +483,69 @@ export default function WindowsPictureViewer({
       <main className="xp-pv-content">
           {view === 'gallery' ? (
             <div className="xp-pv-grid" ref={gridRef}>
-              {members.map((m, i) => {
-                const on = panelOpen && i === safeIndex;
-                return (
-                  <button
-                    type="button"
-                    key={m.id}
-                    data-selected={on ? 'true' : 'false'}
-                    className={`xp-pv-tile ${on ? 'xp-pv-tile-selected' : ''}`}
-                    onClick={() => select(i)}
-                    title={`${m.name} — ${m.role}`}
-                  >
-                    <span className="xp-pv-tile-shell">
-                      <MemberPhoto
-                        member={m}
-                        className="xp-pv-tile-photo"
-                        style={{
-                          transform: on && rotation ? `rotate(${rotation}deg)` : undefined,
-                        }}
-                      />
-                    </span>
-                    <span className="xp-pv-tile-name">{captionFor(m)}</span>
-                  </button>
-                );
-              })}
+              {/* Senior Council Group */}
+              {seniors.length > 0 && (
+                <>
+                  <div className="xp-pv-group-title">Senior Council</div>
+                  {seniors.map((m) => {
+                    const originalIdx = members.findIndex((x) => x.id === m.id);
+                    const on = panelOpen && originalIdx === safeIndex;
+                    return (
+                      <button
+                        type="button"
+                        key={m.id}
+                        data-selected={on ? 'true' : 'false'}
+                        className={`xp-pv-tile ${on ? 'xp-pv-tile-selected' : ''}`}
+                        onClick={() => select(originalIdx)}
+                        title={`${m.name} — ${m.role}`}
+                      >
+                        <span className="xp-pv-tile-shell">
+                          <MemberPhoto
+                            member={m}
+                            className="xp-pv-tile-photo"
+                            style={{
+                              transform: on && rotation ? `rotate(${rotation}deg)` : undefined,
+                            }}
+                          />
+                        </span>
+                        <span className="xp-pv-tile-name">{captionFor(m)}</span>
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* Junior Council Group */}
+              {juniors.length > 0 && (
+                <>
+                  <div className="xp-pv-group-title">Junior Council</div>
+                  {juniors.map((m) => {
+                    const originalIdx = members.findIndex((x) => x.id === m.id);
+                    const on = panelOpen && originalIdx === safeIndex;
+                    return (
+                      <button
+                        type="button"
+                        key={m.id}
+                        data-selected={on ? 'true' : 'false'}
+                        className={`xp-pv-tile ${on ? 'xp-pv-tile-selected' : ''}`}
+                        onClick={() => select(originalIdx)}
+                        title={`${m.name} — ${m.role}`}
+                      >
+                        <span className="xp-pv-tile-shell">
+                          <MemberPhoto
+                            member={m}
+                            className="xp-pv-tile-photo"
+                            style={{
+                              transform: on && rotation ? `rotate(${rotation}deg)` : undefined,
+                            }}
+                          />
+                        </span>
+                        <span className="xp-pv-tile-name">{captionFor(m)}</span>
+                      </button>
+                    );
+                  })}
+                </>
+              )}
             </div>
           ) : (
             <div className="xp-pv-film">
@@ -570,8 +611,8 @@ export default function WindowsPictureViewer({
                   <dd>{current.role}</dd>
                   <dt>Council</dt>
                   <dd>{current.tier}</dd>
-                  <dt>Department</dt>
-                  <dd>{current.team}</dd>
+                  <dt>Domains</dt>
+                  <dd>{getMemberDepartments(current).join(' and ')}</dd>
                   <dt>Class</dt>
                   <dd>{current.branch}</dd>
                 </dl>

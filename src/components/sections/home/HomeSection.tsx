@@ -192,7 +192,7 @@ export default function HomeSection() {
       // of the push under 1.4×, which on a scrubbed scroll feels like the wheel
       // has stopped doing anything, and is the other half of why the reveal
       // went unnoticed.
-      const scale = Math.exp(Math.pow(zoomP, 1.5) * Math.log(MAX_SCALE));
+      const scale = Math.exp(Math.pow(zoomP, 1.15) * Math.log(MAX_SCALE));
 
       // The origin sits on the D's stem, which is left of centre. Drifting it
       // to the middle of the screen as the push starts hides that: it reads as

@@ -212,7 +212,7 @@ const TRACKS: Track[] = [
     word: 'Theme',
     brush: 'Synécheia:',
     lines: ['What continues,', 'becomes greater.'],
-    ring: 'OUR TEAM · GDG ON CAMPUS CRCE · OUR TEAM · SYNÉCHEIA · 33⅓ RPM ·',
+    ring: 'ABOUT US · ABOUT US · ABOUT US · ABOUT US · ABOUT US · ABOUT US ·',
   },
   {
     key: 'vision',
