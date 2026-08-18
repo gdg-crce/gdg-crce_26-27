@@ -529,13 +529,17 @@ export default function EventsAndCouncilSection({
 
           /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
           const PV_START = 0.96;
-          const pvScrollStart = 10560; // px when Picture Viewer starts opening (11000 * 0.96)
-          const pvScrollEnd = 11400;   // px when scrolling finishes, leaving a 500px hold before shutdown at 11900
-          const pvRaw = Math.min(1, Math.max(0, (px - pvScrollStart) / (pvScrollEnd - pvScrollStart)));
-          const pvHoldThreshold = 0.45;
-          pvScrollProgressRef.current = pvRaw <= pvHoldThreshold
-            ? 0
-            : (pvRaw - pvHoldThreshold) / (1 - pvHoldThreshold);
+          // Scale-up runs from 10560px (p=0.96) to 10890px (p=0.99).
+          // Hold at top until 11200px (leaving 310px of static, fully open dwell).
+          // Scroll from 11200px to 11550px.
+          // Hold at bottom until 11900px where the shutdown begins.
+          if (px <= 11200) {
+            pvScrollProgressRef.current = 0;
+          } else if (px >= 11550) {
+            pvScrollProgressRef.current = 1;
+          } else {
+            pvScrollProgressRef.current = (px - 11200) / (11550 - 11200);
+          }
 
           if (pictureViewerRef.current) {
             if (p < PV_START) {
