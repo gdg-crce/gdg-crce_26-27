@@ -370,6 +370,7 @@ a.bios-row {
     padding: 10px 14px !important;
     border: 2px double var(--bios-line) !important;
     box-sizing: border-box !important;
+    overflow-y: auto !important; /* Allow scroll on short screens to avoid map cutoff */
   }
 
   .bios-title {
@@ -423,8 +424,8 @@ a.bios-row {
   }
 
   .bios-help-map {
-    height: auto !important;
-    min-height: 35vh !important;
-    flex: 1 !important;
+    height: 145px !important;
+    min-height: 120px !important;
+    flex: none !important;
   }
 }

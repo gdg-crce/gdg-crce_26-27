@@ -716,28 +716,52 @@ export default function EventsAndCouncilSection({
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'posts' ? 'active' : ''}`}
-                onClick={() => setActiveMobileTab('posts')}
+                onClick={() => {
+                  setActiveMobileTab('posts');
+                  setTimeout(() => {
+                    const el = document.getElementById('mobile-council');
+                    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+                  }, 20);
+                }}
               >
                 Posts
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'about' ? 'active' : ''}`}
-                onClick={() => setActiveMobileTab('about')}
+                onClick={() => {
+                  setActiveMobileTab('about');
+                  setTimeout(() => {
+                    const el = document.getElementById('mobile-council');
+                    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+                  }, 20);
+                }}
               >
                 About
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'videos' ? 'active' : ''}`}
-                onClick={() => setActiveMobileTab('videos')}
+                onClick={() => {
+                  setActiveMobileTab('videos');
+                  setTimeout(() => {
+                    const el = document.getElementById('mobile-council');
+                    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+                  }, 20);
+                }}
               >
                 Videos
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'photos' ? 'active' : ''}`}
-                onClick={() => setActiveMobileTab('photos')}
+                onClick={() => {
+                  setActiveMobileTab('photos');
+                  setTimeout(() => {
+                    const el = document.getElementById('mobile-council');
+                    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+                  }, 20);
+                }}
               >
                 Photos
               </button>

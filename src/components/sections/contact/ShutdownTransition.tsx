@@ -326,7 +326,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
 
     const trigger = ScrollTrigger.create({
       trigger: spacer,
-      start: 'top+=200 top',
+      start: 'top+=1200 top', // Shift start down by 1200px to ensure the entire mobile council feed is fully visible before shutdown starts
       end: 'bottom bottom',
       scrub: true,
       // The spacer sits after a long normal-flow feed whose height is not known
