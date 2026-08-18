@@ -167,6 +167,9 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
 
     const draw = () => {
       const p = progressRef.current ?? 0;
+      if (p === prevPRef.current) return;
+      prevPRef.current = p;
+
       const isMobile = window.innerWidth < 768;
 
       if (isMobile) {
@@ -314,24 +317,8 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
       raf = 0;
     };
 
-    // only spin the frame loop while the scene is actually on screen
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && document.visibilityState !== 'hidden') start();
-        else stop();
-      },
-      { threshold: 0 }
-    );
-    if (rootRef.current) io.observe(rootRef.current);
-    const onVis = () => {
-      if (document.visibilityState === 'hidden') stop();
-    };
-    document.addEventListener('visibilitychange', onVis);
-
-    draw();
+    start();
     return () => {
-      io.disconnect();
-      document.removeEventListener('visibilitychange', onVis);
       stop();
     };
   }, [progressRef]);

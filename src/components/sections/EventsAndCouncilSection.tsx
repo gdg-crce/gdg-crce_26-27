@@ -163,6 +163,19 @@ export default function EventsAndCouncilSection({
   const [mounted, setMounted] = useState(false);
   const [fixedHeight, setFixedHeight] = useState<string>('100vh');
 
+  // Reset scroll to top of mobile-council when active tab changes on mobile
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = document.getElementById('mobile-council');
+    if (el) {
+      const timer = setTimeout(() => {
+        const y = window.scrollY + el.getBoundingClientRect().top;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [activeMobileTab, isMobile]);
+
   useEffect(() => {
     setMounted(true);
     const handleResize = () => {
@@ -716,52 +729,28 @@ export default function EventsAndCouncilSection({
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'posts' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveMobileTab('posts');
-                  setTimeout(() => {
-                    const el = document.getElementById('mobile-council');
-                    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
-                  }, 20);
-                }}
+                onClick={() => setActiveMobileTab('posts')}
               >
                 Posts
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'about' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveMobileTab('about');
-                  setTimeout(() => {
-                    const el = document.getElementById('mobile-council');
-                    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
-                  }, 20);
-                }}
+                onClick={() => setActiveMobileTab('about')}
               >
                 About
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'videos' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveMobileTab('videos');
-                  setTimeout(() => {
-                    const el = document.getElementById('mobile-council');
-                    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
-                  }, 20);
-                }}
+                onClick={() => setActiveMobileTab('videos')}
               >
                 Videos
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'photos' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveMobileTab('photos');
-                  setTimeout(() => {
-                    const el = document.getElementById('mobile-council');
-                    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
-                  }, 20);
-                }}
+                onClick={() => setActiveMobileTab('photos')}
               >
                 Photos
               </button>

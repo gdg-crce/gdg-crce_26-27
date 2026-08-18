@@ -2331,3 +2331,22 @@ button.fb-tab-item.active::after {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
+
+/* ── Mobile Tab Switch Animation ────────────────────────────────────────── */
+@keyframes fbFeedFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fb-feed-container,
+.fb-about-container,
+.fb-videos-container,
+.fb-photos-container {
+  animation: fbFeedFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}

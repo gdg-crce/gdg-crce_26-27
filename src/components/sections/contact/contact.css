@@ -263,8 +263,8 @@ a.bios-row {
   /* Fill the column rather than force it taller. The map now has a fixed
      compact height so it is a usable reference but never drives the column. */
   .bios-help-map {
-    height: 130px;
-    min-height: 130px;
+    height: 320px !important;
+    min-height: 320px !important;
   }
 
   /* The map's own column layout. */
@@ -363,7 +363,7 @@ a.bios-row {
     padding: 10px 14px !important;
     border: 2px double var(--bios-line) !important;
     box-sizing: border-box !important;
-    overflow-y: auto !important; /* Allow scroll on short screens to avoid map cutoff */
+    overflow: hidden !important; /* Hide scrollbars and disable container overflow scrolling on mobile */
   }
 
   .bios-title {

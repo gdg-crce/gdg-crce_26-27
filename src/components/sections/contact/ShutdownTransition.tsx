@@ -243,6 +243,27 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const term = termRef.current;
       if (!tube || !scrim || !dialog || !field || !scan || !dot || !term) return;
 
+      const activeTabEl = document.querySelector('.fb-tab-item.active');
+      const isPostsActive = activeTabEl ? activeTabEl.textContent?.trim().toLowerCase() === 'posts' : true;
+
+      if (!isPostsActive) {
+        overlay.classList.remove('is-active');
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.visibility = 'hidden';
+        scrim.style.opacity = '0';
+        dialog.style.opacity = '0';
+        field.style.opacity = '0';
+        tube.style.opacity = '0';
+        scan.style.opacity = '0';
+        dot.style.opacity = '0';
+        if (term) {
+          term.style.opacity = '0';
+          term.classList.remove('is-live');
+        }
+        return;
+      }
+
       const adjustedP = p < 0.2 ? 0 : (p - 0.2) / 0.8;
       const f = shutdownFrame(adjustedP);
 
@@ -293,6 +314,23 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const scrim = scrimRef.current;
       const term = termRef.current;
       if (!scrim) return;
+
+      const activeTabEl = document.querySelector('.fb-tab-item.active');
+      const isPostsActive = activeTabEl ? activeTabEl.textContent?.trim().toLowerCase() === 'posts' : true;
+
+      if (!isPostsActive) {
+        overlay.classList.remove('is-active');
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.visibility = 'hidden';
+        scrim.style.opacity = '0';
+        if (term) {
+          term.style.opacity = '0';
+          term.classList.remove('is-live');
+        }
+        return;
+      }
+
       const adjustedP = p < 0.2 ? 0 : (p - 0.2) / 0.8;
       overlay.classList.toggle('is-active', p > 0.0005);
       overlay.style.opacity = seg(0.0, 0.1, adjustedP).toString();
@@ -325,12 +363,10 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
     gsap.registerPlugin(ScrollTrigger);
 
     const trigger = ScrollTrigger.create({
-      trigger: spacer,
-      start: 'top+=1200 top', // Shift start down by 1200px to ensure the entire mobile council feed is fully visible before shutdown starts
-      end: 'bottom bottom',
+      trigger: '#mobile-council',
+      start: 'bottom top', // Starts exactly when the bottom of the feed scrolls off the top of the viewport
+      end: 'bottom+=2600 bottom', // Ends when the bottom of the spacer reaches the bottom of the viewport (absolute bottom of the page)
       scrub: true,
-      // The spacer sits after a long normal-flow feed whose height is not known
-      // until its images have laid out.
       invalidateOnRefresh: true,
       onUpdate: (self) => render(self.progress),
     });

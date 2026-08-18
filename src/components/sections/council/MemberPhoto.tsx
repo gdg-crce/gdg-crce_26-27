@@ -106,6 +106,7 @@ export default function MemberPhoto({
           width: '100%',
           height: '100%',
           objectFit: 'cover',
+          objectPosition: (member.photo.startsWith('/advisors/') || member.photoThumb.startsWith('/advisors/')) ? 'center 15%' : 'center',
           display: 'block',
         }}
       />
