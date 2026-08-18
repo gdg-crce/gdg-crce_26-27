@@ -305,6 +305,18 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
     onCompleteRef.current();
   }, []);
 
+  // Prevent background touch scrolling on mobile while preloader is active
+  useEffect(() => {
+    if (completed) return;
+    const preventScroll = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
+    return () => {
+      window.removeEventListener('touchmove', preventScroll, { capture: true });
+    };
+  }, [completed]);
+
   useEffect(() => {
     if (!assetsReady) return;
     document.body.style.overflow = 'hidden';

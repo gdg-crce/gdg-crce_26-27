@@ -223,8 +223,8 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           // At t = 0, photo starts inside camera slot
           const startCenterY = slotY - (0.4 * photoHeight) / 2;
 
-          // Resting center of fully ejected polaroid (positioned so the full polaroid card fits cleanly on screen)
-          const restingCenterY = cameraTop + cameraHeight * 0.32 + photoHeight / 2;
+          // Resting center of fully ejected polaroid (centered in the available space below the header to guarantee it fits on screen)
+          const restingCenterY = cameraTop + (containerHeight - 12 - cameraTop) / 2;
 
           // photos: stack on top of each other fanned out
           for (let i = 0; i < MOBILE_PHOTOS.length; i++) {

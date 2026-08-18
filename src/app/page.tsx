@@ -15,6 +15,14 @@ export default function Home() {
   const [videoStarted, setVideoStarted] = useState(false);
   const [videoPrimed, setVideoPrimed] = useState(false);
 
+  // Disable scroll restoration and force viewport to top on page mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && 'history' in window && 'scrollRestoration' in window) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   /* The shutdown has no clock of its own. It parks its draw function here and
      Act 3's pin calls it from the same scroll callback that runs the council
      archive — one ScrollTrigger, one scrub, one scalar for the entire ending.

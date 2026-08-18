@@ -458,10 +458,12 @@
      is toggled from WhatWeDoSection alongside the opacity. */
   visibility: hidden;
   will-change: opacity;
+  transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.5s step-end;
 }
 
 .fixed-album-wrapper.is-active {
   visibility: visible;
+  transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0s;
 }
 
 /* The solid background that hides the rotating About section.
