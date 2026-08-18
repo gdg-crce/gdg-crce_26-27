@@ -246,7 +246,16 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const activeTabEl = document.querySelector('.fb-tab-item.active');
       const isPostsActive = activeTabEl ? activeTabEl.textContent?.trim().toLowerCase() === 'posts' : true;
 
-      if (!isPostsActive) {
+      // Force 0 progress if we are not on the posts tab or if the spacer top has not reached the top of the viewport
+      let effectiveP = p;
+      if (spacerRef.current) {
+        const spacerRect = spacerRef.current.getBoundingClientRect();
+        if (spacerRect.top > 0) {
+          effectiveP = 0;
+        }
+      }
+
+      if (!isPostsActive || effectiveP === 0) {
         overlay.classList.remove('is-active');
         overlay.style.opacity = '0';
         overlay.style.pointerEvents = 'none';
@@ -264,7 +273,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
         return;
       }
 
-      const adjustedP = p < 0.2 ? 0 : (p - 0.2) / 0.8;
+      const adjustedP = effectiveP < 0.2 ? 0 : (effectiveP - 0.2) / 0.8;
       const f = shutdownFrame(adjustedP);
 
       overlay.classList.toggle('is-active', p > 0.005);
@@ -318,7 +327,15 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const activeTabEl = document.querySelector('.fb-tab-item.active');
       const isPostsActive = activeTabEl ? activeTabEl.textContent?.trim().toLowerCase() === 'posts' : true;
 
-      if (!isPostsActive) {
+      let effectiveP = p;
+      if (spacerRef.current) {
+        const spacerRect = spacerRef.current.getBoundingClientRect();
+        if (spacerRect.top > 0) {
+          effectiveP = 0;
+        }
+      }
+
+      if (!isPostsActive || effectiveP === 0) {
         overlay.classList.remove('is-active');
         overlay.style.opacity = '0';
         overlay.style.pointerEvents = 'none';
@@ -331,8 +348,8 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
         return;
       }
 
-      const adjustedP = p < 0.2 ? 0 : (p - 0.2) / 0.8;
-      overlay.classList.toggle('is-active', p > 0.0005);
+      const adjustedP = effectiveP < 0.2 ? 0 : (effectiveP - 0.2) / 0.8;
+      overlay.classList.toggle('is-active', effectiveP > 0.0005);
       overlay.style.opacity = seg(0.0, 0.1, adjustedP).toString();
       scrim.style.opacity = seg(0.1, 0.5, adjustedP).toString();
       if (term) {
@@ -382,6 +399,10 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
           ScrollTrigger.refresh();
         });
       });
+      const unifiedContainer = document.querySelector('.mobile-unified-container');
+      if (unifiedContainer) {
+        resizeObserver.observe(unifiedContainer);
+      }
       resizeObserver.observe(document.body);
     }
 

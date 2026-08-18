@@ -1716,6 +1716,7 @@
 .fb-post-img {
   width: 100% !important;
   height: auto !important;
+  aspect-ratio: 4 / 3 !important;
   display: block !important;
   object-fit: cover !important;
 }
