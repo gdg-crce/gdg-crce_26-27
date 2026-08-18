@@ -70,8 +70,12 @@ const IMG_BASE = 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images';
    If face detection ever fails on a photo, ImageKit falls back to a centre crop
    at the requested aspect — i.e. exactly the old behaviour, for that one photo
    only. */
-const photoFor = (path: string, width: number, height: number, quality: number) =>
-  `${IMG_BASE}/${path}?tr=w-${width},h-${height},fo-face,z-0.25,q-${quality},f-auto`;
+const photoFor = (path: string, width: number, height: number, quality: number) => {
+  if (path.startsWith('advisors/')) {
+    return `/${path}`;
+  }
+  return `${IMG_BASE}/${path}?tr=w-${width},h-${height},fo-face,z-0.25,q-${quality},f-auto`;
+};
 
 /** Grid tiles, filmstrip frames, avatars — never larger than ~160 CSS px. */
 const THUMB_W = 320;
@@ -192,7 +196,7 @@ const ROSTER: RosterEntry[] = [
     branch: 'TE COMPS C',
     team: 'Marketing',
     tier: 'Senior Council',
-    photoPath: 'New%20folder/johan.jpeg',
+    photoPath: 'advisors/johann.jpeg',
   },
   {
     name: 'Scarlett Menezes',
@@ -209,6 +213,30 @@ const ROSTER: RosterEntry[] = [
     team: 'Design & Creatives',
     tier: 'Senior Council',
     photoPath: 'DSC09714%20(1).JPG',
+  },
+  {
+    name: 'Chris Lopes',
+    role: 'Technical Advisor',
+    branch: 'TE COMPS',
+    team: 'Technical',
+    tier: 'Senior Council',
+    photoPath: 'advisors/chris.JPG',
+  },
+  {
+    name: 'Celene Ciby',
+    role: 'Operational Advisor',
+    branch: 'TE COMPS',
+    team: 'Leadership',
+    tier: 'Senior Council',
+    photoPath: 'advisors/celene.JPG',
+  },
+  {
+    name: 'Jaden Vaz',
+    role: 'Managerial Advisor',
+    branch: 'TE COMPS',
+    team: 'Leadership',
+    tier: 'Senior Council',
+    photoPath: 'advisors/jaden.JPG',
   },
 
   /* ---- Junior Council -------------------------------------------------- */

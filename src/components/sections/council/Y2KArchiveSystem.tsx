@@ -391,7 +391,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
   }, [scrollProgressRef]);
 
   // Browser history stack — kept so the address bar reflects where you are.
-  const [stack, setStack] = useState<Entry[]>([{ view: 'members', team: 'All Tracks' }]);
+  const [stack, setStack] = useState<Entry[]>([{ view: 'profile' }]);
   const [idx, setIdx] = useState(0);
   const cur = stack[idx];
 

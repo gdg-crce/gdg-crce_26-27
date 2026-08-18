@@ -530,15 +530,15 @@ export default function EventsAndCouncilSection({
           /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
           const PV_START = 0.96;
           // Scale-up runs from 10560px (p=0.96) to 10890px (p=0.99).
-          // Hold at top until 11200px (leaving 310px of static, fully open dwell).
-          // Scroll from 11200px to 11550px.
+          // Hold at top until 11450px (leaving 560px of static, fully open dwell).
+          // Scroll from 11450px to 11750px.
           // Hold at bottom until 11900px where the shutdown begins.
-          if (px <= 11200) {
+          if (px <= 11450) {
             pvScrollProgressRef.current = 0;
-          } else if (px >= 11550) {
+          } else if (px >= 11750) {
             pvScrollProgressRef.current = 1;
           } else {
-            pvScrollProgressRef.current = (px - 11200) / (11550 - 11200);
+            pvScrollProgressRef.current = (px - 11450) / (11750 - 11450);
           }
 
           if (pictureViewerRef.current) {
@@ -1055,6 +1055,51 @@ export default function EventsAndCouncilSection({
                 ))}
               </div>
             </div>
+
+            {/* Individual mobcouncil photo cards */}
+            {[
+              { src: '/mobcouncil/DSC04899 (1).JPG.jpeg', caption: 'Glimpses from the session 📸' },
+              { src: '/mobcouncil/IMG20260330194828 (1).jpg.jpeg', caption: 'GDG CRCE team spirit! ✨' },
+              { src: '/mobcouncil/IMG_5410 (1).JPG.jpeg', caption: 'Workshops and collabs 💻' },
+              { src: '/mobcouncil/IMG_8447 (1).JPG.jpeg', caption: 'Moments captured 🌟' },
+              { src: '/mobcouncil/IMG_8775 (1).JPG.jpeg', caption: 'Connecting & growing together 🚀' },
+              { src: '/mobcouncil/IMG_8797 (1).JPG.jpeg', caption: 'Fun behind the scenes 🎬' },
+              { src: '/mobcouncil/fxn 2026-03-25 132323CE9231BDFC83 (2).jpg.jpeg', caption: 'Events in action 🔥' },
+              { src: '/mobcouncil/fxn 2026-03-25 135628A4842A32C689 (1).JPEG', caption: 'Tech talk vibes 🎙️' },
+              { src: '/mobcouncil/fxn 2026-03-25 1401139FCE36B5FBA3 (1).JPEG', caption: 'Speaker sessions 📚' },
+              { src: '/mobcouncil/image (4).png', caption: 'Designing and building 🎨' },
+              { src: '/mobcouncil/image (5).png', caption: 'Innovating on campus 💡' },
+              { src: '/mobcouncil/image (6).png', caption: 'Hackathon memories 🏆' },
+              { src: '/mobcouncil/image (7).png', caption: 'Community meetups 🤝' },
+              { src: '/mobcouncil/image (8).png', caption: 'Milestones achieved 🎉' },
+              { src: '/mobcouncil/still2 (1).jpg.jpeg', caption: 'Till next time 👋' }
+            ].map((p, idx) => (
+              <div key={p.src} className="fb-post-card">
+                <div className="fb-post-header">
+                  <div className="fb-post-avatar page-avatar">
+                    <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
+                  </div>
+                  <div className="fb-post-author-info">
+                    <span className="fb-post-author-name">
+                      GDG CRCE
+                      <span className="fb-verified-badge-small">✓</span>
+                    </span>
+                    <span className="fb-post-meta">Posted • Photo {idx + 1} • 🌐</span>
+                  </div>
+                </div>
+                <div className="fb-post-content">
+                  <p className="fb-post-text">{p.caption}</p>
+                </div>
+                <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', overflow: 'hidden', border: '1px solid #e5e6e9' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.src}
+                    alt={p.caption}
+                    style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         )}
         </section>

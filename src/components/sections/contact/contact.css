@@ -256,28 +256,21 @@ a.bios-row {
 
 .bios-help-map {
   width: 100%;
-  height: 200px;
+  height: 130px;
 }
 
 @media (min-width: 901px) {
-  /* Fill the column rather than force it taller. `min-height: 400px` made the
-     grid row 400px+ regardless of the field list, so the right column ran ~108px
-     past the bottom of the left one and the two never squared up. The map now
-     takes whatever height the fields set, with a floor low enough that it is a
-     usable map but never the thing driving the row. */
+  /* Fill the column rather than force it taller. The map now has a fixed
+     compact height so it is a usable reference but never drives the column. */
   .bios-help-map {
-    height: 100%;
-    min-height: 180px;
+    height: 130px;
+    min-height: 130px;
   }
 
-  /* The map's own column stretches, so the map can fill it. */
+  /* The map's own column layout. */
   .bios-help {
     display: flex;
     flex-direction: column;
-  }
-
-  .bios-help .bios-help-map {
-    flex: 1;
   }
 }
 
