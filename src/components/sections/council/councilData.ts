@@ -217,7 +217,7 @@ const ROSTER: RosterEntry[] = [
   {
     name: 'Chris Lopes',
     role: 'Technical Advisor',
-    branch: 'TE COMPS',
+    branch: 'BE COMPS',
     team: 'Technical',
     tier: 'Senior Council',
     photoPath: 'advisors/chris.JPG',
@@ -225,7 +225,7 @@ const ROSTER: RosterEntry[] = [
   {
     name: 'Celene Ciby',
     role: 'Operational Advisor',
-    branch: 'TE COMPS',
+    branch: 'BE COMPS',
     team: 'Leadership',
     tier: 'Senior Council',
     photoPath: 'advisors/celene.JPG',
@@ -233,7 +233,7 @@ const ROSTER: RosterEntry[] = [
   {
     name: 'Jaden Vaz',
     role: 'Managerial Advisor',
-    branch: 'TE COMPS',
+    branch: 'BE ECS',
     team: 'Leadership',
     tier: 'Senior Council',
     photoPath: 'advisors/jaden.JPG',

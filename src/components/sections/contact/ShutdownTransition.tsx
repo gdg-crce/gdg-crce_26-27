@@ -54,7 +54,7 @@ const seg = (a: number, b: number, x: number) => {
  *
  * Desktop does not use this — its length is `SHUTDOWN_LEN` inside Act 3's pin.
  */
-const MOBILE_SCROLL_LEN = 2600;
+const MOBILE_SCROLL_LEN = 1800;
 
 export interface ShutdownFrame {
   /** The text-mode contact screen on the black. */
@@ -88,7 +88,7 @@ export interface ShutdownFrame {
  * The ending needs somewhere to sit, not a knife-edge to balance on.
  */
 export function shutdownFrame(p: number): ShutdownFrame {
-  const dlgIn = seg(0.1, 0.26, p);
+  const dlgIn = seg(0.03, 0.18, p);
   const dlgOut = seg(0.44, 0.53, p);
 
   /* Vertical collapse first, then horizontal — that order is the whole tell.
@@ -243,19 +243,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const term = termRef.current;
       if (!tube || !scrim || !dialog || !field || !scan || !dot || !term) return;
 
-      const activeTabEl = document.querySelector('.fb-tab-item.active');
-      const isPostsActive = activeTabEl ? activeTabEl.textContent?.trim().toLowerCase() === 'posts' : true;
-
-      // Force 0 progress if we are not on the posts tab or if the spacer top has not reached the top of the viewport
-      let effectiveP = p;
-      if (spacerRef.current) {
-        const spacerRect = spacerRef.current.getBoundingClientRect();
-        if (spacerRect.top > 0) {
-          effectiveP = 0;
-        }
-      }
-
-      if (!isPostsActive || effectiveP === 0) {
+      if (p <= 0.005) {
         overlay.classList.remove('is-active');
         overlay.style.opacity = '0';
         overlay.style.pointerEvents = 'none';
@@ -273,14 +261,16 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
         return;
       }
 
-      const adjustedP = effectiveP < 0.2 ? 0 : (effectiveP - 0.2) / 0.8;
-      const f = shutdownFrame(adjustedP);
+      overlay.classList.add('is-active');
+      overlay.style.visibility = 'visible';
+      overlay.style.pointerEvents = 'auto';
 
-      overlay.classList.toggle('is-active', p > 0.005);
+      const f = shutdownFrame(p);
+
       overlay.style.opacity = f.overlayOpacity.toString();
 
       // Backlight is active during switching off / goodbye, then goes black
-      scrim.style.opacity = (adjustedP < 0.72) ? '1' : '0';
+      scrim.style.opacity = p < 0.72 ? '1' : '0';
 
       dialog.style.opacity = f.dialogOpacity.toString();
       dialog.style.transform = `scale(${f.dialogScale.toFixed(3)})`;
@@ -289,14 +279,14 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const progressBar = document.querySelector('.sd-phone-progress-bar');
       if (progressBar) {
         const totalBlocks = 12;
-        const filled = Math.min(totalBlocks, Math.floor(seg(0.1, 0.65, adjustedP) * totalBlocks));
+        const filled = Math.min(totalBlocks, Math.floor(seg(0.08, 0.44, p) * totalBlocks));
         progressBar.textContent = '▰'.repeat(filled) + '▱'.repeat(totalBlocks - filled);
       }
 
       // Animate status dots cycle
       const statusText = document.querySelector('.sd-phone-status');
       if (statusText) {
-        const dotsCount = Math.floor(seg(0.1, 0.65, adjustedP) * 12) % 4;
+        const dotsCount = Math.floor(seg(0.08, 0.44, p) * 12) % 4;
         statusText.textContent = 'Switching Off' + '.'.repeat(dotsCount);
       }
 
@@ -315,7 +305,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
 
       if (term) {
         term.style.opacity = f.termOpacity.toString();
-        term.classList.toggle('is-live', f.termOpacity > 0.9);
+        term.classList.toggle('is-live', f.termOpacity > 0.85);
       }
     };
 
@@ -324,18 +314,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const term = termRef.current;
       if (!scrim) return;
 
-      const activeTabEl = document.querySelector('.fb-tab-item.active');
-      const isPostsActive = activeTabEl ? activeTabEl.textContent?.trim().toLowerCase() === 'posts' : true;
-
-      let effectiveP = p;
-      if (spacerRef.current) {
-        const spacerRect = spacerRef.current.getBoundingClientRect();
-        if (spacerRect.top > 0) {
-          effectiveP = 0;
-        }
-      }
-
-      if (!isPostsActive || effectiveP === 0) {
+      if (p <= 0.005) {
         overlay.classList.remove('is-active');
         overlay.style.opacity = '0';
         overlay.style.pointerEvents = 'none';
@@ -348,13 +327,13 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
         return;
       }
 
-      const adjustedP = effectiveP < 0.2 ? 0 : (effectiveP - 0.2) / 0.8;
-      overlay.classList.toggle('is-active', effectiveP > 0.0005);
-      overlay.style.opacity = seg(0.0, 0.1, adjustedP).toString();
-      scrim.style.opacity = seg(0.1, 0.5, adjustedP).toString();
+      overlay.classList.add('is-active');
+      overlay.style.visibility = 'visible';
+      overlay.style.opacity = seg(0.0, 0.12, p).toString();
+      scrim.style.opacity = seg(0.1, 0.5, p).toString();
       if (term) {
-        term.style.opacity = seg(0.55, 0.8, adjustedP).toString();
-        term.classList.toggle('is-live', adjustedP > 0.78);
+        term.style.opacity = seg(0.55, 0.8, p).toString();
+        term.classList.toggle('is-live', p > 0.78);
       }
     };
 
@@ -373,54 +352,26 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       };
     }
 
-    /* ── mobile: anchor to our own spacer ─────────────────────────────────── */
-    const spacer = spacerRef.current;
-    if (!spacer) return;
+    /* ── mobile: track the real DOM anchor directly below the council feed ─── */
+    const updateMobile = () => {
+      const anchor = document.getElementById('mobile-shutdown-anchor');
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      // Starts right as the active tab's content finishes settling in view
+      // Slightly delayed for a clean, comfortable reading beat
+      const startThreshold = typeof window !== 'undefined' ? window.innerHeight * 1.05 : 720;
+      const scrollDistance = MOBILE_SCROLL_LEN;
+      const p = clamp01((startThreshold - rect.top) / scrollDistance);
+      render(p);
+    };
 
-    gsap.registerPlugin(ScrollTrigger);
-
-    const trigger = ScrollTrigger.create({
-      trigger: '#mobile-council',
-      start: 'bottom top', // Starts exactly when the bottom of the feed scrolls off the top of the viewport
-      end: 'bottom+=2600 bottom', // Ends when the bottom of the spacer reaches the bottom of the viewport (absolute bottom of the page)
-      scrub: true,
-      invalidateOnRefresh: true,
-      onUpdate: (self) => render(self.progress),
-    });
-
-    // Use ResizeObserver to refresh ScrollTrigger dynamically when images or content changes layout heights
-    let resizeObserver: ResizeObserver | null = null;
-    if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
-      let rafId: number | null = null;
-      resizeObserver = new ResizeObserver(() => {
-        // Debounce to avoid calling refresh on every single pixel change
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => {
-          ScrollTrigger.refresh();
-        });
-      });
-      const unifiedContainer = document.querySelector('.mobile-unified-container');
-      if (unifiedContainer) {
-        resizeObserver.observe(unifiedContainer);
-      }
-      resizeObserver.observe(document.body);
-    }
-
-    // Multiple staggered refreshes to catch images that load at different times
-    const t1 = setTimeout(() => ScrollTrigger.refresh(), 300);
-    const t2 = setTimeout(() => ScrollTrigger.refresh(), 1000);
-    const t3 = setTimeout(() => ScrollTrigger.refresh(), 3000);
-    const t4 = setTimeout(() => ScrollTrigger.refresh(), 6000);
+    window.addEventListener('scroll', updateMobile, { passive: true });
+    window.addEventListener('resize', updateMobile, { passive: true });
+    updateMobile();
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-      trigger.kill();
+      window.removeEventListener('scroll', updateMobile);
+      window.removeEventListener('resize', updateMobile);
     };
   }, [mobile, drawRef]);
 

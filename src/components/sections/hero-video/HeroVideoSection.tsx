@@ -17,6 +17,7 @@ interface HeroVideoSectionProps {
    * of the film start from 0 together — see `onPrimeHero` in Preloader.tsx.
    */
   primed?: boolean;
+  onVideoEnded?: () => void;
 }
 
 /**
@@ -41,7 +42,11 @@ const MAX_LOCK_MS = 20000;
  * the last frame now closes through a circular iris to black, the way a reel
  * ends, and `HomeSection` takes the black screen from there.
  */
-export default function HeroVideoSection({ startPlaying = false, primed = false }: HeroVideoSectionProps) {
+export default function HeroVideoSection({
+  startPlaying = false,
+  primed = false,
+  onVideoEnded,
+}: HeroVideoSectionProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const maxProgressRef = useRef(0);
@@ -111,6 +116,21 @@ export default function HeroVideoSection({ startPlaying = false, primed = false 
       if (released) return;
       released = true;
       document.body.style.overflow = '';
+      onVideoEnded?.();
+
+      // Close the iris smoothly to reveal the black title card underneath
+      const el = containerRef.current;
+      if (el) {
+        gsap.to(el, {
+          clipPath: 'circle(0% at 50% 50%)',
+          duration: 0.8,
+          ease: 'power2.inOut',
+          onComplete: () => {
+            el.style.visibility = 'hidden';
+            maxProgressRef.current = 1;
+          },
+        });
+      }
     };
 
     // Rely on the native 'ended' event so the handover is EXACTLY the last frame
@@ -125,7 +145,7 @@ export default function HeroVideoSection({ startPlaying = false, primed = false 
       clearTimeout(timer);
       document.body.style.overflow = '';
     };
-  }, [startPlaying]);
+  }, [startPlaying, onVideoEnded]);
 
   // ── the iris ──────────────────────────────────────────────────────────────
   // Scroll closes a circle over the frozen last frame until the screen is

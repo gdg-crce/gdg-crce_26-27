@@ -134,8 +134,8 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
 
       // The flip/morph animation runs from 0.0 to 0.80
       const p = Math.min(1, rawP / 0.80);
-      // The deep dive zoom animation runs from 0.80 to 1.0
-      const zoomP = Math.max(0, (rawP - 0.80) / 0.20);
+      // The deep dive zoom animation runs from 0.80 to 0.96 (and holds 0.96 -> 1.0)
+      const zoomP = clamp01((rawP - 0.80) / 0.16);
 
       // Phase 1: The Morph (Extended to 0.20 for a luxurious, slow unraveling)
       // Scale that makes the closed book exactly cover the viewport — the frame

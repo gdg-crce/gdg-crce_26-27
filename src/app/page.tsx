@@ -14,6 +14,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [videoStarted, setVideoStarted] = useState(false);
   const [videoPrimed, setVideoPrimed] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
 
   // Disable scroll restoration and force viewport to top on page mount
   React.useEffect(() => {
@@ -36,6 +37,10 @@ export default function Home() {
     setVideoStarted(true);
   }, []);
 
+  const handleVideoEnded = React.useCallback(() => {
+    setVideoEnded(true);
+  }, []);
+
   const handleComplete = React.useCallback(() => {
     window.scrollTo(0, 0);
     setLoading(false);
@@ -56,12 +61,16 @@ export default function Home() {
           unmounts, and the nav sits at z-100000 — above the loader's z-9999. */}
       <TopNav ready={!loading} />
       <main className="relative z-0">
-        <HeroVideoSection startPlaying={videoStarted} primed={videoPrimed} />
+        <HeroVideoSection
+          startPlaying={videoStarted}
+          primed={videoPrimed}
+          onVideoEnded={handleVideoEnded}
+        />
         {/* The black title card the hero's iris closes onto, and whose letters
             open again as a window onto the turntable. Fixed and self-stacking
             (z 9996, between the hero at 9997 and the About pin at 9995), so its
             position in this list is documentation, not layout. */}
-        <HomeSection />
+        <HomeSection videoEnded={videoEnded} />
         {/* Zero spacer: About turntable sits directly under the hero at top:0 to prevent scroller up artifacts. */}
         <AboutSection />
         <WhatWeDoSection />

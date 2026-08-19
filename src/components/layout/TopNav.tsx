@@ -27,7 +27,7 @@ const ACCENT = '#E9A23B';
 function autoOpenWindow() {
   const ph = currentIntroPhases();
   return {
-    from: ph.title.start + (ph.title.end - ph.title.start) * 0.42,
+    from: 0,
     to: ph.hold.end,
   };
 }

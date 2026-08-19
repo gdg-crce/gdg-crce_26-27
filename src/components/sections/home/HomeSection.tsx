@@ -55,6 +55,10 @@ const MAX_SCALE = 40;
 const IRIS_START = 0.55;
 const IRIS_POWER = 3;
 
+interface HomeSectionProps {
+  videoEnded?: boolean;
+}
+
 /**
  * Act 1.5 — the title card.
  *
@@ -71,7 +75,7 @@ const IRIS_POWER = 3;
  * After that the whole layer is hidden and costs nothing for the rest of the
  * page.
  */
-export default function HomeSection() {
+export default function HomeSection({ videoEnded = false }: HomeSectionProps) {
   const rootRef = useRef<HTMLElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const maskRef = useRef<SVGMaskElement | null>(null);
@@ -83,9 +87,29 @@ export default function HomeSection() {
   const maskGroupRef = useRef<SVGGElement | null>(null);
   const solidGroupRef = useRef<SVGGElement | null>(null);
   const maxTitleInRef = useRef(0);
+  const autoFadeRef = useRef(0);
+  const applyRef = useRef<((scrollPx: number) => void) | null>(null);
 
   /** Push-in origin, in SVG user units (= CSS px, the viewBox is 1:1). */
   const focusRef = useRef({ x: 0, y: 0 });
+
+  // Automatically fade in "GDG CRCE" text only after the video ends
+  useEffect(() => {
+    if (!videoEnded) return;
+    const anim = { val: autoFadeRef.current };
+    const tween = gsap.to(anim, {
+      val: 1,
+      duration: 1.0,
+      ease: 'power2.out',
+      onUpdate: () => {
+        autoFadeRef.current = anim.val;
+        applyRef.current?.(window.scrollY);
+      },
+    });
+    return () => {
+      tween.kill();
+    };
+  }, [videoEnded]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -166,9 +190,9 @@ export default function HomeSection() {
 
       const ph = currentIntroPhases();
 
-      // Phase 2 — the type fades up on black.
+      // Phase 2 — the type fades up on black (or automatically when video ends).
       const rawTitleIn = ramp(ph.title.start, ph.title.end, scrollPx);
-      maxTitleInRef.current = Math.max(maxTitleInRef.current, rawTitleIn);
+      maxTitleInRef.current = Math.max(maxTitleInRef.current, autoFadeRef.current, rawTitleIn);
       const titleIn = maxTitleInRef.current;
 
       // Phase 4 — knockout, then push in.
@@ -250,6 +274,7 @@ export default function HomeSection() {
       apply(window.scrollY);
     };
 
+    applyRef.current = apply;
     layout();
     apply(0);
     window.addEventListener('resize', onResize);

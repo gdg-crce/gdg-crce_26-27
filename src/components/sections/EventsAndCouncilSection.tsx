@@ -57,7 +57,7 @@ function THREE_MATH_LERP(a: number, b: number, t: number) {
    hide. Adding any in-flow element after this section breaks that guarantee.
    ───────────────────────────────────────────────────────────────────────────── */
 const ACT3_LEN = 11000;
-const GALLERY_HOLD = 900;
+const GALLERY_HOLD = 2400;
 const SHUTDOWN_LEN = 2600;
 const PIN_LEN = ACT3_LEN + GALLERY_HOLD + SHUTDOWN_LEN;
 
@@ -163,19 +163,6 @@ export default function EventsAndCouncilSection({
   const [mounted, setMounted] = useState(false);
   const [fixedHeight, setFixedHeight] = useState<string>('100vh');
 
-  // Reset scroll to top of mobile-council when active tab changes on mobile
-  useEffect(() => {
-    if (!isMobile) return;
-    const el = document.getElementById('mobile-council');
-    if (el) {
-      const timer = setTimeout(() => {
-        const y = window.scrollY + el.getBoundingClientRect().top;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [activeMobileTab, isMobile]);
-
   useEffect(() => {
     setMounted(true);
     const handleResize = () => {
@@ -189,14 +176,6 @@ export default function EventsAndCouncilSection({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    if (isMobile) {
-      setTimeout(() => {
-        ScrollTrigger.refresh();
-      }, 100);
-    }
-  }, [activeMobileTab, isMobile]);
 
   const filteredMembers = useMemo(() => {
     if (selectedTeam === 'All Tracks') return councilMembers;
@@ -382,13 +361,25 @@ export default function EventsAndCouncilSection({
           }
 
           /* ── Phase 1: Alleyway Walk (0.00 -> 0.26) ───────────────────────── */
+          const WALK_START_DWELL = 0.05; // Pause on poster #1 on arrival from WhatWeDo transition before walk starts
           const WALK_END = 0.26;
           const LAST_POSTER_P = 0.968;
-          const camP = p < WALK_END ? (p / WALK_END) * LAST_POSTER_P : LAST_POSTER_P;
+
+          let camP = 0;
+          let walkFraction = 0;
+          if (p <= WALK_START_DWELL) {
+            camP = 0;
+            walkFraction = 0;
+          } else if (p < WALK_END) {
+            walkFraction = (p - WALK_START_DWELL) / (WALK_END - WALK_START_DWELL);
+            camP = walkFraction * LAST_POSTER_P;
+          } else {
+            walkFraction = 1;
+            camP = LAST_POSTER_P;
+          }
           progressRef.current = camP;
 
           if (progressBarRef.current) {
-            const walkFraction = Math.min(1, p / WALK_END);
             progressBarRef.current.style.width = `${walkFraction * 100}%`;
           }
 
@@ -543,15 +534,15 @@ export default function EventsAndCouncilSection({
           /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
           const PV_START = 0.96;
           // Scale-up runs from 10560px (p=0.96) to 10890px (p=0.99).
-          // Hold at top until 11450px (leaving 560px of static, fully open dwell).
-          // Scroll from 11450px to 11750px.
-          // Hold at bottom until 11900px where the shutdown begins.
-          if (px <= 11450) {
+          // Hold at top until 11400px (leaving 510px of static dwell on Senior Council).
+          // Scroll from 11400px to 12000px smoothly to bottom.
+          // Hold at bottom from 12000px to 13400px (1400px dwell so Junior Council is fully and clearly visible before shutdown).
+          if (px <= 11400) {
             pvScrollProgressRef.current = 0;
-          } else if (px >= 11750) {
+          } else if (px >= 12000) {
             pvScrollProgressRef.current = 1;
           } else {
-            pvScrollProgressRef.current = (px - 11450) / (11750 - 11450);
+            pvScrollProgressRef.current = (px - 11400) / (12000 - 11400);
           }
 
           if (pictureViewerRef.current) {
@@ -619,6 +610,26 @@ export default function EventsAndCouncilSection({
   }, [isMobile, mounted, shutdownDrawRef]);
 
 
+  const handleTabChange = useCallback((tab: 'posts' | 'about' | 'videos' | 'photos') => {
+    setActiveMobileTab(tab);
+    if (typeof window !== 'undefined') {
+      const councilSection = document.getElementById('mobile-council');
+      if (councilSection) {
+        const topOffset = councilSection.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({
+          top: topOffset,
+          behavior: 'auto',
+        });
+      }
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 60);
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 250);
+    }
+  }, []);
+
   if (mounted && isMobile) {
     return (
       <div className="mobile-unified-container">
@@ -658,10 +669,6 @@ export default function EventsAndCouncilSection({
                     src={evt.posterImage}
                     alt={evt.title}
                     className="mobile-event-image-raw"
-                    /* The artwork's real pixels — 1574² square. These were
-                       1179×1579 for the previous portrait set; leaving them
-                       would declare the wrong intrinsic ratio and reserve a
-                       portrait box for a square image. */
                     width={1574}
                     height={1574}
                     sizes="(max-width: 400px) 82vw, 320px"
@@ -671,13 +678,10 @@ export default function EventsAndCouncilSection({
               ))}
             </div>
 
-            {/* Film overlays. No lifted-blacks layer: see globals.css — it
-                added 1–2/255 and charged a full-screen blend to do it. */}
+            {/* Film overlays */}
             <div className="events-scanlines" />
             <div className="events-grain" />
             <div className="events-vignette" />
-
-
 
             {/* Grunge vignette borders */}
             <div className="events-grunge-top" />
@@ -729,28 +733,28 @@ export default function EventsAndCouncilSection({
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'posts' ? 'active' : ''}`}
-                onClick={() => setActiveMobileTab('posts')}
+                onClick={() => handleTabChange('posts')}
               >
                 Posts
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'about' ? 'active' : ''}`}
-                onClick={() => setActiveMobileTab('about')}
+                onClick={() => handleTabChange('about')}
               >
                 About
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'videos' ? 'active' : ''}`}
-                onClick={() => setActiveMobileTab('videos')}
+                onClick={() => handleTabChange('videos')}
               >
                 Videos
               </button>
               <button
                 type="button"
                 className={`fb-tab-item ${activeMobileTab === 'photos' ? 'active' : ''}`}
-                onClick={() => setActiveMobileTab('photos')}
+                onClick={() => handleTabChange('photos')}
               >
                 Photos
               </button>
@@ -1020,6 +1024,8 @@ export default function EventsAndCouncilSection({
                 <img
                   src="https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/WhatsApp%20Image%202026-08-16%20at%2012.44.58%20PM.jpeg?tr=w-800,q-75,f-auto"
                   alt="Group Photo"
+                  loading="lazy"
+                  decoding="async"
                   style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
                 />
               </div>
@@ -1037,7 +1043,7 @@ export default function EventsAndCouncilSection({
                   <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', border: '1px solid #e5e6e9' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.src} alt={p.caption} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={p.src} alt={p.caption} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <span style={{ fontSize: '10px', color: '#65676b', textAlign: 'center' }}>{p.caption}</span>
                   </div>
@@ -1066,7 +1072,7 @@ export default function EventsAndCouncilSection({
               <div key={p.src} className="fb-post-card">
                 <div className="fb-post-header">
                   <div className="fb-post-avatar page-avatar">
-                    <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
+                    <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" loading="lazy" />
                   </div>
                   <div className="fb-post-author-info">
                     <span className="fb-post-author-name">
@@ -1084,6 +1090,8 @@ export default function EventsAndCouncilSection({
                   <img
                     src={p.src}
                     alt={p.caption}
+                    loading="lazy"
+                    decoding="async"
                     style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
                   />
                 </div>
@@ -1091,6 +1099,7 @@ export default function EventsAndCouncilSection({
             ))}
           </div>
         )}
+        <div id="mobile-shutdown-anchor" style={{ width: '100%', height: '1px', pointerEvents: 'none' }} />
         </section>
       </div>
     );
