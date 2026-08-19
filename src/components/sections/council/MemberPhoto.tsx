@@ -87,9 +87,9 @@ export default function MemberPhoto({
         onError={(e) => {
           e.currentTarget.style.visibility = 'hidden';
         }}
-        // Refresh ScrollTrigger when images load to update heights and avoid trigger offset shifts on mobile
+        // Refresh ScrollTrigger when images load to update heights and avoid trigger offset shifts on desktop
         onLoad={() => {
-          if (typeof window !== 'undefined') {
+          if (typeof window !== 'undefined' && window.innerWidth >= 768) {
             const win = window as unknown as { _stRefreshTimer?: ReturnType<typeof setTimeout> };
             const timer = win._stRefreshTimer;
             if (timer) clearTimeout(timer);

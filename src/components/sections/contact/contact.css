@@ -347,36 +347,38 @@ a.bios-row {
 
 @media (max-width: 767px) {
   .ct-term {
-    padding: 85px 4px 4px 4px !important;
-    font-size: clamp(10px, 3vh, 14px) !important;
+    padding: 70px 6px 8px 6px !important;
+    font-size: clamp(11px, 2.5vh, 13.5px) !important;
     line-height: 1.4 !important;
   }
 
   .bios {
     display: flex !important;
     flex-direction: column !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
     width: 100% !important;
     height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
-    padding: 10px 14px !important;
+    padding: 8px 10px !important;
     border: 2px double var(--bios-line) !important;
     box-sizing: border-box !important;
-    overflow: hidden !important; /* Hide scrollbars and disable container overflow scrolling on mobile */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .bios-title {
     font-size: 1.05em !important;
     letter-spacing: 0.05em !important;
     margin-bottom: 4px !important;
+    flex-shrink: 0 !important;
   }
 
   .bios-body {
-    flex: 1 !important;
-    align-content: center !important;
-    gap: 8px !important;
-    padding: 4px 0 !important;
+    flex: none !important;
+    align-content: flex-start !important;
+    gap: 6px !important;
+    padding: 2px 0 !important;
   }
 
   .bios-group {
@@ -385,13 +387,13 @@ a.bios-row {
   }
 
   .bios-group:not(:first-child) {
-    margin-top: 0.6em !important;
+    margin-top: 0.5em !important;
   }
 
   .bios-row {
     grid-template-columns: 1fr !important;
     gap: 2px !important;
-    padding: 4px 6px !important;
+    padding: 3px 4px !important;
     border-bottom: 1px dotted rgba(168, 168, 168, 0.25) !important;
   }
 
@@ -400,7 +402,7 @@ a.bios-row {
   }
 
   .bios-value {
-    padding-left: 10px !important;
+    padding-left: 8px !important;
     font-size: 0.95em !important;
   }
 
@@ -408,7 +410,7 @@ a.bios-row {
     padding-top: 0.4em !important;
     display: flex !important;
     flex-direction: column !important;
-    flex: 1 !important;
+    flex: none !important;
   }
 
   .bios-help-title {
@@ -417,8 +419,14 @@ a.bios-row {
   }
 
   .bios-help-map {
-    height: 145px !important;
-    min-height: 120px !important;
+    height: 135px !important;
+    min-height: 135px !important;
+    width: 100% !important;
     flex: none !important;
+  }
+
+  .bios-legend {
+    margin-top: 8px !important;
+    flex-shrink: 0 !important;
   }
 }

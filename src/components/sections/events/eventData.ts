@@ -67,12 +67,6 @@ export const eventPosters: EventPoster[] = [
     posterImage: '/posters/4.png',
   },
   {
-    id: 'evt-5',
-    title: 'UNPLUG',
-    subtitle: 'By the Lake · 3-Day Startup Launchpad',
-    posterImage: '/posters/5.png',
-  },
-  {
     id: 'evt-6',
     title: 'IDEA CAFE',
     subtitle: "Have an Idea? Let's Upscale",
@@ -83,6 +77,12 @@ export const eventPosters: EventPoster[] = [
     title: 'BIT N BUILD',
     subtitle: 'International Hackathon',
     posterImage: '/posters/7.png',
+  },
+  {
+    id: 'evt-5',
+    title: 'UNPLUG',
+    subtitle: 'By the Lake · 3-Day Startup Launchpad',
+    posterImage: '/posters/5.png',
   },
 ];
 

@@ -132,19 +132,7 @@ export default function EventsAndCouncilSection({
   const [mounted, setMounted] = useState(false);
   const [fixedHeight, setFixedHeight] = useState<string>('100vh');
 
-  const isInitialMountRef = useRef(true);
-  useEffect(() => {
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false;
-      return;
-    }
-    if (!isMobile || !mounted) return;
-    const councilSection = document.getElementById('mobile-council');
-    if (councilSection) {
-      const topOffset = councilSection.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: topOffset, behavior: 'instant' as ScrollBehavior });
-    }
-  }, [activeMobileTab, isMobile, mounted]);
+
   /* Read by the scroll callback instead of the state value.
 
      This flag used to be a dependency of the effect that builds the pinned
@@ -611,33 +599,46 @@ export default function EventsAndCouncilSection({
 
   const handleTabChange = useCallback((tab: 'posts' | 'about' | 'photos' | 'videos') => {
     if (typeof window !== 'undefined') {
+      const win = window as unknown as { __isSwitchingCouncilTab?: boolean };
+      win.__isSwitchingCouncilTab = true;
+
       const councilSection = document.getElementById('mobile-council');
       const targetY = councilSection
-        ? councilSection.getBoundingClientRect().top + window.scrollY
+        ? Math.round(councilSection.getBoundingClientRect().top + window.scrollY)
         : null;
 
-      if (targetY !== null) {
+      if (councilSection && targetY !== null) {
+        // Prevent DOM collapse/clamping: lock minHeight temporarily to current height
+        const currentH = councilSection.offsetHeight;
+        councilSection.style.minHeight = `${Math.max(currentH, window.innerHeight * 1.5)}px`;
+
         window.scrollTo({
           top: targetY,
           behavior: 'instant' as ScrollBehavior,
         });
+        document.documentElement.scrollTop = targetY;
+        document.body.scrollTop = targetY;
       }
 
       setActiveMobileTab(tab);
 
-      if (targetY !== null) {
-        // Enforce scroll position across multiple animation frames & timeouts
-        // to prevent browser scroll clamping during the DOM shrink
+      if (councilSection && targetY !== null) {
         requestAnimationFrame(() => {
           window.scrollTo({
             top: targetY,
             behavior: 'instant' as ScrollBehavior,
           });
+          document.documentElement.scrollTop = targetY;
+          document.body.scrollTop = targetY;
+
           requestAnimationFrame(() => {
             window.scrollTo({
               top: targetY,
               behavior: 'instant' as ScrollBehavior,
             });
+            // Release the minHeight lock once new tab content is rendered
+            councilSection.style.minHeight = '';
+            ScrollTrigger.refresh();
           });
         });
 
@@ -646,14 +647,7 @@ export default function EventsAndCouncilSection({
             top: targetY,
             behavior: 'instant' as ScrollBehavior,
           });
-          ScrollTrigger.refresh();
-        }, 40);
-
-        setTimeout(() => {
-          window.scrollTo({
-            top: targetY,
-            behavior: 'instant' as ScrollBehavior,
-          });
+          win.__isSwitchingCouncilTab = false;
         }, 120);
       }
     } else {
@@ -1007,54 +1001,6 @@ export default function EventsAndCouncilSection({
 
         {activeMobileTab === 'photos' && (
           <div className="fb-feed-container">
-            <div className="fb-post-card">
-              <div className="fb-post-header">
-                <div className="fb-post-avatar page-avatar">
-                  <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
-                </div>
-                <div className="fb-post-author-info">
-                  <span className="fb-post-author-name">
-                    GDG CRCE
-                    <span className="fb-verified-badge-small">✓</span>
-                  </span>
-                  <span className="fb-post-meta">Posted • Photo • 🌐</span>
-                </div>
-              </div>
-              <div className="fb-post-content">
-                <p className="fb-post-text">all of us together</p>
-              </div>
-              <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', overflow: 'hidden', border: '1px solid #e5e6e9' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/WhatsApp%20Image%202026-08-16%20at%2012.44.58%20PM.jpeg?tr=w-800,q-75,f-auto"
-                  alt="Group Photo"
-                  loading="lazy"
-                  decoding="async"
-                  style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
-                />
-              </div>
-            </div>
-
-            <div className="fb-post-card">
-              <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px', color: '#1877f2' }}>Wall Photos</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                {[
-                  { id: 'fb1', src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook1.JPG?tr=w-800,q-75,f-auto', caption: 'the council, assembled' },
-                  { id: 'fb2', src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook2.JPG?tr=w-800,q-75,f-auto', caption: 'session day' },
-                  { id: 'fb3', src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook3.JPG?tr=w-800,q-75,f-auto', caption: 'behind the scenes' },
-                  { id: 'fb4', src: 'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook4.JPG?tr=w-800,q-75,f-auto', caption: 'after the event' },
-                ].map((p) => (
-                  <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', border: '1px solid #e5e6e9' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.src} alt={p.caption} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <span style={{ fontSize: '10px', color: '#65676b', textAlign: 'center' }}>{p.caption}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Individual mobcouncil photo cards */}
             {[
               { src: '/mobcouncil/DSC04899 (1).JPG.jpeg', caption: 'Glimpses from the session 📸' },

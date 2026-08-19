@@ -229,7 +229,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       '/textures/wall/plaster_normal.jpg',
       '/textures/wall/plaster_ao_rough.jpg',
       // Then the posters, in the order the camera walks past them.
-      ...Array.from({ length: 7 }, (_, i) => ik(`/posters/${i + 1}.png`, 'w-1024')),
+      ...mobileEvents.map((e) => ik(e.posterImage, 'w-1024')),
     ];
 
     let cancelled = false;

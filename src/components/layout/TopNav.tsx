@@ -115,10 +115,9 @@ export default function TopNav({ ready }: { ready: boolean }) {
        DIALOG, with the contact screen still at zero opacity. Clicking Contact
        never once reached contact. */
     const contactAt = maxScroll;
-    // The council window opens partway through the Events pin. Expressed as a
-    // fraction of that pin rather than its hard-coded length, so retuning the
-    // section cannot silently desync the highlight.
-    const councilAt = eventsAt + (contactAt - eventsAt) * 0.52;
+    // The council window opens partway through the Events pin on desktop, or at #mobile-council on mobile.
+    const mobCouncil = top('#mobile-council');
+    const councilAt = mobCouncil !== null ? mobCouncil : eventsAt + (contactAt - eventsAt) * 0.52;
 
     targetsRef.current = [
       { id: 'home', at: 0 },

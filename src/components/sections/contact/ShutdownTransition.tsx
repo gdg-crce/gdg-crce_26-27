@@ -290,7 +290,10 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
         statusText.textContent = 'Switching Off' + '.'.repeat(dotsCount);
       }
 
-      field.style.opacity = f.fieldOpacity.toString();
+      // Phone goodbye screen fades in and out cleanly before power off
+      const goodbyeIn = seg(0.44, 0.54, p);
+      const goodbyeOut = seg(0.68, 0.75, p);
+      field.style.opacity = (goodbyeIn * (1 - goodbyeOut)).toString();
 
       // CRT screen going black discharge animation
       tube.style.transform = `scaleY(${f.tubeScaleY.toFixed(4)}) scaleX(${f.tubeScaleX.toFixed(4)})`;
@@ -353,26 +356,52 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
     }
 
     /* ── mobile: track the real DOM spacer directly below the council feed ─── */
+    let lastRenderedP = -1;
+    let rafId: number | null = null;
+
     const updateMobile = () => {
-      const council = document.getElementById('mobile-council');
-      const spacer = spacerRef.current;
-      if (!spacer) return;
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
 
-      const spacerRect = spacer.getBoundingClientRect();
-      const councilRect = council ? council.getBoundingClientRect() : null;
+        // If a tab switch is in progress, force shutdown to 0
+        if (
+          typeof window !== 'undefined' &&
+          (window as unknown as { __isSwitchingCouncilTab?: boolean }).__isSwitchingCouncilTab
+        ) {
+          if (lastRenderedP !== 0) {
+            lastRenderedP = 0;
+            render(0);
+          }
+          return;
+        }
 
-      // If council section is visible (its bottom is >= 0), or spacer hasn't scrolled above viewport top,
-      // the user is still viewing council content or navigating tabs — shutdown must be 0
-      if (spacerRect.top >= 0 || (councilRect && councilRect.bottom >= 0)) {
-        render(0);
-        return;
-      }
+        const council = document.getElementById('mobile-council');
+        const spacer = spacerRef.current;
+        if (!spacer) return;
 
-      // As user scrolls into the spacer below council (spacerRect.top goes from 0 down to -MOBILE_SCROLL_LEN),
-      // p progresses smoothly from 0.0 to 1.0
-      const scrollDistance = MOBILE_SCROLL_LEN;
-      const p = clamp01(-spacerRect.top / scrollDistance);
-      render(p);
+        const spacerRect = spacer.getBoundingClientRect();
+        const councilRect = council ? council.getBoundingClientRect() : null;
+
+        // If council section is visible (its bottom is >= 0), or spacer hasn't reached viewport top,
+        // the user is still viewing council content or navigating tabs — shutdown must be 0
+        if (spacerRect.top >= 0 || (councilRect && councilRect.bottom >= 0)) {
+          if (lastRenderedP !== 0) {
+            lastRenderedP = 0;
+            render(0);
+          }
+          return;
+        }
+
+        // As user scrolls through the spacer below council:
+        // spacerRect.top travels from 0 down to -(spacer.offsetHeight - window.innerHeight)
+        const maxTravel = Math.max(100, spacer.offsetHeight - window.innerHeight);
+        const p = clamp01(-spacerRect.top / maxTravel);
+        if (Math.abs(p - lastRenderedP) > 0.001) {
+          lastRenderedP = p;
+          render(p);
+        }
+      });
     };
 
     window.addEventListener('scroll', updateMobile, { passive: true });
@@ -380,6 +409,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
     updateMobile();
 
     return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener('scroll', updateMobile);
       window.removeEventListener('resize', updateMobile);
     };
