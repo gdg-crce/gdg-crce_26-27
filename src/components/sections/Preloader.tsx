@@ -1,8 +1,5 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-// Aliased: this module also uses the browser's global `new Image()` for
-// preloading, which a bare `Image` import from next/image would shadow.
 import NextImage from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
@@ -10,31 +7,8 @@ import { ik } from '@/lib/imagekit';
 import { HERO_VIDEO_SRC } from '@/lib/media';
 import { councilMembers } from '@/components/sections/council/councilData';
 import { mobileEvents } from '@/components/sections/events/eventData';
+import FilmTape from '../../../models/reactComponent/FilmTape';
 import './xp-loader.css';
-
-/* ── No framer-motion here, deliberately ───────────────────────────────────
-   This module imported `AnimatePresence` and `motion` to do exactly two things:
-   fade the loader in on mount, and fade the boot screen out when the assets
-   were ready. Two opacity ramps.
-
-   framer-motion is ~5.5 MB on disk and pulls its whole animation runtime into
-   the FIRST chunk the site evaluates — the preloader is the very first thing
-   that renders, so it was on the critical path, ahead of the hero video it is
-   supposed to be buying time for.
-
-   Worse, half of what it was there for could never even run. The exit
-   animation on the outer wrapper is unreachable: `complete()` calls
-   `onComplete`, which sets `loading = false` in page.tsx and unmounts this
-   component outright, so React removes the tree before AnimatePresence gets to
-   play anything out. It was paying for an exit that never happened.
-
-   Both fades are now CSS (see `.preloader-root` / `.xp-boot-screen.is-leaving`
-   in xp-loader.css), which the compositor runs off the main thread. */
-
-const FilmTape = dynamic(() => import('../../../models/reactComponent/FilmTape'), {
-  ssr: false,
-  loading: () => null,
-});
 
 interface PreloaderProps {
   onComplete: () => void;
@@ -176,10 +150,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
 
     // Mobile Event Posters
     mobileEvents.forEach((evt) => {
-      // Next.js optimized responsive sizes
-      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=640&q=75`);
-      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=750&q=75`);
-      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=828&q=75`);
+      criticalMobileAssets.push(ik(evt.posterImage));
     });
 
     // Council Members portraits

@@ -43,6 +43,9 @@ const REMOTE_PATH: Record<string, string> = {
  *   always applied, and `q-auto` unless an explicit `q-` is passed.
  */
 export function ik(publicPath: string, ...transforms: string[]): string {
+  if (publicPath.startsWith('http://') || publicPath.startsWith('https://')) {
+    return publicPath;
+  }
   const local = publicPath.startsWith('/') ? publicPath : `/${publicPath}`;
 
   // encodeURI (not encodeURIComponent) so `/` stays a separator; it is also

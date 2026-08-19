@@ -88,7 +88,7 @@ export interface ShutdownFrame {
  * The ending needs somewhere to sit, not a knife-edge to balance on.
  */
 export function shutdownFrame(p: number): ShutdownFrame {
-  const dlgIn = seg(0.03, 0.18, p);
+  const dlgIn = seg(0.01, 0.12, p);
   const dlgOut = seg(0.44, 0.53, p);
 
   /* Vertical collapse first, then horizontal — that order is the whole tell.
@@ -124,7 +124,7 @@ export function shutdownFrame(p: number): ShutdownFrame {
        which is what Windows does on the way down. It fades IN and never fades
        out: there is nothing beneath it to reveal, the contact screen is drawn
        on this same black. */
-    overlayOpacity: seg(0.0, 0.1, p),
+    overlayOpacity: seg(0.0, 0.04, p),
   };
 }
 
@@ -352,16 +352,26 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       };
     }
 
-    /* ── mobile: track the real DOM anchor directly below the council feed ─── */
+    /* ── mobile: track the real DOM spacer directly below the council feed ─── */
     const updateMobile = () => {
-      const anchor = document.getElementById('mobile-shutdown-anchor');
-      if (!anchor) return;
-      const rect = anchor.getBoundingClientRect();
-      // Starts right as the active tab's content finishes settling in view
-      // Slightly delayed for a clean, comfortable reading beat
-      const startThreshold = typeof window !== 'undefined' ? window.innerHeight * 1.05 : 720;
+      const council = document.getElementById('mobile-council');
+      const spacer = spacerRef.current;
+      if (!spacer) return;
+
+      const spacerRect = spacer.getBoundingClientRect();
+      const councilRect = council ? council.getBoundingClientRect() : null;
+
+      // If council section is visible (its bottom is >= 0), or spacer hasn't scrolled above viewport top,
+      // the user is still viewing council content or navigating tabs — shutdown must be 0
+      if (spacerRect.top >= 0 || (councilRect && councilRect.bottom >= 0)) {
+        render(0);
+        return;
+      }
+
+      // As user scrolls into the spacer below council (spacerRect.top goes from 0 down to -MOBILE_SCROLL_LEN),
+      // p progresses smoothly from 0.0 to 1.0
       const scrollDistance = MOBILE_SCROLL_LEN;
-      const p = clamp01((startThreshold - rect.top) / scrollDistance);
+      const p = clamp01(-spacerRect.top / scrollDistance);
       render(p);
     };
 

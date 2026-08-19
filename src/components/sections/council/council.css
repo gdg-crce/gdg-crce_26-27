@@ -1582,6 +1582,8 @@
   cursor: pointer !important;
   position: relative !important;
   user-select: none !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 .fb-tab-item.active {
@@ -1633,10 +1635,54 @@
 /* Feed Container */
 .fb-feed-container {
   flex: 1 !important;
-  padding: 8px !important;
+  min-height: 100vh !important;
+  padding: 8px 8px 30px 8px !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 12px !important;
+  background-color: #e9ebee !important;
+}
+
+/* Feed End Dwell Card (Pause indicator before shutdown) */
+.fb-feed-end-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 36px 16px 48px 16px !important;
+  margin-top: 12px !important;
+  margin-bottom: 24px !important;
+  text-align: center !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  border: 1px solid #e5e6e9 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.fb-feed-end-icon {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  background-color: #e7f3ff !important;
+  color: #1877f2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  margin-bottom: 10px !important;
+}
+
+.fb-feed-end-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #1c1e21 !important;
+  margin-bottom: 4px !important;
+}
+
+.fb-feed-end-subtitle {
+  font-size: 12px !important;
+  color: #65676b !important;
 }
 
 /* Post Cards */

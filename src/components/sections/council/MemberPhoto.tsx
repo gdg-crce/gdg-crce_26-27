@@ -90,9 +90,10 @@ export default function MemberPhoto({
         // Refresh ScrollTrigger when images load to update heights and avoid trigger offset shifts on mobile
         onLoad={() => {
           if (typeof window !== 'undefined') {
-            const timer = (window as any)._stRefreshTimer;
+            const win = window as unknown as { _stRefreshTimer?: ReturnType<typeof setTimeout> };
+            const timer = win._stRefreshTimer;
             if (timer) clearTimeout(timer);
-            (window as any)._stRefreshTimer = setTimeout(() => {
+            win._stRefreshTimer = setTimeout(() => {
               ScrollTrigger.refresh();
             }, 150);
           }

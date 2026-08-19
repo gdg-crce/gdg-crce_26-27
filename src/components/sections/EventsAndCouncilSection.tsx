@@ -14,7 +14,7 @@ import WindowsXPDesktop from './council/WindowsXPDesktop';
 import Y2KArchiveSystem from './council/Y2KArchiveSystem';
 import WindowsPictureViewer from './council/WindowsPictureViewer';
 import MemberPhoto from './council/MemberPhoto';
-import { ikUrl } from '@/lib/imagekit';
+import { ik, ikUrl } from '@/lib/imagekit';
 import { COUNCIL_CLIPS } from '@/lib/media';
 import './council/council.css';
 
@@ -125,7 +125,26 @@ export default function EventsAndCouncilSection({
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
-  const [activeMobileTab, setActiveMobileTab] = useState<'posts' | 'about' | 'videos' | 'photos'>('posts');
+  const [activeMobileTab, setActiveMobileTab] = useState<'posts' | 'about' | 'photos' | 'videos'>('posts');
+  const [phase, setPhase] = useState(0);
+  const phaseRef = useRef(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [fixedHeight, setFixedHeight] = useState<string>('100vh');
+
+  const isInitialMountRef = useRef(true);
+  useEffect(() => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
+    if (!isMobile || !mounted) return;
+    const councilSection = document.getElementById('mobile-council');
+    if (councilSection) {
+      const topOffset = councilSection.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: topOffset, behavior: 'instant' as ScrollBehavior });
+    }
+  }, [activeMobileTab, isMobile, mounted]);
   /* Read by the scroll callback instead of the state value.
 
      This flag used to be a dependency of the effect that builds the pinned
@@ -142,26 +161,6 @@ export default function EventsAndCouncilSection({
      here and calls ScrollTrigger.update(), which re-runs the callback below
      against the live flag — same result, no teardown. */
   const isEventsMinimizedRef = useRef(false);
-  /**
-   * The act's coarse phase — NOT its scroll progress.
-   *
-   * This used to be `scrollProgress`, a float written from the scroll callback
-   * on every tick. React therefore re-rendered this component — and with it the
-   * XP desktop, the whole TheFacebook archive and the picture viewer — sixty
-   * times a second for eleven thousand pixels of scroll. Every one of those
-   * renders produced identical markup, because all four things that read it
-   * were threshold comparisons (0.26 / 0.32 / 0.50).
-   *
-   * Comparing the thresholds first and storing the result collapses that to
-   * three renders for the entire section. The continuous value still exists,
-   * on `progressRef`, where the 3D scene reads it without involving React at
-   * all — the same rule the rest of this file already follows.
-   */
-  const [phase, setPhase] = useState(0);
-  const phaseRef = useRef(0);
-  const [isMobile, setIsMobile] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [fixedHeight, setFixedHeight] = useState<string>('100vh');
 
   useEffect(() => {
     setMounted(true);
@@ -179,7 +178,7 @@ export default function EventsAndCouncilSection({
 
   const filteredMembers = useMemo(() => {
     if (selectedTeam === 'All Tracks') return councilMembers;
-    return membersByTeam(selectedTeam as any);
+    return membersByTeam(selectedTeam as import('./council/councilData').Department);
   }, [selectedTeam]);
 
   const handleSelectTeam = useCallback((team: string) => {
@@ -610,23 +609,55 @@ export default function EventsAndCouncilSection({
   }, [isMobile, mounted, shutdownDrawRef]);
 
 
-  const handleTabChange = useCallback((tab: 'posts' | 'about' | 'videos' | 'photos') => {
-    setActiveMobileTab(tab);
+  const handleTabChange = useCallback((tab: 'posts' | 'about' | 'photos' | 'videos') => {
     if (typeof window !== 'undefined') {
       const councilSection = document.getElementById('mobile-council');
-      if (councilSection) {
-        const topOffset = councilSection.getBoundingClientRect().top + window.scrollY;
+      const targetY = councilSection
+        ? councilSection.getBoundingClientRect().top + window.scrollY
+        : null;
+
+      if (targetY !== null) {
         window.scrollTo({
-          top: topOffset,
-          behavior: 'auto',
+          top: targetY,
+          behavior: 'instant' as ScrollBehavior,
         });
       }
-      setTimeout(() => {
-        ScrollTrigger.refresh();
-      }, 60);
-      setTimeout(() => {
-        ScrollTrigger.refresh();
-      }, 250);
+
+      setActiveMobileTab(tab);
+
+      if (targetY !== null) {
+        // Enforce scroll position across multiple animation frames & timeouts
+        // to prevent browser scroll clamping during the DOM shrink
+        requestAnimationFrame(() => {
+          window.scrollTo({
+            top: targetY,
+            behavior: 'instant' as ScrollBehavior,
+          });
+          requestAnimationFrame(() => {
+            window.scrollTo({
+              top: targetY,
+              behavior: 'instant' as ScrollBehavior,
+            });
+          });
+        });
+
+        setTimeout(() => {
+          window.scrollTo({
+            top: targetY,
+            behavior: 'instant' as ScrollBehavior,
+          });
+          ScrollTrigger.refresh();
+        }, 40);
+
+        setTimeout(() => {
+          window.scrollTo({
+            top: targetY,
+            behavior: 'instant' as ScrollBehavior,
+          });
+        }, 120);
+      }
+    } else {
+      setActiveMobileTab(tab);
     }
   }, []);
 
@@ -666,7 +697,7 @@ export default function EventsAndCouncilSection({
               {mobileEvents.map((evt) => (
                 <div key={evt.id} className="mobile-event-card-wrapper-raw">
                   <Image
-                    src={evt.posterImage}
+                    src={ik(evt.posterImage)}
                     alt={evt.title}
                     className="mobile-event-image-raw"
                     width={1574}
@@ -746,17 +777,17 @@ export default function EventsAndCouncilSection({
               </button>
               <button
                 type="button"
-                className={`fb-tab-item ${activeMobileTab === 'videos' ? 'active' : ''}`}
-                onClick={() => handleTabChange('videos')}
-              >
-                Videos
-              </button>
-              <button
-                type="button"
                 className={`fb-tab-item ${activeMobileTab === 'photos' ? 'active' : ''}`}
                 onClick={() => handleTabChange('photos')}
               >
                 Photos
+              </button>
+              <button
+                type="button"
+                className={`fb-tab-item ${activeMobileTab === 'videos' ? 'active' : ''}`}
+                onClick={() => handleTabChange('videos')}
+              >
+                Videos
               </button>
             </div>
           </div>
@@ -930,6 +961,12 @@ export default function EventsAndCouncilSection({
                 </div>
               </div>
             ))}
+            {/* End of Posts feed dwell card */}
+            <div className="fb-feed-end-card">
+              <div className="fb-feed-end-icon">✓</div>
+              <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
+              <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+            </div>
           </div>
         )}
 
@@ -959,45 +996,12 @@ export default function EventsAndCouncilSection({
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {activeMobileTab === 'videos' && (
-          <div className="fb-feed-container">
-            {COUNCIL_CLIPS.map((clip) => (
-              <div key={clip.src} className="fb-post-card">
-                {/* Post Header */}
-                <div className="fb-post-header">
-                  <div className="fb-post-avatar page-avatar">
-                    <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
-                  </div>
-                  <div className="fb-post-author-info">
-                    <span className="fb-post-author-name">
-                      GDG CRCE
-                      <span className="fb-verified-badge-small">✓</span>
-                    </span>
-                    <span className="fb-post-meta">Posted • Video • 🌐</span>
-                  </div>
-                </div>
-
-                {/* Post content */}
-                <div className="fb-post-content">
-                  <p className="fb-post-text">{clip.caption}</p>
-                </div>
-
-                {/* Video Block */}
-                <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', background: '#000' }}>
-                  <video
-                    src={clip.src}
-                    poster={clip.poster}
-                    controls
-                    playsInline
-                    muted
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
-              </div>
-            ))}
+            {/* End of About feed dwell card */}
+            <div className="fb-feed-end-card">
+              <div className="fb-feed-end-icon">✓</div>
+              <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
+              <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+            </div>
           </div>
         )}
 
@@ -1097,6 +1101,57 @@ export default function EventsAndCouncilSection({
                 </div>
               </div>
             ))}
+            {/* End of Photos feed dwell card */}
+            <div className="fb-feed-end-card">
+              <div className="fb-feed-end-icon">✓</div>
+              <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
+              <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+            </div>
+          </div>
+        )}
+
+        {activeMobileTab === 'videos' && (
+          <div className="fb-feed-container">
+            {COUNCIL_CLIPS.map((clip) => (
+              <div key={clip.src} className="fb-post-card">
+                {/* Post Header */}
+                <div className="fb-post-header">
+                  <div className="fb-post-avatar page-avatar">
+                    <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
+                  </div>
+                  <div className="fb-post-author-info">
+                    <span className="fb-post-author-name">
+                      GDG CRCE
+                      <span className="fb-verified-badge-small">✓</span>
+                    </span>
+                    <span className="fb-post-meta">Posted • Video • 🌐</span>
+                  </div>
+                </div>
+
+                {/* Post content */}
+                <div className="fb-post-content">
+                  <p className="fb-post-text">{clip.caption}</p>
+                </div>
+
+                {/* Video Block */}
+                <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', background: '#000' }}>
+                  <video
+                    src={clip.src}
+                    poster={clip.poster}
+                    controls
+                    playsInline
+                    muted
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              </div>
+            ))}
+            {/* End of Videos feed dwell card */}
+            <div className="fb-feed-end-card">
+              <div className="fb-feed-end-icon">✓</div>
+              <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
+              <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+            </div>
           </div>
         )}
         <div id="mobile-shutdown-anchor" style={{ width: '100%', height: '1px', pointerEvents: 'none' }} />

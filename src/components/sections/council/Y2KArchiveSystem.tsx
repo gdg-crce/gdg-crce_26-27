@@ -12,6 +12,7 @@ import {
   wallPhotos,
   groupPhoto,
   CouncilMember,
+  Department,
 } from './councilData';
 import MemberPhoto from './MemberPhoto';
 import { COUNCIL_CLIPS } from '@/lib/media';
@@ -574,7 +575,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
   const renderMembers = () => {
     const activeTeam = cur.team ?? 'All Tracks';
     const list =
-      activeTeam === 'All Tracks' ? councilMembers : membersByTeam(activeTeam as any);
+      activeTeam === 'All Tracks' ? councilMembers : membersByTeam(activeTeam as Department);
     const seniors = list.filter((m) => m.tier === 'Senior Council');
     const juniors = list.filter((m) => m.tier === 'Junior Council');
     return (
