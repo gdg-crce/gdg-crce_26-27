@@ -213,74 +213,80 @@ export default function EventsAndCouncilSection({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let scrollTriggerInstance: any;
 
+      let rafId = 0;
       const updateCardPositions = (p: number) => {
-        const floatIndex = p * (totalCards - 1);
-        const activeIdx = Math.min(totalCards - 1, Math.round(floatIndex));
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          const floatIndex = p * (totalCards - 1);
+          const activeIdx = Math.min(totalCards - 1, Math.round(floatIndex));
 
-        // Update HUD text without triggering React state re-renders
-        if (mobileBadgeRef.current) {
-          mobileBadgeRef.current.textContent = `0${activeIdx + 1} / 0${totalCards} · ARCHIVE SERIES`;
-        }
-        if (mobileTitleRef.current && mobileTitleRef.current.textContent !== mobileEvents[activeIdx].title) {
-          mobileTitleRef.current.textContent = mobileEvents[activeIdx].title;
-        }
-        if (mobileSubtitleRef.current && mobileSubtitleRef.current.textContent !== mobileEvents[activeIdx].subtitle) {
-          mobileSubtitleRef.current.textContent = mobileEvents[activeIdx].subtitle;
-        }
+          // Update HUD text without triggering React state re-renders
+          if (mobileBadgeRef.current) {
+            mobileBadgeRef.current.textContent = `0${activeIdx + 1} / 0${totalCards} · ARCHIVE SERIES`;
+          }
+          if (mobileTitleRef.current && mobileTitleRef.current.textContent !== mobileEvents[activeIdx].title) {
+            mobileTitleRef.current.textContent = mobileEvents[activeIdx].title;
+          }
+          if (mobileSubtitleRef.current && mobileSubtitleRef.current.textContent !== mobileEvents[activeIdx].subtitle) {
+            mobileSubtitleRef.current.textContent = mobileEvents[activeIdx].subtitle;
+          }
 
-        // Update dot indicator pills
-        if (mobileDotsRef.current) {
-          const dots = mobileDotsRef.current.querySelectorAll('.mobile-event-dot');
-          dots.forEach((d, i) => {
-            d.classList.toggle('active', i === activeIdx);
-          });
-        }
-
-        // 3D tactile card stack peel & flip animation
-        cardItems.forEach((card, idx) => {
-          const diff = idx - floatIndex;
-
-          if (diff < 0) {
-            // Card has peeled off / is peeling away upwards & slightly tilting
-            const peel = Math.min(1, Math.max(0, -diff));
-            const yPercent = -peel * 135;
-            const rotateDeg = -peel * 10;
-            const xOffset = -peel * 16;
-            const scale = 1 + peel * 0.05;
-            const opacity = Math.max(0, 1 - peel * 1.35);
-
-            gsap.set(card, {
-              yPercent: yPercent,
-              y: 0,
-              x: xOffset,
-              rotate: rotateDeg,
-              scale: scale,
-              opacity: opacity,
-              filter: 'none',
-              zIndex: 20 + idx,
-              pointerEvents: 'none',
-            });
-          } else {
-            // Card is currently active or waiting underneath in the physical stack
-            const depth = Math.min(3, diff);
-            const yOffset = depth * 14;
-            const rotateDeg = (idx % 2 === 0 ? 1 : -1) * depth * 2.4;
-            const scale = 1 - depth * 0.055;
-            const opacity = depth > 2 ? Math.max(0, 1 - (depth - 2)) : 1;
-            const brightness = 1 - depth * 0.15;
-
-            gsap.set(card, {
-              yPercent: 0,
-              y: yOffset,
-              x: 0,
-              rotate: rotateDeg,
-              scale: scale,
-              opacity: opacity,
-              filter: brightness < 0.99 ? `brightness(${brightness.toFixed(2)})` : 'none',
-              zIndex: 20 - idx,
-              pointerEvents: diff < 0.5 ? 'auto' : 'none',
+          // Update dot indicator pills
+          if (mobileDotsRef.current) {
+            const dots = mobileDotsRef.current.querySelectorAll('.mobile-event-dot');
+            dots.forEach((d, i) => {
+              d.classList.toggle('active', i === activeIdx);
             });
           }
+
+          // 3D tactile card stack peel & flip animation
+          cardItems.forEach((card, idx) => {
+            const diff = idx - floatIndex;
+
+            if (diff < 0) {
+              // Card has peeled off / is peeling away upwards & slightly tilting
+              const peel = Math.min(1, Math.max(0, -diff));
+              const yPercent = -peel * 135;
+              const rotateDeg = -peel * 10;
+              const xOffset = -peel * 16;
+              const scale = 1 + peel * 0.05;
+              const opacity = Math.max(0, 1 - peel * 1.35);
+
+              gsap.set(card, {
+                yPercent: yPercent,
+                y: 0,
+                x: xOffset,
+                rotate: rotateDeg,
+                scale: scale,
+                opacity: opacity,
+                filter: 'none',
+                zIndex: 20 + idx,
+                pointerEvents: 'none',
+                force3D: true,
+              });
+            } else {
+              // Card is currently active or waiting underneath in the physical stack
+              const depth = Math.min(3, diff);
+              const yOffset = depth * 14;
+              const rotateDeg = (idx % 2 === 0 ? 1 : -1) * depth * 2.4;
+              const scale = 1 - depth * 0.055;
+              const opacity = depth > 2 ? Math.max(0, 1 - (depth - 2)) : 1;
+              const brightness = 1 - depth * 0.15;
+
+              gsap.set(card, {
+                yPercent: 0,
+                y: yOffset,
+                x: 0,
+                rotate: rotateDeg,
+                scale: scale,
+                opacity: opacity,
+                filter: brightness < 0.99 ? `brightness(${brightness.toFixed(2)})` : 'none',
+                zIndex: 20 - idx,
+                pointerEvents: diff < 0.5 ? 'auto' : 'none',
+                force3D: true,
+              });
+            }
+          });
         });
       };
 

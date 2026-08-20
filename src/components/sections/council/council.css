@@ -2047,6 +2047,8 @@
   margin: auto 0 !important;
   z-index: 15 !important;
   flex-shrink: 0 !important;
+  transform: translateZ(0) !important;
+  contain: layout paint !important;
 }
 
 .mobile-event-card-item {
@@ -2060,6 +2062,7 @@
   transform-origin: center bottom !important;
   will-change: transform, opacity !important;
   backface-visibility: hidden !important;
+  transform: translateZ(0) !important;
   cursor: pointer !important;
 }
 
