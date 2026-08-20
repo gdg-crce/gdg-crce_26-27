@@ -94,7 +94,7 @@
 }
 
 .tnav-mark img {
-  width: 28px;
+  width: 36px;
   height: auto;
   object-fit: contain;
   opacity: 0.94;
@@ -205,7 +205,7 @@
   }
 
   .tnav-mark img {
-    width: 22px !important;
+    width: 30px !important;
   }
 
   .tnav-links {

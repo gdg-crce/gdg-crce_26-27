@@ -359,7 +359,7 @@ a.bios-row {
   }
 
   .ct-term {
-    padding: 70px 10px 14px 10px !important;
+    padding: 68px 8px 10px 8px !important;
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
@@ -367,8 +367,8 @@ a.bios-row {
     display: flex !important;
     align-items: stretch !important;
     justify-content: stretch !important;
-    font-size: clamp(13.5px, 2.5vh, 17.5px) !important;
-    line-height: 1.45 !important;
+    font-size: clamp(11px, 1.9vh, 14px) !important;
+    line-height: 1.35 !important;
   }
 
   .bios {
@@ -379,19 +379,26 @@ a.bios-row {
     max-width: 100% !important;
     height: 100% !important;
     max-height: 100% !important;
-    padding: 12px 14px !important;
+    padding: 8px 10px !important;
     border: 2px double var(--bios-line) !important;
     box-sizing: border-box !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  .bios::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   .bios-title {
-    font-size: 1.15em !important;
+    font-size: 1.05em !important;
     font-weight: 700 !important;
-    letter-spacing: 0.08em !important;
-    margin-bottom: 6px !important;
-    padding-bottom: 0.25em !important;
+    letter-spacing: 0.06em !important;
+    margin-bottom: 2px !important;
+    padding-bottom: 0.12em !important;
     flex-shrink: 0 !important;
   }
 
@@ -399,28 +406,29 @@ a.bios-row {
     flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: flex-start !important;
-    gap: 8px !important;
-    padding: 4px 0 !important;
+    justify-content: space-between !important;
+    gap: 2px !important;
+    padding: 2px 0 !important;
+    min-height: 0 !important;
   }
 
   .bios-group {
-    font-size: 1.05em !important;
+    font-size: 0.98em !important;
     font-weight: 700 !important;
-    margin-bottom: 0.15em !important;
-    padding-bottom: 0.2em !important;
+    margin-bottom: 0.08em !important;
+    padding-bottom: 0.1em !important;
   }
 
   .bios-group:not(:first-child) {
-    margin-top: 0.4em !important;
+    margin-top: 0.2em !important;
   }
 
   .bios-row {
     grid-template-columns: 1fr !important;
-    gap: 2px !important;
-    padding: 4px 2px !important;
-    border-bottom: 1px dotted rgba(168, 168, 168, 0.3) !important;
-    font-size: 1em !important;
+    gap: 1px !important;
+    padding: 1.5px 0 !important;
+    border-bottom: 1px dotted rgba(168, 168, 168, 0.25) !important;
+    font-size: 0.95em !important;
   }
 
   .bios-dots {
@@ -428,42 +436,42 @@ a.bios-row {
   }
 
   .bios-label {
-    font-size: 0.98em !important;
+    font-size: 0.94em !important;
     font-weight: 600 !important;
   }
 
   .bios-value {
-    padding-left: 6px !important;
-    font-size: 1em !important;
+    padding-left: 4px !important;
+    font-size: 0.95em !important;
     font-weight: 700 !important;
   }
 
   .bios-help {
-    padding-top: 0.4em !important;
+    padding-top: 0.2em !important;
     display: flex !important;
     flex-direction: column !important;
     flex: none !important;
   }
 
   .bios-help-title {
-    font-size: 1.05em !important;
+    font-size: 0.98em !important;
     font-weight: 700 !important;
-    margin-bottom: 0.25em !important;
-    padding-bottom: 0.2em !important;
+    margin-bottom: 0.12em !important;
+    padding-bottom: 0.1em !important;
   }
 
   .bios-help-map {
-    height: clamp(110px, 18vh, 160px) !important;
-    min-height: 110px !important;
+    height: clamp(85px, 13.5vh, 125px) !important;
+    min-height: 85px !important;
     width: 100% !important;
     flex: none !important;
   }
 
   .bios-legend {
-    margin-top: 8px !important;
-    padding-top: 0.3em !important;
+    margin-top: 4px !important;
+    padding-top: 0.15em !important;
     flex-shrink: 0 !important;
-    font-size: 0.92em !important;
+    font-size: 0.86em !important;
     font-weight: 600 !important;
   }
 }
