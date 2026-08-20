@@ -268,10 +268,6 @@ export default function TopNav({ ready }: { ready: boolean }) {
         <button
           type="button"
           className="tnav-mark"
-          // Closed: open it. Open because it was clicked open: close it again —
-          // otherwise the only way out is to scroll or click away, and a
-          // toggle that will not untoggle is the classic click-nav annoyance.
-          // Open because we are on Home: it is a "back to top" button.
           onClick={() => {
             if (isCollapsed) setHeld(true);
             else if (held) setHeld(false);
@@ -283,20 +279,35 @@ export default function TopNav({ ready }: { ready: boolean }) {
           <Image src="/logo.png" alt="GDG CRCE" width={60} height={40} draggable={false} priority />
         </button>
 
+        {/* Mobile Header Row */}
+        <div className="tnav-mobile-header">
+          <div className="tnav-mobile-brand">
+            <Image src="/logo.png" alt="GDG CRCE" width={28} height={18} draggable={false} />
+            <span>GDG CRCE</span>
+          </div>
+          <button
+            type="button"
+            className="tnav-close-btn"
+            onClick={() => setHeld(false)}
+            aria-label="Close navigation"
+          >
+            ✕
+          </button>
+        </div>
+
         <div className="tnav-links">
           {NAV_ITEMS.map((item, i) => (
             <button
               key={item.id}
               type="button"
               className="tnav-link"
-              // Index for the open stagger — see `--i` in top-nav.css.
               style={{ ['--i' as string]: i + 1 }}
               aria-current={active === item.id ? 'true' : undefined}
-              // Nothing to tab to while it is a circle.
               tabIndex={isCollapsed ? -1 : 0}
               onClick={() => go(item.id)}
             >
-              {item.label}
+              <span className="tnav-link-dot" />
+              <span className="tnav-link-text">{item.label}</span>
             </button>
           ))}
         </div>

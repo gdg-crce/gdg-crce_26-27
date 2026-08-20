@@ -122,6 +122,12 @@ export default function EventsAndCouncilSection({
   const eventNumRef = useRef<HTMLSpanElement>(null);
   const eventTitleRef = useRef<HTMLSpanElement>(null);
   const eventSubtitleRef = useRef<HTMLSpanElement>(null);
+  const mobileBadgeRef = useRef<HTMLDivElement>(null);
+  const mobileTitleRef = useRef<HTMLHeadingElement>(null);
+  const mobileSubtitleRef = useRef<HTMLParagraphElement>(null);
+  const mobileDotsRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mobileStRef = useRef<any>(null);
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
@@ -201,84 +207,109 @@ export default function EventsAndCouncilSection({
       const track = carouselTrackRef.current;
       if (!track) return;
 
+      const cardItems = track.querySelectorAll<HTMLElement>('.mobile-event-card-item');
+      const totalCards = mobileEvents.length;
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let scrollTriggerInstance: any;
 
-      const initScrollTrigger = () => {
-        const anim = gsap.to(track, {
-          x: () => -((mobileEvents.length - 1) * window.innerWidth),
-          ease: 'none',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            pin: containerRef.current,
-            start: 'top top',
-            end: () => `+=${(mobileEvents.length - 1) * window.innerHeight * 0.8}`,
-            scrub: 0.5,
-            snap: {
-              snapTo: 1 / (mobileEvents.length - 1),
-              duration: { min: 0.2, max: 0.4 },
-              delay: 0.05,
-              ease: 'power1.inOut',
-            },
-            invalidateOnRefresh: true,
-            onUpdate: (self) => {
-              const p = self.progress;
+      const updateCardPositions = (p: number) => {
+        const floatIndex = p * (totalCards - 1);
+        const activeIdx = Math.min(totalCards - 1, Math.round(floatIndex));
 
-              if (progressBarRef.current) {
-                progressBarRef.current.style.width = `${p * 100}%`;
-              }
+        // Update HUD text without triggering React state re-renders
+        if (mobileBadgeRef.current) {
+          mobileBadgeRef.current.textContent = `0${activeIdx + 1} / 0${totalCards} · ARCHIVE SERIES`;
+        }
+        if (mobileTitleRef.current && mobileTitleRef.current.textContent !== mobileEvents[activeIdx].title) {
+          mobileTitleRef.current.textContent = mobileEvents[activeIdx].title;
+        }
+        if (mobileSubtitleRef.current && mobileSubtitleRef.current.textContent !== mobileEvents[activeIdx].subtitle) {
+          mobileSubtitleRef.current.textContent = mobileEvents[activeIdx].subtitle;
+        }
 
-              const totalCards = mobileEvents.length;
-              activeEventRef.current = Math.min(
-                totalCards - 1,
-                Math.round(p * (totalCards - 1))
-              );
-
-              // Apply 3D curved transformation to each card based on its position relative to viewport center
-              const cards = track.querySelectorAll('.mobile-event-image-raw');
-              cards.forEach((card, idx) => {
-                const relativeX = idx - p * (totalCards - 1);
-                
-                // Curve calculations:
-                const angle = 0; // Keep poster shape unchanged (no 3D perspective skewing)
-                const z = -Math.abs(Math.max(-1.5, Math.min(1.5, relativeX))) * 100; // Curve outwards in depth
-                const scale = 1 - Math.abs(Math.max(-1, Math.min(1, relativeX))) * 0.1; // Scale down side cards
-                const y = Math.abs(relativeX) * 25; // Convex arch curve (pushes side cards down)
-                const opacity = 1 - Math.abs(Math.max(-1, Math.min(1, relativeX))) * 0.35; // Fade out side cards
-
-                gsap.set(card, {
-                  rotateY: angle,
-                  z: z,
-                  scale: scale,
-                  y: y,
-                  opacity: opacity,
-                  transformPerspective: 1000,
-                });
-              });
-            },
-          },
-        });
-        scrollTriggerInstance = anim;
-
-        // Position cards correctly initially before scroll trigger updates
-        const cards = track.querySelectorAll('.mobile-event-image-raw');
-        cards.forEach((card, idx) => {
-          const relativeX = idx;
-          const angle = 0; // Keep poster shape unchanged
-          const z = -Math.abs(Math.max(-1.5, Math.min(1.5, relativeX))) * 100;
-          const scale = 1 - Math.abs(Math.max(-1, Math.min(1, relativeX))) * 0.1;
-          const y = Math.abs(relativeX) * 25;
-          const opacity = 1 - Math.abs(Math.max(-1, Math.min(1, relativeX))) * 0.35;
-
-          gsap.set(card, {
-            rotateY: angle,
-            z: z,
-            scale: scale,
-            y: y,
-            opacity: opacity,
-            transformPerspective: 1000,
+        // Update dot indicator pills
+        if (mobileDotsRef.current) {
+          const dots = mobileDotsRef.current.querySelectorAll('.mobile-event-dot');
+          dots.forEach((d, i) => {
+            d.classList.toggle('active', i === activeIdx);
           });
+        }
+
+        // 3D tactile card stack peel & flip animation
+        cardItems.forEach((card, idx) => {
+          const diff = idx - floatIndex;
+
+          if (diff < 0) {
+            // Card has peeled off / is peeling away upwards & slightly tilting
+            const peel = Math.min(1, Math.max(0, -diff));
+            const yPercent = -peel * 135;
+            const rotateDeg = -peel * 10;
+            const xOffset = -peel * 16;
+            const scale = 1 + peel * 0.05;
+            const opacity = Math.max(0, 1 - peel * 1.35);
+
+            gsap.set(card, {
+              yPercent: yPercent,
+              y: 0,
+              x: xOffset,
+              rotate: rotateDeg,
+              scale: scale,
+              opacity: opacity,
+              filter: 'none',
+              zIndex: 20 + idx,
+              pointerEvents: 'none',
+            });
+          } else {
+            // Card is currently active or waiting underneath in the physical stack
+            const depth = Math.min(3, diff);
+            const yOffset = depth * 14;
+            const rotateDeg = (idx % 2 === 0 ? 1 : -1) * depth * 2.4;
+            const scale = 1 - depth * 0.055;
+            const opacity = depth > 2 ? Math.max(0, 1 - (depth - 2)) : 1;
+            const brightness = 1 - depth * 0.15;
+
+            gsap.set(card, {
+              yPercent: 0,
+              y: yOffset,
+              x: 0,
+              rotate: rotateDeg,
+              scale: scale,
+              opacity: opacity,
+              filter: brightness < 0.99 ? `brightness(${brightness.toFixed(2)})` : 'none',
+              zIndex: 20 - idx,
+              pointerEvents: diff < 0.5 ? 'auto' : 'none',
+            });
+          }
         });
+      };
+
+      const initScrollTrigger = () => {
+        const anim = gsap.to(
+          {},
+          {
+            duration: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              pin: containerRef.current,
+              pinType: 'fixed',
+              anticipatePin: 1,
+              start: 'top top',
+              end: () => `+=${(totalCards - 1) * window.innerHeight * 0.75}`,
+              scrub: 0.35,
+              invalidateOnRefresh: true,
+              onUpdate: (self) => {
+                updateCardPositions(self.progress);
+              },
+            },
+          }
+        );
+        scrollTriggerInstance = anim;
+        mobileStRef.current = anim;
+
+        // Position cards immediately on mount
+        updateCardPositions(0);
       };
 
       const timeoutId = setTimeout(() => {
@@ -288,12 +319,11 @@ export default function EventsAndCouncilSection({
 
       return () => {
         clearTimeout(timeoutId);
-        if (scrollTriggerInstance) {
-          if (scrollTriggerInstance.scrollTrigger) {
-            scrollTriggerInstance.scrollTrigger.kill();
-          }
+        if (scrollTriggerInstance?.scrollTrigger) {
+          scrollTriggerInstance.scrollTrigger.kill();
           scrollTriggerInstance.kill();
         }
+        mobileStRef.current = null;
       };
     } else {
       /* THE SINGLE SOURCE OF TRUTH FOR WHAT IS ON SCREEN.
@@ -655,10 +685,27 @@ export default function EventsAndCouncilSection({
     }
   }, []);
 
+  const handleCardTap = useCallback((index: number) => {
+    if (mobileStRef.current?.scrollTrigger) {
+      const st = mobileStRef.current.scrollTrigger;
+      const nextIdx = (index + 1) % mobileEvents.length;
+      const targetY = st.start + (nextIdx / (mobileEvents.length - 1)) * (st.end - st.start);
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+  }, []);
+
+  const handleDotClick = useCallback((index: number) => {
+    if (mobileStRef.current?.scrollTrigger) {
+      const st = mobileStRef.current.scrollTrigger;
+      const targetY = st.start + (index / (mobileEvents.length - 1)) * (st.end - st.start);
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+  }, []);
+
   if (mounted && isMobile) {
     return (
       <div className="mobile-unified-container">
-        {/* Mobile Event Section (2D HTML/CSS Smooth Carousel) */}
+        {/* Mobile Event Section (3D Street Deck Peel & Flip Showcase) */}
         <section
           ref={sectionRef}
           id="events"
@@ -667,40 +714,67 @@ export default function EventsAndCouncilSection({
         >
           <div
             ref={containerRef}
+            className="mobile-events-stage"
             style={{
-              width: '100%',
               height: fixedHeight,
-              position: 'relative',
-              overflow: 'hidden',
-              backgroundImage: ikUrl('/events/eventsmobbg.png'),
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
             }}
           >
-            {/* Events Title on Top */}
+            {/* Dynamic HUD Header */}
             <div className="mobile-events-header">
-              <h2 className="mobile-events-section-title">OUR EVENTS</h2>
+              <div ref={mobileBadgeRef} className="mobile-events-badge">
+                01 / 0{mobileEvents.length} · ARCHIVE SERIES
+              </div>
+              <h2 ref={mobileTitleRef} className="mobile-events-title">
+                {mobileEvents[0].title}
+              </h2>
+              <p ref={mobileSubtitleRef} className="mobile-events-subtitle">
+                {mobileEvents[0].subtitle}
+              </p>
             </div>
 
-            {/* 2D HTML/CSS Carousel Track */}
+            {/* 3D Central Poster Deck */}
             <div
               ref={carouselTrackRef}
-              className="mobile-events-track"
+              className="mobile-events-deck"
             >
-              {mobileEvents.map((evt) => (
-                <div key={evt.id} className="mobile-event-card-wrapper-raw">
-                  <Image
-                    src={ik(evt.posterImage)}
-                    alt={evt.title}
-                    className="mobile-event-image-raw"
-                    width={1574}
-                    height={1574}
-                    sizes="(max-width: 400px) 82vw, 320px"
-                    draggable={false}
-                  />
+              {mobileEvents.map((evt, idx) => (
+                <div
+                  key={evt.id}
+                  className="mobile-event-card-item"
+                  data-index={idx}
+                  onClick={() => handleCardTap(idx)}
+                >
+                  <div className="mobile-event-card-frame">
+                    <Image
+                      src={ik(evt.posterImage)}
+                      alt={evt.title}
+                      className="mobile-event-poster-img"
+                      width={1574}
+                      height={1574}
+                      sizes="(max-width: 400px) 90vw, 380px"
+                      draggable={false}
+                      priority={idx < 2}
+                    />
+                    <div className="mobile-event-poster-sheen" />
+                  </div>
                 </div>
               ))}
+            </div>
+
+            {/* Bottom Controls / Pill Indicator */}
+            <div className="mobile-events-footer">
+              <div ref={mobileDotsRef} className="mobile-events-pills">
+                {mobileEvents.map((evt, idx) => (
+                  <button
+                    key={evt.id}
+                    type="button"
+                    className={`mobile-event-dot ${idx === 0 ? 'active' : ''}`}
+                    onClick={() => handleDotClick(idx)}
+                    aria-label={`Jump to event ${idx + 1}: ${evt.title}`}
+                  />
+                ))}
+              </div>
+              <div className="mobile-events-hint">SCROLL TO FLIP ARCHIVE ↓</div>
             </div>
 
             {/* Film overlays */}

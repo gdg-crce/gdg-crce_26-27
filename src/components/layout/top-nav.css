@@ -43,50 +43,38 @@
 }
 
 .tnav {
-  --tnav-size: 58px;
-  --tnav-open: min(660px, 94vw);
+  --tnav-size: 54px;
+  --tnav-open: min(720px, 94vw);
 
   position: relative;
   display: flex;
   align-items: center;
   height: var(--tnav-size);
   width: var(--tnav-open);
-  padding: 0;
+  padding: 0 8px 0 6px;
   border-radius: 999px;
   overflow: hidden;
   pointer-events: auto;
+  box-sizing: border-box;
 
-  /* An opaque graded fill, NOT `backdrop-filter: blur(22px) saturate(165%)`.
-
-     This is the one element on the site that is fixed above EVERY act, and
-     Act 3 is a full-screen WebGL canvas repainting every frame. A
-     backdrop-filter has to read the composited backdrop back and re-blur it
-     each time the region under it repaints — so this nav was forcing a 22px
-     blur of a 660px-wide strip of the canvas, sixty times a second, for the
-     entire eleven-thousand-pixel scroll of the events act. It is the same
-     trap already documented for `.events-era-badge` in globals.css; this one
-     is worse because the nav is on screen the whole time.
-
-     The gradient keeps the glass read — a lighter top edge falling to a darker
-     base is what the blur was mostly doing anyway against these dark scenes —
-     and costs exactly one paint, once, because the fill never changes. */
-  background: linear-gradient(180deg, rgba(28, 30, 36, 0.94) 0%, rgba(13, 14, 17, 0.96) 100%);
-  /* A hairline plus a top-edge highlight — the thing that makes glass read as
-     a physical object rather than a translucent rectangle. */
+  background: linear-gradient(180deg, rgba(24, 26, 32, 0.94) 0%, rgba(11, 12, 15, 0.96) 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.085),
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    0 18px 50px -18px rgba(0, 0, 0, 0.85);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 16px 45px -12px rgba(0, 0, 0, 0.85);
 
   transition:
-    width 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    width 580ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 480ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 480ms cubic-bezier(0.16, 1, 0.3, 1),
     background-color 420ms ease,
     box-shadow 420ms ease;
-  will-change: width;
+  will-change: width, transform;
 }
 
 .tnav-shell[data-collapsed='true'] .tnav {
   width: var(--tnav-size);
+  padding: 0;
   background: linear-gradient(180deg, rgba(26, 28, 34, 0.92) 0%, rgba(13, 14, 17, 0.95) 100%);
 }
 
@@ -106,7 +94,7 @@
 }
 
 .tnav-mark img {
-  width: 27px;
+  width: 28px;
   height: auto;
   object-fit: contain;
   opacity: 0.94;
@@ -124,46 +112,20 @@
   border-radius: 999px;
 }
 
-/* Scroll progress, drawn around the mark. It only earns its place once the
-   capsule has collapsed — expanded, the ring would just be noise around a logo
-   that already sits next to six labels. */
-.tnav-ring {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transform: rotate(-90deg);
-  transition: opacity 420ms ease;
-  display: none !important;
+/* Hidden by default on desktop */
+.tnav-mobile-header {
+  display: none;
 }
 
-.tnav-shell[data-collapsed='true'] .tnav-ring {
-  opacity: 1;
-}
-
-.tnav-ring circle {
-  fill: none;
-  stroke-width: 1.4;
-  stroke-linecap: round;
-}
-
-.tnav-ring .tnav-ring-track {
-  stroke: rgba(255, 255, 255, 0.1);
-}
-
-.tnav-ring .tnav-ring-fill {
-  stroke: var(--tnav-accent);
-  /* dasharray/offset are written from JS — see TopNav.tsx */
-  transition: stroke-dashoffset 120ms linear;
-}
-
-/* ── links ─────────────────────────────────────────────────────────────── */
+/* ── desktop links ──────────────────────────────────────────────────────── */
 
 .tnav-links {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding-right: 8px;
+  justify-content: space-evenly;
+  flex: 1;
+  gap: 4px;
+  padding: 0 4px;
   white-space: nowrap;
   min-width: 0;
 }
@@ -173,72 +135,106 @@
   background: none;
   border: 0;
   cursor: pointer;
-  padding: 9px 14px;
+  padding: 8px 14px;
   border-radius: 999px;
   font-family: var(--font-00s-body), ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.845rem;
+  font-size: 0.84rem;
   font-weight: 500;
   letter-spacing: 0.015em;
-  color: rgba(255, 255, 255, 0.52);
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
   transition:
-    color 260ms ease,
-    background-color 260ms ease,
-    opacity 380ms ease,
-    transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+    color 240ms ease,
+    background-color 240ms ease,
+    opacity 350ms ease,
+    transform 350ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Clipping alone would drag the labels sideways as the capsule closes; fading
-   them on the way out means the circle is already clean before the width has
-   finished travelling. */
+.tnav-link-dot {
+  display: none;
+}
+
 .tnav-shell[data-collapsed='true'] .tnav-link {
   opacity: 0;
   transform: translateX(-6px);
-  transition-duration: 200ms;
-  /* No stagger on the way out — closing should feel like one movement. */
+  transition-duration: 180ms;
   transition-delay: 0ms;
+  pointer-events: none;
 }
 
-/* Opening, the labels arrive left-to-right *behind* the widening capsule
-   rather than all at once in a block. The first delay clears the leading edge
-   of the width animation, so nothing is visible before there is room for it. */
 .tnav-shell[data-collapsed='false'] .tnav-link {
-  transition-delay: calc(150ms + (var(--i) - 1) * 48ms);
+  transition-delay: calc(120ms + (var(--i) - 1) * 35ms);
 }
 
 .tnav-link:hover,
 .tnav-link:focus-visible {
   color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.07);
   outline: none;
 }
 
 .tnav-link[aria-current='true'] {
-  color: #fff;
+  color: #ffffff;
+  background: rgba(233, 162, 59, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(233, 162, 59, 0.38);
+  font-weight: 600;
 }
 
-/* The active mark: a small dot under the label. Quieter than a filled pill,
-   and it does not compete with the hover state. */
-.tnav-link[aria-current='true']::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 5px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--tnav-accent);
-  transform: translateX(-50%);
-}
-
-/* ── mobile: the capsule stays a mark, and opens a sheet ───────────────── */
+/* ── mobile: sleek horizontal floating glass pill, matching desktop exactly ── */
 
 @media (max-width: 767px) {
-  .tnav {
-    --tnav-open: min(92vw, 420px);
+  .tnav-shell {
+    top: 14px;
   }
+
+  .tnav {
+    --tnav-size: 46px;
+    --tnav-open: min(94vw, 480px);
+    height: var(--tnav-size) !important;
+    border-radius: 999px !important;
+    padding: 0 4px !important;
+    flex-direction: row !important;
+  }
+
+  .tnav-mark {
+    width: 42px !important;
+    height: 42px !important;
+    display: grid !important;
+  }
+
+  .tnav-mark img {
+    width: 22px !important;
+  }
+
+  .tnav-links {
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    padding: 0 4px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .tnav-links::-webkit-scrollbar {
+    display: none !important;
+  }
+
   .tnav-link {
-    padding: 9px 10px;
-    font-size: 0.78rem;
+    padding: 5px 9px !important;
+    font-size: 0.74rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    border-radius: 999px !important;
+    background: none !important;
+    border: none !important;
+  }
+
+  .tnav-link[aria-current='true'] {
+    background: rgba(233, 162, 59, 0.18) !important;
+    box-shadow: inset 0 0 0 1px rgba(233, 162, 59, 0.4) !important;
   }
 }
 
@@ -246,8 +242,7 @@
   .tnav-shell,
   .tnav,
   .tnav-link,
-  .tnav-mark img,
-  .tnav-ring {
+  .tnav-mark img {
     transition-duration: 1ms !important;
     transition-delay: 0ms !important;
   }

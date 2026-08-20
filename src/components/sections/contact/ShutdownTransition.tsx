@@ -180,16 +180,27 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       const field = fieldRef.current;
       const scan = scanRef.current;
       const dot = dotRef.current;
+      const term = termRef.current;
       if (!tube || !scrim || !dialog || !field || !scan || !dot) return;
+
+      if (p <= 0.0005) {
+        overlay.classList.remove('is-active');
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.visibility = 'hidden';
+        if (term) {
+          term.style.opacity = '0';
+          term.classList.remove('is-live');
+        }
+        return;
+      }
 
       const f = shutdownFrame(p);
 
-      /* Composite ten stacked full-viewport layers only while the act is
-         actually running. Latched off THIS scalar and not off the driving
-         trigger's `isActive` — that flag goes false at progress 1, which on a
-         shutdown that finishes at the bottom of the document meant the whole
-         ending vanished at the exact position the page rests on. */
-      overlay.classList.toggle('is-active', p > 0.0005);
+      overlay.classList.add('is-active');
+      overlay.style.visibility = 'visible';
+      overlay.style.opacity = f.overlayOpacity.toString();
+      overlay.style.pointerEvents = p > 0.8 ? 'auto' : 'none';
 
       scrim.style.opacity = f.scrimOpacity.toString();
       dialog.style.opacity = f.dialogOpacity.toString();
@@ -206,26 +217,35 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       dot.style.opacity = f.dotOpacity.toString();
       dot.style.transform = `scale(${f.dotScale.toFixed(3)})`;
 
-      overlay.style.opacity = f.overlayOpacity.toString();
-
-      const term = termRef.current;
       if (term) {
         term.style.opacity = f.termOpacity.toString();
-        // Only clickable once it is actually readable. The class goes on the
-        // HOST — `.sd-term-host.is-live .ct-term` in shutdown.css.
-        term.classList.toggle('is-live', f.termOpacity > 0.9);
+        term.classList.toggle('is-live', f.termOpacity > 0.85);
       }
     };
 
     /* Reduced motion: no tube discharge, no marquee — just a straight fade
-       from the desktop to the present. The beat is preserved, the strobing
-       brightness ramp is not. */
+       from the desktop to the present. */
     const drawReduced = (p: number) => {
       const scrim = scrimRef.current;
       const term = termRef.current;
       if (!scrim) return;
-      overlay.classList.toggle('is-active', p > 0.0005);
+
+      if (p <= 0.0005) {
+        overlay.classList.remove('is-active');
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.visibility = 'hidden';
+        if (term) {
+          term.style.opacity = '0';
+          term.classList.remove('is-live');
+        }
+        return;
+      }
+
+      overlay.classList.add('is-active');
+      overlay.style.visibility = 'visible';
       overlay.style.opacity = seg(0.0, 0.1, p).toString();
+      overlay.style.pointerEvents = p > 0.75 ? 'auto' : 'none';
       scrim.style.opacity = seg(0.1, 0.5, p).toString();
       if (term) {
         term.style.opacity = seg(0.55, 0.8, p).toString();

@@ -122,8 +122,8 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       ik('/preloader/futureforge.png'),
     ];
 
-    // Build list of critical mobile assets to preload
-    const criticalMobileAssets = [
+    // Build list of critical assets to preload and decode
+    const criticalAssets = [
       // About Section Turntable Player
       ik('/record player/base.png'),
       ik('/record player/disc.png'),
@@ -141,49 +141,84 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       ik('/whatwedo/mobile/ml&andro.png'),
       ik('/whatwedo/mobile/design.png'),
 
-      // Events Section Mobile Background & Logo
+      // Events Section Mobile Background & Logos
       ik('/events/eventsmobbg.png'),
+      '/logo.png',
       '/_next/image?url=%2Flogo.png&w=96&q=75',
       '/_next/image?url=%2Flogo.png&w=128&q=75',
       '/_next/image?url=%2Flogo.png&w=640&q=75',
+
+      // Wall textures
+      '/textures/wall/plaster_color.jpg',
+      '/textures/wall/plaster_normal.jpg',
+      '/textures/wall/plaster_ao_rough.jpg',
+
+      // Desktop Windows XP / Wall candidates
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/walpaper.png?tr=f-auto,q-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/WhatsApp%20Image%202026-08-16%20at%2012.44.58%20PM.jpeg?tr=w-800,q-75,f-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook1.JPG?tr=w-800,q-75,f-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook2.JPG?tr=w-800,q-75,f-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook3.JPG?tr=w-800,q-75,f-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook4.JPG?tr=w-800,q-75,f-auto',
+
+      // Mobile Council Gallery Photos
+      '/mobcouncil/DSC04899 (1).JPG.jpeg',
+      '/mobcouncil/IMG20260330194828 (1).jpg.jpeg',
+      '/mobcouncil/IMG_5410 (1).JPG.jpeg',
+      '/mobcouncil/IMG_8447 (1).JPG.jpeg',
+      '/mobcouncil/IMG_8775 (1).JPG.jpeg',
+      '/mobcouncil/IMG_8797 (1).JPG.jpeg',
+      '/mobcouncil/fxn 2026-03-25 132323CE9231BDFC83 (2).jpg.jpeg',
+      '/mobcouncil/fxn 2026-03-25 135628A4842A32C689 (1).JPEG',
+      '/mobcouncil/fxn 2026-03-25 1401139FCE36B5FBA3 (1).JPEG',
+      '/mobcouncil/image (4).png',
+      '/mobcouncil/image (5).png',
+      '/mobcouncil/image (6).png',
+      '/mobcouncil/image (7).png',
+      '/mobcouncil/image (8).png',
+      '/mobcouncil/still2 (1).jpg.jpeg',
     ];
 
-    // Mobile Event Posters
+    // Event Posters (both full and w-1024 variants)
     mobileEvents.forEach((evt) => {
-      criticalMobileAssets.push(ik(evt.posterImage));
+      criticalAssets.push(ik(evt.posterImage));
+      criticalAssets.push(ik(evt.posterImage, 'w-1024'));
     });
 
-    // Council Members portraits
+    // Council Members portraits & thumbnails
     councilMembers.forEach((member) => {
-      criticalMobileAssets.push(member.photo);
-      criticalMobileAssets.push(member.photoThumb);
+      criticalAssets.push(member.photo);
+      criticalAssets.push(member.photoThumb);
     });
 
-    const allImagesToLoad = [...coreImages, ...criticalMobileAssets];
+    const allImagesToLoad = [...coreImages, ...criticalAssets];
     
     // Total items: images + 1 (hero video) + 1 (GLB file)
     const totalItems = allImagesToLoad.length + 2;
 
-    // The boot screen's bar is a canned XP marquee, not a real progress read —
-    // there is nothing to hand a percentage to. Counting into state anyway
-    // re-rendered the whole loader eight times during the heaviest part of
-    // startup, so the count stays a local.
     function checkReady() {
       loaded++;
       if (loaded >= totalItems) {
-        setTimeout(() => setAssetsReady(true), 1600);
+        setTimeout(() => setAssetsReady(true), 1200);
       }
     }
+
+    // Fallback safety timer so preloader never hangs indefinitely
+    const safetyTimeout = setTimeout(() => {
+      setAssetsReady(true);
+    }, 4500);
 
     allImagesToLoad.forEach((src) => {
       const img = new Image();
       img.src = src;
-      img.onload = img.onerror = checkReady;
+      if (typeof img.decode === 'function') {
+        img.decode().then(checkReady).catch(checkReady);
+      } else {
+        img.onload = img.onerror = checkReady;
+      }
     });
 
-    // Pull the hero film into cache before the sequence starts. It is one
-    // local 1.1 MB file and the film strip's reveal cell plays the SAME url,
-    // so this single fetch serves the loader, the zoom-through and the hero.
+    // Pull the hero film into cache before the sequence starts.
     const vid = document.createElement('video');
     vid.src = HERO_VIDEO_SRC;
     vid.preload = 'auto';
@@ -196,6 +231,10 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
     fetch('/models/myModel-v1-transformed.glb')
       .then(checkReady)
       .catch(checkReady);
+
+    return () => {
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   /* ── Warm the cache for the acts that come AFTER the loader ───────────────

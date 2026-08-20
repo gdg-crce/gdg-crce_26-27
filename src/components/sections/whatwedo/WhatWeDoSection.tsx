@@ -87,34 +87,38 @@ export default function WhatWeDoSection() {
        from the stylesheet, so all of that stops when the act is not playing.
        No React state: this runs on the scroll hot path. */
     let activeNow: boolean | null = null;
-    const setActive = (on: boolean) => {
-      const el = overlayRef.current;
-      if (!el || on === activeNow) return;
-      activeNow = on;
-      el.style.opacity = on ? '1' : '0';
-      el.style.pointerEvents = on ? 'auto' : 'none';
-      el.classList.toggle('is-active', on);
-    };
 
-    /* Same shape as the events act: one pure function of progress, reachable
-       from every path that can change where we are.
-
-       This matters more here than anywhere else on the page, because when the
-       album is "on" it is a `position: fixed` overlay at z-index 99990 — the
-       full viewport, above everything. Leave it on by mistake and it does not
-       look like a stuck album; it looks like THE NEXT SECTION FAILED TO LOAD,
-       because the events act is rendering perfectly underneath a white sheet.
-
-       `setActive` was previously only reachable from `onUpdate` and the four
-       enter/leave callbacks. Those cover scrolling, but not a
-       `ScrollTrigger.refresh()` — which re-measures and can restore the scroll
-       position without firing any of them, and which fires on every resize and
-       on late fonts and images. Land in that gap and the overlay keeps whatever
-       state it last had. `setActive` already no-ops when the value has not
-       changed (`on === activeNow`), so calling it from refresh is free. */
+    /* Smooth pure function of progress.
+       From p=0.86 to p=0.98, WhatWeDo seamlessly crossfades out into Events,
+       preventing any abrupt cuts or popping. */
     const applyAlbumState = (progress: number) => {
       progressRef.current = progress;
-      setActive(progress > 0 && progress < 1);
+      const el = overlayRef.current;
+      if (!el) return;
+
+      if (progress <= 0 || progress >= 1) {
+        if (activeNow !== false) {
+          activeNow = false;
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+          el.classList.remove('is-active');
+        }
+        return;
+      }
+
+      activeNow = true;
+      el.classList.add('is-active');
+
+      // Smooth exit ramp into Events
+      const FADE_START = 0.86;
+      const FADE_END = 0.98;
+      let opacity = 1;
+      if (progress > FADE_START) {
+        opacity = Math.max(0, 1 - (progress - FADE_START) / (FADE_END - FADE_START));
+      }
+
+      el.style.opacity = opacity.toFixed(3);
+      el.style.pointerEvents = opacity > 0.3 ? 'auto' : 'none';
     };
 
     const trigger = ScrollTrigger.create({
@@ -128,9 +132,9 @@ export default function WhatWeDoSection() {
       onUpdate: (self) => applyAlbumState(self.progress),
       onRefresh: (self) => applyAlbumState(self.progress),
       // Also hide on leave so it doesn't persist after scrolling past
-      onLeave: () => setActive(false),
-      onEnterBack: () => setActive(true),
-      onLeaveBack: () => setActive(false),
+      onLeave: () => applyAlbumState(1),
+      onEnterBack: () => applyAlbumState(0.99),
+      onLeaveBack: () => applyAlbumState(0),
     });
 
     applyAlbumState(trigger.progress);

@@ -346,21 +346,40 @@ a.bios-row {
 }
 
 @media (max-width: 767px) {
+  .ct-term,
+  .bios,
+  .bios-title,
+  .bios-group,
+  .bios-row,
+  .bios-label,
+  .bios-value,
+  .bios-help-title,
+  .bios-legend {
+    font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', 'Courier New', monospace !important;
+  }
+
   .ct-term {
-    padding: 70px 6px 8px 6px !important;
-    font-size: clamp(11px, 2.5vh, 13.5px) !important;
-    line-height: 1.4 !important;
+    padding: 70px 10px 14px 10px !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    font-size: clamp(13.5px, 2.5vh, 17.5px) !important;
+    line-height: 1.45 !important;
   }
 
   .bios {
     display: flex !important;
     flex-direction: column !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     width: 100% !important;
-    height: 100% !important;
     max-width: 100% !important;
+    height: 100% !important;
     max-height: 100% !important;
-    padding: 8px 10px !important;
+    padding: 12px 14px !important;
     border: 2px double var(--bios-line) !important;
     box-sizing: border-box !important;
     overflow-y: auto !important;
@@ -368,42 +387,55 @@ a.bios-row {
   }
 
   .bios-title {
-    font-size: 1.05em !important;
-    letter-spacing: 0.05em !important;
-    margin-bottom: 4px !important;
+    font-size: 1.15em !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    margin-bottom: 6px !important;
+    padding-bottom: 0.25em !important;
     flex-shrink: 0 !important;
   }
 
   .bios-body {
-    flex: none !important;
-    align-content: flex-start !important;
-    gap: 6px !important;
-    padding: 2px 0 !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    padding: 4px 0 !important;
   }
 
   .bios-group {
-    font-size: 0.95em !important;
-    margin-bottom: 0.1em !important;
+    font-size: 1.05em !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.15em !important;
+    padding-bottom: 0.2em !important;
   }
 
   .bios-group:not(:first-child) {
-    margin-top: 0.5em !important;
+    margin-top: 0.4em !important;
   }
 
   .bios-row {
     grid-template-columns: 1fr !important;
     gap: 2px !important;
-    padding: 3px 4px !important;
-    border-bottom: 1px dotted rgba(168, 168, 168, 0.25) !important;
+    padding: 4px 2px !important;
+    border-bottom: 1px dotted rgba(168, 168, 168, 0.3) !important;
+    font-size: 1em !important;
   }
 
   .bios-dots {
     display: none !important;
   }
 
+  .bios-label {
+    font-size: 0.98em !important;
+    font-weight: 600 !important;
+  }
+
   .bios-value {
-    padding-left: 8px !important;
-    font-size: 0.95em !important;
+    padding-left: 6px !important;
+    font-size: 1em !important;
+    font-weight: 700 !important;
   }
 
   .bios-help {
@@ -414,19 +446,24 @@ a.bios-row {
   }
 
   .bios-help-title {
-    font-size: 0.95em !important;
-    margin-bottom: 0.3em !important;
+    font-size: 1.05em !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.25em !important;
+    padding-bottom: 0.2em !important;
   }
 
   .bios-help-map {
-    height: 135px !important;
-    min-height: 135px !important;
+    height: clamp(110px, 18vh, 160px) !important;
+    min-height: 110px !important;
     width: 100% !important;
     flex: none !important;
   }
 
   .bios-legend {
     margin-top: 8px !important;
+    padding-top: 0.3em !important;
     flex-shrink: 0 !important;
+    font-size: 0.92em !important;
+    font-weight: 600 !important;
   }
 }

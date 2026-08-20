@@ -206,18 +206,30 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
           const titleTop = topOffset;
           const cameraTop = titleTop + titleHeight + gap;
 
+          // Exit transition into events: from p=0.86 to 1.0, gently lift and soften
+          let exitY = 0;
+          let exitScale = 1;
+          if (p > 0.86) {
+            const exitT = clamp01((p - 0.86) / 0.12);
+            exitY = -exitT * 28;
+            exitScale = 1 - exitT * 0.04;
+          }
+
           if (mobileTitleRef.current) {
             mobileTitleRef.current.style.top = `${titleTop}px`;
             mobileTitleRef.current.style.fontSize = `calc(1.8rem * ${scale})`;
+            mobileTitleRef.current.style.transform = `translateY(${exitY}px) scale(${exitScale})`;
           }
 
           if (mobileCameraWrapperRef.current) {
             mobileCameraWrapperRef.current.style.top = `${cameraTop}px`;
             mobileCameraWrapperRef.current.style.width = `${cameraWidth}px`;
+            mobileCameraWrapperRef.current.style.transform = `translateX(-50%) translateY(${exitY}px) scale(${exitScale})`;
           }
           if (mobileCameratopRef.current) {
             mobileCameratopRef.current.style.top = `${cameraTop}px`;
             mobileCameratopRef.current.style.width = `${cameraWidth}px`;
+            mobileCameratopRef.current.style.transform = `translateX(-50%) translateY(${exitY}px) scale(${exitScale})`;
           }
 
           // Slot Y relative to container top (79.1% from the top of the camera)
@@ -243,12 +255,12 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             // Interpolate the actual center Y position
             const currentCenterY = lerp(startCenterY, restingCenterY, t);
 
-            const sc = lerp(0.4, 1.0, t);
+            const sc = lerp(0.4, 1.0, t) * exitScale;
             const rot = lerp(-10, ph.rot, t);
             
             // We apply translate(left, top) relative to the container.
             const currentOffsetX = ph.offsetX * scale;
-            el.style.transform = `translate(-50%, -50%) translate(${currentOffsetX}px, calc(${currentCenterY.toFixed(1)}px + ${ph.offsetY * scale}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
+            el.style.transform = `translate(-50%, -50%) translate(${currentOffsetX}px, calc(${currentCenterY.toFixed(1)}px + ${ph.offsetY * scale + exitY}px)) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
           }
 
           // Calculate flash opacity based on proximity to photo reveal starts

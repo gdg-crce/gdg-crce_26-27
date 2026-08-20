@@ -1956,77 +1956,187 @@
 .mobile-event-section-wrapper {
   width: 100% !important;
   position: relative !important;
+  background-color: #0a0807 !important;
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/events/eventsmobbg.png?tr=f-auto,q-auto') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
 }
 
-/* Mobile Events Carousel Styles */
+/* ── Mobile Events 3D Poster Deck Showcase ─────────────────────────────── */
+.mobile-events-stage {
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  position: relative;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: max(76px, 9vh) 16px max(24px, 3vh) 16px !important;
+  box-sizing: border-box !important;
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/events/eventsmobbg.png?tr=f-auto,q-auto') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
 .mobile-events-header {
-  position: absolute !important;
-  top: 150px !important;
-  left: 0 !important;
-  right: 0 !important;
+  position: relative !important;
+  z-index: 25 !important;
+  width: 100% !important;
+  max-width: 380px !important;
   text-align: center !important;
-  z-index: 20 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 3px !important;
+  flex-shrink: 0 !important;
 }
 
-.mobile-events-section-title {
-  font-family: var(--font-90s-display), sans-serif !important;
-  font-size: 38px !important;
+.mobile-events-badge {
+  font-family: var(--font-ibm-plex-mono), monospace !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.16em !important;
+  color: #38bdf8 !important;
+  background: rgba(14, 165, 233, 0.12) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  padding: 3px 10px !important;
+  border-radius: 20px !important;
+  text-transform: uppercase !important;
+  display: inline-block !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.15) !important;
+}
+
+.mobile-events-title {
+  font-family: 'Sugo Display', 'Arial Black', Impact, sans-serif !important;
+  font-size: clamp(28px, 7.5vw, 38px) !important;
   font-weight: 900 !important;
   color: #ffffff !important;
-  letter-spacing: 0.15em !important;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4) !important;
-  margin: 0 !important;
+  letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
+  margin: 2px 0 0 0 !important;
+  line-height: 1.1 !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85), 0 0 24px rgba(255, 255, 255, 0.3) !important;
 }
 
-.mobile-events-track {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  height: calc(100% - 170px) !important;
-  margin-top: 170px !important;
-  align-items: center !important;
-  /* The TRACK is the only thing GSAP transforms, so it is the only thing that
-     earns a layer. `perspective: 1000px` was doing nothing — there is no 3D
-     child here — but it forced a stacking context and a rendering surface. */
-  will-change: transform !important;
-  backface-visibility: hidden !important;
-  perspective: 1000px !important;
-  transform-style: preserve-3d !important;
-  background: transparent !important;
-  gap: 0px !important;
-}
-
-.mobile-event-card-wrapper-raw {
-  flex-shrink: 0 !important;
-  width: 100vw !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  box-sizing: border-box !important;
-  transform-style: preserve-3d !important;
-  perspective: 1000px !important;
-}
-
-.mobile-event-image-raw {
-  flex-shrink: 0 !important;
-  width: 82vw !important;
+.mobile-events-subtitle {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  margin: 0 !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.35 !important;
   max-width: 320px !important;
-  height: auto !important;
-  /* Square, because the artwork is: the posters are 1574×1574. This was 3/4,
-     matching the old 1179×1579 portrait set, and `object-fit: cover` on a
-     square image in a 3:4 box crops a quarter of the width off — straight
-     through the event title on most of these designs. Keep this in step with
-     the art; `cover` only stays harmless while the two agree. */
+}
+
+/* Central Card Deck */
+.mobile-events-deck {
+  position: relative !important;
+  width: min(86vw, 360px) !important;
+  height: min(86vw, 360px) !important;
   aspect-ratio: 1 / 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  perspective: 1200px !important;
+  transform-style: preserve-3d !important;
+  margin: auto 0 !important;
+  z-index: 15 !important;
+  flex-shrink: 0 !important;
+}
+
+.mobile-event-card-item {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transform-origin: center bottom !important;
+  will-change: transform, opacity !important;
+  backface-visibility: hidden !important;
+  cursor: pointer !important;
+}
+
+.mobile-event-card-frame {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+  background: #111115 !important;
+}
+
+.mobile-event-poster-img {
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover !important;
-  border-radius: 4px !important;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  /* No `will-change` here. These cards never transform individually — the
-     track above them does. This was pinning one permanent compositor layer per
-     card (four full-width 3:4 images) on the device with the least VRAM to
-     spare, to accelerate an animation that does not exist. */
+  display: block !important;
+  border-radius: 12px !important;
+}
+
+.mobile-event-poster-sheen {
+  position: absolute !important;
+  inset: 0 !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, transparent 45%, rgba(0, 0, 0, 0.3) 100%) !important;
+  pointer-events: none !important;
+}
+
+/* Footer / Controls */
+.mobile-events-footer {
+  position: relative !important;
+  z-index: 25 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 7px !important;
+  flex-shrink: 0 !important;
+}
+
+.mobile-events-pills {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  padding: 6px 12px !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.mobile-event-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.mobile-event-dot.active {
+  width: 22px !important;
+  border-radius: 10px !important;
+  background: #38bdf8 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6) !important;
+}
+
+.mobile-events-hint {
+  font-family: var(--font-ibm-plex-mono), monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 0.15em !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  text-transform: uppercase !important;
 }
 
 .mobile-unified-container {
