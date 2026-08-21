@@ -247,45 +247,43 @@ export default function EventsAndCouncilSection({
             const diff = idx - floatIndex;
 
             if (diff < 0) {
-              // Card has peeled off / is peeling away upwards & slightly tilting
+              // Card peeling away upwards with an elegant, expressive arc
               const peel = Math.min(1, Math.max(0, -diff));
-              const yPercent = -peel * 135;
-              const y = 0;
-              const rotateDeg = -peel * 10;
-              const xOffset = -peel * 16;
-              const scale = 1 + peel * 0.05;
-              const opacity = Math.max(0, 1 - peel * 1.35);
+              const yPercent = -peel * 140;
+              const rotateDeg = -peel * 16;
+              const xOffset = -peel * 38;
+              const scale = 1 + peel * 0.08;
+              const opacity = Math.max(0, 1 - peel * 1.25);
 
               gsap.set(card, {
                 yPercent: yPercent,
-                y: y,
+                y: 0,
                 x: xOffset,
                 rotate: rotateDeg,
                 scale: scale,
                 opacity: opacity,
                 filter: 'none',
-                zIndex: 20 + idx,
+                zIndex: 40 + idx,
                 pointerEvents: 'none',
                 force3D: true,
               });
             } else {
-              // Card is currently active or waiting underneath in the physical stack
-              const depth = Math.min(3, diff);
-              const yOffset = depth * 14;
-              const rotateDeg = (idx % 2 === 0 ? 1 : -1) * depth * 2.4;
-              const scale = 1 - depth * 0.055;
-              const opacity = depth > 2 ? Math.max(0, 1 - (depth - 2)) : 1;
-              const brightness = 1 - depth * 0.15;
+              // Active card & waiting depth stack cards with dynamic fan-out
+              const depth = Math.min(3.5, diff);
+              const yOffset = depth * 18;
+              const rotateDeg = (idx % 2 === 0 ? 1 : -1) * depth * 4.5;
+              const scale = 1 - depth * 0.065;
+              const opacity = depth > 2.5 ? Math.max(0, 1 - (depth - 2.5) * 1.2) : 1;
 
               gsap.set(card, {
                 yPercent: 0,
                 y: yOffset,
-                x: 0,
+                x: (idx % 2 === 0 ? 1 : -1) * depth * 6,
                 rotate: rotateDeg,
                 scale: scale,
                 opacity: opacity,
-                filter: brightness < 0.99 ? `brightness(${brightness.toFixed(2)})` : 'none',
-                zIndex: 20 - idx,
+                filter: 'none',
+                zIndex: 30 - idx,
                 pointerEvents: diff < 0.5 ? 'auto' : 'none',
                 force3D: true,
               });
@@ -465,11 +463,9 @@ export default function EventsAndCouncilSection({
               eventsWindowRef.current.style.opacity = '1';
               eventsWindowRef.current.style.pointerEvents = 'auto';
               showChrome(false);
-            } else if (isEventsMinimizedRef.current || p >= MINIMIZE_END) {
-              eventsWindowRef.current.style.opacity = '0';
-              eventsWindowRef.current.style.pointerEvents = 'none';
             } else if (p < WINDOW_END) {
-              // Shrink center-out from fullscreen to media player window with smooth easing
+              // Reset minimized on reverse scroll so window re-appears cleanly
+              isEventsMinimizedRef.current = false;
               const rawT = (p - DWELL_END) / (WINDOW_END - DWELL_END);
               const t = rawT * rawT * (3 - 2 * rawT);
               const scale = 1.0 - t * (1.0 - WINDOW_SCALE);
@@ -477,7 +473,7 @@ export default function EventsAndCouncilSection({
               eventsWindowRef.current.style.opacity = '1';
               eventsWindowRef.current.style.pointerEvents = 'auto';
               showChrome(t > 0.10);
-            } else {
+            } else if (p < MINIMIZE_END && !isEventsMinimizedRef.current) {
               // Genie window down/left into Windows XP taskbar with smooth easing
               const rawT = (p - WINDOW_END) / (MINIMIZE_END - WINDOW_END);
               const t = rawT * rawT * (3 - 2 * rawT);
@@ -488,6 +484,9 @@ export default function EventsAndCouncilSection({
               eventsWindowRef.current.style.opacity = `${(1.0 - t * 0.9).toFixed(3)}`;
               eventsWindowRef.current.style.pointerEvents = 'none';
               showChrome(true);
+            } else {
+              eventsWindowRef.current.style.opacity = '0';
+              eventsWindowRef.current.style.pointerEvents = 'none';
             }
 
             eventsWindowRef.current.style.visibility =

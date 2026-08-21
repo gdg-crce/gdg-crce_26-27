@@ -13,6 +13,8 @@ import {
   cormorantGaramond,
   kaushanScript,
   pacifico,
+  vt323,
+  pressStart2P,
 } from '@/lib/fonts';
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
 
@@ -49,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${shrikhand.variable} ${jakarta.variable} ${righteous.variable} ${spaceGrotesk.variable} ${specialElite.variable} ${shareTechMono.variable} ${orbitron.variable} ${outfit.variable} ${ibmPlexMono.variable} ${cormorantGaramond.variable} ${kaushanScript.variable} ${pacifico.variable} h-full antialiased`}
+      className={`${shrikhand.variable} ${jakarta.variable} ${righteous.variable} ${spaceGrotesk.variable} ${specialElite.variable} ${shareTechMono.variable} ${orbitron.variable} ${outfit.variable} ${ibmPlexMono.variable} ${cormorantGaramond.variable} ${kaushanScript.variable} ${pacifico.variable} ${vt323.variable} ${pressStart2P.variable} h-full antialiased`}
     >
       {IMAGEKIT_ORIGIN && (
         <head>

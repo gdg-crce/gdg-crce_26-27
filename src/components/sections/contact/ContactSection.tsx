@@ -167,7 +167,7 @@ export default function ContactSection({ isMobile = false }: ContactSectionProps
                 src="https://maps.google.com/maps?q=Fr.%20C.%20Rodrigues%20College%20of%20Engineering&t=k&z=16&ie=UTF8&iwloc=&output=embed" 
                 width="100%" 
                 height="100%" 
-                style={{ border: 0, filter: 'grayscale(100%) invert(90%) contrast(1.2)' }} 
+                style={{ border: 0 }} 
                 allowFullScreen 
                 loading="lazy" 
                 referrerPolicy="no-referrer-when-downgrade" 

@@ -12,7 +12,24 @@ import {
   IBM_Plex_Mono,
   Kaushan_Script,
   Pacifico,
+  VT323,
+  Press_Start_2P,
 } from 'next/font/google';
+
+// IBM PC BIOS 8x8 / VGA Text-Mode Bitmap Font
+export const vt323 = VT323({
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-ibm-bios',
+});
+
+export const pressStart2P = Press_Start_2P({
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-press-start',
+});
 
 // 1970s Typography: Groovy Serif + Warm Sans
 export const shrikhand = Shrikhand({

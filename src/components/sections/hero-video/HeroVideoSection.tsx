@@ -90,12 +90,20 @@ export default function HeroVideoSection({
       setFadeInDone(true);
 
       // Play immediately so it is running directly behind the zooming film strip with zero gap
+      video.muted = true;
       try {
         video.currentTime = 0;
       } catch {}
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {});
+        playPromise.catch(() => {
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.muted = true;
+              videoRef.current.play().catch(() => {});
+            }
+          }, 100);
+        });
       }
     }
   }, [startPlaying]);
@@ -112,20 +120,6 @@ export default function HeroVideoSection({
       if (released) return;
       released = true;
       onVideoEnded?.();
-
-      // Close the iris smoothly to reveal the black title card underneath
-      const el = containerRef.current;
-      if (el && maxProgressRef.current < 0.95) {
-        gsap.to(el, {
-          clipPath: 'circle(0% at 50% 50%)',
-          duration: 0.8,
-          ease: 'power2.inOut',
-          onComplete: () => {
-            el.style.visibility = 'hidden';
-            maxProgressRef.current = 1;
-          },
-        });
-      }
     };
 
     // Rely on the native 'ended' event so the handover is EXACTLY the last frame
@@ -217,7 +211,7 @@ export default function HeroVideoSection({
         onLoadedData={() => setIsLoaded(true)}
         onCanPlay={() => setIsLoaded(true)}
         className={`absolute inset-0 w-full h-full object-cover z-10 transform-gpu transition-opacity duration-300 ease-in-out ${
-          isLoaded && (fadeInDone || startPlaying) ? 'opacity-100' : 'opacity-0'
+          startPlaying || fadeInDone || isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
       />
     </section>

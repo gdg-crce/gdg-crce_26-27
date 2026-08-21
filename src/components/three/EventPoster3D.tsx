@@ -156,50 +156,17 @@ export default function EventPoster3D({
       map: texture,
       alphaMap: tearMask,
       normalMap: wrinkle,
-      normalScale: new THREE.Vector2(1.0, 1.0),
-      /* Cutout, not blending: writes depth, needs no sorting, and is cheaper
-         than the transparent stack this replaces.
-
-         `alphaToCoverage` is what makes the edge blunt rather than stencilled.
-         The mask is now feathered (see FEATHER in posterPaper), but a plain
-         `alphaTest` throws that away — it is a step function, so every pixel in
-         the soft band still resolves to fully-there or fully-gone and the
-         border comes out as a razor-sharp vector cut with stair-stepping on
-         every diagonal. A2C instead maps the alpha ramp onto the MSAA sample
-         mask, so the feather survives as a genuinely antialiased, slightly soft
-         edge. It costs nothing extra: the canvas already runs `antialias: true`
-         (see WallScene), so the samples are being paid for either way.
-
-         alphaTest drops to 0.02 — just enough to discard the fully transparent
-         outside so it never writes depth, while leaving the whole soft band for
-         A2C to resolve. At 0.5 the test would clip the feather back off. */
+      normalScale: new THREE.Vector2(0.2, 0.2),
       transparent: false,
       alphaTest: 0.02,
       alphaToCoverage: true,
-      // Paper is matte but not dead — old print keeps a faint tooth, and the
-      // ink sits slightly glossier than the stock around it.
-      roughness: 0.88,
+      roughness: 0.75,
       metalness: 0,
-      envMapIntensity: 0.45,
+      envMapIntensity: 0.5,
       side: THREE.FrontSide,
     });
-    // Fade varies per poster — some have been up far longer than others.
-    //
-    // Backed off from 0.62–0.92. That range was set when the wall was graded
-    // grey and lit by a golden spot, so the print was the brightest, most
-    // saturated thing in frame and had to be beaten down. Both causes are gone:
-    // the wall has its own colour back, and flat overcast stops blowing the ink
-    // out. Fading this hard now would fight the brief from the other side —
-    // the wall is meant to be the muted one and the posters are meant to carry
-    // the colour. They are still the NEWEST thing on a 30-year surface, not the
-    // quietest. 0.32–0.58 reads as cheap paper that has been rained on, while
-    // leaving it the only saturated element in the frame.
-    // Trimmed again to 0.24–0.44. Same reasoning as the 0.62→0.32 move, one
-    // notch further: the posters are the only saturated element in an
-    // intentionally muted frame, so they are where "give it life" is actually
-    // paid for. Still visibly rained-on — the dye-loss warm shift and the
-    // top-of-sheet gradient are untouched.
-    const fade = 0.24 + ((variant * 0.137) % 1) * 0.20;
+    // Minimal fade so posters remain vibrant, crisp, clean, and proper
+    const fade = 0.05 + ((variant * 0.07) % 1) * 0.08;
     applyPosterFade(m, fade);
     return m;
   }, [texture, tearMask, wrinkle, variant]);

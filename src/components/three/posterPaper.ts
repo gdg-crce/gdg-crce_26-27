@@ -279,10 +279,10 @@ export function buildPaperMaps(): PaperMaps {
        started clipping the GDG logo, and 110 ate into the title. 60 leaves
        every poster's type and logo intact while the silhouette is unmistakably
        torn — roughly 92% of the sheet survives. */
-    walk(a, a, b, a, 60.0);
-    walk(b, a, b, b, 44.0);
-    walk(b, b, a, b, 52.0);
-    walk(a, b, a, a, 44.0);
+    walk(a, a, b, a, 12.0);
+    walk(b, a, b, b, 8.0);
+    walk(b, b, a, b, 10.0);
+    walk(a, b, a, a, 8.0);
 
     tx.fillStyle = '#fff';
     tx.beginPath();

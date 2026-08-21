@@ -190,15 +190,23 @@
 @media (max-width: 767px) {
   .tnav-shell {
     top: 14px;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 100%;
+    display: flex !important;
+    justify-content: center !important;
   }
 
   .tnav {
     --tnav-size: 46px;
-    --tnav-open: min(94vw, 480px);
+    --tnav-open: min(92vw, 440px);
     height: var(--tnav-size) !important;
     border-radius: 999px !important;
-    padding: 0 4px !important;
+    padding: 0 8px 0 4px !important;
     flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 auto !important;
   }
 
   .tnav-mark {
@@ -207,18 +215,21 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    flex-shrink: 0 !important;
   }
 
   .tnav-mark img {
-    width: 38px !important;
+    width: 36px !important;
     height: auto !important;
   }
 
   .tnav-links {
     display: flex !important;
     align-items: center !important;
-    gap: 2px !important;
+    justify-content: center !important;
+    gap: 3px !important;
     padding: 0 4px !important;
+    margin: 0 auto !important;
     overflow-x: auto !important;
     scrollbar-width: none !important;
     -webkit-overflow-scrolling: touch !important;

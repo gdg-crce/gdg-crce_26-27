@@ -16,6 +16,7 @@
   --primary: #E8412A;
   --secondary: #E0A526;
   --text: #E8D29F;
+  --font-ibm-bios: var(--font-ibm-bios, 'VT323'), 'VT323', var(--font-press-start, 'Press Start 2P'), 'Press Start 2P', 'Px437 IBM VGA 8x8', 'Px437 IBM VGA8', monospace;
   
   /* Map Tailwind's canvas to our era's dynamic colors */
   --background: var(--bg);

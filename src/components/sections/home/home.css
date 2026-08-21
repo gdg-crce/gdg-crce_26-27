@@ -21,7 +21,7 @@
 .home-section {
   position: fixed;
   inset: 0;
-  z-index: 9996;
+  z-index: 9998;
   /* NO background. This is load-bearing.
      The black of this screen is the masked <rect> inside the SVG — the same
      rect the letters are cut out of. A `background: #000` here is a SECOND

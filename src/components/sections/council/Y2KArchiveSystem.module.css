@@ -15,7 +15,7 @@
   --luna: #ece9d8;
   --hair: #1c1c1c;
 
-  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', 'Courier New', monospace;
+  font-family: var(--font-ibm-bios), 'VT323', 'Press Start 2P', 'Px437 IBM VGA 8x8', monospace;
   display: flex;
   justify-content: center;
   align-items: flex-start;

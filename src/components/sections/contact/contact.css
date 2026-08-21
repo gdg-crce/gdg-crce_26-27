@@ -248,11 +248,10 @@ a.bios-row {
 }
 
 @media (min-width: 901px) {
-  /* Fill the column rather than force it taller. The map now has a fixed
-     compact height so it is a usable reference but never drives the column. */
+  /* Vertically prominent desktop location map */
   .bios-help-map {
-    height: clamp(140px, 28vh, 320px) !important;
-    min-height: 120px !important;
+    height: clamp(260px, 46vh, 500px) !important;
+    min-height: 240px !important;
   }
 
   /* The map's own column layout. */
