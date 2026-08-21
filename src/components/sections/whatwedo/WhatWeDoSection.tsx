@@ -96,7 +96,7 @@ export default function WhatWeDoSection() {
       const el = overlayRef.current;
       if (!el) return;
 
-      if (progress < 0 || progress >= 1) {
+      if (progress <= 0 || progress >= 1) {
         if (activeNow !== false) {
           activeNow = false;
           el.style.opacity = '0';
@@ -108,7 +108,7 @@ export default function WhatWeDoSection() {
 
       activeNow = true;
       el.classList.add('is-active');
-      el.style.opacity = '1.000';
+      el.style.opacity = '1';
       el.style.pointerEvents = 'auto';
     };
 
@@ -124,7 +124,7 @@ export default function WhatWeDoSection() {
       onRefresh: (self) => applyAlbumState(self.progress),
       // Also hide on leave so it doesn't persist after scrolling past
       onLeave: () => applyAlbumState(1),
-      onEnterBack: () => applyAlbumState(0.999),
+      onEnterBack: () => applyAlbumState(0.99),
       onLeaveBack: () => applyAlbumState(0),
     });
 

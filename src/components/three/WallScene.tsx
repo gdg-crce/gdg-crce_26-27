@@ -53,9 +53,7 @@ function InteractiveCameraRig({ progressRef, snapToTarget }: { progressRef: Reac
     const targetX = THREE.MathUtils.lerp(-24, 23, p);
 
     if (!initializedRef.current || snapToTarget) {
-      if (snapToTarget || p > 0.1) {
-        camera.position.x = targetX;
-      }
+      camera.position.x = targetX;
       initializedRef.current = true;
     }
 

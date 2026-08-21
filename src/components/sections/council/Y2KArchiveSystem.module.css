@@ -254,6 +254,9 @@
   overflow-y: auto;
   background: var(--fb-bg);
   border-top: 1px solid #ffffff;
+  will-change: scroll-position;
+  contain: content;
+  transform: translateZ(0);
 }
 
 .page::-webkit-scrollbar {

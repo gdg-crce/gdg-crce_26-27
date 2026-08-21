@@ -132,33 +132,23 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
       if (vw !== lastVw || vh !== lastVh) measure();
       lastP = rawP; lastVw = vw; lastVh = vh;
 
-      // The flip/morph animation runs from 0.0 to 0.78
-      const p = Math.min(1, rawP / 0.78);
-      // The deep dive zoom animation runs continuously from 0.78 to 1.00
-      const zoomP = clamp01((rawP - 0.78) / 0.22);
+      // The flip/morph animation runs from 0.0 to 0.90
+      const p = Math.min(1, rawP / 0.90);
+      // Swift, butter-smooth deep dive zoom into full-screen scale from rawP = 0.90 to 0.98 (~320px scroll)
+      const zoomP = clamp01((rawP - 0.90) / 0.08);
+      const zoomCurve = 1 - Math.pow(1 - zoomP, 4); // Quartic ease-out for instant, luxurious response
 
-      // Phase 1: The Morph (Extended to 0.20 for a luxurious, slow unraveling)
-      // Scale that makes the closed book exactly cover the viewport — the frame
-      // the still has to arrive on. The book's ratio is the still's ratio, so
-      // this crops rather than stretches.
       const maxStartScale = Math.max(vw / boxW, vh / boxH);
-
       const morphProgress = smooth(0.0, 0.20, p);
-
-      // Cinematic easing curve (Cubic in-out) for a magical, breathless float
-      const easeInOutCubic = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      const easeInOutCubic = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
       const cinematicMorph = easeInOutCubic(morphProgress);
-
       const morphScale = maxStartScale - cinematicMorph * (maxStartScale - 1.0);
-
-      // Phase 3: The Deep Dive Zoom (runs continuously after 0.78)
-      const zoomCurve = zoomP * zoomP * (3 - 2 * zoomP); // Smoothstep cubic easing for ultra-smooth handoff
 
       // Calculate precise scale needed to make the image cover the screen (like object-fit: cover)
       const photoWidth = Math.min(vw * 0.85, 1000); // 85% width, max 1000px — matches .final-event-photo
       const photoHeight = photoWidth / FINAL_PHOTO_ASPECT;
-      // We perfectly match the max scale to the screen so it aligns flawlessly with the next section without overshooting
-      const targetScale = Math.max(vw / photoWidth, vh / photoHeight);
+      // We perfectly match the max scale to the screen so it aligns flawlessly with the next section
+      const targetScale = Math.max(vw / photoWidth, vh / photoHeight) * 1.12;
 
       const finalScale = morphScale + zoomCurve * (targetScale - 1.0);
 

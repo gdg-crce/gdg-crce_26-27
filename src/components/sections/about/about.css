@@ -33,25 +33,14 @@
 .tt-pin {
   position: relative;
   width: 100%;
-  height: 100vh !important;
-  height: 100dvh !important;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: #050403;
   /* Sits over the fixed hero video, which fades out beneath it. */
   z-index: 9995;
   /* Driven by the approach ScrollTrigger as the section rises into view. */
   opacity: 0;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  will-change: transform;
-}
-
-.tt-pin-scale-wrapper {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transform-origin: center center;
-  will-change: transform;
 }
 
 .tt-stage {
@@ -63,10 +52,6 @@
   transform-origin: 50% 50%;
   /* transform (cover scale + narrow-screen recentre) is written from JS. */
   transform: translate(-50%, -50%);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -webkit-transform-style: preserve-3d;
-  transform-style: preserve-3d;
 }
 
 /* ── the plinth ─────────────────────────────────────────────────────────

@@ -374,17 +374,22 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
   useEffect(() => {
     if (!scrollProgressRef) return;
     let raf = 0;
-    let lastP = -1;
+    let currentScroll = -1;
     const tick = () => {
       raf = requestAnimationFrame(tick);
       const p = scrollProgressRef.current ?? 0;
-      if (p === lastP) return;
-      lastP = p;
       const el = pageRef.current;
       if (!el) return;
       const maxScroll = el.scrollHeight - el.clientHeight;
-      if (maxScroll > 0) {
-        el.scrollTop = p * maxScroll;
+      if (maxScroll <= 0) return;
+      const targetScroll = p * maxScroll;
+      if (currentScroll < 0) {
+        currentScroll = targetScroll;
+      } else {
+        currentScroll += (targetScroll - currentScroll) * 0.35;
+      }
+      if (Math.abs(el.scrollTop - currentScroll) > 0.5) {
+        el.scrollTop = currentScroll;
       }
     };
     raf = requestAnimationFrame(tick);

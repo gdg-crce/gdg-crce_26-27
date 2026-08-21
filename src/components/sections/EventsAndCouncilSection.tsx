@@ -217,7 +217,10 @@ export default function EventsAndCouncilSection({
       const updateCardPositions = (p: number) => {
         if (rafId) cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(() => {
-          const floatIndex = p * (totalCards - 1);
+          // Add arrival dwell on mobile so card #1 stays still for the first 8% of scroll
+          const MOBILE_DWELL = 0.08;
+          const normP = Math.max(0, (p - MOBILE_DWELL) / (1 - MOBILE_DWELL));
+          const floatIndex = normP * (totalCards - 1);
           const activeIdx = Math.min(totalCards - 1, Math.round(floatIndex));
 
           // Update HUD text without triggering React state re-renders
@@ -247,6 +250,7 @@ export default function EventsAndCouncilSection({
               // Card has peeled off / is peeling away upwards & slightly tilting
               const peel = Math.min(1, Math.max(0, -diff));
               const yPercent = -peel * 135;
+              const y = 0;
               const rotateDeg = -peel * 10;
               const xOffset = -peel * 16;
               const scale = 1 + peel * 0.05;
@@ -254,7 +258,7 @@ export default function EventsAndCouncilSection({
 
               gsap.set(card, {
                 yPercent: yPercent,
-                y: 0,
+                y: y,
                 x: xOffset,
                 rotate: rotateDeg,
                 scale: scale,
@@ -383,19 +387,20 @@ export default function EventsAndCouncilSection({
             setPhase(nextPhase);
           }
 
-          /* ── Phase 1: Alleyway Walk (0.00 -> 0.26) ───────────────────────── */
-          const WALK_START_DWELL = 0.05; // Pause on poster #1 on arrival from WhatWeDo transition before walk starts
-          const WALK_END = 0.26;
+          /* ── Phase 1: Alleyway Walk (0.00 -> 0.32) ───────────────────────── */
+          const WALK_START_DWELL = 0.04; // Shorter arrival pause (~440px scroll) on Poster #1 before camera walk starts
+          const WALK_END = 0.32;
+          const FIRST_POSTER_P = 0.018; // Camera position centered dead-on Poster #1 (-23.15 -> lookAt -22.5)
           const LAST_POSTER_P = 0.968;
 
-          let camP = 0;
+          let camP = FIRST_POSTER_P;
           let walkFraction = 0;
           if (p <= WALK_START_DWELL) {
-            camP = 0;
+            camP = FIRST_POSTER_P;
             walkFraction = 0;
           } else if (p < WALK_END) {
             walkFraction = (p - WALK_START_DWELL) / (WALK_END - WALK_START_DWELL);
-            camP = walkFraction * LAST_POSTER_P;
+            camP = FIRST_POSTER_P + walkFraction * (LAST_POSTER_P - FIRST_POSTER_P);
           } else {
             walkFraction = 1;
             camP = LAST_POSTER_P;
@@ -419,7 +424,6 @@ export default function EventsAndCouncilSection({
 
           if (closest !== activeEventRef.current) {
             activeEventRef.current = closest;
-            // No setState here — see eventNumRef.
             const evt = events[closest];
             if (eventNumRef.current) {
               eventNumRef.current.textContent = String(closest + 1).padStart(2, '0');
@@ -428,9 +432,9 @@ export default function EventsAndCouncilSection({
             if (eventSubtitleRef.current) eventSubtitleRef.current.textContent = evt?.subtitle ?? '';
           }
 
-          /* ── Phase 2 -> 4: Dwell, Windowize & Minimize (0.26 -> 0.50) ────── */
-          const DWELL_END = 0.32;
-          const WINDOW_END = 0.42;
+          /* ── Phase 2 -> 4: Dwell, Windowize & Minimize (0.32 -> 0.50) ────── */
+          const DWELL_END = 0.36;
+          const WINDOW_END = 0.44;
           const MINIMIZE_END = 0.50;
           const WINDOW_SCALE = 0.66;
 
@@ -457,7 +461,7 @@ export default function EventsAndCouncilSection({
             if (p < DWELL_END) {
               // Fullscreen alleyway walk & hold — reset minimized state on reverse scroll
               isEventsMinimizedRef.current = false;
-              eventsWindowRef.current.style.transform = 'translate(0, 0) scale(1)';
+              eventsWindowRef.current.style.transform = 'translate3d(0, 0, 0) scale(1)';
               eventsWindowRef.current.style.opacity = '1';
               eventsWindowRef.current.style.pointerEvents = 'auto';
               showChrome(false);
@@ -469,7 +473,7 @@ export default function EventsAndCouncilSection({
               const rawT = (p - DWELL_END) / (WINDOW_END - DWELL_END);
               const t = rawT * rawT * (3 - 2 * rawT);
               const scale = 1.0 - t * (1.0 - WINDOW_SCALE);
-              eventsWindowRef.current.style.transform = `translate(0, 0) scale(${scale})`;
+              eventsWindowRef.current.style.transform = `translate3d(0, 0, 0) scale(${scale.toFixed(4)})`;
               eventsWindowRef.current.style.opacity = '1';
               eventsWindowRef.current.style.pointerEvents = 'auto';
               showChrome(t > 0.10);
@@ -480,27 +484,12 @@ export default function EventsAndCouncilSection({
               const scale = WINDOW_SCALE * (1.0 - t * 0.9);
               const translateY = t * 46; // vh down to taskbar
               const translateX = t * -26; // vw left to .avi taskbar item
-              eventsWindowRef.current.style.transform = `translate(${translateX}vw, ${translateY}vh) scale(${scale})`;
-              eventsWindowRef.current.style.opacity = `${1.0 - t * 0.9}`;
+              eventsWindowRef.current.style.transform = `translate3d(${translateX.toFixed(2)}vw, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
+              eventsWindowRef.current.style.opacity = `${(1.0 - t * 0.9).toFixed(3)}`;
               eventsWindowRef.current.style.pointerEvents = 'none';
               showChrome(true);
             }
 
-            /* The archive and the gallery already do this; this layer did not,
-               and it is the one that sits ON TOP of the archive (z-index 40 vs
-               30). `opacity: 0` hides a thing but leaves it in the hit-test, so
-               the only thing stopping a full-screen invisible pane from eating
-               every click on TheFacebook window was the inline pointer-events
-               written on the line above — and `.xp-events-transition-window`
-               sets `pointer-events: auto` in CSS, so any path that reaches this
-               phase without a scroll tick having written that inline style
-               leaves the pane live. That is the "cursor goes to a plain arrow
-               and nothing on the Facebook page is clickable" bug.
-
-               `visibility: hidden` is the robust form: it removes the subtree
-               from hit-testing outright, so a child re-enabling pointer-events
-               cannot bring it back. It also stops the browser painting and
-               compositing the whole 3D window while it is not on screen. */
             eventsWindowRef.current.style.visibility =
               parseFloat(eventsWindowRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
           }
@@ -515,7 +504,7 @@ export default function EventsAndCouncilSection({
             if (p < 0.48) {
               playerWrapperRef.current.style.opacity = '0';
               playerWrapperRef.current.style.pointerEvents = 'none';
-              playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
+              playerWrapperRef.current.style.transform = 'translate3d(0, 46vh, 0) scale(0.1)';
             } else if (p < MEMBERS_START) {
               const rawT = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
               const t = 1 - Math.pow(1 - rawT, 3); // Cubic ease-out pop up
@@ -523,14 +512,12 @@ export default function EventsAndCouncilSection({
               const translateY = (1 - t) * 46;
               playerWrapperRef.current.style.opacity = '1';
               playerWrapperRef.current.style.pointerEvents = t > 0.5 ? 'auto' : 'none';
-              playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
+              playerWrapperRef.current.style.transform = `translate3d(0, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
             } else if (p <= MEMBERS_END) {
               // TheFacebook archive window holds centered through this scroll range.
-              // Drive the inner page scroll so the Facebook page scrolls down
-              // as the user scrolls, rather than appearing static.
               playerWrapperRef.current.style.opacity = '1';
               playerWrapperRef.current.style.pointerEvents = 'auto';
-              playerWrapperRef.current.style.transform = 'translate(0, 0) scale(1)';
+              playerWrapperRef.current.style.transform = 'translate3d(0, 0, 0) scale(1)';
               const scrollStart = MEMBERS_START;
               const scrollEnd = MEMBERS_END;
               archiveScrollRef.current = Math.min(1, Math.max(0, (p - scrollStart) / (scrollEnd - scrollStart)));
@@ -540,31 +527,21 @@ export default function EventsAndCouncilSection({
               const t = rawT * rawT * (3 - 2 * rawT);
               const scale = 1.0 - t * 0.9;
               const translateY = t * 46; // vh down to taskbar
-              playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
-              playerWrapperRef.current.style.opacity = `${1.0 - t * 0.9}`;
+              playerWrapperRef.current.style.transform = `translate3d(0, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
+              playerWrapperRef.current.style.opacity = `${(1.0 - t * 0.9).toFixed(3)}`;
               playerWrapperRef.current.style.pointerEvents = 'none';
             } else {
               playerWrapperRef.current.style.opacity = '0';
               playerWrapperRef.current.style.pointerEvents = 'none';
-              playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
+              playerWrapperRef.current.style.transform = 'translate3d(0, 46vh, 0) scale(0.1)';
             }
 
-            // `opacity: 0` hides a window; it does not stop the browser drawing
-            // it. The whole TheFacebook archive — its grid, its avatars, its
-            // chrome — was being laid out, painted and composited on every
-            // frame of the wall walk, invisibly, for the ~half of this section
-            // where it is not on screen. One property fixes that. Reading back
-            // the inline opacity we just wrote costs nothing (no layout flush).
             playerWrapperRef.current.style.visibility =
               parseFloat(playerWrapperRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
           }
 
           /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
           const PV_START = 0.96;
-          // Scale-up runs from 10560px (p=0.96) to 10890px (p=0.99).
-          // Hold at top until 12200px (1200px static dwell on Senior Council so users can read it).
-          // Scroll from 12200px to 12800px smoothly to bottom.
-          // Hold at bottom from 12800px to 13400px (600px dwell so Junior Council is fully visible before shutdown).
           if (px <= 12200) {
             pvScrollProgressRef.current = 0;
           } else if (px >= 12800) {
@@ -577,18 +554,17 @@ export default function EventsAndCouncilSection({
             if (p < PV_START) {
               pictureViewerRef.current.style.opacity = '0';
               pictureViewerRef.current.style.pointerEvents = 'none';
-              pictureViewerRef.current.style.transform = 'scale(0.85) translateY(25px)';
+              pictureViewerRef.current.style.transform = 'translate3d(0, 25px, 0) scale(0.85)';
             } else {
               const rawT = Math.min(1, (p - PV_START) / 0.03);
               const pvT = 1 - Math.pow(1 - rawT, 3); // Cubic ease-out
               const scale = 0.85 + pvT * 0.15;
               const translateY = (1 - pvT) * 25;
-              pictureViewerRef.current.style.opacity = `${pvT}`;
+              pictureViewerRef.current.style.opacity = `${pvT.toFixed(3)}`;
               pictureViewerRef.current.style.pointerEvents = pvT > 0.4 ? 'auto' : 'none';
-              pictureViewerRef.current.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+              pictureViewerRef.current.style.transform = `translate3d(0, ${translateY.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`;
             }
 
-            // Same again: this viewer is invisible for 96% of the section.
             pictureViewerRef.current.style.visibility =
               parseFloat(pictureViewerRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
           }

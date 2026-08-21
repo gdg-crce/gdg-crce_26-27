@@ -89,8 +89,7 @@ export default function HeroVideoSection({
       // 1. First trigger soft fade-in of the video container
       setFadeInDone(true);
 
-      // 2. Play immediately so it is running directly behind the zooming film
-      //    strip with zero gap
+      // Play immediately so it is running directly behind the zooming film strip with zero gap
       try {
         video.currentTime = 0;
       } catch {}
@@ -116,7 +115,7 @@ export default function HeroVideoSection({
 
       // Close the iris smoothly to reveal the black title card underneath
       const el = containerRef.current;
-      if (el) {
+      if (el && maxProgressRef.current < 0.95) {
         gsap.to(el, {
           clipPath: 'circle(0% at 50% 50%)',
           duration: 0.8,
@@ -181,7 +180,7 @@ export default function HeroVideoSection({
       trigger: document.body,
       start: 0,
       end: () => currentIntroPhases().iris.end,
-      scrub: 0.2,
+      scrub: 1.2,
       onUpdate: (self) => apply(self.progress),
       onRefresh: (self) => apply(self.progress),
     });
@@ -197,9 +196,9 @@ export default function HeroVideoSection({
   return (
     <section
       ref={containerRef}
-      className="fixed inset-0 w-full h-screen overflow-hidden select-none z-[9997] pointer-events-none transform-gpu"
+      className="fixed inset-0 w-full h-screen overflow-hidden select-none z-[9997] pointer-events-none"
       aria-label="Storytelling Cinematic Intro"
-      style={{ clipPath: `circle(${IRIS_OPEN}% at 50% 50%)`, transform: 'translateZ(0)', willChange: 'clip-path, transform' }}
+      style={{ clipPath: `circle(${IRIS_OPEN}% at 50% 50%)`, willChange: 'clip-path, transform' }}
     >
       {/* Black backing, so the frame the iris closes over is never see-through */}
       <div className="absolute inset-0 bg-black z-0" />

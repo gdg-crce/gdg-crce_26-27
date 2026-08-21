@@ -510,6 +510,15 @@
    PHASE 7 & 8: WINDOWS PICTURE AND FAX VIEWER GRAND FINALE STYLING
    ========================================================================== */
 
+.xp-events-transition-wrapper,
+.xp-player-window-wrapper,
+.xp-picture-viewer-wrapper {
+  will-change: transform, opacity !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+  transform-style: preserve-3d !important;
+}
+
 .xp-picture-viewer-wrapper {
   position: absolute !important;
   top: 0 !important;
@@ -521,7 +530,6 @@
   justify-content: center !important;
   z-index: 60 !important;
   padding: 12px !important;
-  transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) !important;
 }
 
 /* --------------------------------------------------------------------------
