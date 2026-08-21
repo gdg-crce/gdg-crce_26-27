@@ -31,7 +31,7 @@
  * distance that the viewer can register and enjoy the transition before the
  * next one begins. The total intro is 4.5 screens of scroll.
  */
-const IRIS_VH = 0.1;
+const IRIS_VH = 0.6;
 const TITLE_VH = 0.1;
 const HOLD_VH = 0.1;
 const ZOOM_VH = 2.0;

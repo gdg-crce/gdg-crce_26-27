@@ -454,26 +454,29 @@ export default function EventsAndCouncilSection({
               }
             };
 
-            if (isEventsMinimizedRef.current || p >= MINIMIZE_END) {
-              eventsWindowRef.current.style.opacity = '0';
-              eventsWindowRef.current.style.pointerEvents = 'none';
-            } else if (p < DWELL_END) {
-              // Fullscreen alleyway walk & hold
+            if (p < DWELL_END) {
+              // Fullscreen alleyway walk & hold — reset minimized state on reverse scroll
+              isEventsMinimizedRef.current = false;
               eventsWindowRef.current.style.transform = 'translate(0, 0) scale(1)';
               eventsWindowRef.current.style.opacity = '1';
               eventsWindowRef.current.style.pointerEvents = 'auto';
               showChrome(false);
+            } else if (isEventsMinimizedRef.current || p >= MINIMIZE_END) {
+              eventsWindowRef.current.style.opacity = '0';
+              eventsWindowRef.current.style.pointerEvents = 'none';
             } else if (p < WINDOW_END) {
-              // Shrink center-out from fullscreen to media player window
-              const t = (p - DWELL_END) / (WINDOW_END - DWELL_END);
+              // Shrink center-out from fullscreen to media player window with smooth easing
+              const rawT = (p - DWELL_END) / (WINDOW_END - DWELL_END);
+              const t = rawT * rawT * (3 - 2 * rawT);
               const scale = 1.0 - t * (1.0 - WINDOW_SCALE);
               eventsWindowRef.current.style.transform = `translate(0, 0) scale(${scale})`;
               eventsWindowRef.current.style.opacity = '1';
               eventsWindowRef.current.style.pointerEvents = 'auto';
               showChrome(t > 0.10);
             } else {
-              // Genie window down/left into Windows XP taskbar
-              const t = (p - WINDOW_END) / (MINIMIZE_END - WINDOW_END);
+              // Genie window down/left into Windows XP taskbar with smooth easing
+              const rawT = (p - WINDOW_END) / (MINIMIZE_END - WINDOW_END);
+              const t = rawT * rawT * (3 - 2 * rawT);
               const scale = WINDOW_SCALE * (1.0 - t * 0.9);
               const translateY = t * 46; // vh down to taskbar
               const translateX = t * -26; // vw left to .avi taskbar item
@@ -514,7 +517,8 @@ export default function EventsAndCouncilSection({
               playerWrapperRef.current.style.pointerEvents = 'none';
               playerWrapperRef.current.style.transform = 'translate(0, 46vh) scale(0.1)';
             } else if (p < MEMBERS_START) {
-              const t = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
+              const rawT = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
+              const t = 1 - Math.pow(1 - rawT, 3); // Cubic ease-out pop up
               const scale = 0.1 + t * 0.9;
               const translateY = (1 - t) * 46;
               playerWrapperRef.current.style.opacity = '1';
@@ -532,7 +536,8 @@ export default function EventsAndCouncilSection({
               archiveScrollRef.current = Math.min(1, Math.max(0, (p - scrollStart) / (scrollEnd - scrollStart)));
             } else if (p < ARCHIVE_MIN_END) {
               // Genie minimize animation down into bottom taskbar
-              const t = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
+              const rawT = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
+              const t = rawT * rawT * (3 - 2 * rawT);
               const scale = 1.0 - t * 0.9;
               const translateY = t * 46; // vh down to taskbar
               playerWrapperRef.current.style.transform = `translate(0, ${translateY}vh) scale(${scale})`;
@@ -557,15 +562,15 @@ export default function EventsAndCouncilSection({
           /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
           const PV_START = 0.96;
           // Scale-up runs from 10560px (p=0.96) to 10890px (p=0.99).
-          // Hold at top until 11400px (leaving 510px of static dwell on Senior Council).
-          // Scroll from 11400px to 12000px smoothly to bottom.
-          // Hold at bottom from 12000px to 13400px (1400px dwell so Junior Council is fully and clearly visible before shutdown).
-          if (px <= 11400) {
+          // Hold at top until 12200px (1200px static dwell on Senior Council so users can read it).
+          // Scroll from 12200px to 12800px smoothly to bottom.
+          // Hold at bottom from 12800px to 13400px (600px dwell so Junior Council is fully visible before shutdown).
+          if (px <= 12200) {
             pvScrollProgressRef.current = 0;
-          } else if (px >= 12000) {
+          } else if (px >= 12800) {
             pvScrollProgressRef.current = 1;
           } else {
-            pvScrollProgressRef.current = (px - 11400) / (12000 - 11400);
+            pvScrollProgressRef.current = (px - 12200) / (12800 - 12200);
           }
 
           if (pictureViewerRef.current) {
@@ -574,7 +579,8 @@ export default function EventsAndCouncilSection({
               pictureViewerRef.current.style.pointerEvents = 'none';
               pictureViewerRef.current.style.transform = 'scale(0.85) translateY(25px)';
             } else {
-              const pvT = Math.min(1, (p - PV_START) / 0.03);
+              const rawT = Math.min(1, (p - PV_START) / 0.03);
+              const pvT = 1 - Math.pow(1 - rawT, 3); // Cubic ease-out
               const scale = 0.85 + pvT * 0.15;
               const translateY = (1 - pvT) * 25;
               pictureViewerRef.current.style.opacity = `${pvT}`;
@@ -1196,6 +1202,7 @@ export default function EventsAndCouncilSection({
     >
       <div
         ref={containerRef}
+        className="xp-events-main-container"
         style={{
           width: '100%',
           height: '100vh',

@@ -446,8 +446,8 @@
 .fixed-album-wrapper {
   position: fixed;
   inset: 0;
-  height: 100vh;
-  height: 100dvh;
+  height: 100vh !important;
+  height: 100dvh !important;
   z-index: 99990;
   pointer-events: none;
   opacity: 0;

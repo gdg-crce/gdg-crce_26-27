@@ -84,19 +84,22 @@
   flex: none;
   width: var(--tnav-size);
   height: var(--tnav-size);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: 0;
   padding: 0;
+  margin: 0;
   cursor: pointer;
   position: relative;
 }
 
 .tnav-mark img {
-  width: 36px;
+  width: 44px;
   height: auto;
   object-fit: contain;
+  display: block;
   opacity: 0.94;
   transition: transform 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease;
 }
@@ -199,13 +202,16 @@
   }
 
   .tnav-mark {
-    width: 42px !important;
-    height: 42px !important;
-    display: grid !important;
+    width: var(--tnav-size) !important;
+    height: var(--tnav-size) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .tnav-mark img {
-    width: 30px !important;
+    width: 38px !important;
+    height: auto !important;
   }
 
   .tnav-links {

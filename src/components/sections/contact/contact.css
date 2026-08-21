@@ -40,7 +40,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px clamp(16px, 2.5vw, 36px) 24px !important;
-  padding-top: 105px !important;
+  padding-top: clamp(55px, 8vh, 105px) !important;
   /* NO `opacity: 0` here. The fade belongs to `.sd-term-host`, which is what
      the shutdown's draw loop holds a ref to and writes. When both carried it,
      the effective opacity was host(0 → 1) × this(0) = 0 at every scroll
@@ -49,19 +49,7 @@
   pointer-events: none;
   background: var(--bios-bg);
   font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', 'Courier New', monospace;
-  /* Width AND height, because this screen has to fit a viewport it cannot
-     scroll out of.
-
-     The vw term is a fixed rem plus a small ramp, not a pure `1.12vw` — that
-     hit its floor at every width under ~850px and went unreadable on a tablet
-     that had 700px of unused headroom.
-
-     The vh term is the one that actually protects the invariant. In a short
-     window (800x454, a landscape phone, a half-height browser) the utility
-     measured 462px against 414px of room and the bottom 40px were simply
-     unreachable, because there is no scroll left here by design. Taking the
-     smaller of the two keeps it inside the glass at any aspect ratio. */
-  font-size: clamp(14px, min(1.2rem + 1.2vw, 4vh), 28px);
+  font-size: clamp(12px, min(1.0rem + 1.0vw, 3.2vh), 24px);
   line-height: 1.6;
   color: var(--bios-text);
   /* A CRT does not resolve a crisp edge, and firmware text was never
@@ -263,8 +251,8 @@ a.bios-row {
   /* Fill the column rather than force it taller. The map now has a fixed
      compact height so it is a usable reference but never drives the column. */
   .bios-help-map {
-    height: 320px !important;
-    min-height: 320px !important;
+    height: clamp(140px, 28vh, 320px) !important;
+    min-height: 120px !important;
   }
 
   /* The map's own column layout. */

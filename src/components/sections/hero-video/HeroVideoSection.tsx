@@ -89,10 +89,7 @@ export default function HeroVideoSection({
       // 1. First trigger soft fade-in of the video container
       setFadeInDone(true);
 
-      // 2. Lock body overflow so the user cannot scroll during the first pass
-      document.body.style.overflow = 'hidden';
-
-      // 3. Play immediately so it is running directly behind the zooming film
+      // 2. Play immediately so it is running directly behind the zooming film
       //    strip with zero gap
       try {
         video.currentTime = 0;
@@ -115,7 +112,6 @@ export default function HeroVideoSection({
     const unlock = () => {
       if (released) return;
       released = true;
-      document.body.style.overflow = '';
       onVideoEnded?.();
 
       // Close the iris smoothly to reveal the black title card underneath
@@ -143,7 +139,6 @@ export default function HeroVideoSection({
     return () => {
       video.removeEventListener('ended', unlock);
       clearTimeout(timer);
-      document.body.style.overflow = '';
     };
   }, [startPlaying, onVideoEnded]);
 
@@ -186,7 +181,7 @@ export default function HeroVideoSection({
       trigger: document.body,
       start: 0,
       end: () => currentIntroPhases().iris.end,
-      scrub: 1.2,
+      scrub: 0.2,
       onUpdate: (self) => apply(self.progress),
       onRefresh: (self) => apply(self.progress),
     });
@@ -202,9 +197,9 @@ export default function HeroVideoSection({
   return (
     <section
       ref={containerRef}
-      className="fixed inset-0 w-full h-screen overflow-hidden select-none z-[9997] pointer-events-none"
+      className="fixed inset-0 w-full h-screen overflow-hidden select-none z-[9997] pointer-events-none transform-gpu"
       aria-label="Storytelling Cinematic Intro"
-      style={{ clipPath: `circle(${IRIS_OPEN}% at 50% 50%)`, willChange: 'clip-path, transform' }}
+      style={{ clipPath: `circle(${IRIS_OPEN}% at 50% 50%)`, transform: 'translateZ(0)', willChange: 'clip-path, transform' }}
     >
       {/* Black backing, so the frame the iris closes over is never see-through */}
       <div className="absolute inset-0 bg-black z-0" />

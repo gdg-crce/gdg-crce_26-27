@@ -200,7 +200,7 @@ const ROSTER: RosterEntry[] = [
   },
   {
     name: 'Scarlett Menezes',
-    role: 'Public Relations Lead',
+    role: 'Public Relations and Media Lead',
     branch: 'TE CSE',
     team: 'Public Relations',
     tier: 'Senior Council',

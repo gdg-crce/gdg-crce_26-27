@@ -157,6 +157,7 @@ const ARM_KEYS: [number, number][] = [
   [0.53, ANG_TRACK[1]],
   [0.69, ANG_TRACK[1]],
   [0.78, ANG_TRACK[2]],
+  [0.86, ANG_TRACK[2]],
   [1.0, ANG_RUNOUT],
 ];
 
@@ -274,6 +275,7 @@ export default function AboutSection() {
   const ringIdxRef = useRef(0);
   const copyRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const scaleWrapperRef = useRef<HTMLDivElement>(null);
 
   /* Platter drive. The angle written to --spin is the SUM of two independent
      sources, so neither has to know about the other:
@@ -324,8 +326,9 @@ export default function AboutSection() {
       const useMobileLayout = isMobileDevice;
 
       if (useMobileLayout) {
-        // Mobile / Portrait: Center the spindle and scale based on the smaller viewport dimension to fit the label with margin
-        s = (1.05 * Math.min(vw, vh)) / (LABEL_R * 2);
+        // Mobile / Portrait: Center the spindle and scale based on the label margin, ensuring full top-to-bottom screen height fit
+        const baseScale = (1.05 * Math.min(vw, vh)) / (LABEL_R * 2);
+        s = Math.max(baseScale, vh / STAGE_H);
         ox = -(REC_CX - STAGE_W / 2);
         oy = -(REC_CY - STAGE_H / 2);
       } else {
@@ -497,7 +500,10 @@ export default function AboutSection() {
         // performance-tearing fixed container rescales on Android.
         const push = 1 + ramp(SEAM_PUSH_START, 1, playP) * (SEAM_MATCH - 1);
 
-        pin.style.transform = `scale(${push.toFixed(5)})`;
+        const scaleWrapper = scaleWrapperRef.current;
+        if (scaleWrapper) {
+          scaleWrapper.style.transform = `scale(${push.toFixed(5)})`;
+        }
         const isMobile = window.innerWidth < 768;
         if (isMobile) {
           stage.style.transform = `translate(-50%, -50%) scale(${fitScaleRef.current.toFixed(4)}) translate(${fitOxRef.current.toFixed(1)}px, ${fitOyRef.current.toFixed(1)}px)`;
@@ -513,7 +519,7 @@ export default function AboutSection() {
       pin: pinRef.current,
       start: 0,
       end: () => `+=${currentIntroPhases().total + PLAY_DIST}`,
-      scrub: 1.5,
+      scrub: true,
       onUpdate: (self) => drive(self.progress),
       onRefresh: (self) => drive(self.progress),
     });
@@ -640,8 +646,9 @@ export default function AboutSection() {
   return (
     <section ref={sectionRef} id="about" className="tt-section" aria-label="About GDG CRCE">
       <div ref={pinRef} className="tt-pin">
-        {/* ── the turntable, in 1600×900 design space ── */}
-        <div ref={stageRef} className="tt-stage">
+        <div ref={scaleWrapperRef} className="tt-pin-scale-wrapper">
+          {/* ── the turntable, in 1600×900 design space ── */}
+          <div ref={stageRef} className="tt-stage">
           {/* Dark backing — only shows through the knob that is masked out of the
               base photo below; base.png covers everything else. */}
           <div className="tt-plinth" aria-hidden="true" />
@@ -771,6 +778,7 @@ export default function AboutSection() {
               </div>
             ))}
           </div>
+        </div>
         </div>
       </div>
     </section>

@@ -132,10 +132,10 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
       if (vw !== lastVw || vh !== lastVh) measure();
       lastP = rawP; lastVw = vw; lastVh = vh;
 
-      // The flip/morph animation runs from 0.0 to 0.80
-      const p = Math.min(1, rawP / 0.80);
-      // The deep dive zoom animation runs from 0.80 to 0.96 (and holds 0.96 -> 1.0)
-      const zoomP = clamp01((rawP - 0.80) / 0.16);
+      // The flip/morph animation runs from 0.0 to 0.78
+      const p = Math.min(1, rawP / 0.78);
+      // The deep dive zoom animation runs continuously from 0.78 to 1.00
+      const zoomP = clamp01((rawP - 0.78) / 0.22);
 
       // Phase 1: The Morph (Extended to 0.20 for a luxurious, slow unraveling)
       // Scale that makes the closed book exactly cover the viewport — the frame
@@ -151,8 +151,8 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
 
       const morphScale = maxStartScale - cinematicMorph * (maxStartScale - 1.0);
 
-      // Phase 3: The Deep Dive Zoom (runs concurrently after 0.80)
-      const zoomCurve = zoomP * zoomP * zoomP; // Cubic ease-in for dramatic acceleration
+      // Phase 3: The Deep Dive Zoom (runs continuously after 0.78)
+      const zoomCurve = zoomP * zoomP * (3 - 2 * zoomP); // Smoothstep cubic easing for ultra-smooth handoff
 
       // Calculate precise scale needed to make the image cover the screen (like object-fit: cover)
       const photoWidth = Math.min(vw * 0.85, 1000); // 85% width, max 1000px — matches .final-event-photo

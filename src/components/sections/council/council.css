@@ -16,6 +16,14 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.xp-events-main-container {
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  position: relative;
+  overflow: hidden;
+}
+
 /* --------------------------------------------------------------------------
    DESKTOP CANVAS & REALISTIC BLISS WALLPAPER
    -------------------------------------------------------------------------- */

@@ -59,7 +59,7 @@ body {
 /* Smooth scrolling but respect accessibility setting */
 @media (prefers-reduced-motion: no-preference) {
   html {
-    scroll-behavior: smooth;
+    /* Removed scroll-behavior: smooth to prevent conflicts with Lenis and ScrollTrigger */
   }
 }
 

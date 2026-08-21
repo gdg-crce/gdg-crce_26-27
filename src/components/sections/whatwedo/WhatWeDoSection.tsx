@@ -96,7 +96,7 @@ export default function WhatWeDoSection() {
       const el = overlayRef.current;
       if (!el) return;
 
-      if (progress <= 0 || progress >= 1) {
+      if (progress < 0 || progress >= 1) {
         if (activeNow !== false) {
           activeNow = false;
           el.style.opacity = '0';
@@ -108,17 +108,8 @@ export default function WhatWeDoSection() {
 
       activeNow = true;
       el.classList.add('is-active');
-
-      // Smooth exit ramp into Events
-      const FADE_START = 0.86;
-      const FADE_END = 0.98;
-      let opacity = 1;
-      if (progress > FADE_START) {
-        opacity = Math.max(0, 1 - (progress - FADE_START) / (FADE_END - FADE_START));
-      }
-
-      el.style.opacity = opacity.toFixed(3);
-      el.style.pointerEvents = opacity > 0.3 ? 'auto' : 'none';
+      el.style.opacity = '1.000';
+      el.style.pointerEvents = 'auto';
     };
 
     const trigger = ScrollTrigger.create({
@@ -133,7 +124,7 @@ export default function WhatWeDoSection() {
       onRefresh: (self) => applyAlbumState(self.progress),
       // Also hide on leave so it doesn't persist after scrolling past
       onLeave: () => applyAlbumState(1),
-      onEnterBack: () => applyAlbumState(0.99),
+      onEnterBack: () => applyAlbumState(0.999),
       onLeaveBack: () => applyAlbumState(0),
     });
 
