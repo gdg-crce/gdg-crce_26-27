@@ -177,10 +177,18 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       '/mobcouncil/image (7).png',
       '/mobcouncil/image (8).png',
       '/mobcouncil/still2 (1).jpg.jpeg',
+      // Transition & Album Photos
+      '/transition/image.png',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/1.png?tr=f-auto,q-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/2.png?tr=f-auto,q-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/31.png',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/4.png?tr=f-auto,q-auto',
+      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/5.png?tr=f-auto,q-auto',
     ];
 
-    // Event Posters (both full and w-1024 variants)
+    // Event Posters (both full, raw, and w-1024 variants)
     mobileEvents.forEach((evt) => {
+      criticalAssets.push(evt.posterImage);
       criticalAssets.push(ik(evt.posterImage));
       criticalAssets.push(ik(evt.posterImage, 'w-1024'));
     });

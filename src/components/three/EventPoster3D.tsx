@@ -156,20 +156,19 @@ export default function EventPoster3D({
       map: texture,
       alphaMap: tearMask,
       normalMap: wrinkle,
-      normalScale: new THREE.Vector2(0.2, 0.2),
+      normalScale: new THREE.Vector2(0.1, 0.1),
       transparent: false,
       alphaTest: 0.02,
       alphaToCoverage: true,
-      roughness: 0.75,
+      roughness: 0.45,
       metalness: 0,
-      envMapIntensity: 0.5,
+      envMapIntensity: 1.0,
       side: THREE.FrontSide,
     });
-    // Minimal fade so posters remain vibrant, crisp, clean, and proper
-    const fade = 0.05 + ((variant * 0.07) % 1) * 0.08;
-    applyPosterFade(m, fade);
+    // Zero fade so posters remain 100% vibrant, crisp, clean, and punchy
+    applyPosterFade(m, 0.0);
     return m;
-  }, [texture, tearMask, wrinkle, variant]);
+  }, [texture, tearMask, wrinkle]);
 
   useEffect(() => {
     material.emissive.set(hovered ? '#2A1D10' : '#000000');

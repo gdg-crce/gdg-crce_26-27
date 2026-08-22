@@ -41,20 +41,14 @@
   justify-content: center;
   padding: 16px clamp(16px, 2.5vw, 36px) 24px !important;
   padding-top: clamp(55px, 8vh, 105px) !important;
-  /* NO `opacity: 0` here. The fade belongs to `.sd-term-host`, which is what
-     the shutdown's draw loop holds a ref to and writes. When both carried it,
-     the effective opacity was host(0 → 1) × this(0) = 0 at every scroll
-     position on the page, which is why the contact screen was never visible:
-     it rendered, it occupied the DOM, and it was mathematically transparent. */
   pointer-events: none;
   background: var(--bios-bg);
-  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', 'Courier New', monospace;
-  font-size: clamp(12px, min(1.0rem + 1.0vw, 3.2vh), 24px);
+  font-family: var(--font-ibm-bios), 'VT323', 'Press Start 2P', 'Px437 IBM VGA 8x8', monospace !important;
+  font-size: clamp(14px, min(1.15rem + 1.1vw, 3.6vh), 28px) !important;
+  font-weight: 700 !important;
   line-height: 1.6;
   color: var(--bios-text);
-  /* A CRT does not resolve a crisp edge, and firmware text was never
-     antialiased into one either. Just enough bloom to sit on the glass. */
-  text-shadow: 0 0 6px rgba(150, 170, 255, 0.25);
+  text-shadow: 0 0 6px rgba(150, 170, 255, 0.4);
 }
 
 /* Clickability is granted by the host once the shutdown has revealed this —
@@ -79,9 +73,13 @@
 .bios-title {
   text-align: center;
   color: var(--bios-bright);
-  letter-spacing: 0.12em;
+  font-size: clamp(1.4em, 2.4vw, 2.2em) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.24em !important;
   text-transform: uppercase;
-  padding-bottom: 0.35em;
+  border-bottom: 2px double var(--bios-line);
+  padding-bottom: 0.4em !important;
+  margin-bottom: 0.4em !important;
 }
 
 /* ── body: fields on the left, help on the right ─────────────────────────── */
@@ -111,7 +109,7 @@
   font-size: 1em;
   font-weight: 400;
   color: var(--bios-cyan);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
 }
 
 .bios-group:not(:first-child) {
@@ -170,6 +168,7 @@
 .bios-label {
   color: var(--bios-text);
   white-space: nowrap;
+  letter-spacing: 0.08em;
 }
 
 .bios-dots {
@@ -182,6 +181,7 @@
   color: var(--bios-bright);
   min-width: 0;
   overflow-wrap: anywhere;
+  letter-spacing: 0.06em;
 }
 
 /* `.bios-value.is-plain` and `.bios-row.is-static` were removed — nothing in
@@ -342,7 +342,7 @@ a.bios-row {
   .bios-value,
   .bios-help-title,
   .bios-legend {
-    font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', 'Courier New', monospace !important;
+    font-family: var(--font-ibm-bios), 'VT323', 'Press Start 2P', 'Px437 IBM VGA 8x8', monospace !important;
   }
 
   .ct-term {
@@ -383,7 +383,7 @@ a.bios-row {
   .bios-title {
     font-size: 1.05em !important;
     font-weight: 700 !important;
-    letter-spacing: 0.06em !important;
+    letter-spacing: 0.14em !important;
     margin-bottom: 2px !important;
     padding-bottom: 0.12em !important;
     flex-shrink: 0 !important;
@@ -418,19 +418,32 @@ a.bios-row {
     font-size: 0.95em !important;
   }
 
-  .bios-dots {
-    display: none !important;
+  .bios-main {
+    order: 1 !important;
+  }
+
+  .bios-group {
+    font-size: 1.38rem !important;
+    font-weight: 900 !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 6px !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .bios-fields {
+    gap: 8px !important;
   }
 
   .bios-label {
-    font-size: 0.94em !important;
-    font-weight: 600 !important;
+    font-size: 1.18rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
   }
 
   .bios-value {
-    padding-left: 4px !important;
-    font-size: 0.95em !important;
-    font-weight: 700 !important;
+    padding-left: 6px !important;
+    font-size: 1.22rem !important;
+    font-weight: 800 !important;
   }
 
   .bios-help {
@@ -438,27 +451,33 @@ a.bios-row {
     display: flex !important;
     flex-direction: column !important;
     flex: none !important;
+    order: 2 !important;
+    margin-top: 18px !important;
+    margin-bottom: 0 !important;
   }
 
   .bios-help-title {
-    font-size: 0.98em !important;
-    font-weight: 700 !important;
-    margin-bottom: 0.12em !important;
-    padding-bottom: 0.1em !important;
+    font-size: 1.28rem !important;
+    font-weight: 900 !important;
+    margin-bottom: 6px !important;
+    padding-bottom: 4px !important;
+    letter-spacing: 0.12em !important;
   }
 
   .bios-help-map {
-    height: clamp(85px, 13.5vh, 125px) !important;
-    min-height: 85px !important;
+    height: 155px !important;
+    min-height: 155px !important;
     width: 100% !important;
     flex: none !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
   }
 
   .bios-legend {
-    margin-top: 4px !important;
-    padding-top: 0.15em !important;
+    margin-top: 8px !important;
+    padding-top: 0.2em !important;
     flex-shrink: 0 !important;
-    font-size: 0.86em !important;
-    font-weight: 600 !important;
+    font-size: 1.08rem !important;
+    font-weight: 800 !important;
   }
 }

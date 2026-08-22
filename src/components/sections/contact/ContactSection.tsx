@@ -37,7 +37,7 @@ import './contact.css';
    plausible-looking dead link.
    -------------------------------------------------------------------------- */
 
-const EMAIL = 'gdg.crce@gmail.com';
+const EMAIL = 'gdgcrce@gmail.com';
 
 interface Field {
   id: string;
@@ -57,25 +57,18 @@ const FIELDS: Field[] = [
     help: 'Primary channel. Goes to the council inbox — events, collaborations, speaking, sponsorship, or joining a track.',
   },
   {
+    id: 'instagram',
+    label: 'Instagram',
+    value: 'instagram.com/gdg_crce',
+    href: 'https://www.instagram.com/gdg_crce/',
+    help: 'Official Instagram profile. Event highlights, announcements, and story updates.',
+  },
+  {
     id: 'linkedin',
     label: 'LinkedIn',
-    value: 'linkedin.com/company/gdgcrce',
-    href: '',
-    help: 'Chapter page. Council announcements and event write-ups. No URL on record yet, so this field is display only.',
-  },
-  {
-    id: 'github',
-    label: 'GitHub',
-    value: 'github.com/gdgcrce',
-    href: '',
-    help: 'Workshop material and project source. No URL on record yet, so this field is display only.',
-  },
-  {
-    id: 'x',
-    label: 'X / Twitter',
-    value: 'x.com/gdgcrce',
-    href: '',
-    help: 'Short-form updates and event-day posts. No URL on record yet, so this field is display only.',
+    value: 'linkedin.com/company/gdsc-crce',
+    href: 'https://www.linkedin.com/company/gdsc-crce/posts/?feedView=all',
+    help: 'Official LinkedIn page. Council announcements and event write-ups.',
   },
 ];
 
@@ -164,7 +157,7 @@ export default function ContactSection({ isMobile = false }: ContactSectionProps
             <div className="bios-help-title">Location Map</div>
             <div className="bios-help-map">
               <iframe 
-                src="https://maps.google.com/maps?q=Fr.%20C.%20Rodrigues%20College%20of%20Engineering&t=k&z=16&ie=UTF8&iwloc=&output=embed" 
+                src="https://maps.google.com/maps?q=Fr.%20Conceicao%20Rodrigues%20College%20of%20Engineering,%20Bandra%20West,%20Mumbai&t=m&z=16&output=embed" 
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }} 

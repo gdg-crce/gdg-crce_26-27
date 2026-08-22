@@ -111,6 +111,8 @@ export interface CouncilMember {
   /** Same photograph at grid size. Use this anywhere many are on screen. */
   photoThumb: string;
   bio: string;
+  /** Custom personalized title / epithet (e.g. Mommy, The Breadwinner). */
+  title?: string;
   /** Chips on the profile page — the department and the council tier. */
   techStack: string[];
   avatarBg: string;
@@ -137,7 +139,6 @@ const DEPT: Record<Department, { bg: string }> = {
   Outreach: { bg: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' },
 };
 
-/** One row per person, in the order the council itself lists them. */
 interface RosterEntry {
   name: string;
   role: string;
@@ -146,6 +147,8 @@ interface RosterEntry {
   tier: Tier;
   /** Path under /gdg-crce/images/, percent-encoded, no query string. */
   photoPath: string;
+  bio?: string;
+  title?: string;
 }
 
 const ROSTER: RosterEntry[] = [
@@ -157,6 +160,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Leadership',
     tier: 'Senior Council',
     photoPath: 'New%20folder/shalom.JPG',
+    title: 'The Anchor',
   },
   {
     name: 'Kevin Synet',
@@ -165,6 +169,8 @@ const ROSTER: RosterEntry[] = [
     team: 'Leadership',
     tier: 'Senior Council',
     photoPath: 'New%20folder/kevin.jpeg',
+    bio: 'i suck stuco off',
+    title: 'Mommy',
   },
   {
     name: 'Laksh Shivalkar',
@@ -173,6 +179,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Leadership',
     tier: 'Senior Council',
     photoPath: 'New%20folder/Laksh.jpeg',
+    title: 'The Powerhouse',
   },
   {
     name: 'Varad Joshi',
@@ -181,6 +188,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Leadership',
     tier: 'Senior Council',
     photoPath: 'New%20folder/Varad.png',
+    title: 'Tactician',
   },
   {
     name: 'Abhishek Roy Jose',
@@ -189,6 +197,8 @@ const ROSTER: RosterEntry[] = [
     team: 'Technical',
     tier: 'Senior Council',
     photoPath: 'Screenshot%202026-08-16%20125215.png',
+    bio: 'fuck it we ball',
+    title: 'The Prodigy',
   },
   {
     name: 'Johann Joseph',
@@ -197,14 +207,18 @@ const ROSTER: RosterEntry[] = [
     team: 'Marketing',
     tier: 'Senior Council',
     photoPath: 'advisors/johann.jpeg',
+    bio: 'nonchalant feminist or sm shi idk 😭',
+    title: 'the breadwinner',
   },
   {
     name: 'Scarlett Menezes',
-    role: 'Public Relations and Media Lead',
+    role: 'Public Relations, Media Lead',
     branch: 'TE CSE',
     team: 'Public Relations',
     tier: 'Senior Council',
     photoPath: 'Screenshot%202026-08-16%20125205.png',
+    bio: 'type shi',
+    title: 'PR Siren',
   },
   {
     name: 'Aditi Pawar',
@@ -213,6 +227,8 @@ const ROSTER: RosterEntry[] = [
     team: 'Design & Creatives',
     tier: 'Senior Council',
     photoPath: 'DSC09714%20(1).JPG',
+    bio: 'Every Designer can be an Artist but not All Artist can be a Designer',
+    title: 'The Visionary',
   },
   {
     name: 'Chris Lopes',
@@ -221,6 +237,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Technical',
     tier: 'Senior Council',
     photoPath: 'advisors/chris.JPG',
+    title: 'The Specialist',
   },
   {
     name: 'Celene Ciby',
@@ -229,6 +246,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Leadership',
     tier: 'Senior Council',
     photoPath: 'advisors/celene.JPG',
+    title: 'The Strategist',
   },
   {
     name: 'Jaden Vaz',
@@ -237,6 +255,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Leadership',
     tier: 'Senior Council',
     photoPath: 'advisors/jaden.JPG',
+    title: 'The Mastermind',
   },
 
   /* ---- Junior Council -------------------------------------------------- */
@@ -247,6 +266,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Technical',
     tier: 'Junior Council',
     photoPath: 'movin.JPG',
+    title: 'The Craftsman',
   },
   {
     name: 'Manobhav Sharma',
@@ -255,6 +275,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Technical',
     tier: 'Junior Council',
     photoPath: 'New%20folder/manubav.png',
+    title: 'The Fixer',
   },
   {
     name: 'Niya Puthusseri',
@@ -263,6 +284,8 @@ const ROSTER: RosterEntry[] = [
     team: 'Events',
     tier: 'Junior Council',
     photoPath: 'niya.JPG',
+    bio: 'side quest ultra pro maxxing',
+    title: 'Side Quest God',
   },
   {
     name: 'Astin Chettiar',
@@ -271,6 +294,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Events',
     tier: 'Junior Council',
     photoPath: 'New%20folder/astin.jpeg',
+    title: 'The Crowd Puller',
   },
   {
     name: 'Tanisha Chary',
@@ -279,6 +303,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Public Relations',
     tier: 'Junior Council',
     photoPath: 'New%20folder/tanisha.jpeg',
+    title: 'The Hype Specialist',
   },
   {
     name: 'Soham Padalkar',
@@ -287,6 +312,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Public Relations',
     tier: 'Junior Council',
     photoPath: 'New%20folder/soham.jpeg',
+    title: 'The Vibe Maker',
   },
   {
     name: 'Keisha D’Souza',
@@ -295,6 +321,8 @@ const ROSTER: RosterEntry[] = [
     team: 'Design & Creatives',
     tier: 'Junior Council',
     photoPath: 'New%20folder/ll.jpeg',
+    bio: 'I think the elephant really ties the room together.',
+    title: 'Design Virtuoso',
   },
   {
     name: 'Saumya Hathi',
@@ -303,6 +331,8 @@ const ROSTER: RosterEntry[] = [
     team: 'Design & Creatives',
     tier: 'Junior Council',
     photoPath: 'New%20folder/souymya.png',
+    bio: 'Bite off more than you can chew, then learn to chew it.',
+    title: 'The Overachiever',
   },
   {
     name: 'Isaac Gazula',
@@ -311,6 +341,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Social Media',
     tier: 'Junior Council',
     photoPath: 'isaac.JPG',
+    title: 'The Storyteller',
   },
   {
     name: 'Heet Kankariya',
@@ -319,6 +350,8 @@ const ROSTER: RosterEntry[] = [
     team: 'Social Media',
     tier: 'Junior Council',
     photoPath: 'New%20folder/heet.jpeg',
+    bio: 'Thats what ~She',
+    title: 'Meme Mastermind',
   },
   {
     name: 'Metta Jadhav',
@@ -327,6 +360,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Marketing',
     tier: 'Junior Council',
     photoPath: 'New%20folder/metha.png',
+    title: 'Growth Specialist',
   },
   {
     name: 'Simardeep Singh',
@@ -335,6 +369,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Marketing',
     tier: 'Junior Council',
     photoPath: 'New%20folder/simardeep.jpeg',
+    title: 'Campaign Master',
   },
   {
     name: 'Neyomi Martis',
@@ -343,6 +378,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Outreach',
     tier: 'Junior Council',
     photoPath: 'New%20folder/neomi.jpeg',
+    title: 'The Connector',
   },
   {
     name: 'Joshua Jerry',
@@ -351,6 +387,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Outreach',
     tier: 'Junior Council',
     photoPath: 'New%20folder/joshua.jpeg',
+    title: 'The Pulse',
   },
 ];
 
@@ -360,6 +397,7 @@ const ROSTER: RosterEntry[] = [
    `quote` need touching. */
 export const councilMembers: CouncilMember[] = ROSTER.map((entry, i) => {
   const d = DEPT[entry.team];
+  const memberBio = entry.bio || `${entry.name} — ${entry.role}, ${entry.branch}. Part of the ${entry.team} team on the ${entry.tier} of GDG on Campus · CRCE.`;
   return {
     id: i + 1,
     name: entry.name,
@@ -369,10 +407,11 @@ export const councilMembers: CouncilMember[] = ROSTER.map((entry, i) => {
     branch: entry.branch,
     photo: photoFor(entry.photoPath, FULL_W, FULL_H, 75),
     photoThumb: photoFor(entry.photoPath, THUMB_W, THUMB_H, 70),
-    bio: `${entry.name} — ${entry.role}, ${entry.branch}. Part of the ${entry.team} team on the ${entry.tier} of GDG on Campus · CRCE.`,
+    bio: memberBio,
+    title: entry.title,
     techStack: [entry.team, entry.tier],
     avatarBg: d.bg,
-    quote: `${entry.role} · ${entry.team} · GDG on Campus CRCE`,
+    quote: entry.bio || `${entry.role} · ${entry.team} · GDG on Campus CRCE`,
     // Left empty on purpose: no invented handles for real people. Fill in as
     // the actual profiles are collected — the UI renders nothing for an empty
     // socials object, so partial data is safe.

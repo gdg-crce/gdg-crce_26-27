@@ -230,7 +230,7 @@
 .sd-spacer {
   position: relative;
   width: 100%;
-  background: transparent;
+  background: #0000a8 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -666,13 +666,15 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
               <div className={styles.dPanelBody}>
                 <div><span className={styles.acctKey}>Post:</span> {m.role}</div>
                 <div><span className={styles.acctKey}>Council:</span> {m.tier}</div>
-                <div><span className={styles.acctKey}>Domains:</span> {getMemberDepartments(m).join(' and ')}</div>
+                <div><span className={styles.acctKey}>Domains:</span> {getMemberDepartments(m).join(', ')}</div>
                 <div><span className={styles.acctKey}>Class:</span> {m.branch}</div>
               </div>
             </div>
 
             <div className={styles.dPanel}>
-              <div className={styles.dPanelHead}>The Skinny</div>
+              <div className={styles.dPanelHead}>
+                {m.title ? `${m.name.split(' ')[0]} — "${m.title}"` : `${m.name.split(' ')[0]}’s Quote`}
+              </div>
               <div className={styles.dPanelBody}>{m.bio}</div>
             </div>
 
@@ -687,11 +689,6 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
                   ))}
                 </div>
               </div>
-            </div>
-
-            <div className={styles.quoteBox}>
-              <span className={styles.quoteMark}>“</span>
-              {m.quote}
             </div>
           </div>
         </div>
@@ -897,15 +894,6 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           </button>
         </div>
 
-        {/* ---- Links bar (default IE6 links) ---- */}
-        <div className={styles.linksBar}>
-          <span className={styles.linksBarLabel}>Links</span>
-          {['Customize Links', 'Free Hotmail', 'Windows', 'Windows Media'].map((l) => (
-            <span key={l} className={styles.linksBarItem}>
-              <PageIcon size={11} /> {l}
-            </span>
-          ))}
-        </div>
 
         {/* ================= BROWSER PAGE — TheFacebook document ================= */}
         <div ref={pageRef} className={styles.page} key={`${cur.view}-${cur.memberId ?? ''}-${cur.team ?? ''}`}>

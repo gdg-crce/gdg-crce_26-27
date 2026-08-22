@@ -47,7 +47,7 @@ export default function WindowsXPDesktop({
      impossible — a renamed department renames its shortcut. */
   const SHORT_LABEL: Record<string, string> = {
     'Design & Creatives': 'Design',
-    'Public Relations': 'PR & Comms',
+    'Public Relations': 'PR, Comms',
     'Social Media': 'Social',
   };
 

@@ -15,7 +15,7 @@
   --luna: #ece9d8;
   --hair: #1c1c1c;
 
-  font-family: var(--font-ibm-bios), 'VT323', 'Press Start 2P', 'Px437 IBM VGA 8x8', monospace;
+  font-family: var(--font-ibm-plex-mono), 'IBM Plex Mono', 'Courier New', monospace;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -273,6 +273,9 @@
 
 /* --- TheFacebook top nav --- */
 .fbNav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -280,6 +283,7 @@
   padding: 0 14px;
   background: var(--fb-blue);
   border-bottom: 3px solid #2b3a63;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .fbWordmark {

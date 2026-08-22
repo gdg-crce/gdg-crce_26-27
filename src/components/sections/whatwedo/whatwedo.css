@@ -20,7 +20,7 @@
   position: relative;
   width: 100%;
   /* Height is set inline by WhatWeDoSection (= SCROLL_END px) */
-  background: transparent;
+  background: #17141c !important;
 }
 
 /* ── the 3D Photo Album ────────────────────────────────────────────────────
@@ -412,18 +412,15 @@
 
 .final-event-photo {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 85%;
-  max-width: 1000px;
-  /* Explicit, though the browser already resolves it this way — measured at
-     1000×455 with or without it. It is here to state the contract: this box is
-     the ARTWORK's aspect, and the deep-dive zoom computes how far to scale from
-     the same number (FINAL_PHOTO_ASPECT in PolaroidAlbumScene). If a future
-     edit pins a height here, that zoom silently stops covering the screen. */
+  top: 53.5% !important;
+  left: 50% !important;
+  width: 96% !important;
+  max-width: 1150px !important;
   height: auto;
   transform: translate(-50%, -50%);
   display: block;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
 }
 
 .memory-text {

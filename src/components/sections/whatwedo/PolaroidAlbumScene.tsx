@@ -134,9 +134,9 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
 
       // The flip/morph animation runs from 0.0 to 0.90
       const p = Math.min(1, rawP / 0.90);
-      // Swift, butter-smooth deep dive zoom into full-screen scale from rawP = 0.90 to 0.98 (~320px scroll)
-      const zoomP = clamp01((rawP - 0.90) / 0.08);
-      const zoomCurve = 1 - Math.pow(1 - zoomP, 4); // Quartic ease-out for instant, luxurious response
+      // Fast, butter-smooth deep dive zoom into full-screen scale from rawP = 0.90 to 1.00
+      const zoomP = clamp01((rawP - 0.90) / 0.10);
+      const zoomCurve = Math.sin(zoomP * (Math.PI / 2)); // Smooth sine ease-out for natural velocity curve
 
       const maxStartScale = Math.max(vw / boxW, vh / boxH);
       const morphProgress = smooth(0.0, 0.20, p);
@@ -145,10 +145,10 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
       const morphScale = maxStartScale - cinematicMorph * (maxStartScale - 1.0);
 
       // Calculate precise scale needed to make the image cover the screen (like object-fit: cover)
-      const photoWidth = Math.min(vw * 0.85, 1000); // 85% width, max 1000px — matches .final-event-photo
+      const photoWidth = boxW * 0.96; // matches .final-event-photo 96% width inside album page bounds
       const photoHeight = photoWidth / FINAL_PHOTO_ASPECT;
       // We perfectly match the max scale to the screen so it aligns flawlessly with the next section
-      const targetScale = Math.max(vw / photoWidth, vh / photoHeight) * 1.12;
+      const targetScale = Math.max(vw / photoWidth, vh / photoHeight) * 1.05;
 
       const finalScale = morphScale + zoomCurve * (targetScale - 1.0);
 

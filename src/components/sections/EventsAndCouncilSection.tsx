@@ -58,7 +58,7 @@ function THREE_MATH_LERP(a: number, b: number, t: number) {
    ───────────────────────────────────────────────────────────────────────────── */
 const ACT3_LEN = 11000;
 const GALLERY_HOLD = 2400;
-const SHUTDOWN_LEN = 2600;
+const SHUTDOWN_LEN = 1600;
 const PIN_LEN = ACT3_LEN + GALLERY_HOLD + SHUTDOWN_LEN;
 
 export interface EventsAndCouncilSectionProps {
@@ -129,6 +129,7 @@ export default function EventsAndCouncilSection({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mobileStRef = useRef<any>(null);
   const [activeMemberIndex, setActiveMemberIndex] = useState(0);
+  const [mobileActiveIdx, setMobileActiveIdx] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState<string>('All Tracks');
   const [isEventsMinimized, setIsEventsMinimized] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<'posts' | 'about' | 'photos' | 'videos'>('posts');
@@ -217,11 +218,11 @@ export default function EventsAndCouncilSection({
       const updateCardPositions = (p: number) => {
         if (rafId) cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(() => {
-          // Add arrival dwell on mobile so card #1 stays still for the first 8% of scroll
-          const MOBILE_DWELL = 0.08;
-          const normP = Math.max(0, (p - MOBILE_DWELL) / (1 - MOBILE_DWELL));
+          rafId = 0; // Crucial fix: reset rAF handle so scroll ticks are never blocked!
+          const normP = Math.min(1, Math.max(0, p));
           const floatIndex = normP * (totalCards - 1);
           const activeIdx = Math.min(totalCards - 1, Math.round(floatIndex));
+          setMobileActiveIdx(activeIdx);
 
           // Update HUD text without triggering React state re-renders
           if (mobileBadgeRef.current) {
@@ -242,50 +243,56 @@ export default function EventsAndCouncilSection({
             });
           }
 
-          // 3D tactile card stack peel & flip animation
+          // Redesigned 3D Card Stack Swipe Deck — Continuous, responsive & symmetrical in forward & reverse scroll
           cardItems.forEach((card, idx) => {
             const diff = idx - floatIndex;
 
             if (diff < 0) {
-              // Card peeling away upwards with an elegant, expressive arc
-              const peel = Math.min(1, Math.max(0, -diff));
-              const yPercent = -peel * 140;
-              const rotateDeg = -peel * 16;
-              const xOffset = -peel * 38;
-              const scale = 1 + peel * 0.08;
-              const opacity = Math.max(0, 1 - peel * 1.25);
+              // Passed poster: smooth vertical 3D swipe off top of stack
+              const passed = Math.min(1, Math.max(0, -diff));
+              const yPercent = -passed * 125;
+              const rotateZ = -passed * 10;
+              const rotateX = passed * 12;
+              const scale = 1.0 - passed * 0.04;
+              const opacity = Math.max(0, 1 - passed * 1.25);
 
               gsap.set(card, {
+                xPercent: 0,
                 yPercent: yPercent,
-                y: 0,
-                x: xOffset,
-                rotate: rotateDeg,
+                z: passed * 60,
+                rotateY: 0,
+                rotateX: rotateX,
+                rotateZ: rotateZ,
                 scale: scale,
                 opacity: opacity,
                 filter: 'none',
-                zIndex: 40 + idx,
+                zIndex: 50 - Math.round(passed * 10),
                 pointerEvents: 'none',
                 force3D: true,
+                transformPerspective: 1000,
               });
             } else {
-              // Active card & waiting depth stack cards with dynamic fan-out
-              const depth = Math.min(3.5, diff);
-              const yOffset = depth * 18;
-              const rotateDeg = (idx % 2 === 0 ? 1 : -1) * depth * 4.5;
-              const scale = 1 - depth * 0.065;
-              const opacity = depth > 2.5 ? Math.max(0, 1 - (depth - 2.5) * 1.2) : 1;
+              // Active & upcoming posters: 3D Stack underneath
+              const depth = Math.min(3, diff);
+              const scale = 1.0 - depth * 0.07;
+              const yPercent = depth * 14;
+              const rotateZ = (idx % 2 === 0 ? 1 : -1) * depth * 2.5;
+              const opacity = depth > 2.2 ? Math.max(0, 1 - (depth - 2.2) * 1.2) : 1;
 
               gsap.set(card, {
-                yPercent: 0,
-                y: yOffset,
-                x: (idx % 2 === 0 ? 1 : -1) * depth * 6,
-                rotate: rotateDeg,
+                xPercent: 0,
+                yPercent: yPercent,
+                z: -depth * 60,
+                rotateY: 0,
+                rotateX: 0,
+                rotateZ: rotateZ,
                 scale: scale,
                 opacity: opacity,
                 filter: 'none',
-                zIndex: 30 - idx,
-                pointerEvents: diff < 0.5 ? 'auto' : 'none',
+                zIndex: 30 - Math.round(depth * 5),
+                pointerEvents: diff < 0.4 ? 'auto' : 'none',
                 force3D: true,
+                transformPerspective: 1000,
               });
             }
           });
@@ -301,7 +308,6 @@ export default function EventsAndCouncilSection({
             scrollTrigger: {
               trigger: sectionRef.current,
               pin: containerRef.current,
-              pinType: 'fixed',
               anticipatePin: 1,
               start: 'top top',
               end: () => `+=${(totalCards - 1) * window.innerHeight * 0.75}`,
@@ -386,7 +392,7 @@ export default function EventsAndCouncilSection({
           }
 
           /* ── Phase 1: Alleyway Walk (0.00 -> 0.32) ───────────────────────── */
-          const WALK_START_DWELL = 0.04; // Shorter arrival pause (~440px scroll) on Poster #1 before camera walk starts
+          const WALK_START_DWELL = 0.07; // Distinct arrival pause (~770px scroll) on Poster #1 before camera walk starts
           const WALK_END = 0.32;
           const FIRST_POSTER_P = 0.018; // Camera position centered dead-on Poster #1 (-23.15 -> lookAt -22.5)
           const LAST_POSTER_P = 0.968;
@@ -477,11 +483,12 @@ export default function EventsAndCouncilSection({
               // Genie window down/left into Windows XP taskbar with smooth easing
               const rawT = (p - WINDOW_END) / (MINIMIZE_END - WINDOW_END);
               const t = rawT * rawT * (3 - 2 * rawT);
-              const scale = WINDOW_SCALE * (1.0 - t * 0.9);
+              const scale = WINDOW_SCALE * (1.0 - t * 0.95);
               const translateY = t * 46; // vh down to taskbar
               const translateX = t * -26; // vw left to .avi taskbar item
+              const op = Math.max(0, 1.0 - Math.pow(rawT, 1.6));
               eventsWindowRef.current.style.transform = `translate3d(${translateX.toFixed(2)}vw, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
-              eventsWindowRef.current.style.opacity = `${(1.0 - t * 0.9).toFixed(3)}`;
+              eventsWindowRef.current.style.opacity = op.toFixed(3);
               eventsWindowRef.current.style.pointerEvents = 'none';
               showChrome(true);
             } else {
@@ -493,19 +500,19 @@ export default function EventsAndCouncilSection({
               parseFloat(eventsWindowRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
           }
 
-          /* ── Phase 5 -> Phase 7: Student Council TheFacebook Archive Window (0.48 -> 0.96) ── */
-          const MEMBERS_START = 0.55;
+          /* ── Phase 5 -> Phase 7: Student Council TheFacebook Archive Window (0.45 -> 0.96) ── */
+          const MEMBERS_START = 0.57;
           const MEMBERS_END = 0.93;
           const ARCHIVE_MIN_START = 0.93;
           const ARCHIVE_MIN_END = 0.96;
 
           if (playerWrapperRef.current) {
-            if (p < 0.48) {
+            if (p < 0.45) {
               playerWrapperRef.current.style.opacity = '0';
               playerWrapperRef.current.style.pointerEvents = 'none';
               playerWrapperRef.current.style.transform = 'translate3d(0, 46vh, 0) scale(0.1)';
             } else if (p < MEMBERS_START) {
-              const rawT = Math.min(1, Math.max(0, (p - 0.48) / 0.07));
+              const rawT = Math.min(1, Math.max(0, (p - 0.45) / 0.12));
               const t = 1 - Math.pow(1 - rawT, 3); // Cubic ease-out pop up
               const scale = 0.1 + t * 0.9;
               const translateY = (1 - t) * 46;
@@ -732,6 +739,7 @@ export default function EventsAndCouncilSection({
                   onClick={() => handleCardTap(idx)}
                 >
                   <div className="mobile-event-card-frame">
+                    <div className="mobile-event-tag-badge">GDG EVENT</div>
                     <Image
                       src={ik(evt.posterImage)}
                       alt={evt.title}
@@ -748,20 +756,38 @@ export default function EventsAndCouncilSection({
               ))}
             </div>
 
-            {/* Bottom Controls / Pill Indicator */}
+            {/* Bottom Controls / Pill Indicator & Prev/Next Taps */}
             <div className="mobile-events-footer">
-              <div ref={mobileDotsRef} className="mobile-events-pills">
-                {mobileEvents.map((evt, idx) => (
-                  <button
-                    key={evt.id}
-                    type="button"
-                    className={`mobile-event-dot ${idx === 0 ? 'active' : ''}`}
-                    onClick={() => handleDotClick(idx)}
-                    aria-label={`Jump to event ${idx + 1}: ${evt.title}`}
-                  />
-                ))}
+              <div className="mobile-events-nav-row">
+                <button
+                  type="button"
+                  className="mobile-events-nav-btn"
+                  onClick={() => handleDotClick(Math.max(0, mobileActiveIdx - 1))}
+                  aria-label="Previous Event"
+                >
+                  ‹ PREV
+                </button>
+                <div ref={mobileDotsRef} className="mobile-events-pills">
+                  {mobileEvents.map((evt, idx) => (
+                    <button
+                      key={evt.id}
+                      type="button"
+                      className={`mobile-event-dot ${idx === 0 ? 'active' : ''}`}
+                      onClick={() => handleDotClick(idx)}
+                      aria-label={`Jump to event ${idx + 1}: ${evt.title}`}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="mobile-events-nav-btn"
+                  onClick={() => handleDotClick(Math.min(mobileEvents.length - 1, mobileActiveIdx + 1))}
+                  aria-label="Next Event"
+                >
+                  NEXT ›
+                </button>
               </div>
-              <div className="mobile-events-hint">SCROLL TO FLIP ARCHIVE ↓</div>
+              <div className="mobile-events-hint">SCROLL OR TAP TO FLIP ARCHIVE</div>
             </div>
 
             {/* Film overlays */}

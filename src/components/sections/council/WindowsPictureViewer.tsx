@@ -354,10 +354,10 @@ export default function WindowsPictureViewer({
     return () => cancelAnimationFrame(raf);
   }, [scrollProgressRef]);
 
-  // Keep the current picture in view in whichever rail is on screen.
+  // Keep the current picture in view only when in filmstrip mode
   useEffect(() => {
-    const root = view === 'gallery' ? gridRef.current : stripRef.current;
-    const sel = root?.querySelector<HTMLElement>('[data-selected="true"]');
+    if (view !== 'filmstrip') return;
+    const sel = stripRef.current?.querySelector<HTMLElement>('[data-selected="true"]');
     sel?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
   }, [safeIndex, view]);
 
@@ -612,7 +612,7 @@ export default function WindowsPictureViewer({
                   <dt>Council</dt>
                   <dd>{current.tier}</dd>
                   <dt>Domains</dt>
-                  <dd>{getMemberDepartments(current).join(' and ')}</dd>
+                  <dd>{getMemberDepartments(current).join(', ')}</dd>
                   <dt>Class</dt>
                   <dd>{current.branch}</dd>
                 </dl>

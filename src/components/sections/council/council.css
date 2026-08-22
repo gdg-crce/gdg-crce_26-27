@@ -5,18 +5,25 @@
    Hyper-professional aesthetic inspired by authentic Windows XP & Reference Images
    ========================================================================== */
 
-.xp-council-section,
-.mobile-council-section,
-#mobile-council {
+.xp-council-section {
   position: relative;
   width: 100%;
   background: #000000;
   color: #111111;
-  font-family: var(--font-ibm-bios), 'VT323', 'Press Start 2P', 'Px437 IBM VGA 8x8', monospace !important;
+  font-family: 'Tahoma', 'Segoe UI', Arial, sans-serif;
   overflow: hidden;
   user-select: none;
-  -webkit-font-smoothing: none;
-  font-smooth: never;
+}
+
+.mobile-council-section,
+#mobile-council {
+  position: relative;
+  width: 100%;
+  background: #e9ebee;
+  color: #111111;
+  font-family: 'Tahoma', 'Segoe UI', Arial, sans-serif;
+  overflow: visible !important;
+  user-select: none;
 }
 
 .xp-events-main-container {
@@ -146,7 +153,7 @@
   display: flex !important;
   flex-direction: column !important;
   gap: 24px !important;
-  z-index: 55 !important;
+  z-index: 2 !important;
 }
 
 .xp-desktop-icon {
@@ -571,6 +578,32 @@
   user-select: none !important;
 }
 
+/* Authentic Windows XP Luna Scrollbar override for 3rd Window (Picture Viewer) */
+.xp-pv ::-webkit-scrollbar,
+.xp-pv-grid::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.xp-pv ::-webkit-scrollbar-track,
+.xp-pv-grid::-webkit-scrollbar-track {
+  background: #ece9d8 !important;
+  border-left: 1px solid #d6d3ce !important;
+}
+
+.xp-pv ::-webkit-scrollbar-thumb,
+.xp-pv-grid::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ffffff 0%, #ece9d8 40%, #d6d3ce 100%) !important;
+  border: 1px solid #0054e3 !important;
+  border-radius: 2px !important;
+  box-shadow: inset 1px 1px 0 #ffffff !important;
+}
+
+.xp-pv ::-webkit-scrollbar-thumb:hover,
+.xp-pv-grid::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #e3dfcd 40%, #c7c3be 100%) !important;
+}
+
 .xp-pv-empty {
   padding: 40px !important;
   font-size: 11px !important;
@@ -857,6 +890,8 @@
   min-width: 0 !important;
   min-height: 0 !important;
   overflow-y: auto !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
   display: grid !important;
   /* Cell size is what "zoom" means in this view — it is the same number the
      magnifier slider in the command bar scales via --thumb. The default sits
@@ -1437,22 +1472,37 @@
   min-height: 100vh !important;
   background-color: #e9ebee !important; /* Classic Facebook Light Grey */
   color: #1c1e21 !important;
-  font-family: var(--font-ibm-bios), 'VT323', 'Press Start 2P', 'Px437 IBM VGA 8x8', monospace !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
+  overflow: visible !important;
 }
 
 /* Sticky Header styling */
 .mobile-header-sticky {
   position: sticky !important;
   top: 0 !important;
-  z-index: 1000 !important;
+  z-index: 10000 !important;
   width: 100% !important;
   background: #ffffff !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
   display: flex !important;
   flex-direction: column !important;
+}
+
+/* Profile Navigation Tabs — sticky pinned to top 0 when scrolling feed */
+.fb-profile-tabs-menu {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10000 !important;
+  display: flex !important;
+  background-color: #ffffff !important;
+  border-top: 1px solid #e5e6e9 !important;
+  border-bottom: 1px solid #e5e6e9 !important;
+  width: 100% !important;
+  margin-top: 0 !important;
+  padding: 0 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Cover Photo */
@@ -2111,6 +2161,24 @@
   pointer-events: none !important;
 }
 
+.mobile-event-tag-badge {
+  position: absolute !important;
+  top: 10px !important;
+  left: 10px !important;
+  z-index: 10 !important;
+  background: rgba(14, 165, 233, 0.88) !important;
+  color: #ffffff !important;
+  font-family: var(--font-ibm-plex-mono), monospace !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+  text-transform: uppercase !important;
+}
+
 /* Footer / Controls */
 .mobile-events-footer {
   position: relative !important;
@@ -2120,6 +2188,32 @@
   align-items: center !important;
   gap: 7px !important;
   flex-shrink: 0 !important;
+}
+
+.mobile-events-nav-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.mobile-events-nav-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-family: var(--font-ibm-plex-mono), monospace !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  padding: 5px 12px !important;
+  border-radius: 16px !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(8px) !important;
+  transition: all 0.2s ease !important;
+}
+
+.mobile-events-nav-btn:active {
+  background: rgba(56, 189, 248, 0.3) !important;
+  border-color: #38bdf8 !important;
 }
 
 .mobile-events-pills {

@@ -102,9 +102,8 @@ export default function TopNav({ ready }: { ready: boolean }) {
     const events = top('#events');
     const maxScroll = document.documentElement.scrollHeight - vh;
 
-    // WhatWeDo and Events engage when their spacers reach the viewport bottom /
-    // top — the same offsets their own triggers use.
-    const wwdAt = wwd === null ? intro + 3250 : wwd - vh;
+    // WhatWeDo and Events engage when their section elements reach top of viewport
+    const wwdAt = wwd === null ? intro + 3250 : wwd;
     const eventsAt = events === null ? wwdAt + 5000 : events;
     /* Contact is the bottom of the page, full stop — there is no element to
        measure. The shutdown runs inside the Events pin and finishes with the

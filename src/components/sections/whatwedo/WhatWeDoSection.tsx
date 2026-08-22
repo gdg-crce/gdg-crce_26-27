@@ -33,8 +33,8 @@ const PolaroidScene2D = dynamic(() => import('./PolaroidScene2D'), {
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
-/** Pinned scroll length — 5000px gives one full, luxurious unraveling experience + deep dive zoom. */
-const SCROLL_END = 5000;
+/** Pinned scroll length — 10000px gives a slower, unhurried page-flipping experience + deep dive zoom. */
+const SCROLL_END = 10000;
 
 /**
  * WhatWeDoSection — the Polaroid wall (Act 2.5).
@@ -108,6 +108,9 @@ export default function WhatWeDoSection() {
 
       activeNow = true;
       el.classList.add('is-active');
+
+      // Keep 100% solid opacity during the zoom sequence to completely cover the screen.
+      // Hand off to Events at progress >= 1.0 when Events is pinned at top:top.
       el.style.opacity = '1';
       el.style.pointerEvents = 'auto';
     };

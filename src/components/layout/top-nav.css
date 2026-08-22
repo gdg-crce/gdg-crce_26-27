@@ -44,14 +44,14 @@
 
 .tnav {
   --tnav-size: 54px;
-  --tnav-open: min(720px, 94vw);
+  --tnav-open: min(660px, 90vw);
 
   position: relative;
   display: flex;
   align-items: center;
   height: var(--tnav-size);
   width: var(--tnav-open);
-  padding: 0 8px 0 6px;
+  padding: 0 12px 0 8px;
   border-radius: 999px;
   overflow: hidden;
   pointer-events: auto;
@@ -74,8 +74,41 @@
 
 .tnav-shell[data-collapsed='true'] .tnav {
   width: var(--tnav-size);
-  padding: 0;
+  height: var(--tnav-size);
+  padding: 0 !important;
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1 !important;
+  justify-content: center !important;
+  align-items: center !important;
   background: linear-gradient(180deg, rgba(26, 28, 34, 0.92) 0%, rgba(13, 14, 17, 0.95) 100%);
+  overflow: hidden !important;
+}
+
+.tnav-shell[data-collapsed='true'] .tnav-mark {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  border-radius: 50% !important;
+}
+
+.tnav-shell[data-collapsed='true'] .tnav-mark img {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  object-fit: contain !important;
+  max-width: 36px !important;
+  max-height: 24px !important;
+  width: 36px !important;
+  height: 24px !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
 }
 
 /* ── the mark ──────────────────────────────────────────────────────────── */
@@ -90,22 +123,30 @@
   background: none;
   border: 0;
   padding: 0;
-  margin: 0;
+  margin: 0 4px 0 0;
   cursor: pointer;
   position: relative;
+  border-radius: 50%;
 }
 
 .tnav-mark img {
-  width: 44px;
-  height: auto;
+  max-width: 36px;
+  max-height: 24px;
+  width: 36px;
+  height: 24px;
   object-fit: contain;
   display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0 !important;
   opacity: 0.94;
   transition: transform 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease;
 }
 
 .tnav-mark:hover img {
-  transform: scale(1.08);
+  transform: translate(-50%, -50%) scale(1.08);
   opacity: 1;
 }
 
@@ -125,10 +166,10 @@
 .tnav-links {
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: space-between;
   flex: 1;
-  gap: 4px;
-  padding: 0 4px;
+  gap: 6px;
+  padding: 0 8px;
   white-space: nowrap;
   min-width: 0;
 }
@@ -138,16 +179,17 @@
   background: none;
   border: 0;
   cursor: pointer;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 999px;
   font-family: var(--font-00s-body), ui-sans-serif, system-ui, sans-serif;
   font-size: 0.84rem;
   font-weight: 500;
   letter-spacing: 0.015em;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.65);
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
   transition:
     color 240ms ease,
     background-color 240ms ease,
@@ -180,8 +222,8 @@
 
 .tnav-link[aria-current='true'] {
   color: #ffffff;
-  background: rgba(233, 162, 59, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(233, 162, 59, 0.38);
+  background: rgba(233, 162, 59, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(233, 162, 59, 0.4);
   font-weight: 600;
 }
 
@@ -192,14 +234,35 @@
     top: 14px;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 100%;
+    width: auto !important;
     display: flex !important;
     justify-content: center !important;
+    align-items: center !important;
+    margin: 0 auto !important;
+  }
+
+  .tnav-shell[data-collapsed='true'] .tnav {
+    width: var(--tnav-size) !important;
+    height: var(--tnav-size) !important;
+    min-width: var(--tnav-size) !important;
+    max-width: var(--tnav-size) !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .tnav-shell[data-collapsed='true'] .tnav-links,
+  .tnav-shell[data-collapsed='true'] .tnav-mobile-header {
+    display: none !important;
   }
 
   .tnav {
     --tnav-size: 46px;
-    --tnav-open: min(92vw, 440px);
+    --tnav-open: min(96vw, 460px);
     height: var(--tnav-size) !important;
     border-radius: 999px !important;
     padding: 0 8px 0 4px !important;
@@ -209,26 +272,58 @@
     margin: 0 auto !important;
   }
 
+  .tnav-shell[data-collapsed='true'] .tnav-mark {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .tnav-shell[data-collapsed='true'] .tnav-mark img {
+    max-width: 28px !important;
+    max-height: 20px !important;
+    width: 28px !important;
+    height: 20px !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+  }
+
   .tnav-mark {
     width: var(--tnav-size) !important;
     height: var(--tnav-size) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    position: relative !important;
     flex-shrink: 0 !important;
+    margin: 0 4px 0 0;
+    padding: 0 !important;
+    border-radius: 50% !important;
   }
 
   .tnav-mark img {
-    width: 36px !important;
-    height: auto !important;
+    max-width: 28px !important;
+    max-height: 20px !important;
+    width: 28px !important;
+    height: 20px !important;
+    object-fit: contain !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    display: block !important;
   }
 
   .tnav-links {
     display: flex !important;
     align-items: center !important;
-    justify-content: center !important;
-    gap: 3px !important;
-    padding: 0 4px !important;
+    justify-content: space-between !important;
+    gap: 4px !important;
+    padding: 0 6px !important;
     margin: 0 auto !important;
     overflow-x: auto !important;
     scrollbar-width: none !important;
@@ -240,8 +335,9 @@
   }
 
   .tnav-link {
-    padding: 5px 9px !important;
-    font-size: 0.74rem !important;
+    padding: 6px 10px !important;
+    font-size: 0.78rem !important;
+    font-weight: 500 !important;
     white-space: nowrap !important;
     flex-shrink: 0 !important;
     border-radius: 999px !important;
