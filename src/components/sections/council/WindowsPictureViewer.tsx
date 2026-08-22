@@ -333,23 +333,65 @@ export default function WindowsPictureViewer({
     return () => window.clearInterval(t);
   }, [playing, step, total]);
 
-  // Drive the grid container's scroll position based on scrollProgressRef
+  /* Drive the grid's scroll position from the page's scroll progress.
+     Matches TheFacebook archive's `.page`: an eased follow, not a hard set.
+
+     Two things used to make this read as broken rather than smooth.
+
+     `el.scrollTop = p * maxScroll` pinned the grid exactly to the page, so
+     every judder in the scroll source landed on the thumbnails undamped — and
+     `.xp-pv-grid` also carried `scroll-behavior: smooth`, which turned each of
+     those per-frame writes into a *browser* scroll animation that the next
+     frame cancelled. The grid spent the whole act chasing a target it never
+     reached. (That CSS is now `auto`; the note there explains why it has to
+     stay that way.)
+
+     And `if (p === lastP) return` meant the loop only did work while the page
+     was moving — so an eased follow could never finish its glide. The
+     settle test is now distance to target, not change in input. */
   useEffect(() => {
     if (!scrollProgressRef) return;
     let raf = 0;
-    let lastP = -1;
-    const tick = () => {
+    /** Eased position. `-1` means "not initialised" — see `lastEl`. */
+    let current = -1;
+    /** The element `current` belongs to. The grid unmounts in filmstrip view,
+        and a remount must re-seat on its target rather than glide from wherever
+        the old one had got to. */
+    let lastEl: HTMLElement | null = null;
+    let lastT = 0;
+
+    const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
-      const p = scrollProgressRef.current ?? 0;
-      if (p === lastP) return;
-      lastP = p;
+
       const el = gridRef.current;
-      if (!el) return;
-      const maxScroll = el.scrollHeight - el.clientHeight;
-      if (maxScroll > 0) {
-        el.scrollTop = p * maxScroll;
+      if (!el) {
+        lastEl = null;
+        return;
       }
+
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll <= 0) return;
+
+      const target = (scrollProgressRef.current ?? 0) * maxScroll;
+
+      if (el !== lastEl) {
+        lastEl = el;
+        current = target;
+        lastT = now;
+      } else {
+        /* Frame-rate independent easing. A flat `current += (target - current)
+           * 0.35` converges twice as fast on a 120Hz panel as on a 60Hz one,
+           which is a different feel on different machines for no reason. This
+           is the same 0.35-per-60Hz-frame response, expressed as a rate. */
+        const dt = Math.min(now - lastT, 50);
+        lastT = now;
+        current += (target - current) * (1 - Math.pow(1 - 0.35, dt / (1000 / 60)));
+      }
+
+      // Sub-pixel writes cost a scroll event and paint for nothing.
+      if (Math.abs(el.scrollTop - current) > 0.5) el.scrollTop = current;
     };
+
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [scrollProgressRef]);

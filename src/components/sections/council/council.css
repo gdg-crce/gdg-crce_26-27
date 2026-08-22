@@ -890,7 +890,23 @@
   min-width: 0 !important;
   min-height: 0 !important;
   overflow-y: auto !important;
-  scroll-behavior: smooth !important;
+  /* `scroll-behavior: auto`, and it has to stay that way.
+
+     This grid does not scroll itself — `WindowsPictureViewer` writes its
+     `scrollTop` from the page's scroll progress on every animation frame. With
+     `smooth`, EVERY one of those assignments starts a browser-owned scroll
+     animation, so each frame cancelled the previous one and started a new one
+     toward a target that had already moved. The grid never arrived anywhere:
+     it lagged behind the page, overshot, and rubber-banded. That is the album
+     "not scrolling properly" while TheFacebook archive next door felt right —
+     the archive's `.page` has no `scroll-behavior` at all.
+
+     The smoothing that is actually wanted lives in the driver, as an eased
+     follow toward the target. It is the same reason global
+     `scroll-behavior: smooth` was taken out in `globals.css` (see the note at
+     the top of that file): nothing that Lenis or a rAF loop drives can also be
+     animated by the browser. */
+  scroll-behavior: auto !important;
   -webkit-overflow-scrolling: touch !important;
   display: grid !important;
   /* Cell size is what "zoom" means in this view — it is the same number the
