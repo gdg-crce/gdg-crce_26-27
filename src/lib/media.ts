@@ -20,35 +20,74 @@
  *  - A `?tr=` transcode carries that same plan dependency and has nothing to
  *    win: the file is 1.17 MB, which is smaller than most hero images.
  *
- * The file is already as optimised as a progressive mp4 gets — verified, not
- * assumed:
+ * Current file — measured, not assumed:
  *
- *    1,200,357 bytes (1.17 MB)
- *    moov atom at byte 36, before mdat   faststart: playback can begin after
- *                                        ~22 KB, not after the last byte
- *    Accept-Ranges: bytes                seeking works
+ *    6,135,326 bytes (5.85 MB)
+ *    1440×810, H.264 High L4.0, yuv420p, 30fps, 18.13s, ~2.71 Mbps
+ *    NO audio track
+ *    moov atom at byte 32, before mdat   faststart: playback can begin after
+ *                                        a few KB, not after the last byte
  *
  * So there is nothing for a bitrate ladder to adapt to and nothing for a
  * transform to shrink. One request, no MSE, no hls.js, no subscription to
  * lapse. The remaining wins live on the element (`preload="auto"`, `muted`,
  * `playsInline`), not in the transport.
  *
- * ── If the full-screen hero looks soft, it is the MASTER, not the transport ─
- * The current file is **848×478**. The hero is full-viewport `object-cover`, so
- * on a 1080p display that is a 2.26× upscale and it will read soft; the strip
- * cell looks sharp at the same instant because it is DOWN-scaling the same
- * frames into ~100px. The zoom-through's transform math was checked and lands
- * exactly on `scale(1)` — nothing in the code is adding blur, and no transport
- * change can invent the missing pixels.
+ * ── faststart is the whole ballgame; it has been lost once ─────────────────
+ * A previous export sat here at **15,969,110 bytes (15.2 MB), 1920×1080 at
+ * 7.04 Mbps, with `moov` at byte 15,953,544 — i.e. AFTER `mdat`, at the very
+ * end of the file.** A progressive mp4 whose `moov` trails cannot start until
+ * the LAST byte has arrived, so the film did not begin playing until all
+ * 15.2 MB had downloaded. That single property produced every symptom the
+ * loader was blamed for: the video "sometimes not running" (the preloader's
+ * 4.5s asset gate timed out and the show started over a black rectangle), and
+ * the film "ending before it finished" (see `HeroVideoSection`, where a
+ * mount-time `(duration || 12)` timeout irised an 18.1s film shut at 12.5s
+ * because metadata had not landed to make `duration` a number).
  *
- * The fix is a better export: re-encode at 1920×1080 (or at minimum 1280×720),
- * H.264 High, CRF ~20, and `-movflags +faststart`, then drop it in at this same
- * path. No code change is needed. Budget ~4-6 MB for 19s at 1080p; that is
- * still one cached request and it is the correct place to spend the bytes,
- * because this film is the first thing anyone sees.
+ * If you ever replace this file, re-encode it — do not just drop an export in:
+ *
+ *   ffmpeg -i in.mp4 -vf scale=1440:-2:flags=lanczos -c:v libx264 \
+ *     -profile:v high -level 4.0 -pix_fmt yuv420p -preset veryslow -crf 24 \
+ *     -maxrate 4500k -bufsize 9000k -g 60 -keyint_min 30 -sc_threshold 0 \
+ *     -an -movflags +faststart out.mp4
+ *
+ * and then VERIFY the box order (`moov` must precede `mdat`) rather than
+ * trusting the flag. `-an` is deliberate: every element that plays this file
+ * is `muted`, so the audio track is a decoder and a download for nothing — the
+ * old file carried a 2.7 kbps stub.
+ *
+ * Budget is ~4-6 MB for this 18s film. The chosen point was picked off a VMAF
+ * sweep against the 15.2 MB master rather than by eye: 1440×810/CRF24 scores
+ * **90.9 VMAF at 5.85 MB**, where 1920×1080/CRF25 cost 7.64 MB for 92.5 and
+ * 1280×720/CRF26 saved only 1.9 MB to drop to 85.7. It is one cached request
+ * and it is the correct place to spend the bytes, because this film is the
+ * first thing anyone sees.
  */
 
 export const HERO_VIDEO_SRC = '/videos/a.mp4';
+
+/**
+ * Frame 0 of {@link HERO_VIDEO_SRC}, as a still.
+ *
+ * The loader's film strip shows THIS, not a running `<video>`. Two reasons,
+ * and the first one was a visible bug:
+ *
+ *  - **The film used to open on one pure-black frame.** Anything parked at
+ *    `currentTime = 0` therefore rendered black, so the zoom-through opened
+ *    onto a black rectangle — the "screens black out" at the reveal. The master
+ *    is now re-encoded with that frame dropped (`select='gte(n,1)'`), so frame
+ *    0 is the CRT static the film actually starts on, and this still is taken
+ *    from the trimmed file. Regenerate it whenever the film is replaced, or the
+ *    strip will show a frame the film no longer starts on.
+ *  - **The film is only ever decoded once now.** The strip cell used to run its
+ *    own `autoPlay loop` copy at full 1440x810 to fill a ~330px window, while
+ *    the portal and the hero decoded the same file alongside it. A still costs
+ *    90KB and no decoder.
+ *
+ * 640px wide, which is ~2x the strip cell's on-screen width at a 1920 viewport.
+ */
+export const HERO_VIDEO_FIRST_FRAME = '/videos/a-first-frame.jpg';
 
 /**
  * The two council clips on TheFacebook wall (Y2KArchiveSystem).

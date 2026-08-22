@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { registerScroller } from '@/lib/scrollLock';
 
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -30,6 +31,15 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       touchMultiplier: 1.2,
     });
 
+    /* Hand Lenis to the scroll lock. `overflow: hidden` alone cannot hold this
+       page — Lenis scrolls it programmatically, and programmatic scrolling
+       goes straight through hidden overflow. See `src/lib/scrollLock.ts`.
+
+       This effect runs AFTER the preloader's (React commits child effects
+       first), so the lock is usually already held by the time we get here;
+       `registerScroller` re-applies it rather than assuming an open page. */
+    registerScroller(lenis);
+
     // Wire Lenis's scroll event directly to GSAP's ScrollTrigger update.
     // This ensures pinning and scrub animations recalculate instantly.
     lenis.on('scroll', ScrollTrigger.update);
@@ -48,6 +58,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
     gsap.ticker.lagSmoothing(0);
 
     return () => {
+      registerScroller(null);
       gsap.ticker.remove(raf);
       lenis.destroy();
     };

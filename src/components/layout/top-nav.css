@@ -96,6 +96,27 @@
   border-radius: 50% !important;
 }
 
+/* The links keep their box in the collapsed state so the opacity/translate
+   transition still has something to animate — but that box must measure ZERO,
+   and `flex: 1` alone does not get it there.
+
+   `.tnav-links` carries `padding: 0 8px`, and padding is not shrinkable by
+   flex: with `flex-basis: 0%` the content box collapses but the 16px of
+   horizontal padding survives. So the collapsed row measured 54px (mark, which
+   is `flex: none` at `width: 100%`) + 16px (links padding) = 70px inside a 54px
+   circle, and `justify-content: center` split that 16px overflow evenly —
+   dragging the mark, and with it the logo, 8px to the LEFT of the circle's
+   centre. Zeroing the padding lets the links reach a true 0 and puts the mark
+   back on centre.
+
+   This is also why the mark looked centred on mobile and not on desktop: the
+   mobile block below drops `.tnav-links` to `display: none` when collapsed, so
+   it never contributed the padding in the first place. */
+.tnav-shell[data-collapsed='true'] .tnav-links {
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
 .tnav-shell[data-collapsed='true'] .tnav-mark img {
   margin: 0 !important;
   padding: 0 !important;
