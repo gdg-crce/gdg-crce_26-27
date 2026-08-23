@@ -147,3 +147,28 @@
   line-height: 1.4;
 }
 
+/* "Enter Full Screen (F11)" is advice a phone cannot act on, so the small
+   print says something true there instead. Swapped by media query rather than
+   by innerWidth so the server and the first client render agree. */
+.xp-hint-mobile {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .xp-bottom-text {
+    bottom: 1.25rem;
+    left: 1.25rem;
+    right: 1.25rem;
+    font-size: 0.72rem;
+    opacity: 0.62;
+  }
+
+  .xp-hint-desktop {
+    display: none;
+  }
+
+  .xp-hint-mobile {
+    display: inline;
+  }
+}
+

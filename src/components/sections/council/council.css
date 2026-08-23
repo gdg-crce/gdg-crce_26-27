@@ -2649,3 +2649,63 @@ button.fb-tab-item.active::after {
 .fb-photos-container {
   animation: fbFeedFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
+
+
+/* --------------------------------------------------------------------------
+   MOBILE TOUCH FEEDBACK
+   Every tappable thing in the mobile trees gets a press state, and the two
+   Android defaults that make taps feel dead are turned off:
+     · the ~300ms click delay (`touch-action: manipulation`)
+     · the grey flash Chrome paints over the element, which arrives late and
+       fights whatever :active does (`-webkit-tap-highlight-color`)
+   -------------------------------------------------------------------------- */
+
+.fb-tab-item,
+.fb-action-btn,
+.mobile-events-nav-btn,
+.mobile-event-dot,
+.mobile-event-card-item,
+.fb-post-card button,
+.mobile-events-pills button {
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.fb-tab-item,
+.fb-action-btn {
+  transition: background-color 0.12s ease, transform 0.12s ease !important;
+}
+
+.fb-tab-item:active {
+  background-color: #e4e6eb !important;
+  transform: scale(0.98) !important;
+}
+
+.fb-action-btn:active {
+  background-color: #e4e6eb !important;
+  transform: scale(0.96) !important;
+}
+
+.mobile-events-nav-btn:active {
+  transform: scale(0.94) !important;
+}
+
+/* The dot is 6px, so it cannot shrink to show a press — it grows instead, and
+   the halo is what actually reads at that size. */
+.mobile-event-dot:active {
+  transform: scale(1.6) !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+}
+
+.mobile-event-dot.active:active {
+  transform: scale(1.08) !important;
+  background: #38bdf8 !important;
+}
+
+/* The posters are tappable (handleCardTap). Only the front card takes a press
+   — the ones behind it have pointer-events off, so this can never fire on a
+   card the viewer cannot see. */
+.mobile-event-card-item:active .mobile-event-card-frame {
+  transform: scale(0.97) !important;
+  transition: transform 0.12s ease !important;
+}

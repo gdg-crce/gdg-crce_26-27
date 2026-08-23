@@ -556,9 +556,14 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
                   </div>
                 </div>
 
+                {/* Both variants render; CSS picks one. Branching on
+                    innerWidth here would mismatch on hydration. */}
                 <div className="xp-bottom-text">
-                  For the best experience<br />
-                  Enter Full Screen (F11)
+                  <span className="xp-hint-desktop">
+                    For the best experience<br />
+                    Enter Full Screen (F11)
+                  </span>
+                  <span className="xp-hint-mobile">Best viewed on a laptop</span>
                 </div>
             </div>
           )}

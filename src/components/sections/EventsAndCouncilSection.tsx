@@ -228,7 +228,7 @@ export default function EventsAndCouncilSection({
 
           // Update HUD text without triggering React state re-renders
           if (mobileBadgeRef.current) {
-            mobileBadgeRef.current.textContent = `0${activeIdx + 1} / 0${totalCards}`;
+            mobileBadgeRef.current.textContent = `0${activeIdx + 1} / 0${totalCards} · EVENT SECTION`;
           }
           if (mobileTitleRef.current && mobileTitleRef.current.textContent !== mobileEvents[activeIdx].title) {
             mobileTitleRef.current.textContent = mobileEvents[activeIdx].title;
@@ -301,6 +301,26 @@ export default function EventsAndCouncilSection({
         });
       };
 
+      /* Lead-in hold. The viewer arrives here mid-flick from What We Do, and
+         the pin used to start advancing on the very first pixel — so the
+         momentum left over from that flick carried card 1 away before it had
+         been seen. This buys the deck a stationary beat: the section pins,
+         card 1 sits still for HOLD_VH of scroll while the fling bleeds off,
+         and only then does the deck start turning. */
+      const HOLD_VH = 0.7;
+      const holdPx = () => window.innerHeight * HOLD_VH;
+      const cardsPx = () => (totalCards - 1) * window.innerHeight;
+      /** Pin progress -> deck progress, with the hold mapped out of the front. */
+      const deckProgress = (raw: number) => {
+        const hold = holdPx();
+        const total = hold + cardsPx();
+        if (total <= 0) return 0;
+        const holdFrac = hold / total;
+        if (holdFrac >= 1) return 0;
+        // updateCardPositions clamps, so a negative here simply reads as 0.
+        return (raw - holdFrac) / (1 - holdFrac);
+      };
+
       const initScrollTrigger = () => {
         const anim = gsap.to(
           {},
@@ -312,18 +332,18 @@ export default function EventsAndCouncilSection({
               pin: containerRef.current,
               anticipatePin: 1,
               start: 'top top',
-              end: () => `+=${(totalCards - 1) * window.innerHeight * 1.0}`,
+              end: () => `+=${holdPx() + cardsPx()}`,
               scrub: 0.35,
               invalidateOnRefresh: true,
               onUpdate: (self) => {
-                updateCardPositions(self.progress);
+                updateCardPositions(deckProgress(self.progress));
               },
               /* Same reason the desktop branch has one: a refresh, a restored
                  scroll position or a fast scroll across the whole range can
                  leave the pin active with no update ever firing, and the cards
                  keep whatever the last tick wrote. */
               onRefresh: (self) => {
-                updateCardPositions(self.progress);
+                updateCardPositions(deckProgress(self.progress));
               },
             },
           }
@@ -725,7 +745,7 @@ export default function EventsAndCouncilSection({
             {/* Dynamic HUD Header */}
             <div className="mobile-events-header">
               <div ref={mobileBadgeRef} className="mobile-events-badge">
-                01 / 0{mobileEvents.length}
+                01 / 0{mobileEvents.length} · EVENT SECTION
               </div>
               <h2 ref={mobileTitleRef} className="mobile-events-title">
                 {mobileEvents[0].title}
@@ -1009,7 +1029,6 @@ export default function EventsAndCouncilSection({
                     <span className="reaction-bubble blue-bubble">👍</span>
                     <span className="reaction-bubble yellow-bubble">😊</span>
                   </div>
-                  <span className="fb-reaction-text">Liked by Sir Harvey York and 42 others</span>
                 </div>
 
                 {/* Action Buttons */}
