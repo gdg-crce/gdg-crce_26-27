@@ -228,7 +228,7 @@ export default function EventsAndCouncilSection({
 
           // Update HUD text without triggering React state re-renders
           if (mobileBadgeRef.current) {
-            mobileBadgeRef.current.textContent = `0${activeIdx + 1} / 0${totalCards} · ARCHIVE SERIES`;
+            mobileBadgeRef.current.textContent = `0${activeIdx + 1} / 0${totalCards}`;
           }
           if (mobileTitleRef.current && mobileTitleRef.current.textContent !== mobileEvents[activeIdx].title) {
             mobileTitleRef.current.textContent = mobileEvents[activeIdx].title;
@@ -312,7 +312,7 @@ export default function EventsAndCouncilSection({
               pin: containerRef.current,
               anticipatePin: 1,
               start: 'top top',
-              end: () => `+=${(totalCards - 1) * window.innerHeight * 0.75}`,
+              end: () => `+=${(totalCards - 1) * window.innerHeight * 1.0}`,
               scrub: 0.35,
               invalidateOnRefresh: true,
               onUpdate: (self) => {
@@ -725,7 +725,7 @@ export default function EventsAndCouncilSection({
             {/* Dynamic HUD Header */}
             <div className="mobile-events-header">
               <div ref={mobileBadgeRef} className="mobile-events-badge">
-                01 / 0{mobileEvents.length} · ARCHIVE SERIES
+                01 / 0{mobileEvents.length}
               </div>
               <h2 ref={mobileTitleRef} className="mobile-events-title">
                 {mobileEvents[0].title}

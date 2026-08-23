@@ -2059,7 +2059,7 @@
   flex-direction: column !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding: max(76px, 9vh) 16px max(24px, 3vh) 16px !important;
+  padding: max(76px, 9vh) 12px max(24px, 3vh) 12px !important;
   box-sizing: border-box !important;
   background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/events/eventsmobbg.png?tr=f-auto,q-auto') !important;
   background-size: cover !important;
@@ -2121,8 +2121,11 @@
 /* Central Card Deck */
 .mobile-events-deck {
   position: relative !important;
-  width: min(86vw, 360px) !important;
-  height: min(86vw, 360px) !important;
+  /* The 48vh term is the safety rail: on a short phone (360x640) the header +
+     footer already eat most of the stage, so sizing off width alone would push
+     the deck out of the box. Tall phones get the bigger card, short ones cap. */
+  width: min(92vw, 420px, 48vh) !important;
+  height: min(92vw, 420px, 48vh) !important;
   aspect-ratio: 1 / 1 !important;
   display: flex !important;
   align-items: center !important;
