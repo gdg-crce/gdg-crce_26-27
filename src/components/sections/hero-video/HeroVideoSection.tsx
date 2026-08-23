@@ -319,20 +319,11 @@ export default function HeroVideoSection({
     >
       <div className="absolute inset-0 bg-black z-0" />
 
-      {/* NO `autoPlay`. Playback here is driven entirely by `startPlaying` ->
-          `attemptPlay()`, which calls `.play()` on a muted element and so needs
-          no autoplay attribute to satisfy the policy. Left in, the attribute
-          defeated the `primed` prop it sits next to: instead of decoding a
-          first frame and HOLDING it, the hero actually played — measured at
-          119 decoded frames — for the whole preloader, invisible the entire
-          time behind the loader's z-9999 layer, and then had to be seeked back
-          to 0 at the handover. That is a wasted decoder running against the
-          loader's animation, plus a seek on the one frame that can least
-          afford it. */}
       <video
         ref={videoRef}
         src={HERO_VIDEO_SRC}
         preload="auto"
+        autoPlay
         muted
         playsInline
         controls={false}

@@ -3,7 +3,7 @@
 import React from 'react';
 import { orbitron, shareTechMono, specialElite } from '@/lib/fonts';
 import { ik } from '@/lib/imagekit';
-import { HERO_VIDEO_FIRST_FRAME } from '@/lib/media';
+import { HERO_VIDEO_SRC } from '@/lib/media';
 
 export type FilmTapeFrame = '2020s' | '2000x' | '90s' | '80s' | '70s';
 
@@ -152,30 +152,16 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
                   className="loader-film-cell loader-film-cell-reveal relative flex-1 overflow-hidden"
                   style={{ minWidth: 0, background: '#000' }}
                 >
-                  {/* The film's own first frame, as a STILL — not a running
-                      copy of the film.
-
-                      This used to be an `autoPlay loop` <video> pointing at the
-                      hero film, i.e. a third 1440x810 decoder running for the
-                      loader's whole eight seconds to fill a ~330px window,
-                      playing footage the portal and the hero were decoding at
-                      the same time. It also meant the strip was showing the
-                      film at a completely different timestamp from the copy the
-                      zoom was about to reveal, so the reveal cut between two
-                      unrelated moments of the same clip.
-
-                      Now nothing here moves until the zoom is over: the cell
-                      shows frame 0, the portal opens on frame 0, and the film
-                      starts from frame 0 once the reveal has landed. One
-                      continuous image that begins to move — no cut, no second
-                      decoder. */}
-                  <img
-                    src={HERO_VIDEO_FIRST_FRAME}
-                    alt=""
-                    aria-hidden="true"
-                    loading="eager"
-                    decoding="async"
-                    draggable={false}
+                  <video
+                    // The hero film itself, not a stand-in. Same local url the
+                    // hero plays, so it is one download for both, and the
+                    // zoom-through hands over between two elements showing the
+                    // same footage instead of cutting between two clips.
+                    src={HERO_VIDEO_SRC}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
                     style={{
                       position: 'absolute',
                       inset: 0,

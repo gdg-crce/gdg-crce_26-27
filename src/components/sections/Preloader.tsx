@@ -388,8 +388,14 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
 
     const animObj = { val: 0 };
     let heroPrimed = false;
+    let zoomStarted = false;
+    let cellVideoParked = false;
     /** Last `--rewind` actually written, quantised. See `applyFrame`. */
     let lastRewind = '';
+
+    /** The loader's copy of the film, living inside the strip's reveal cell. */
+    const cellVideo = () =>
+      filmWrapRef.current?.querySelector<HTMLVideoElement>('.loader-film-cell-reveal video') ?? null;
 
     const tl = gsap.timeline({
       onUpdate: () => {
@@ -397,60 +403,37 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
         applyFrame(p);
       },
       onComplete: () => {
-        /* ── the film starts HERE, and nowhere earlier ────────────────────
-           The reveal has landed: the portal is full-screen and the strip is
-           gone. Up to this instant every copy has been a still on frame 0 —
-           the strip cell is a JPEG, the portal a paused <video>, the hero
-           primed and paused — so the film does not CUT in, it simply begins
-           to move out of the frame the zoom was already showing.
-
-           The portal is started FROM THE HERO'S CLOCK once the hero is
-           running, not on this tick alongside it. Starting both here read as
-           simultaneous but was not: waking the hero is a React state write, so
-           it only actually plays after the next commit — measured at 76ms
-           later. The portal was therefore 76ms AHEAD, and the swap at unmount
-           stepped the film ~2 frames BACKWARDS, which is the hiccup you see at
-           the cut. Aligning it below makes the two copies the same file at the
-           same timestamp, a frame apart at most. */
-        onStartTransitionRef.current?.();
-
+        // Wait for the hero video to have a painted frame before the
+        // preloader unmounts. Without this, on slow decode or cold cache
+        // the preloader's z-9999 layer disappears BEFORE the video has
+        // rendered its first frame, so the user sees the HomeSection's
+        // "GDG CRCE" directly instead of the video.
         const heroVideo = document.querySelector<HTMLVideoElement>(
           'section[aria-label="Storytelling Cinematic Intro"] video'
         );
-        if (!heroVideo) {
+        if (heroVideo && heroVideo.readyState >= 3) {
+          // Already has a frame painted — go immediately
+          window.setTimeout(complete, 80);
+        } else if (heroVideo) {
+          // Wait for the first painted frame
+          const onReady = () => {
+            heroVideo.removeEventListener('canplay', onReady);
+            heroVideo.removeEventListener('playing', onReady);
+            clearTimeout(fallback);
+            window.setTimeout(complete, 80);
+          };
+          heroVideo.addEventListener('canplay', onReady);
+          heroVideo.addEventListener('playing', onReady);
+          // Fallback: never stall longer than 600ms
+          const fallback = setTimeout(() => {
+            heroVideo.removeEventListener('canplay', onReady);
+            heroVideo.removeEventListener('playing', onReady);
+            complete();
+          }, 600);
+        } else {
+          // No video element found (shouldn't happen) — proceed
           window.setTimeout(complete, 200);
-          return;
         }
-
-        /* Hand over only once the hero is genuinely RUNNING, not merely
-           decodable. `canplay` was the old bar and it is too low: it fires on
-           a paused element, so the loader could uncover a hero that had not
-           started, which is the black frame this whole act is trying to avoid. */
-        const onPlaying = () => {
-          heroVideo.removeEventListener('playing', onPlaying);
-          window.clearTimeout(fallback);
-          /* Match the portal to the hero before running it, so the 60ms the
-             loader still spends on screen is the same 60ms of film the hero is
-             playing underneath it. A seek here is free: the portal is
-             readyState 4 and the target is a fraction of a second in. */
-          const portal = portalVideoRef.current;
-          if (portal) {
-            try {
-              portal.currentTime = heroVideo.currentTime;
-            } catch {}
-            portal.play().catch(() => {});
-          }
-          window.setTimeout(complete, 60);
-        };
-        heroVideo.addEventListener('playing', onPlaying);
-        /* Never stall the handover on a hero that refuses to start. Running
-           the portal here would buy nothing — `complete()` unmounts it on the
-           same tick. The hero's own `canplay`/`pointerdown` retries are what
-           recover from a rejected `play()`. */
-        const fallback = window.setTimeout(() => {
-          heroVideo.removeEventListener('playing', onPlaying);
-          complete();
-        }, 700);
       },
     });
 
@@ -539,19 +522,30 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       const zoomP = clamp((p - HOLD_FRAME21_END) / (REVEAL_END - HOLD_FRAME21_END));
       const eased = zoomP * zoomP * (3 - 2 * zoomP);
 
-      /* NOTHING starts playing here any more.
+      if (zoomP > 0 && !zoomStarted) {
+        zoomStarted = true;
+        // Every copy of the film restarts on this one tick — the loader's cell,
+        // the portal, and the hero. That is what makes the handover invisible:
+        // three elements showing frame 0 of the same file at the same instant.
+        // It is also the replay the strip has been promising, since the cell
+        // only ever showed a cropped sliver of the frame.
+        for (const v of [cellVideo(), portalVideoRef.current]) {
+          if (!v) continue;
+          try {
+            v.currentTime = 0;
+          } catch {}
+          v.play().catch(() => {});
+        }
+        onStartTransitionRef.current?.();
+      }
 
-         The zoom's first tick is the most expensive frame in the loader — a
-         ~16,600px-wide strip layer starts scaling and fading and a full-screen
-         clip-path starts opening — and it used to also seek two videos to 0 and
-         start them, plus wake the hero. Three decoders spinning up inside that
-         one frame is what made the zoom hitch.
+      // Once the portal is opaque it fully covers the cell, so the loader's
+      // copy is painting nothing and only costs a decoder. Park it.
+      if (!cellVideoParked && zoomP > 0.16) {
+        cellVideoParked = true;
+        cellVideo()?.pause();
+      }
 
-         Playback now begins in the timeline's `onComplete`, i.e. once the
-         reveal has actually landed. Through the whole zoom every element is a
-         still on frame 0: the strip cell is a JPEG, the portal is a paused
-         <video>, the hero is primed and paused. So the zoom is a pure
-         transform + clip-path animation with no decode work in it at all. */
       applyPortal(zoomP, eased);
 
       if (filmWrapRef.current) {
@@ -743,21 +737,12 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
                 the strip's reveal cell. Same local url as the cell and the
                 hero, so it is still one download for all three. */}
             <div ref={portalRef} className="loader-reveal-portal" aria-hidden="true">
-              {/* NO `autoPlay`. This element is `visibility: hidden` and
-                  `opacity: 0` for the first ~7.3s of the loader, and with
-                  autoplay it decoded that whole stretch anyway — measured at
-                  119 frames of 1440x810 that nothing ever painted, running
-                  concurrently with the film strip's animation and with the two
-                  other copies of the same film. Left paused it holds frame 0
-                  (`preload="auto"` still gets it to readyState 4), which is
-                  also exactly where the zoom wants it: the handover can then
-                  `play()` a decoded, correctly-positioned element instead of
-                  seeking one on the zoom's very first frame. */}
               <video
                 ref={portalVideoRef}
                 className="loader-reveal-portal-video"
                 src={HERO_VIDEO_SRC}
                 preload="auto"
+                autoPlay
                 muted
                 playsInline
                 disablePictureInPicture
