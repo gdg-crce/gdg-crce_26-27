@@ -222,7 +222,9 @@ export default function EventsAndCouncilSection({
           const normP = Math.min(1, Math.max(0, p));
           const floatIndex = normP * (totalCards - 1);
           const activeIdx = Math.min(totalCards - 1, Math.round(floatIndex));
-          setMobileActiveIdx(activeIdx);
+          // Only on a real change: this ran on every scroll tick and re-rendered
+          // the whole act each frame. The buttons are the only reader.
+          setMobileActiveIdx((prev) => (prev === activeIdx ? prev : activeIdx));
 
           // Update HUD text without triggering React state re-renders
           if (mobileBadgeRef.current) {
@@ -314,6 +316,13 @@ export default function EventsAndCouncilSection({
               scrub: 0.35,
               invalidateOnRefresh: true,
               onUpdate: (self) => {
+                updateCardPositions(self.progress);
+              },
+              /* Same reason the desktop branch has one: a refresh, a restored
+                 scroll position or a fast scroll across the whole range can
+                 leave the pin active with no update ever firing, and the cards
+                 keep whatever the last tick wrote. */
+              onRefresh: (self) => {
                 updateCardPositions(self.progress);
               },
             },

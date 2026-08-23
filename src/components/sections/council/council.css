@@ -2133,7 +2133,9 @@
   z-index: 15 !important;
   flex-shrink: 0 !important;
   transform: translateZ(0) !important;
-  contain: layout paint !important;
+  /* `paint` containment clips to this box, and the cards deliberately fly
+     out of it (yPercent -125). Layout containment keeps the perf win. */
+  contain: layout !important;
 }
 
 .mobile-event-card-item {
@@ -2147,7 +2149,10 @@
   transform-origin: center bottom !important;
   will-change: transform, opacity !important;
   backface-visibility: hidden !important;
-  transform: translateZ(0) !important;
+  /* NO `transform` here. A stylesheet !important beats a normal inline
+     declaration, and GSAP writes inline WITHOUT !important — so this line
+     silently discarded every gsap.set() on these cards and the deck never
+     animated. `force3D: true` already promotes the layer. */
   cursor: pointer !important;
 }
 
