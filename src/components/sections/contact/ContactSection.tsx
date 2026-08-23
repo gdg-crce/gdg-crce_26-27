@@ -169,29 +169,12 @@ export default function ContactSection({ isMobile = false }: ContactSectionProps
           </div>
         </div>
 
-        <div className="bios-legend" aria-hidden="true">
-          <div className="bios-legend-row">
-            <span>
-              <b>F1</b> Help
-            </span>
-            <span>
-              <b>↑↓</b> Select Item
-            </span>
-            <span>
-              <b>Enter</b> Open
-            </span>
-          </div>
-          <div className="bios-legend-row">
-            <span>
-              <b>Esc</b> Exit
-            </span>
-            <span>
-              <b>←→</b> Select Menu
-            </span>
-            <span>
-              <b>F10</b> Save and Exit
-            </span>
-          </div>
+        {/* CC BY-SA 4.0 on the Web437 IBM BIOS face requires a visible credit.
+            Styled as the copyright line a real setup utility prints along the
+            bottom, so it reads as BIOS chrome rather than as a footnote. It is
+            a licence term — moving it is fine, deleting it is not. */}
+        <div className="bios-copyright">
+          Web437 IBM BIOS font &copy; VileR &middot; CC BY-SA 4.0 &middot; int10h.org
         </div>
       </div>
     </section>

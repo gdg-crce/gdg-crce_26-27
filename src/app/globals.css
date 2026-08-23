@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* The IBM PC BIOS ROM character set, Code Page 437.
+   Web437_IBM_BIOS.woff — The Ultimate Oldschool PC Font Pack v2.2 by VileR,
+   https://int10h.org/oldschool-pc-fonts/ — CC BY-SA 4.0. The credit line is
+   rendered on the BIOS screen itself; see ContactSection.tsx. Removing it
+   breaks the licence, not just the look.
+
+   `font-display: block` on purpose: this face is a traced BITMAP, so swapping
+   in from a fallback re-flows every glyph box. A brief invisible beat is less
+   jarring than the whole screen jumping. */
+@font-face {
+  font-family: 'Web437 IBM BIOS';
+  src: url('/fonts/Web437_IBM_BIOS.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
 @theme inline {
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
@@ -16,7 +33,7 @@
   --primary: #E8412A;
   --secondary: #E0A526;
   --text: #E8D29F;
-  --font-ibm-bios: var(--font-ibm-bios, 'VT323'), 'VT323', var(--font-press-start, 'Press Start 2P'), 'Press Start 2P', 'Px437 IBM VGA 8x8', 'Px437 IBM VGA8', monospace;
+  --font-bios: 'Web437 IBM BIOS', var(--font-ibm-bios), 'VT323', monospace;
   
   /* Map Tailwind's canvas to our era's dynamic colors */
   --background: var(--bg);
