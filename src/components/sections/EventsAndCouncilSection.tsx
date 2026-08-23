@@ -1056,7 +1056,11 @@ export default function EventsAndCouncilSection({
                     <span className="reaction-bubble blue-bubble">👍</span>
                     <span className="reaction-bubble yellow-bubble">😊</span>
                   </div>
-                  <span className="fb-reaction-text">Liked by StuCo, Rotaract and 25 others</span>
+                  <span className="fb-reaction-text">
+                    {member.name === 'Kevin Synet'
+                      ? 'Liked by StuCo, Rotaract and 25 others'
+                      : 'Liked by GDG and 24 others'}
+                  </span>
                 </div>
 
                 <FbActionBar />
