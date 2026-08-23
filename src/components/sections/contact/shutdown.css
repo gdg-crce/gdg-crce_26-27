@@ -230,7 +230,15 @@
 .sd-spacer {
   position: relative;
   width: 100%;
-  background: #0000a8 !important;
+  /* Mobile-only, and it is VISIBLE for a full viewport height before the
+     overlay takes over: the shutdown cannot start until the spacer fills the
+     screen (the overlay is fixed and would otherwise black out the council
+     still above it), so whatever colour this is slides up from the bottom as
+     a bare block. It used to be XP blue #0000a8 — an idea borrowed from the
+     DESKTOP ending, which finishes on an XP desktop. Mobile ends on the
+     light-grey Facebook council, so that blue read as a dark box appearing at
+     the bottom of the page. Matching the council makes the handover invisible. */
+  background: #e9ebee !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
