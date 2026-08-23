@@ -103,6 +103,13 @@ const REVEAL_END = 1.0;
  * the tiles the viewport touches. The 18× this replaced put the layer past
  * 115k px, which is where tiling stops saving you.
  */
+/** Boot screen floor. Buys the warm pass real time on a fast connection. */
+const MIN_BOOT_MS = 4200;
+/** Boot screen ceiling, so a stalled asset can never strand the loader. */
+const MAX_BOOT_MS = 14000;
+/** Beat after the gate closes, so the fade-out never lands mid-decode. */
+const SETTLE_MS = 700;
+
 const STRIP_SCALE = 2.6;
 const STRIP_FADE = 0.5;
 
@@ -133,12 +140,15 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
   /** The reveal cell's screen rect, measured once during the hold. */
   const revealRectRef = useRef<DOMRect | null>(null);
 
-  // Preload intro video + all 7 preloader event images + critical mobile assets
+  /* Critical set. Everything here is CONFIRMED to be requested later at this
+     exact URL — a preload that does not match the real request is a download
+     for nothing. Mobile-only and desktop-only assets are split, because both
+     consumers (`WhatWeDoSection` -> PolaroidScene2D, `EventsAndCouncilSection`)
+     are gated on `innerWidth < 768`. */
   useEffect(() => {
-    let loaded = 0;
-    
-    // Core preloader images
-    const coreImages = [
+    const isMobile = window.innerWidth < 768;
+
+    const critical = [
       ik('/preloader/genesis.jpg'),
       ik('/preloader/unplug.png'),
       ik('/preloader/pitchperf.png'),
@@ -146,141 +156,104 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       ik('/preloader/whatif.png'),
       ik('/preloader/ideacafe1.png'),
       ik('/preloader/futureforge.png'),
-    ];
-
-    // Build list of critical mobile assets to preload
-    const criticalMobileAssets = [
-      // About Section Turntable Player
+      // About turntable — both viewports.
       ik('/record player/base.png'),
       ik('/record player/disc.png'),
       ik('/record player/toneram.png'),
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Orange_record.png?tr=f-auto,q-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Red_record.png?tr=f-auto,q-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Yellow_record.png?tr=f-auto,q-auto',
-      
-      // What We Do Mobile Camera & Prints
-      ik('/whatwedo/mobile/camera.png'),
-      ik('/whatwedo/mobile/cameratop.png'),
-      ik('/whatwedo/mobile/technical.png'),
-      ik('/whatwedo/mobile/content.png'),
-      ik('/whatwedo/mobile/coomunity.png'),
-      ik('/whatwedo/mobile/ml&andro.png'),
-      ik('/whatwedo/mobile/design.png'),
-
-      // Events Section Mobile Background & Logo
-      ik('/events/eventsmobbg.png'),
-      '/_next/image?url=%2Flogo.png&w=96&q=75',
-      '/_next/image?url=%2Flogo.png&w=128&q=75',
-      '/_next/image?url=%2Flogo.png&w=640&q=75',
+      ik('/record player/Orange record.png'),
+      ik('/record player/Red record.png'),
+      ik('/record player/Yellow record.png'),
+      // Council grid opens on thumbs, so only thumbs block.
+      ...councilMembers.map((m) => m.photoThumb),
     ];
 
-    // Mobile Event Posters
-    mobileEvents.forEach((evt) => {
-      // Next.js optimized responsive sizes
-      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=640&q=75`);
-      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=750&q=75`);
-      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=828&q=75`);
-    });
-
-    // Council Members portraits
-    councilMembers.forEach((member) => {
-      criticalMobileAssets.push(member.photo);
-      criticalMobileAssets.push(member.photoThumb);
-    });
-
-    const allImagesToLoad = [...coreImages, ...criticalMobileAssets];
-    
-    // Total items: images + 1 (hero video) + 1 (GLB file)
-    const totalItems = allImagesToLoad.length + 2;
-
-    // The boot screen's bar is a canned XP marquee, not a real progress read —
-    // there is nothing to hand a percentage to. Counting into state anyway
-    // re-rendered the whole loader eight times during the heaviest part of
-    // startup, so the count stays a local.
-    function checkReady() {
-      loaded++;
-      if (loaded >= totalItems) {
-        setTimeout(() => setAssetsReady(true), 1600);
-      }
+    if (isMobile) {
+      critical.push(
+        ik('/whatwedo/mobile/camera.png'),
+        ik('/whatwedo/mobile/cameratop.png'),
+        ik('/whatwedo/mobile/technical.png'),
+        ik('/whatwedo/mobile/content.png'),
+        ik('/whatwedo/mobile/coomunity.png'),
+        ik('/whatwedo/mobile/ml&andro.png'),
+        ik('/whatwedo/mobile/design.png'),
+        ik('/events/eventsmobbg.png'),
+        // Exactly what the mobile carousel renders: `ik(evt.posterImage)`.
+        ...mobileEvents.map((evt) => ik(evt.posterImage)),
+      );
     }
 
-    allImagesToLoad.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-      img.onload = img.onerror = checkReady;
-    });
+    /* Non-blocking. Kicked off the moment the gate closes, so the extra boot
+       time below is spent loading rather than waiting. */
+    const warm = [
+      ...councilMembers.map((m) => m.photo),
+      ...(isMobile
+        ? []
+        : [
+            '/textures/wall/plaster_color.jpg',
+            '/textures/wall/plaster_normal.jpg',
+            '/textures/wall/plaster_ao_rough.jpg',
+            // Matches eventData's wall URLs: ik(posterImage, 'w-1024').
+            ...mobileEvents.map((evt) => ik(evt.posterImage, 'w-1024')),
+          ]),
+    ];
 
-    // Pull the hero film into cache before the sequence starts. It is one
-    // local 1.1 MB file and the film strip's reveal cell plays the SAME url,
-    // so this single fetch serves the loader, the zoom-through and the hero.
+    // Some members (the advisors) have the same url for thumb and full, so the
+    // warm pass would re-request what the gate already fetched.
+    const criticalSet = new Set(critical);
+    const warmOnly = warm.filter((u) => !criticalSet.has(u));
+
+    let loaded = 0;
+    let gateDone = false;
+    const total = critical.length + 1; // + the film
+
+    const startWarm = () => {
+      const run = () => {
+        for (const url of warmOnly) {
+          fetch(url, { priority: 'low', mode: 'no-cors' } as RequestInit).catch(() => {});
+        }
+      };
+      if (window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 2000 });
+      else window.setTimeout(run, 200);
+    };
+
+    const openGate = () => {
+      if (gateDone) return;
+      gateDone = true;
+      startWarm();
+      const waited = performance.now() - t0;
+      window.setTimeout(() => setAssetsReady(true), Math.max(SETTLE_MS, MIN_BOOT_MS - waited));
+    };
+
+    const t0 = performance.now();
+    const checkReady = () => {
+      if (++loaded >= total) openGate();
+    };
+
+    for (const src of critical) {
+      const img = new Image();
+      img.onload = img.onerror = checkReady;
+      img.src = src;
+    }
+
+    // The film. `loadeddata` and `canplay` BOTH fire, so it is counted once.
     const vid = document.createElement('video');
+    let filmCounted = false;
+    const countFilm = () => {
+      if (filmCounted) return;
+      filmCounted = true;
+      checkReady();
+    };
     vid.src = HERO_VIDEO_SRC;
     vid.preload = 'auto';
     vid.muted = true;
-    vid.onloadeddata = vid.oncanplay = checkReady;
-    vid.onerror = checkReady;
+    vid.onloadeddata = vid.oncanplay = vid.onerror = countFilm;
     vid.load();
 
-    // Prefetch GLB file
-    fetch('/models/myModel-v1-transformed.glb')
-      .then(checkReady)
-      .catch(checkReady);
+    // A stalled asset must never strand the boot screen.
+    const cap = window.setTimeout(openGate, MAX_BOOT_MS);
+    return () => window.clearTimeout(cap);
   }, []);
 
-  /* ── Warm the cache for the acts that come AFTER the loader ───────────────
-     The sequence runs for about eight seconds and, until now, spent all of it
-     fetching only its own seven stills. Everything the rest of the site needs
-     was fetched later, at the moment it was first shown — which is why the
-     wall renders untextured for a beat when Act 3 opens (its textures load
-     through a bare `loader.load()` with no Suspense) and why the first posters
-     pop in as you walk past them.
-
-     Two rules make this a win rather than a new problem:
-
-     1. It NEVER blocks. The gate above still waits on exactly the loader's own
-        stills plus the hero film. This runs separately and nothing waits on it,
-        so a slow connection delays the wall's textures, not the show.
-     2. It starts only once that gate has opened, and inside `requestIdleCallback`
-        — so it cannot compete with the hero video for bandwidth or with the
-        first frames of the animation for main thread. Cache warming that
-        stutters the thing it is warming for is worse than none.
-
-     Ordered by when each asset is first needed. `fetch` with low priority
-     rather than `new Image()`: these go into the HTTP cache, and the three
-     wall textures are consumed by three.js's loader, not by an <img>. */
-  useEffect(() => {
-    if (!assetsReady) return;
-
-    const warm = [
-      // Act 3 opens on the wall. These are the biggest and the most visibly
-      // late — the scan set is ~820KB across three files.
-      '/textures/wall/plaster_color.jpg',
-      '/textures/wall/plaster_normal.jpg',
-      '/textures/wall/plaster_ao_rough.jpg',
-      // Then the posters, in the order the camera walks past them.
-      ...Array.from({ length: 7 }, (_, i) => ik(`/posters/${i + 1}.png`, 'w-1024')),
-    ];
-
-    let cancelled = false;
-    const run = () => {
-      if (cancelled) return;
-      for (const url of warm) {
-        // `priority: 'low'` keeps these behind anything the visible page asks
-        // for. Errors are swallowed on purpose: a warm that fails just means
-        // the asset is fetched normally later, which is the old behaviour.
-        fetch(url, { priority: 'low', mode: 'no-cors' } as RequestInit).catch(() => {});
-      }
-    };
-
-    const idle = window.requestIdleCallback
-      ? window.requestIdleCallback(run, { timeout: 2500 })
-      : window.setTimeout(run, 1200);
-
-    return () => {
-      cancelled = true;
-      if (window.cancelIdleCallback && typeof idle === 'number') window.cancelIdleCallback(idle);
-    };
-  }, [assetsReady]);
 
   const onStartTransitionRef = useRef(onStartTransition);
   const onCompleteRef = useRef(onComplete);
@@ -313,6 +286,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
     let heroPrimed = false;
     let zoomStarted = false;
     let cellVideoParked = false;
+    let lastRewind = '';
 
     /** The loader's copy of the film, living inside the strip's reveal cell. */
     const cellVideo = () =>
@@ -402,8 +376,16 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       const stripX = (0.50 - currentFraction) * 100; // translateX in % of strip width
 
       if (filmTapeInnerRef.current) {
-        filmTapeInnerRef.current.style.transform = `translate3d(${stripX}%, 0, 0)`;
-        filmTapeInnerRef.current.style.setProperty('--rewind', String(rewind));
+        filmTapeInnerRef.current.style.transform = `translate3d(${stripX.toFixed(3)}%, 0, 0)`;
+        /* `--rewind` is inherited by all 25 cells and read by 8 rules, so every
+           write invalidates style for that whole subtree. Two decimals is the
+           resolution the effects consume (largest is a 4deg skew), so skipping
+           unchanged writes drops most of those recalcs and looks identical. */
+        const q = rewind.toFixed(2);
+        if (q !== lastRewind) {
+          lastRewind = q;
+          filmTapeInnerRef.current.style.setProperty('--rewind', q);
+        }
       }
 
       // Measure the reveal cell exactly once, during the hold. This is the only
@@ -480,7 +462,9 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       }
 
       if (progressBarRef.current) {
-        progressBarRef.current.style.width = `${p * 100}%`;
+        // scaleX, not width: `width` is a layout property, so writing it every
+        // tick forced layout + paint on every frame of the loader.
+        progressBarRef.current.style.transform = `scaleX(${p.toFixed(4)})`;
       }
     }
 
@@ -649,7 +633,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
             </div>
 
             <div className="absolute bottom-7 left-1/2 h-px w-[min(360px,66vw)] -translate-x-1/2 overflow-hidden rounded-full bg-white/10">
-              <div ref={progressBarRef} className="h-full rounded-full bg-neutral-300 shadow-[0_0_18px_rgba(255,255,255,0.45)]" style={{ width: '0%' }} />
+              <div ref={progressBarRef} className="h-full w-full rounded-full bg-neutral-300 shadow-[0_0_18px_rgba(255,255,255,0.45)]" style={{ transform: 'scaleX(0)', transformOrigin: '0 50%', willChange: 'transform' }} />
             </div>
 
             <div className="absolute top-6 right-6 z-[999999] pointer-events-auto flex items-center gap-2.5">

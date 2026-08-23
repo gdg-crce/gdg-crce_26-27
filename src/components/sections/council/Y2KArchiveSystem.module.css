@@ -662,12 +662,6 @@
   flex: 0 0 auto;
 }
 
-@keyframes y2kThrob {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* Default IE6 "Links" bar */
 .linksBar {
   display: flex;
@@ -1477,7 +1471,6 @@
 /* The 520px block held only `.socialGrid` (deleted with the Wall grid) and
    `.bannerText` (deleted with the banner overlay), so it is gone entirely.
    The banner needs no breakpoint now — its aspect-ratio scales it. */
-
 
 /* ── the club's photo album ───────────────────────────────────────────────
    The facebook*.JPG uploads: candids and event shots, not portraits. A
