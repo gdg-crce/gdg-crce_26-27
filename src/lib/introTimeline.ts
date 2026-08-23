@@ -31,9 +31,9 @@
  * distance that the viewer can register and enjoy the transition before the
  * next one begins. The total intro is 4.5 screens of scroll.
  */
-const IRIS_VH = 0.8;
-const TITLE_VH = 0.4;
-const HOLD_VH = 0.4;
+const IRIS_VH = 1.2;
+const TITLE_VH = 1.0;
+const HOLD_VH = 0.3;
 const ZOOM_VH = 2.0;
 
 export interface IntroPhase {
@@ -53,10 +53,10 @@ export interface IntroPhases {
 /** Resolve the timeline against a viewport height (px). */
 export function introPhases(vh: number): IntroPhases {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const irisVh = isMobile ? 0.6 : IRIS_VH;
-  const titleVh = isMobile ? 0.3 : TITLE_VH;
-  const holdVh = isMobile ? 0.3 : HOLD_VH;
-  const zoomVh = isMobile ? 1.4 : ZOOM_VH; // Smooth zoom on mobile
+  const irisVh = isMobile ? 0.7 : IRIS_VH;
+  const titleVh = isMobile ? 0.4 : TITLE_VH;
+  const holdVh = isMobile ? 0.1 : HOLD_VH;
+  const zoomVh = isMobile ? 0.8 : ZOOM_VH; // Faster zoom on mobile
   const iris = { start: 0, end: irisVh * vh };
   const title = { start: iris.end, end: iris.end + titleVh * vh };
   const hold = { start: title.end, end: title.end + holdVh * vh };

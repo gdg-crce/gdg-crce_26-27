@@ -1,15 +1,40 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+// Aliased: this module also uses the browser's global `new Image()` for
+// preloading, which a bare `Image` import from next/image would shadow.
 import NextImage from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ik } from '@/lib/imagekit';
-import { HERO_VIDEO_FIRST_FRAME, HERO_VIDEO_SRC } from '@/lib/media';
-import { lockScroll, unlockScroll } from '@/lib/scrollLock';
+import { HERO_VIDEO_SRC } from '@/lib/media';
 import { councilMembers } from '@/components/sections/council/councilData';
 import { mobileEvents } from '@/components/sections/events/eventData';
-import FilmTape from '../../../models/reactComponent/FilmTape';
 import './xp-loader.css';
+
+/* ── No framer-motion here, deliberately ───────────────────────────────────
+   This module imported `AnimatePresence` and `motion` to do exactly two things:
+   fade the loader in on mount, and fade the boot screen out when the assets
+   were ready. Two opacity ramps.
+
+   framer-motion is ~5.5 MB on disk and pulls its whole animation runtime into
+   the FIRST chunk the site evaluates — the preloader is the very first thing
+   that renders, so it was on the critical path, ahead of the hero video it is
+   supposed to be buying time for.
+
+   Worse, half of what it was there for could never even run. The exit
+   animation on the outer wrapper is unreachable: `complete()` calls
+   `onComplete`, which sets `loading = false` in page.tsx and unmounts this
+   component outright, so React removes the tree before AnimatePresence gets to
+   play anything out. It was paying for an exit that never happened.
+
+   Both fades are now CSS (see `.preloader-root` / `.xp-boot-screen.is-leaving`
+   in xp-loader.css), which the compositor runs off the main thread. */
+
+const FilmTape = dynamic(() => import('../../../models/reactComponent/FilmTape'), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface PreloaderProps {
   onComplete: () => void;
@@ -114,9 +139,6 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
     
     // Core preloader images
     const coreImages = [
-      // The strip's reveal cell. It is the frame the zoom lands on, so it must
-      // be decoded before the sequence starts, not fetched when the cell scrolls in.
-      HERO_VIDEO_FIRST_FRAME,
       ik('/preloader/genesis.jpg'),
       ik('/preloader/unplug.png'),
       ik('/preloader/pitchperf.png'),
@@ -126,8 +148,8 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       ik('/preloader/futureforge.png'),
     ];
 
-    // Build list of critical assets to preload and decode
-    const criticalAssets = [
+    // Build list of critical mobile assets to preload
+    const criticalMobileAssets = [
       // About Section Turntable Player
       ik('/record player/base.png'),
       ik('/record player/disc.png'),
@@ -145,131 +167,64 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       ik('/whatwedo/mobile/ml&andro.png'),
       ik('/whatwedo/mobile/design.png'),
 
-      // Events Section Mobile Background & Logos
+      // Events Section Mobile Background & Logo
       ik('/events/eventsmobbg.png'),
-      '/logo.png',
       '/_next/image?url=%2Flogo.png&w=96&q=75',
       '/_next/image?url=%2Flogo.png&w=128&q=75',
       '/_next/image?url=%2Flogo.png&w=640&q=75',
-
-      // Wall textures
-      '/textures/wall/plaster_color.jpg',
-      '/textures/wall/plaster_normal.jpg',
-      '/textures/wall/plaster_ao_rough.jpg',
-
-      // Desktop Windows XP / Wall candidates
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/walpaper.png?tr=f-auto,q-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/WhatsApp%20Image%202026-08-16%20at%2012.44.58%20PM.jpeg?tr=w-800,q-75,f-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook1.JPG?tr=w-800,q-75,f-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook2.JPG?tr=w-800,q-75,f-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook3.JPG?tr=w-800,q-75,f-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/images/facebook4.JPG?tr=w-800,q-75,f-auto',
-
-      // Mobile Council Gallery Photos
-      '/mobcouncil/DSC04899 (1).JPG.jpeg',
-      '/mobcouncil/IMG20260330194828 (1).jpg.jpeg',
-      '/mobcouncil/IMG_5410 (1).JPG.jpeg',
-      '/mobcouncil/IMG_8447 (1).JPG.jpeg',
-      '/mobcouncil/IMG_8775 (1).JPG.jpeg',
-      '/mobcouncil/IMG_8797 (1).JPG.jpeg',
-      '/mobcouncil/fxn 2026-03-25 132323CE9231BDFC83 (2).jpg.jpeg',
-      '/mobcouncil/fxn 2026-03-25 135628A4842A32C689 (1).JPEG',
-      '/mobcouncil/fxn 2026-03-25 1401139FCE36B5FBA3 (1).JPEG',
-      '/mobcouncil/image (4).png',
-      '/mobcouncil/image (5).png',
-      '/mobcouncil/image (6).png',
-      '/mobcouncil/image (7).png',
-      '/mobcouncil/image (8).png',
-      '/mobcouncil/still2 (1).jpg.jpeg',
-      // Transition & Album Photos
-      '/transition/image.png',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/1.png?tr=f-auto,q-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/2.png?tr=f-auto,q-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/31.png',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/4.png?tr=f-auto,q-auto',
-      'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/5.png?tr=f-auto,q-auto',
     ];
 
-    // Event Posters (both full, raw, and w-1024 variants)
+    // Mobile Event Posters
     mobileEvents.forEach((evt) => {
-      criticalAssets.push(evt.posterImage);
-      criticalAssets.push(ik(evt.posterImage));
-      criticalAssets.push(ik(evt.posterImage, 'w-1024'));
+      // Next.js optimized responsive sizes
+      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=640&q=75`);
+      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=750&q=75`);
+      criticalMobileAssets.push(`/_next/image?url=${encodeURIComponent(evt.posterImage)}&w=828&q=75`);
     });
 
-    // Council Members portraits & thumbnails
+    // Council Members portraits
     councilMembers.forEach((member) => {
-      criticalAssets.push(member.photo);
-      criticalAssets.push(member.photoThumb);
+      criticalMobileAssets.push(member.photo);
+      criticalMobileAssets.push(member.photoThumb);
     });
 
-    const allImagesToLoad = [...coreImages, ...criticalAssets];
+    const allImagesToLoad = [...coreImages, ...criticalMobileAssets];
     
     // Total items: images + 1 (hero video) + 1 (GLB file)
     const totalItems = allImagesToLoad.length + 2;
 
+    // The boot screen's bar is a canned XP marquee, not a real progress read —
+    // there is nothing to hand a percentage to. Counting into state anyway
+    // re-rendered the whole loader eight times during the heaviest part of
+    // startup, so the count stays a local.
     function checkReady() {
       loaded++;
       if (loaded >= totalItems) {
-        setTimeout(() => setAssetsReady(true), 1200);
+        setTimeout(() => setAssetsReady(true), 1600);
       }
     }
-
-    // Fallback safety timer so preloader never hangs indefinitely
-    const safetyTimeout = setTimeout(() => {
-      setAssetsReady(true);
-    }, 4500);
 
     allImagesToLoad.forEach((src) => {
       const img = new Image();
       img.src = src;
-      if (typeof img.decode === 'function') {
-        img.decode().then(checkReady).catch(checkReady);
-      } else {
-        img.onload = img.onerror = checkReady;
-      }
+      img.onload = img.onerror = checkReady;
     });
 
-    /* ── readiness probe for the film ─────────────────────────────────────
-       This used to build a FOURTH copy of the video —
-       `document.createElement('video')` with its own `src` and
-       `preload="auto"` — on top of the strip's reveal cell, the portal and the
-       hero. One URL is meant to buy one download (see `src/lib/media.ts`), and
-       of the four copies this was the only one that never painted anything, so
-       it was pure duplicated bytes on the critical path. The probe now rides
-       on the portal's element, which is already in the DOM and already
-       `preload="auto"`.
-
-       Firing once is the other half of the fix: `loadeddata` and `canplay`
-       BOTH fire, and the old code assigned `checkReady` to both, so the film
-       counted twice toward a total that budgeted one — opening the gate one
-       asset early, every load. */
-    let filmCounted = false;
-    const countFilm = () => {
-      if (filmCounted) return;
-      filmCounted = true;
-      checkReady();
-    };
-    const probe = portalVideoRef.current;
-    if (!probe) {
-      countFilm();
-    } else if (probe.readyState >= 2) {
-      countFilm();
-    } else {
-      probe.addEventListener('loadeddata', countFilm);
-      probe.addEventListener('error', countFilm);
-    }
+    // Pull the hero film into cache before the sequence starts. It is one
+    // local 1.1 MB file and the film strip's reveal cell plays the SAME url,
+    // so this single fetch serves the loader, the zoom-through and the hero.
+    const vid = document.createElement('video');
+    vid.src = HERO_VIDEO_SRC;
+    vid.preload = 'auto';
+    vid.muted = true;
+    vid.onloadeddata = vid.oncanplay = checkReady;
+    vid.onerror = checkReady;
+    vid.load();
 
     // Prefetch GLB file
     fetch('/models/myModel-v1-transformed.glb')
       .then(checkReady)
       .catch(checkReady);
-
-    return () => {
-      clearTimeout(safetyTimeout);
-      probe?.removeEventListener('loadeddata', countFilm);
-      probe?.removeEventListener('error', countFilm);
-    };
   }, []);
 
   /* ── Warm the cache for the acts that come AFTER the loader ───────────────
@@ -303,7 +258,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       '/textures/wall/plaster_normal.jpg',
       '/textures/wall/plaster_ao_rough.jpg',
       // Then the posters, in the order the camera walks past them.
-      ...mobileEvents.map((e) => ik(e.posterImage, 'w-1024')),
+      ...Array.from({ length: 7 }, (_, i) => ik(`/posters/${i + 1}.png`, 'w-1024')),
     ];
 
     let cancelled = false;
@@ -350,48 +305,14 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
     onCompleteRef.current();
   }, []);
 
-  /* ── the loader owns the scroll for as long as it is on screen ────────────
-     Taken at MOUNT, not at `assetsReady`: the boot screen is on screen for
-     several seconds before the timeline starts and there is nothing to scroll
-     behind it either.
-
-     This replaced a bare `document.body.style.overflow = 'hidden'`, which was
-     not a lock at all on this page — Lenis scrolls the document
-     programmatically and programmatic scrolling goes straight through hidden
-     overflow, so wheel input during the loader really did scroll the page.
-     Far enough, measured, to run the hero's iris ScrollTrigger to progress 1
-     before the zoom had even landed: the reveal then opened onto a hero that
-     was already `visibility: hidden`, and the film played its whole 18.1s into
-     nothing. See `src/lib/scrollLock.ts`.
-
-     The release is deliberately `resetToTop`: the film has to begin on a page
-     that has not moved, or the iris starts part-closed over its first frame. */
-  useEffect(() => {
-    lockScroll('preloader');
-    return () => unlockScroll('preloader', true);
-  }, []);
-
-  // Prevent background touch scrolling on mobile while preloader is active
-  useEffect(() => {
-    if (completed) return;
-    const preventScroll = (e: TouchEvent) => {
-      e.preventDefault();
-    };
-    window.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
-    return () => {
-      window.removeEventListener('touchmove', preventScroll, { capture: true });
-    };
-  }, [completed]);
-
   useEffect(() => {
     if (!assetsReady) return;
+    document.body.style.overflow = 'hidden';
 
     const animObj = { val: 0 };
     let heroPrimed = false;
     let zoomStarted = false;
     let cellVideoParked = false;
-    /** Last `--rewind` actually written, quantised. See `applyFrame`. */
-    let lastRewind = '';
 
     /** The loader's copy of the film, living inside the strip's reveal cell. */
     const cellVideo = () =>
@@ -481,21 +402,8 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       const stripX = (0.50 - currentFraction) * 100; // translateX in % of strip width
 
       if (filmTapeInnerRef.current) {
-        filmTapeInnerRef.current.style.transform = `translate3d(${stripX.toFixed(3)}%, 0, 0)`;
-        /* `--rewind` is INHERITED by the whole strip and read by nine rules
-           spread across all 25 cells, so every write invalidates style for that
-           entire subtree. Writing `String(rewind)` at full float precision did
-           that on all ~336 frames of the sequence.
-
-           Two decimals is the resolution the effects actually consume — the
-           largest consumer is a 4deg skew, the rest are sub-0.2 opacity ramps —
-           so quantising is invisible, and skipping the write when the quantised
-           value has not moved drops roughly two thirds of those recalcs. */
-        const q = rewind.toFixed(2);
-        if (q !== lastRewind) {
-          lastRewind = q;
-          filmTapeInnerRef.current.style.setProperty('--rewind', q);
-        }
+        filmTapeInnerRef.current.style.transform = `translate3d(${stripX}%, 0, 0)`;
+        filmTapeInnerRef.current.style.setProperty('--rewind', String(rewind));
       }
 
       // Measure the reveal cell exactly once, during the hold. This is the only
@@ -572,13 +480,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       }
 
       if (progressBarRef.current) {
-        // scaleX, not width. `width` is a layout property, so writing it on
-        // every tick forced a full layout + paint each frame for the loader's
-        // entire eight seconds — including the zoom, where the frame budget is
-        // already spent on the strip and the clip-path. The bar is a plain
-        // 1px-tall fill, so a transform is visually identical and stays on the
-        // compositor.
-        progressBarRef.current.style.transform = `scaleX(${p.toFixed(4)})`;
+        progressBarRef.current.style.width = `${p * 100}%`;
       }
     }
 
@@ -631,13 +533,9 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
       }
     }
 
-    /* No `document.body.style.overflow = ''` here. This cleanup runs when the
-       loader unmounts, which is 60ms AFTER the hero has started — so clearing
-       the global string released a lock this effect had not taken and the hero
-       still wanted. Ownership lives in `scrollLock`; the mount effect above
-       hands it back. */
     return () => {
       tl.kill();
+      document.body.style.overflow = '';
     };
   }, [assetsReady, complete]);
 
@@ -751,11 +649,7 @@ export default function Preloader({ onComplete, onStartTransition, onPrimeHero }
             </div>
 
             <div className="absolute bottom-7 left-1/2 h-px w-[min(360px,66vw)] -translate-x-1/2 overflow-hidden rounded-full bg-white/10">
-              <div
-                ref={progressBarRef}
-                className="h-full w-full rounded-full bg-neutral-300 shadow-[0_0_18px_rgba(255,255,255,0.45)]"
-                style={{ transform: 'scaleX(0)', transformOrigin: '0 50%', willChange: 'transform' }}
-              />
+              <div ref={progressBarRef} className="h-full rounded-full bg-neutral-300 shadow-[0_0_18px_rgba(255,255,255,0.45)]" style={{ width: '0%' }} />
             </div>
 
             <div className="absolute top-6 right-6 z-[999999] pointer-events-auto flex items-center gap-2.5">

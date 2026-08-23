@@ -55,10 +55,6 @@ const MAX_SCALE = 40;
 const IRIS_START = 0.55;
 const IRIS_POWER = 3;
 
-interface HomeSectionProps {
-  videoEnded?: boolean;
-}
-
 /**
  * Act 1.5 — the title card.
  *
@@ -75,7 +71,7 @@ interface HomeSectionProps {
  * After that the whole layer is hidden and costs nothing for the rest of the
  * page.
  */
-export default function HomeSection({ videoEnded = false }: HomeSectionProps) {
+export default function HomeSection() {
   const rootRef = useRef<HTMLElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const maskRef = useRef<SVGMaskElement | null>(null);
@@ -87,29 +83,9 @@ export default function HomeSection({ videoEnded = false }: HomeSectionProps) {
   const maskGroupRef = useRef<SVGGElement | null>(null);
   const solidGroupRef = useRef<SVGGElement | null>(null);
   const maxTitleInRef = useRef(0);
-  const autoFadeRef = useRef(0);
-  const applyRef = useRef<((scrollPx: number) => void) | null>(null);
 
   /** Push-in origin, in SVG user units (= CSS px, the viewBox is 1:1). */
   const focusRef = useRef({ x: 0, y: 0 });
-
-  // Automatically fade in "GDG CRCE" text only after the video ends
-  useEffect(() => {
-    if (!videoEnded) return;
-    const anim = { val: autoFadeRef.current };
-    const tween = gsap.to(anim, {
-      val: 1,
-      duration: 1.0,
-      ease: 'power2.out',
-      onUpdate: () => {
-        autoFadeRef.current = anim.val;
-        applyRef.current?.(window.scrollY);
-      },
-    });
-    return () => {
-      tween.kill();
-    };
-  }, [videoEnded]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -190,9 +166,9 @@ export default function HomeSection({ videoEnded = false }: HomeSectionProps) {
 
       const ph = currentIntroPhases();
 
-      // Phase 2 — the type fades up on black (or automatically when video ends).
+      // Phase 2 — the type fades up on black.
       const rawTitleIn = ramp(ph.title.start, ph.title.end, scrollPx);
-      maxTitleInRef.current = Math.max(maxTitleInRef.current, autoFadeRef.current, rawTitleIn);
+      maxTitleInRef.current = Math.max(maxTitleInRef.current, rawTitleIn);
       const titleIn = maxTitleInRef.current;
 
       // Phase 4 — knockout, then push in.
@@ -216,7 +192,7 @@ export default function HomeSection({ videoEnded = false }: HomeSectionProps) {
       // of the push under 1.4×, which on a scrubbed scroll feels like the wheel
       // has stopped doing anything, and is the other half of why the reveal
       // went unnoticed.
-      const scale = Math.exp(Math.pow(zoomP, 1.15) * Math.log(MAX_SCALE));
+      const scale = Math.exp(Math.pow(zoomP, 1.5) * Math.log(MAX_SCALE));
 
       // The origin sits on the D's stem, which is left of centre. Drifting it
       // to the middle of the screen as the push starts hides that: it reads as
@@ -274,7 +250,6 @@ export default function HomeSection({ videoEnded = false }: HomeSectionProps) {
       apply(window.scrollY);
     };
 
-    applyRef.current = apply;
     layout();
     apply(0);
     window.addEventListener('resize', onResize);

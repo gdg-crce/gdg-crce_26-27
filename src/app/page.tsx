@@ -14,15 +14,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [videoStarted, setVideoStarted] = useState(false);
   const [videoPrimed, setVideoPrimed] = useState(false);
-  const [videoEnded, setVideoEnded] = useState(false);
-
-  // Disable scroll restoration and force viewport to top on page mount
-  React.useEffect(() => {
-    if (typeof window !== 'undefined' && 'history' in window && 'scrollRestoration' in window) {
-      window.history.scrollRestoration = 'manual';
-    }
-    window.scrollTo(0, 0);
-  }, []);
 
   /* The shutdown has no clock of its own. It parks its draw function here and
      Act 3's pin calls it from the same scroll callback that runs the council
@@ -35,10 +26,6 @@ export default function Home() {
   const handleStartTransition = React.useCallback(() => {
     window.scrollTo(0, 0);
     setVideoStarted(true);
-  }, []);
-
-  const handleVideoEnded = React.useCallback(() => {
-    setVideoEnded(true);
   }, []);
 
   const handleComplete = React.useCallback(() => {
@@ -61,16 +48,12 @@ export default function Home() {
           unmounts, and the nav sits at z-100000 — above the loader's z-9999. */}
       <TopNav ready={!loading} />
       <main className="relative z-0">
-        <HeroVideoSection
-          startPlaying={videoStarted}
-          primed={videoPrimed}
-          onVideoEnded={handleVideoEnded}
-        />
+        <HeroVideoSection startPlaying={videoStarted} primed={videoPrimed} />
         {/* The black title card the hero's iris closes onto, and whose letters
             open again as a window onto the turntable. Fixed and self-stacking
             (z 9996, between the hero at 9997 and the About pin at 9995), so its
             position in this list is documentation, not layout. */}
-        <HomeSection videoEnded={videoEnded} />
+        <HomeSection />
         {/* Zero spacer: About turntable sits directly under the hero at top:0 to prevent scroller up artifacts. */}
         <AboutSection />
         <WhatWeDoSection />
