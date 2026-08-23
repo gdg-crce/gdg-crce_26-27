@@ -18,6 +18,76 @@ import { ik, ikUrl } from '@/lib/imagekit';
 import { COUNCIL_CLIPS } from '@/lib/media';
 import './council/council.css';
 
+/**
+ * The Like / Comment / Share row under a post.
+ *
+ * Purely cosmetic. Nothing here posts, counts or persists — the point is that
+ * a tap looks like it landed. `Like` latches (blue, filled, "Liked"); the other
+ * two flash for a beat and fall back, because there is nothing for them to
+ * latch to. State is per-instance, so one post's Like cannot light up another's.
+ */
+function FbActionBar() {
+  const [liked, setLiked] = React.useState(false);
+  const [flash, setFlash] = React.useState<'comment' | 'share' | null>(null);
+  const flashTimer = React.useRef<number | null>(null);
+
+  const pulse = React.useCallback((which: 'comment' | 'share') => {
+    setFlash(which);
+    if (flashTimer.current) window.clearTimeout(flashTimer.current);
+    flashTimer.current = window.setTimeout(() => setFlash(null), 420);
+  }, []);
+
+  React.useEffect(() => () => {
+    if (flashTimer.current) window.clearTimeout(flashTimer.current);
+  }, []);
+
+  return (
+    <div className="fb-post-actions">
+      <button
+        type="button"
+        className={`fb-action-btn${liked ? ' is-liked' : ''}`}
+        aria-pressed={liked}
+        onClick={() => setLiked((v) => !v)}
+      >
+        <span className="btn-icon">
+          {/* Icon colour comes from state rather than a stylesheet rule, so it
+              cannot be out-specified by the button's own !important colour. */}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={liked ? '#1877f2' : '#1b3a70'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: liked ? '#1877f2' : '#1b3a70' }}>
+            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
+          </svg>
+        </span>
+        {liked ? 'Liked' : 'Like'}
+      </button>
+      <div className="fb-action-separator" />
+      <button
+        type="button"
+        className={`fb-action-btn${flash === 'comment' ? ' is-flashing' : ''}`}
+        onClick={() => pulse('comment')}
+      >
+        <span className="btn-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </span>
+        Comment
+      </button>
+      <div className="fb-action-separator" />
+      <button
+        type="button"
+        className={`fb-action-btn${flash === 'share' ? ' is-flashing' : ''}`}
+        onClick={() => pulse('share')}
+      >
+        <span className="btn-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
+            <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
+          </svg>
+        </span>
+        Share
+      </button>
+    </div>
+  );
+}
+
 /* Dynamically import the R3F scene — no SSR for WebGL */
 const WallScene = dynamic(() => import('@/components/three/WallScene'), {
   ssr: false,
@@ -919,14 +989,14 @@ export default function EventsAndCouncilSection({
                     GDG CRCE
                     <span className="fb-verified-badge-small">✓</span>
                   </span>
-                  <span className="fb-post-meta">Posted by Sir Harvey York • Pinned Post • 🌐</span>
+                  <span className="fb-post-meta">Posted by GDG CRCE • Pinned Post • 🌐</span>
                 </div>
               </div>
 
               {/* Post content */}
               <div className="fb-post-content">
                 <p className="fb-post-text">
-                  Zoomies before duties. Paws-ing for a group photo before we start building! 🐾
+                  The team behind it all. GDG on Campus · CRCE Student Council 2026-27, together before the year begins. 🚀
                 </p>
               </div>
 
@@ -941,56 +1011,13 @@ export default function EventsAndCouncilSection({
                   <span className="reaction-bubble blue-bubble">👍</span>
                   <span className="reaction-bubble red-bubble">❤️</span>
                 </div>
-                <span className="fb-reaction-text">You, Movin and 87 others</span>
+                <span className="fb-reaction-text">Liked by GDG CRCE and 24 others</span>
               </div>
 
-              {/* Post Action Buttons */}
-              <div className="fb-post-actions">
-                <button type="button" className="fb-action-btn">
-                  <span className="btn-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
-                    </svg>
-                  </span>
-                  Like
-                </button>
-                <div className="fb-action-separator" />
-                <button type="button" className="fb-action-btn">
-                  <span className="btn-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                  </span>
-                  Comment
-                </button>
-                <div className="fb-action-separator" />
-                <button type="button" className="fb-action-btn">
-                  <span className="btn-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
-                      <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
-                    </svg>
-                  </span>
-                  Share
-                </button>
-              </div>
+              <FbActionBar />
 
               {/* Comments block */}
               <div className="fb-comments-section">
-                <div className="fb-comment-item">
-                  <span className="comment-avatar">💻</span>
-                  <div className="comment-bubble">
-                    <span className="comment-author">Movin</span>
-                    <span className="comment-text">Barkend Developer looks good! 🐶</span>
-                  </div>
-                </div>
-                <div className="fb-comment-item">
-                  <span className="comment-avatar">🐶</span>
-                  <div className="comment-bubble">
-                    <span className="comment-author">Sir Harvey York</span>
-                    <span className="comment-text">Woof! 🐾</span>
-                  </div>
-                </div>
-                
                 {/* Comment Input Box */}
                 <div className="fb-comment-input-row">
                   <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
@@ -1029,37 +1056,10 @@ export default function EventsAndCouncilSection({
                     <span className="reaction-bubble blue-bubble">👍</span>
                     <span className="reaction-bubble yellow-bubble">😊</span>
                   </div>
+                  <span className="fb-reaction-text">Liked by StuCo, Rotaract and 25 others</span>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="fb-post-actions">
-                  <button type="button" className="fb-action-btn">
-                    <span className="btn-icon">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM6 11H3v10h3V11z" />
-                      </svg>
-                    </span>
-                    Like
-                  </button>
-                  <div className="fb-action-separator" />
-                  <button type="button" className="fb-action-btn">
-                    <span className="btn-icon">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d3a70" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#1b3a70' }}>
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                      </svg>
-                    </span>
-                    Comment
-                  </button>
-                  <div className="fb-action-separator" />
-                  <button type="button" className="fb-action-btn">
-                    <span className="btn-icon">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a3b8c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ fill: '#5856d6' }}>
-                        <path d="M15 8V4l9 8-9 8v-4C4 16 2 20 2 20c0-6 2-12 13-12z" />
-                      </svg>
-                    </span>
-                    Share
-                  </button>
-                </div>
+                <FbActionBar />
 
                 {/* Comments Input */}
                 <div className="fb-comments-section">

@@ -2682,7 +2682,8 @@ button.fb-tab-item.active::after {
 }
 
 .fb-action-btn:active {
-  background-color: #e4e6eb !important;
+  /* No background here either — see .fb-action-btn.is-flashing. The scale is
+     what actually reads on this button. */
   transform: scale(0.96) !important;
 }
 
@@ -2708,4 +2709,41 @@ button.fb-tab-item.active::after {
 .mobile-event-card-item:active .mobile-event-card-frame {
   transform: scale(0.97) !important;
   transition: transform 0.12s ease !important;
+}
+
+/* --------------------------------------------------------------------------
+   FB ACTION BUTTON STATES (cosmetic only)
+   Nothing here posts, counts or persists. Like latches; Comment and Share
+   acknowledge for a beat and fall back, because they have nothing to latch to.
+   -------------------------------------------------------------------------- */
+
+.fb-action-btn.is-liked {
+  color: #1877f2 !important;
+}
+
+.fb-action-btn.is-liked .btn-icon,
+.fb-action-btn.is-flashing .btn-icon {
+  animation: fbLikePop 0.28s ease !important;
+}
+
+@keyframes fbLikePop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.32); }
+  100% { transform: scale(1); }
+}
+
+/* Colour + the icon pop, deliberately NOT background: `.fb-action-btn` sets
+   `background: transparent !important` as a shorthand, and a longhand
+   background-color override does not take here even at higher specificity with
+   !important (verified with transitions disabled, so this is the cascade and
+   not a frozen transition). `color` on the same selector shape applies fine. */
+.fb-action-btn.is-flashing {
+  color: #1877f2 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fb-action-btn.is-liked .btn-icon,
+  .fb-action-btn.is-flashing .btn-icon {
+    animation: none !important;
+  }
 }
