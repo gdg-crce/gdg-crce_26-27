@@ -171,7 +171,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Leadership',
     tier: 'Senior Council',
     photoPath: 'New%20folder/kevin.jpeg',
-    bio: 'im a good boy',
+    bio: 'It aint that deep.',
     title: 'Mommy',
   },
   {
@@ -203,8 +203,8 @@ const ROSTER: RosterEntry[] = [
     team: 'Technical',
     tier: 'Senior Council',
     photoPath: 'Screenshot%202026-08-16%20125215.png',
-    bio: 'fuck it we ball',
-    title: 'The Jack of all Trades',
+    bio: 'The more you care, the less you live',
+    title: 'The Polymath',
   },
   {
     name: 'Johann Joseph',
@@ -305,7 +305,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Events',
     tier: 'Junior Council',
     photoPath: 'New%20folder/astin.jpeg',
-    bio: 'Mic check 1, 2... making sure everyone shows up.',
+    bio: 'With great power comes great responsibility.',
     title: 'The Crowd Puller',
   },
   {

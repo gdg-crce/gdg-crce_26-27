@@ -473,219 +473,219 @@ export default function EventsAndCouncilSection({
          This costs nothing per frame: it is the same code on the same tick, plus
          a handful of discrete calls. */
       const applyProgress = (progress: number) => {
-          /* One clock, two rulers.
-             `px` is the position along the whole pin. `p` re-normalises it onto
-             the council choreography so every threshold below is still a
-             fraction of ACT3_LEN and none of them had to move. It saturates at
-             1 for the gallery hold and the shutdown, which is precisely what
-             leaves the Picture and Fax Viewer open and motionless underneath
-             them instead of still fading in while the screen goes dark. */
-          const px = progress * PIN_LEN;
-          const p = Math.min(1, px / ACT3_LEN);
+        /* One clock, two rulers.
+           `px` is the position along the whole pin. `p` re-normalises it onto
+           the council choreography so every threshold below is still a
+           fraction of ACT3_LEN and none of them had to move. It saturates at
+           1 for the gallery hold and the shutdown, which is precisely what
+           leaves the Picture and Fax Viewer open and motionless underneath
+           them instead of still fading in while the screen goes dark. */
+        const px = progress * PIN_LEN;
+        const p = Math.min(1, px / ACT3_LEN);
 
-          // 0 walking · 1 dwelling on the last poster · 2 windowed · 3 minimized
-          const nextPhase = p >= 0.5 ? 3 : p >= 0.32 ? 2 : p >= 0.26 ? 1 : 0;
-          if (nextPhase !== phaseRef.current) {
-            phaseRef.current = nextPhase;
-            setPhase(nextPhase);
+        // 0 walking · 1 dwelling on the last poster · 2 windowed · 3 minimized
+        const nextPhase = p >= 0.5 ? 3 : p >= 0.32 ? 2 : p >= 0.26 ? 1 : 0;
+        if (nextPhase !== phaseRef.current) {
+          phaseRef.current = nextPhase;
+          setPhase(nextPhase);
+        }
+
+        /* ── Phase 1: Alleyway Walk (0.00 -> 0.32) ───────────────────────── */
+        const WALK_START_DWELL = 0.07; // Distinct arrival pause (~770px scroll) on Poster #1 before camera walk starts
+        const WALK_END = 0.32;
+        const FIRST_POSTER_P = 0.018; // Camera position centered dead-on Poster #1 (-23.15 -> lookAt -22.5)
+        const LAST_POSTER_P = 0.968;
+
+        let camP = FIRST_POSTER_P;
+        let walkFraction = 0;
+        if (p <= WALK_START_DWELL) {
+          camP = FIRST_POSTER_P;
+          walkFraction = 0;
+        } else if (p < WALK_END) {
+          walkFraction = (p - WALK_START_DWELL) / (WALK_END - WALK_START_DWELL);
+          camP = FIRST_POSTER_P + walkFraction * (LAST_POSTER_P - FIRST_POSTER_P);
+        } else {
+          walkFraction = 1;
+          camP = LAST_POSTER_P;
+        }
+        progressRef.current = camP;
+
+        if (progressBarRef.current) {
+          progressBarRef.current.style.width = `${walkFraction * 100}%`;
+        }
+
+        const cameraX = THREE_MATH_LERP(-24, 23, camP);
+        let closest = 0;
+        let minDist = Infinity;
+        events.forEach((e, i) => {
+          const dist = Math.abs(e.position[0] - cameraX);
+          if (dist < minDist) {
+            minDist = dist;
+            closest = i;
           }
+        });
 
-          /* ── Phase 1: Alleyway Walk (0.00 -> 0.32) ───────────────────────── */
-          const WALK_START_DWELL = 0.07; // Distinct arrival pause (~770px scroll) on Poster #1 before camera walk starts
-          const WALK_END = 0.32;
-          const FIRST_POSTER_P = 0.018; // Camera position centered dead-on Poster #1 (-23.15 -> lookAt -22.5)
-          const LAST_POSTER_P = 0.968;
-
-          let camP = FIRST_POSTER_P;
-          let walkFraction = 0;
-          if (p <= WALK_START_DWELL) {
-            camP = FIRST_POSTER_P;
-            walkFraction = 0;
-          } else if (p < WALK_END) {
-            walkFraction = (p - WALK_START_DWELL) / (WALK_END - WALK_START_DWELL);
-            camP = FIRST_POSTER_P + walkFraction * (LAST_POSTER_P - FIRST_POSTER_P);
-          } else {
-            walkFraction = 1;
-            camP = LAST_POSTER_P;
+        if (closest !== activeEventRef.current) {
+          activeEventRef.current = closest;
+          const evt = events[closest];
+          if (eventNumRef.current) {
+            eventNumRef.current.textContent = String(closest + 1).padStart(2, '0');
           }
-          progressRef.current = camP;
+          if (eventTitleRef.current) eventTitleRef.current.textContent = evt?.title ?? '';
+          if (eventSubtitleRef.current) eventSubtitleRef.current.textContent = evt?.subtitle ?? '';
+        }
 
-          if (progressBarRef.current) {
-            progressBarRef.current.style.width = `${walkFraction * 100}%`;
-          }
+        /* ── Phase 2 -> 4: Dwell, Windowize & Minimize (0.32 -> 0.50) ────── */
+        const DWELL_END = 0.36;
+        const WINDOW_END = 0.44;
+        const MINIMIZE_END = 0.50;
+        const WINDOW_SCALE = 0.66;
 
-          const cameraX = THREE_MATH_LERP(-24, 23, camP);
-          let closest = 0;
-          let minDist = Infinity;
-          events.forEach((e, i) => {
-            const dist = Math.abs(e.position[0] - cameraX);
-            if (dist < minDist) {
-              minDist = dist;
-              closest = i;
-            }
-          });
-
-          if (closest !== activeEventRef.current) {
-            activeEventRef.current = closest;
-            const evt = events[closest];
-            if (eventNumRef.current) {
-              eventNumRef.current.textContent = String(closest + 1).padStart(2, '0');
-            }
-            if (eventTitleRef.current) eventTitleRef.current.textContent = evt?.title ?? '';
-            if (eventSubtitleRef.current) eventSubtitleRef.current.textContent = evt?.subtitle ?? '';
-          }
-
-          /* ── Phase 2 -> 4: Dwell, Windowize & Minimize (0.32 -> 0.50) ────── */
-          const DWELL_END = 0.36;
-          const WINDOW_END = 0.44;
-          const MINIMIZE_END = 0.50;
-          const WINDOW_SCALE = 0.66;
-
-          if (eventsWindowRef.current) {
-            const titlebar = eventsWindowRef.current.querySelector(
-              '.xp-titlebar'
-            ) as HTMLElement | null;
-            const showChrome = (on: boolean) => {
-              if (on) {
-                eventsWindowRef.current!.classList.add('is-windowed');
-                if (titlebar) {
-                  titlebar.style.opacity = '1';
-                  titlebar.style.height = '30px';
-                }
-              } else {
-                eventsWindowRef.current!.classList.remove('is-windowed');
-                if (titlebar) {
-                  titlebar.style.opacity = '0';
-                  titlebar.style.height = '0px';
-                }
+        if (eventsWindowRef.current) {
+          const titlebar = eventsWindowRef.current.querySelector(
+            '.xp-titlebar'
+          ) as HTMLElement | null;
+          const showChrome = (on: boolean) => {
+            if (on) {
+              eventsWindowRef.current!.classList.add('is-windowed');
+              if (titlebar) {
+                titlebar.style.opacity = '1';
+                titlebar.style.height = '30px';
               }
-            };
-
-            if (p < DWELL_END) {
-              // Fullscreen alleyway walk & hold — reset minimized state on reverse scroll
-              isEventsMinimizedRef.current = false;
-              eventsWindowRef.current.style.transform = 'translate3d(0, 0, 0) scale(1)';
-              eventsWindowRef.current.style.opacity = '1';
-              eventsWindowRef.current.style.pointerEvents = 'auto';
-              showChrome(false);
-            } else if (p < WINDOW_END) {
-              // Reset minimized on reverse scroll so window re-appears cleanly
-              isEventsMinimizedRef.current = false;
-              const rawT = (p - DWELL_END) / (WINDOW_END - DWELL_END);
-              const t = rawT * rawT * (3 - 2 * rawT);
-              const scale = 1.0 - t * (1.0 - WINDOW_SCALE);
-              eventsWindowRef.current.style.transform = `translate3d(0, 0, 0) scale(${scale.toFixed(4)})`;
-              eventsWindowRef.current.style.opacity = '1';
-              eventsWindowRef.current.style.pointerEvents = 'auto';
-              showChrome(t > 0.10);
-            } else if (p < MINIMIZE_END && !isEventsMinimizedRef.current) {
-              // Genie window down/left into Windows XP taskbar with smooth easing
-              const rawT = (p - WINDOW_END) / (MINIMIZE_END - WINDOW_END);
-              const t = rawT * rawT * (3 - 2 * rawT);
-              const scale = WINDOW_SCALE * (1.0 - t * 0.95);
-              const translateY = t * 46; // vh down to taskbar
-              const translateX = t * -26; // vw left to .avi taskbar item
-              const op = Math.max(0, 1.0 - Math.pow(rawT, 1.6));
-              eventsWindowRef.current.style.transform = `translate3d(${translateX.toFixed(2)}vw, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
-              eventsWindowRef.current.style.opacity = op.toFixed(3);
-              eventsWindowRef.current.style.pointerEvents = 'none';
-              showChrome(true);
             } else {
-              eventsWindowRef.current.style.opacity = '0';
-              eventsWindowRef.current.style.pointerEvents = 'none';
+              eventsWindowRef.current!.classList.remove('is-windowed');
+              if (titlebar) {
+                titlebar.style.opacity = '0';
+                titlebar.style.height = '0px';
+              }
             }
+          };
 
-            eventsWindowRef.current.style.visibility =
-              parseFloat(eventsWindowRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
-          }
-
-          /* ── Phase 5 -> Phase 7: Student Council TheFacebook Archive Window (0.45 -> 0.96) ── */
-          const MEMBERS_START = 0.57;
-          const MEMBERS_END = 0.93;
-          const ARCHIVE_MIN_START = 0.93;
-          const ARCHIVE_MIN_END = 0.96;
-
-          if (playerWrapperRef.current) {
-            if (p < 0.45) {
-              playerWrapperRef.current.style.opacity = '0';
-              playerWrapperRef.current.style.pointerEvents = 'none';
-              playerWrapperRef.current.style.transform = 'translate3d(0, 46vh, 0) scale(0.1)';
-            } else if (p < MEMBERS_START) {
-              const rawT = Math.min(1, Math.max(0, (p - 0.45) / 0.12));
-              const t = 1 - Math.pow(1 - rawT, 3); // Cubic ease-out pop up
-              const scale = 0.1 + t * 0.9;
-              const translateY = (1 - t) * 46;
-              playerWrapperRef.current.style.opacity = '1';
-              playerWrapperRef.current.style.pointerEvents = t > 0.5 ? 'auto' : 'none';
-              playerWrapperRef.current.style.transform = `translate3d(0, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
-            } else if (p <= MEMBERS_END) {
-              // TheFacebook archive window holds centered through this scroll range.
-              playerWrapperRef.current.style.opacity = '1';
-              playerWrapperRef.current.style.pointerEvents = 'auto';
-              playerWrapperRef.current.style.transform = 'translate3d(0, 0, 0) scale(1)';
-              const scrollStart = MEMBERS_START;
-              const scrollEnd = MEMBERS_END;
-              archiveScrollRef.current = Math.min(1, Math.max(0, (p - scrollStart) / (scrollEnd - scrollStart)));
-            } else if (p < ARCHIVE_MIN_END) {
-              // Genie minimize animation down into bottom taskbar
-              const rawT = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
-              const t = rawT * rawT * (3 - 2 * rawT);
-              const scale = 1.0 - t * 0.9;
-              const translateY = t * 46; // vh down to taskbar
-              playerWrapperRef.current.style.transform = `translate3d(0, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
-              playerWrapperRef.current.style.opacity = `${(1.0 - t * 0.9).toFixed(3)}`;
-              playerWrapperRef.current.style.pointerEvents = 'none';
-            } else {
-              playerWrapperRef.current.style.opacity = '0';
-              playerWrapperRef.current.style.pointerEvents = 'none';
-              playerWrapperRef.current.style.transform = 'translate3d(0, 46vh, 0) scale(0.1)';
-            }
-
-            playerWrapperRef.current.style.visibility =
-              parseFloat(playerWrapperRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
-          }
-
-          /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
-          const PV_START = 0.96;
-          if (px <= 12200) {
-            pvScrollProgressRef.current = 0;
-          } else if (px >= 12800) {
-            pvScrollProgressRef.current = 1;
+          if (p < DWELL_END) {
+            // Fullscreen alleyway walk & hold — reset minimized state on reverse scroll
+            isEventsMinimizedRef.current = false;
+            eventsWindowRef.current.style.transform = 'translate3d(0, 0, 0) scale(1)';
+            eventsWindowRef.current.style.opacity = '1';
+            eventsWindowRef.current.style.pointerEvents = 'auto';
+            showChrome(false);
+          } else if (p < WINDOW_END) {
+            // Reset minimized on reverse scroll so window re-appears cleanly
+            isEventsMinimizedRef.current = false;
+            const rawT = (p - DWELL_END) / (WINDOW_END - DWELL_END);
+            const t = rawT * rawT * (3 - 2 * rawT);
+            const scale = 1.0 - t * (1.0 - WINDOW_SCALE);
+            eventsWindowRef.current.style.transform = `translate3d(0, 0, 0) scale(${scale.toFixed(4)})`;
+            eventsWindowRef.current.style.opacity = '1';
+            eventsWindowRef.current.style.pointerEvents = 'auto';
+            showChrome(t > 0.10);
+          } else if (p < MINIMIZE_END && !isEventsMinimizedRef.current) {
+            // Genie window down/left into Windows XP taskbar with smooth easing
+            const rawT = (p - WINDOW_END) / (MINIMIZE_END - WINDOW_END);
+            const t = rawT * rawT * (3 - 2 * rawT);
+            const scale = WINDOW_SCALE * (1.0 - t * 0.95);
+            const translateY = t * 46; // vh down to taskbar
+            const translateX = t * -26; // vw left to .avi taskbar item
+            const op = Math.max(0, 1.0 - Math.pow(rawT, 1.6));
+            eventsWindowRef.current.style.transform = `translate3d(${translateX.toFixed(2)}vw, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
+            eventsWindowRef.current.style.opacity = op.toFixed(3);
+            eventsWindowRef.current.style.pointerEvents = 'none';
+            showChrome(true);
           } else {
-            pvScrollProgressRef.current = (px - 12200) / (12800 - 12200);
+            eventsWindowRef.current.style.opacity = '0';
+            eventsWindowRef.current.style.pointerEvents = 'none';
           }
 
-          if (pictureViewerRef.current) {
-            if (p < PV_START) {
-              pictureViewerRef.current.style.opacity = '0';
-              pictureViewerRef.current.style.pointerEvents = 'none';
-              pictureViewerRef.current.style.transform = 'translate3d(0, 25px, 0) scale(0.85)';
-            } else {
-              const rawT = Math.min(1, (p - PV_START) / 0.03);
-              const pvT = 1 - Math.pow(1 - rawT, 3); // Cubic ease-out
-              const scale = 0.85 + pvT * 0.15;
-              const translateY = (1 - pvT) * 25;
-              pictureViewerRef.current.style.opacity = `${pvT.toFixed(3)}`;
-              pictureViewerRef.current.style.pointerEvents = pvT > 0.4 ? 'auto' : 'none';
-              pictureViewerRef.current.style.transform = `translate3d(0, ${translateY.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`;
-            }
+          eventsWindowRef.current.style.visibility =
+            parseFloat(eventsWindowRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
+        }
 
-            pictureViewerRef.current.style.visibility =
-              parseFloat(pictureViewerRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
+        /* ── Phase 5 -> Phase 7: Student Council TheFacebook Archive Window (0.45 -> 0.96) ── */
+        const MEMBERS_START = 0.57;
+        const MEMBERS_END = 0.93;
+        const ARCHIVE_MIN_START = 0.93;
+        const ARCHIVE_MIN_END = 0.96;
+
+        if (playerWrapperRef.current) {
+          if (p < 0.45) {
+            playerWrapperRef.current.style.opacity = '0';
+            playerWrapperRef.current.style.pointerEvents = 'none';
+            playerWrapperRef.current.style.transform = 'translate3d(0, 46vh, 0) scale(0.1)';
+          } else if (p < MEMBERS_START) {
+            const rawT = Math.min(1, Math.max(0, (p - 0.45) / 0.12));
+            const t = 1 - Math.pow(1 - rawT, 3); // Cubic ease-out pop up
+            const scale = 0.1 + t * 0.9;
+            const translateY = (1 - t) * 46;
+            playerWrapperRef.current.style.opacity = '1';
+            playerWrapperRef.current.style.pointerEvents = t > 0.5 ? 'auto' : 'none';
+            playerWrapperRef.current.style.transform = `translate3d(0, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
+          } else if (p <= MEMBERS_END) {
+            // TheFacebook archive window holds centered through this scroll range.
+            playerWrapperRef.current.style.opacity = '1';
+            playerWrapperRef.current.style.pointerEvents = 'auto';
+            playerWrapperRef.current.style.transform = 'translate3d(0, 0, 0) scale(1)';
+            const scrollStart = MEMBERS_START;
+            const scrollEnd = MEMBERS_END;
+            archiveScrollRef.current = Math.min(1, Math.max(0, (p - scrollStart) / (scrollEnd - scrollStart)));
+          } else if (p < ARCHIVE_MIN_END) {
+            // Genie minimize animation down into bottom taskbar
+            const rawT = (p - ARCHIVE_MIN_START) / (ARCHIVE_MIN_END - ARCHIVE_MIN_START);
+            const t = rawT * rawT * (3 - 2 * rawT);
+            const scale = 1.0 - t * 0.9;
+            const translateY = t * 46; // vh down to taskbar
+            playerWrapperRef.current.style.transform = `translate3d(0, ${translateY.toFixed(2)}vh, 0) scale(${scale.toFixed(4)})`;
+            playerWrapperRef.current.style.opacity = `${(1.0 - t * 0.9).toFixed(3)}`;
+            playerWrapperRef.current.style.pointerEvents = 'none';
+          } else {
+            playerWrapperRef.current.style.opacity = '0';
+            playerWrapperRef.current.style.pointerEvents = 'none';
+            playerWrapperRef.current.style.transform = 'translate3d(0, 46vh, 0) scale(0.1)';
           }
 
-          /* ── Phase 9: hand the tail of the pin to the shutdown ─────────────
-             Stays at 0 for the whole of ACT3_LEN and for GALLERY_HOLD after
-             it — the gallery gets its dwell with nothing on top of it — then
-             runs 0 → 1 over the last SHUTDOWN_LEN px. Same tick, same scrub,
-             same scalar as everything above, so the overlay physically cannot
-             start before the last component has been sitting there in the
-             clear. Driving it from here rather than from a second trigger is
-             the whole point; see EventsAndCouncilSectionProps. */
-          if (shutdownDrawRef) {
-            const sp = (px - ACT3_LEN - GALLERY_HOLD) / SHUTDOWN_LEN;
-            shutdownDrawRef.current?.(Math.min(1, Math.max(0, sp)));
+          playerWrapperRef.current.style.visibility =
+            parseFloat(playerWrapperRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
+        }
+
+        /* ── Phase 8: Windows Picture and Fax Viewer Grand Finale (0.96 -> 1.00) ── */
+        const PV_START = 0.96;
+        if (px <= 12200) {
+          pvScrollProgressRef.current = 0;
+        } else if (px >= 12800) {
+          pvScrollProgressRef.current = 1;
+        } else {
+          pvScrollProgressRef.current = (px - 12200) / (12800 - 12200);
+        }
+
+        if (pictureViewerRef.current) {
+          if (p < PV_START) {
+            pictureViewerRef.current.style.opacity = '0';
+            pictureViewerRef.current.style.pointerEvents = 'none';
+            pictureViewerRef.current.style.transform = 'translate3d(0, 25px, 0) scale(0.85)';
+          } else {
+            const rawT = Math.min(1, (p - PV_START) / 0.03);
+            const pvT = 1 - Math.pow(1 - rawT, 3); // Cubic ease-out
+            const scale = 0.85 + pvT * 0.15;
+            const translateY = (1 - pvT) * 25;
+            pictureViewerRef.current.style.opacity = `${pvT.toFixed(3)}`;
+            pictureViewerRef.current.style.pointerEvents = pvT > 0.4 ? 'auto' : 'none';
+            pictureViewerRef.current.style.transform = `translate3d(0, ${translateY.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`;
           }
+
+          pictureViewerRef.current.style.visibility =
+            parseFloat(pictureViewerRef.current.style.opacity || '1') > 0.001 ? 'visible' : 'hidden';
+        }
+
+        /* ── Phase 9: hand the tail of the pin to the shutdown ─────────────
+           Stays at 0 for the whole of ACT3_LEN and for GALLERY_HOLD after
+           it — the gallery gets its dwell with nothing on top of it — then
+           runs 0 → 1 over the last SHUTDOWN_LEN px. Same tick, same scrub,
+           same scalar as everything above, so the overlay physically cannot
+           start before the last component has been sitting there in the
+           clear. Driving it from here rather than from a second trigger is
+           the whole point; see EventsAndCouncilSectionProps. */
+        if (shutdownDrawRef) {
+          const sp = (px - ACT3_LEN - GALLERY_HOLD) / SHUTDOWN_LEN;
+          shutdownDrawRef.current?.(Math.min(1, Math.max(0, sp)));
+        }
       };
 
       const trigger = ScrollTrigger.create({
@@ -905,280 +905,80 @@ export default function EventsAndCouncilSection({
           className="mobile-council-section"
           aria-label="GDG CRCE Student Council 2026-27 — Mobile Experience"
         >
-        {/* Sticky Mobile Header (Facebook style) */}
-        <div className="mobile-header-sticky">
-          {/* Cover Photo / Banner */}
-          <div className="fb-cover-photo-wrapper">
-            <div
-              className="fb-cover-photo"
-              style={{
-                backgroundImage: ikUrl('/events/eventsmobbg.png'),
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-              }}
-            >
-              <div className="fb-cover-content">
-                <span className="fb-cover-text">GDG CRCE 26-27</span>
-                <span className="fb-cover-subtext">Google Developers Group</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Profile Header Block */}
-          <div className="fb-profile-header">
-            <div className="fb-avatar-row">
-              <div className="fb-profile-avatar-container">
-                <Image src="/logo.png" className="fb-profile-logo" alt="GDG Logo" width={612} height={408} sizes="72px" />
-              </div>
-              <div className="fb-profile-header-meta">
-                <h1 className="fb-profile-name">
-                  GDG FRCRCE
-                  <span className="fb-verified-badge" title="Verified Group">✓</span>
-                </h1>
-              </div>
-            </div>
-
-            {/* Profile Navigation Tabs (Posts, About, Videos, Photos) */}
-            <div className="fb-profile-tabs-menu">
-              <button
-                type="button"
-                className={`fb-tab-item ${activeMobileTab === 'posts' ? 'active' : ''}`}
-                onClick={() => handleTabChange('posts')}
+          {/* Sticky Mobile Header (Facebook style) */}
+          <div className="mobile-header-sticky">
+            {/* Cover Photo / Banner */}
+            <div className="fb-cover-photo-wrapper">
+              <div
+                className="fb-cover-photo"
+                style={{
+                  backgroundImage: ikUrl('/events/eventsmobbg.png'),
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                }}
               >
-                Posts
-              </button>
-              <button
-                type="button"
-                className={`fb-tab-item ${activeMobileTab === 'about' ? 'active' : ''}`}
-                onClick={() => handleTabChange('about')}
-              >
-                About
-              </button>
-              <button
-                type="button"
-                className={`fb-tab-item ${activeMobileTab === 'photos' ? 'active' : ''}`}
-                onClick={() => handleTabChange('photos')}
-              >
-                Photos
-              </button>
-              <button
-                type="button"
-                className={`fb-tab-item ${activeMobileTab === 'videos' ? 'active' : ''}`}
-                onClick={() => handleTabChange('videos')}
-              >
-                Videos
-              </button>
+                <div className="fb-cover-content">
+                  <span className="fb-cover-text">GDG CRCE 26-27</span>
+                  <span className="fb-cover-subtext">Google Developers Group</span>
+                </div>
+              </div>
             </div>
+
+            {/* Profile Header Block */}
+            <div className="fb-profile-header">
+              <div className="fb-avatar-row">
+                <div className="fb-profile-avatar-container">
+                  <Image src="/logo.png" className="fb-profile-logo" alt="GDG Logo" width={612} height={408} sizes="72px" />
+                </div>
+                <div className="fb-profile-header-meta">
+                  <h1 className="fb-profile-name">
+                    GDG FRCRCE
+                    <span className="fb-verified-badge" title="Verified Group">✓</span>
+                  </h1>
+                </div>
+              </div>
+
+              {/* Profile Navigation Tabs (Posts, About, Videos, Photos) */}
+              <div className="fb-profile-tabs-menu">
+                <button
+                  type="button"
+                  className={`fb-tab-item ${activeMobileTab === 'posts' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('posts')}
+                >
+                  Posts
+                </button>
+                <button
+                  type="button"
+                  className={`fb-tab-item ${activeMobileTab === 'about' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('about')}
+                >
+                  About
+                </button>
+                <button
+                  type="button"
+                  className={`fb-tab-item ${activeMobileTab === 'photos' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('photos')}
+                >
+                  Photos
+                </button>
+                <button
+                  type="button"
+                  className={`fb-tab-item ${activeMobileTab === 'videos' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('videos')}
+                >
+                  Videos
+                </button>
+              </div>
+            </div>
+            <div className="fb-header-divider" />
           </div>
-          <div className="fb-header-divider" />
-        </div>
 
-        {/* Scrollable post feed */}
-        {activeMobileTab === 'posts' && (
-          <div className="fb-feed-container">
-            {/* Post 1: Welcome post from GDG CRCE */}
-            <div className="fb-post-card pinned-post">
-              {/* Post Header */}
-              <div className="fb-post-header">
-                <div className="fb-post-avatar page-avatar">
-                  <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
-                </div>
-                <div className="fb-post-author-info">
-                  <span className="fb-post-author-name">
-                    GDG CRCE
-                    <span className="fb-verified-badge-small">✓</span>
-                  </span>
-                  <span className="fb-post-meta">Posted by GDG CRCE • Pinned Post • 🌐</span>
-                </div>
-              </div>
-
-              {/* Post content */}
-              <div className="fb-post-content">
-                <p className="fb-post-text">
-                  The team behind it all. GDG on Campus · CRCE Student Council 2026-27, together before the year begins. 🚀
-                </p>
-              </div>
-
-              {/* Attached Photo */}
-              <div className="fb-post-media-container">
-                <Image src="/preloader/genesis.jpg" className="fb-post-img" alt="Genesis Welcome" width={1280} height={960} sizes="(max-width: 600px) 100vw, 500px" />
-              </div>
-
-              {/* Reactions summary */}
-              <div className="fb-post-reactions-bar">
-                <div className="fb-reaction-icons">
-                  <span className="reaction-bubble blue-bubble">👍</span>
-                  <span className="reaction-bubble red-bubble">❤️</span>
-                </div>
-                <span className="fb-reaction-text">Liked by GDG CRCE and 24 others</span>
-              </div>
-
-              <FbActionBar />
-
-              {/* Comments block */}
-              <div className="fb-comments-section">
-                {/* Comment Input Box */}
-                <div className="fb-comment-input-row">
-                  <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
-                  <span className="comment-camera-icon">📷</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Loop over actual council members */}
-            {councilMembers.map((member) => (
-              <div key={member.id} className="fb-post-card">
-                {/* Post Header */}
-                <div className="fb-post-header">
-                  <MemberPhoto member={member} className="fb-post-avatar" />
-                  <div className="fb-post-author-info">
-                    <span className="fb-post-author-name">{member.name}</span>
-                    <span className="fb-post-meta">
-                      {member.role} • {member.branch} • {member.tier}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Post content */}
-                <div className="fb-post-content">
-                  <p className="fb-post-text">{member.quote}</p>
-                </div>
-
-                {/* Attached Member Photo Card */}
-                <div className="fb-post-media-container">
-                  <MemberPhoto member={member} className="fb-post-member-card" size="full" />
-                </div>
-
-                {/* Reactions summary */}
-                <div className="fb-post-reactions-bar">
-                  <div className="fb-reaction-icons">
-                    <span className="reaction-bubble blue-bubble">👍</span>
-                    <span className="reaction-bubble yellow-bubble">😊</span>
-                  </div>
-                  <span className="fb-reaction-text">
-                    {member.name === 'Kevin Synet'
-                      ? 'Liked by StuCo, Rotaract and 25 others'
-                      : 'Liked by GDG and 24 others'}
-                  </span>
-                </div>
-
-                <FbActionBar />
-
-                {/* Comments Input */}
-                <div className="fb-comments-section">
-                  <div className="fb-comment-input-row">
-                    <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
-                    <span className="comment-camera-icon">📷</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {/* End of Posts feed dwell card */}
-            <div className="fb-feed-end-card">
-              <div className="fb-feed-end-icon">✓</div>
-              <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
-              <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
-            </div>
-          </div>
-        )}
-
-        {activeMobileTab === 'about' && (
-          <div className="fb-feed-container">
-            <div className="fb-post-card">
-              <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: '#1877f2' }}>About GDG on Campus CRCE</h3>
-              <p style={{ fontSize: '13px', lineHeight: '1.6', color: '#4b4f56', marginBottom: '12px' }}>
-                Google Developer Group on Campus at Fr. Conceicao Rodrigues College of Engineering is a vibrant community of tech enthusiasts, designers, and managers aiming to learn, collaborate, and build solutions together.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #e5e6e9', paddingTop: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#65676b' }}>Networks:</span>
-                  <span style={{ color: '#1c1e21' }}>CRCE, Mumbai · GDG on Campus</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#65676b' }}>Total Members:</span>
-                  <span style={{ color: '#1c1e21' }}>{councilMembers.length} Members</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#65676b' }}>Structure:</span>
-                  <span style={{ color: '#1c1e21' }}>8 Tracks · Senior & Junior Council</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#65676b' }}>Status:</span>
-                  <span style={{ color: '#00a400', fontWeight: 'bold' }}>Online & Active</span>
-                </div>
-              </div>
-            </div>
-            {/* End of About feed dwell card */}
-            <div className="fb-feed-end-card">
-              <div className="fb-feed-end-icon">✓</div>
-              <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
-              <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
-            </div>
-          </div>
-        )}
-
-        {activeMobileTab === 'photos' && (
-          <div className="fb-feed-container">
-            {/* Individual mobcouncil photo cards */}
-            {[
-              { src: '/mobcouncil/DSC04899 (1).JPG.jpeg', caption: 'Glimpses from the session 📸' },
-              { src: '/mobcouncil/IMG20260330194828 (1).jpg.jpeg', caption: 'GDG CRCE team spirit! ✨' },
-              { src: '/mobcouncil/IMG_5410 (1).JPG.jpeg', caption: 'Workshops and collabs 💻' },
-              { src: '/mobcouncil/IMG_8447 (1).JPG.jpeg', caption: 'Moments captured 🌟' },
-              { src: '/mobcouncil/IMG_8775 (1).JPG.jpeg', caption: 'Connecting & growing together 🚀' },
-              { src: '/mobcouncil/IMG_8797 (1).JPG.jpeg', caption: 'Fun behind the scenes 🎬' },
-              { src: '/mobcouncil/fxn 2026-03-25 132323CE9231BDFC83 (2).jpg.jpeg', caption: 'Events in action 🔥' },
-              { src: '/mobcouncil/fxn 2026-03-25 135628A4842A32C689 (1).JPEG', caption: 'Tech talk vibes 🎙️' },
-              { src: '/mobcouncil/fxn 2026-03-25 1401139FCE36B5FBA3 (1).JPEG', caption: 'Speaker sessions 📚' },
-              { src: '/mobcouncil/image (4).png', caption: 'Designing and building 🎨' },
-              { src: '/mobcouncil/image (5).png', caption: 'Innovating on campus 💡' },
-              { src: '/mobcouncil/image (6).png', caption: 'Hackathon memories 🏆' },
-              { src: '/mobcouncil/image (7).png', caption: 'Community meetups 🤝' },
-              { src: '/mobcouncil/image (8).png', caption: 'Milestones achieved 🎉' },
-              { src: '/mobcouncil/still2 (1).jpg.jpeg', caption: 'Till next time 👋' }
-            ].map((p, idx) => (
-              <div key={p.src} className="fb-post-card">
-                <div className="fb-post-header">
-                  <div className="fb-post-avatar page-avatar">
-                    <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" loading="lazy" />
-                  </div>
-                  <div className="fb-post-author-info">
-                    <span className="fb-post-author-name">
-                      GDG CRCE
-                      <span className="fb-verified-badge-small">✓</span>
-                    </span>
-                    <span className="fb-post-meta">Posted • Photo {idx + 1} • 🌐</span>
-                  </div>
-                </div>
-                <div className="fb-post-content">
-                  <p className="fb-post-text">{p.caption}</p>
-                </div>
-                <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', overflow: 'hidden', border: '1px solid #e5e6e9' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.src}
-                    alt={p.caption}
-                    loading="lazy"
-                    decoding="async"
-                    style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
-                  />
-                </div>
-              </div>
-            ))}
-            {/* End of Photos feed dwell card */}
-            <div className="fb-feed-end-card">
-              <div className="fb-feed-end-icon">✓</div>
-              <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
-              <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
-            </div>
-          </div>
-        )}
-
-        {activeMobileTab === 'videos' && (
-          <div className="fb-feed-container">
-            {COUNCIL_CLIPS.map((clip) => (
-              <div key={clip.src} className="fb-post-card">
+          {/* Scrollable post feed */}
+          {activeMobileTab === 'posts' && (
+            <div className="fb-feed-container">
+              {/* Post 1: Welcome post from GDG CRCE */}
+              <div className="fb-post-card pinned-post">
                 {/* Post Header */}
                 <div className="fb-post-header">
                   <div className="fb-post-avatar page-avatar">
@@ -1189,37 +989,237 @@ export default function EventsAndCouncilSection({
                       GDG CRCE
                       <span className="fb-verified-badge-small">✓</span>
                     </span>
-                    <span className="fb-post-meta">Posted • Video • 🌐</span>
+                    <span className="fb-post-meta">Posted by GDG CRCE • Pinned Post • 🌐</span>
                   </div>
                 </div>
 
                 {/* Post content */}
                 <div className="fb-post-content">
-                  <p className="fb-post-text">{clip.caption}</p>
+                  <p className="fb-post-text">
+                    The team behind it all. GDG on Campus · CRCE Student Council 2026-27, together before the year begins. 🚀
+                  </p>
                 </div>
 
-                {/* Video Block */}
-                <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', background: '#000' }}>
-                  <video
-                    src={clip.src}
-                    poster={clip.poster}
-                    controls
-                    playsInline
-                    muted
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+                {/* Attached Photo */}
+                <div className="fb-post-media-container">
+                  <Image src="/preloader/genesis.jpg" className="fb-post-img" alt="Genesis Welcome" width={1280} height={960} sizes="(max-width: 600px) 100vw, 500px" />
+                </div>
+
+                {/* Reactions summary */}
+                <div className="fb-post-reactions-bar">
+                  <div className="fb-reaction-icons">
+                    <span className="reaction-bubble blue-bubble">👍</span>
+                    <span className="reaction-bubble red-bubble">❤️</span>
+                  </div>
+                  <span className="fb-reaction-text">Liked by GDG CRCE and 24 others</span>
+                </div>
+
+                <FbActionBar />
+
+                {/* Comments block */}
+                <div className="fb-comments-section">
+                  {/* Comment Input Box */}
+                  <div className="fb-comment-input-row">
+                    <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
+                    <span className="comment-camera-icon">📷</span>
+                  </div>
                 </div>
               </div>
-            ))}
-            {/* End of Videos feed dwell card */}
-            <div className="fb-feed-end-card">
-              <div className="fb-feed-end-icon">✓</div>
-              <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
-              <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+
+              {/* Loop over actual council members */}
+              {councilMembers.map((member) => (
+                <div key={member.id} className="fb-post-card">
+                  {/* Post Header */}
+                  <div className="fb-post-header">
+                    <MemberPhoto member={member} className="fb-post-avatar" />
+                    <div className="fb-post-author-info">
+                      <span className="fb-post-author-name">{member.name}</span>
+                      <span className="fb-post-meta">
+                        {member.role} • {member.branch} • {member.tier}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Post content */}
+                  <div className="fb-post-content">
+                    <p className="fb-post-text">{member.quote}</p>
+                  </div>
+
+                  {/* Attached Member Photo Card */}
+                  <div className="fb-post-media-container">
+                    <MemberPhoto member={member} className="fb-post-member-card" size="full" />
+                  </div>
+
+                  {/* Reactions summary */}
+                  <div className="fb-post-reactions-bar">
+                    <div className="fb-reaction-icons">
+                      <span className="reaction-bubble blue-bubble">👍</span>
+                      <span className="reaction-bubble yellow-bubble">😊</span>
+                    </div>
+                    <span className="fb-reaction-text">
+                      {member.name === 'Kevin Synet'
+                        ? 'Liked by Asher, GDG and 23 others'
+                        : 'Liked by GDG and 23 others'}
+                    </span>
+                  </div>
+
+                  <FbActionBar />
+
+                  {/* Comments Input */}
+                  <div className="fb-comments-section">
+                    <div className="fb-comment-input-row">
+                      <input type="text" className="fb-comment-input" placeholder="Write a comment..." readOnly />
+                      <span className="comment-camera-icon">📷</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {/* End of Posts feed dwell card */}
+              <div className="fb-feed-end-card">
+                <div className="fb-feed-end-icon">✓</div>
+                <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
+                <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+              </div>
             </div>
-          </div>
-        )}
-        <div id="mobile-shutdown-anchor" style={{ width: '100%', height: '1px', pointerEvents: 'none' }} />
+          )}
+
+          {activeMobileTab === 'about' && (
+            <div className="fb-feed-container">
+              <div className="fb-post-card">
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: '#1877f2' }}>About GDG on Campus CRCE</h3>
+                <p style={{ fontSize: '13px', lineHeight: '1.6', color: '#4b4f56', marginBottom: '12px' }}>
+                  Google Developer Group on Campus at Fr. Conceicao Rodrigues College of Engineering is a vibrant community of tech enthusiasts, designers, and managers aiming to learn, collaborate, and build solutions together.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #e5e6e9', paddingTop: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#65676b' }}>Networks:</span>
+                    <span style={{ color: '#1c1e21' }}>CRCE, Mumbai · GDG on Campus</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#65676b' }}>Total Members:</span>
+                    <span style={{ color: '#1c1e21' }}>{councilMembers.length} Members</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#65676b' }}>Structure:</span>
+                    <span style={{ color: '#1c1e21' }}>8 Tracks · Senior & Junior Council</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#65676b' }}>Status:</span>
+                    <span style={{ color: '#00a400', fontWeight: 'bold' }}>Online & Active</span>
+                  </div>
+                </div>
+              </div>
+              {/* End of About feed dwell card */}
+              <div className="fb-feed-end-card">
+                <div className="fb-feed-end-icon">✓</div>
+                <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
+                <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+              </div>
+            </div>
+          )}
+
+          {activeMobileTab === 'photos' && (
+            <div className="fb-feed-container">
+              {/* Individual mobcouncil photo cards */}
+              {[
+                { src: '/mobcouncil/DSC04899 (1).JPG.jpeg', caption: 'Glimpses from the session 📸' },
+                { src: '/mobcouncil/IMG20260330194828 (1).jpg.jpeg', caption: 'GDG CRCE team spirit! ✨' },
+                { src: '/mobcouncil/IMG_5410 (1).JPG.jpeg', caption: 'Workshops and collabs 💻' },
+                { src: '/mobcouncil/IMG_8447 (1).JPG.jpeg', caption: 'Moments captured 🌟' },
+                { src: '/mobcouncil/IMG_8775 (1).JPG.jpeg', caption: 'Connecting & growing together 🚀' },
+                { src: '/mobcouncil/IMG_8797 (1).JPG.jpeg', caption: 'Fun behind the scenes 🎬' },
+                { src: '/mobcouncil/fxn 2026-03-25 132323CE9231BDFC83 (2).jpg.jpeg', caption: 'Events in action 🔥' },
+                { src: '/mobcouncil/fxn 2026-03-25 135628A4842A32C689 (1).JPEG', caption: 'Tech talk vibes 🎙️' },
+                { src: '/mobcouncil/fxn 2026-03-25 1401139FCE36B5FBA3 (1).JPEG', caption: 'Speaker sessions 📚' },
+                { src: '/mobcouncil/image (4).png', caption: 'Designing and building 🎨' },
+                { src: '/mobcouncil/image (5).png', caption: 'Innovating on campus 💡' },
+                { src: '/mobcouncil/image (6).png', caption: 'Hackathon memories 🏆' },
+                { src: '/mobcouncil/image (7).png', caption: 'Community meetups 🤝' },
+                { src: '/mobcouncil/image (8).png', caption: 'Milestones achieved 🎉' },
+                { src: '/mobcouncil/still2 (1).jpg.jpeg', caption: 'Till next time 👋' }
+              ].map((p, idx) => (
+                <div key={p.src} className="fb-post-card">
+                  <div className="fb-post-header">
+                    <div className="fb-post-avatar page-avatar">
+                      <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" loading="lazy" />
+                    </div>
+                    <div className="fb-post-author-info">
+                      <span className="fb-post-author-name">
+                        GDG CRCE
+                        <span className="fb-verified-badge-small">✓</span>
+                      </span>
+                      <span className="fb-post-meta">Posted • Photo {idx + 1} • 🌐</span>
+                    </div>
+                  </div>
+                  <div className="fb-post-content">
+                    <p className="fb-post-text">{p.caption}</p>
+                  </div>
+                  <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', overflow: 'hidden', border: '1px solid #e5e6e9' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.src}
+                      alt={p.caption}
+                      loading="lazy"
+                      decoding="async"
+                      style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {/* End of Photos feed dwell card */}
+              <div className="fb-feed-end-card">
+                <div className="fb-feed-end-icon">✓</div>
+                <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
+                <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+              </div>
+            </div>
+          )}
+
+          {activeMobileTab === 'videos' && (
+            <div className="fb-feed-container">
+              {COUNCIL_CLIPS.map((clip) => (
+                <div key={clip.src} className="fb-post-card">
+                  {/* Post Header */}
+                  <div className="fb-post-header">
+                    <div className="fb-post-avatar page-avatar">
+                      <Image src="/logo.png" className="fb-avatar-logo" alt="GDG Logo" width={612} height={408} sizes="48px" />
+                    </div>
+                    <div className="fb-post-author-info">
+                      <span className="fb-post-author-name">
+                        GDG CRCE
+                        <span className="fb-verified-badge-small">✓</span>
+                      </span>
+                      <span className="fb-post-meta">Posted • Video • 🌐</span>
+                    </div>
+                  </div>
+
+                  {/* Post content */}
+                  <div className="fb-post-content">
+                    <p className="fb-post-text">{clip.caption}</p>
+                  </div>
+
+                  {/* Video Block */}
+                  <div className="fb-post-media-container" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', background: '#000' }}>
+                    <video
+                      src={clip.src}
+                      poster={clip.poster}
+                      controls
+                      playsInline
+                      muted
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {/* End of Videos feed dwell card */}
+              <div className="fb-feed-end-card">
+                <div className="fb-feed-end-icon">✓</div>
+                <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
+                <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+              </div>
+            </div>
+          )}
+          <div id="mobile-shutdown-anchor" style={{ width: '100%', height: '1px', pointerEvents: 'none' }} />
         </section>
       </div>
     );
