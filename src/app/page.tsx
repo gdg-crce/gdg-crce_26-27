@@ -9,8 +9,17 @@ import AboutSection from '@/components/sections/about/AboutSection';
 import WhatWeDoSection from '@/components/sections/whatwedo/WhatWeDoSection';
 import ShutdownTransition from '@/components/sections/contact/ShutdownTransition';
 import TopNav from '@/components/layout/TopNav';
+import useMobileFullscreen from '@/hooks/useMobileFullscreen';
 
 export default function Home() {
+  /* Phones only, and it costs nothing anywhere else. A phone viewport changes
+     height mid-scroll as the URL bar and system nav come and go, and this page
+     is built almost entirely out of layers sized to the viewport — so that
+     movement shows up as a black strip along the bottom edge. Fullscreen takes
+     the chrome away so there is nothing left to move. See the hook for why it
+     waits for a touch, and why iOS cannot be helped this way. */
+  useMobileFullscreen();
+
   const [loading, setLoading] = useState(true);
   const [videoStarted, setVideoStarted] = useState(false);
   const [videoPrimed, setVideoPrimed] = useState(false);

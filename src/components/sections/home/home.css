@@ -68,3 +68,70 @@
   clip-path: inset(50%);
   border: 0;
 }
+
+/* ── The scroll cue ──────────────────────────────────────────────────────────
+   The title card is the one screen on the site that asks the viewer for an
+   input while showing them nothing that moves. The film has just faded to
+   black, the page has walked itself to the title on its own (see the hero's
+   auto-reveal), and then everything stops — so the viewer has no way to tell
+   whether the site is finished, still loading, or waiting on them.
+
+   It is deliberately the quietest thing that can still be read as an
+   instruction: a hairline rail with one mote falling down it, at a third
+   opacity, in the title's own ink. No arrow, no bounce, no "SCROLL DOWN" —
+   the frame it sits in is a black screen with two words on it, and anything
+   louder becomes the second thing you look at.
+
+   Opacity is written from the scroll callback, not from CSS: it belongs to the
+   same single scalar as everything else on this layer, and it has to be gone
+   before the knockout starts or it would be a UI chip floating over the
+   push-in. Only the falling mote runs on a timer. */
+.home-scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 6vh;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 46px;
+  background: linear-gradient(
+    to bottom,
+    rgba(244, 242, 237, 0) 0%,
+    rgba(244, 242, 237, 0.28) 30%,
+    rgba(244, 242, 237, 0.28) 70%,
+    rgba(244, 242, 237, 0) 100%
+  );
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.home-scroll-cue::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
+  border-radius: 50%;
+  background: #F4F2ED;
+  animation: home-scroll-mote 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes home-scroll-mote {
+  0%   { transform: translateY(-4px); opacity: 0; }
+  22%  { opacity: 0.9; }
+  78%  { opacity: 0.9; }
+  100% { transform: translateY(46px); opacity: 0; }
+}
+
+/* The mote is the only thing on this layer that moves without being scrolled.
+   Someone who has asked for less motion is not the person who needs a nudge to
+   keep scrolling — the rail alone still reads as an affordance. */
+@media (prefers-reduced-motion: reduce) {
+  .home-scroll-cue::after {
+    animation: none;
+    opacity: 0.9;
+    transform: translateY(21px);
+  }
+}

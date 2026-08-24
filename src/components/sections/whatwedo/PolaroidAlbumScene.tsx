@@ -15,39 +15,53 @@ const smooth = (a: number, b: number, x: number) => {
    Add a URL and the page appears; the flip schedule below is derived from the
    list's length, so nothing else needs touching. */
 const PAGE_PHOTOS = [
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/1.png?tr=f-auto,q-auto',
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/2.png?tr=f-auto,q-auto',
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/31.png',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/whatwedo1/2.png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/whatwedo1/3.png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/whatwedo1/4.png?tr=f-auto,q-auto',
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/whatwedo1/5.png?tr=f-auto,q-auto',
   // The last leaf you turn — it lies directly on the back board, so this and
   // FINAL_PHOTO below are the two frames the hand-off to the events act is cut
-  // between. Was whatwedo/tech (4).png.
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/4.png?tr=f-auto,q-auto',
-  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/5.png?tr=f-auto,q-auto',
+  // between.
+  'https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/whatwedo1/6.png?tr=f-auto,q-auto',
 ];
+
+/* Why every one of those carries `?tr=f-auto,q-auto`, and any replacement must
+   too: the source artwork is a ~530KB PNG each. Served as-is that is 3.2MB of
+   album, all of it decoded into full-viewport layers. ImageKit re-encodes to
+   WebP at 75-176KB apiece for the same picture. The pages are painted with
+   `background-image`, which never touches next/image's loader, so the
+   transform has to be written into the URL by hand — there is nothing else in
+   the path to add it. */
 
 /* The final frame — the album's back board, and the shot the deep-dive zoom
    flies INTO to hand over to the events act.
 
-   Its real pixel size lives here because two places need to agree about it and
-   they were previously allowed to disagree: the <Image> that renders it, and
-   the `targetScale` maths in the frame loop, which works out how far to zoom so
-   the photo exactly covers the viewport at the moment the next section takes
-   over.
+   This is the PHOTO PRINTED ON the back board — the wall-and-GENESIS still
+   that the events act opens on. It is not the board itself: the board's paper
+   is `.album-back-cover`'s background in whatwedo.css, and the two are
+   separate assets on purpose, because this one has to match the first frame of
+   the next section and the paper under it has to match the rest of the album.
+   Swapping the page's backdrop in here instead is a mistake that looks like a
+   blank album — the photo vanishes and the board is all you see.
 
-   That maths used a hardcoded 9/16 while the artwork has never been 16:9 — the
-   previous file was 2.090:1, this one is 2.196:1. Because the photo is much
-   wider than 16:9, its real height is much smaller than the maths assumed, so
-   the computed scale fell short: measured at 1280×720, 1920×1080 and 1440×900,
-   the photo reached only 81% of the viewport height at the hand-off — a strip
-   of album cover left showing along the top and bottom at the exact moment the
-   events act is supposed to take over. Driving it from the aspect below puts
-   that at 1.000 on every one of those viewports. */
+   The width/height below are ONLY what <Image> reserves before the file
+   decodes — they must be the artwork's real pixels (it is 1915×872), but
+   nothing animated reads them any more. The hand-off zoom used to derive its
+   aspect here, and twice got a stale copy of it; it now measures the laid-out
+   photo directly in the frame loop's `measure()`. Do not reintroduce a
+   `FINAL_PHOTO_ASPECT` — the point of removing it was that a constant next to
+   the source file is exactly the thing that keeps going out of date.
+
+   Kept as a `public/`-style path rather than an absolute CDN URL, because this
+   one goes through <Image> and therefore through the ImageKit loader — which
+   is what appends `w-{width}` per srcset entry. An absolute URL
+   short-circuits `ik()` and every srcset candidate collapses to the same
+   full-size file. */
 const FINAL_PHOTO = {
   src: '/transition/image.png',
   width: 1915,
   height: 872,
 };
-const FINAL_PHOTO_ASPECT = FINAL_PHOTO.width / FINAL_PHOTO.height;
 
 /* Flip cascade, in units of `p` (the 0 → 0.80 morph/flip phase remapped to
    0 → 1). FLIP_START clears the opening morph, which owns 0 → 0.20. The
@@ -115,11 +129,62 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
        CSS box itself. */
     let boxW = 1;
     let boxH = 1;
+
+    /* The final photo's real box, and the point the deep-dive zoom scales it
+       about. Measured for the same reason `boxW`/`boxH` are, and after the same
+       bug in a second place.
+
+       The zoom used to re-derive this as `boxW * 0.96`, copying
+       `.final-event-photo { width: 96% }` out of the stylesheet — and the very
+       same rule also carries `max-width: 1150px`, which the copy did not. At
+       1280x720 the photo is capped to 1150 while the maths still believed
+       1216. The copy also assumed the photo was centred on the viewport, when
+       the stylesheet sits it at `top: 53.5%` — a little low.
+
+       Neither error is visible at this photo's 2.196:1, because a sheet that
+       wide needs so much scale to cover the viewport's HEIGHT that ~6% of slop
+       disappears into the margin. Swapping in 16:9-ish artwork for one round
+       removed that slack and surfaced both at once — 4px of album cover down
+       each side and 30px across the top, at the exact frame the events act
+       cuts in. The artwork went back; this did not, because the next near-16:9
+       sheet would bring the bug straight back with it.
+
+       `getBoundingClientRect`, not `offsetWidth`, because the position matters
+       too; both transforms above it are neutralised first so what comes back is
+       the layout box rather than whatever frame the zoom is part-way through.
+       Runs at init and on resize, never per frame. */
+    let photoL = 0;
+    let photoT = 0;
+    let photoR = 0;
+    let photoB = 0;
+    let originX = 0;
+    let originY = 0;
+
     const measure = () => {
       const wrap = rotatorRef.current;
       if (!wrap) return;
       boxW = wrap.offsetWidth || 1;
       boxH = wrap.offsetHeight || 1;
+
+      const scaler = scalerRef.current;
+      const photo = backCoverRef.current?.querySelector('.final-event-photo') as HTMLElement | null;
+      if (!scaler || !photo) return;
+
+      const prevScaler = scaler.style.transform;
+      const prevContainer = container?.style.transform ?? '';
+      scaler.style.transform = 'none';
+      if (container) container.style.transform = 'none';
+      const pr = photo.getBoundingClientRect();
+      const sr = scaler.getBoundingClientRect();
+      scaler.style.transform = prevScaler;
+      if (container) container.style.transform = prevContainer;
+
+      photoL = pr.left;
+      photoT = pr.top;
+      photoR = pr.right;
+      photoB = pr.bottom;
+      originX = sr.left + sr.width / 2;
+      originY = sr.top + sr.height / 2;
     };
     measure();
 
@@ -144,11 +209,19 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
       const cinematicMorph = easeInOutCubic(morphProgress);
       const morphScale = maxStartScale - cinematicMorph * (maxStartScale - 1.0);
 
-      // Calculate precise scale needed to make the image cover the screen (like object-fit: cover)
-      const photoWidth = boxW * 0.96; // matches .final-event-photo 96% width inside album page bounds
-      const photoHeight = photoWidth / FINAL_PHOTO_ASPECT;
-      // We perfectly match the max scale to the screen so it aligns flawlessly with the next section
-      const targetScale = Math.max(vw / photoWidth, vh / photoHeight) * 1.05;
+      /* How far to zoom so the photo covers the viewport at the hand-off.
+         One ratio per viewport edge, because the photo is NOT centred on the
+         scale origin and a single width/height pair cannot express that; the
+         binding edge wins. The filter and the floor of 1 are there so a
+         degenerate measurement — a zero-sized box read before layout — cannot
+         write NaN or a shrink into the transform. */
+      const covers = [
+        originX / (originX - photoL),
+        (vw - originX) / (photoR - originX),
+        originY / (originY - photoT),
+        (vh - originY) / (photoB - originY),
+      ].filter((n) => Number.isFinite(n) && n > 0);
+      const targetScale = Math.max(1, ...covers) * 1.05;
 
       const finalScale = morphScale + zoomCurve * (targetScale - 1.0);
 
@@ -351,14 +424,13 @@ export default function PolaroidAlbumScene({ progressRef, observeRef }: Polaroid
               <Image
                 src={FINAL_PHOTO.src}
                 alt="Event"
-                /* The artwork's real pixels. These were 1000×562 (16:9), which
-                   matched neither this file nor the one before it. It did not
-                   distort anything — the browser lays the box out from the
-                   image's natural aspect regardless, measured at 1000×455
-                   either way — but it reserved the wrong space before the image
-                   decoded, and it was the number someone would reach for when
-                   they needed the aspect. Which is exactly what happened in the
-                   zoom maths below. */
+                /* The artwork's real pixels. These were once 1000×562, which
+                   matched neither the file then in place nor the one before it.
+                   It did not distort anything — the browser lays the box out
+                   from the image's natural aspect regardless — but it reserved
+                   the wrong space before the image decoded, and it was the
+                   number someone would reach for when they needed the aspect.
+                   Which is exactly what happened in the zoom maths above. */
                 width={FINAL_PHOTO.width}
                 height={FINAL_PHOTO.height}
                 className="final-event-photo"

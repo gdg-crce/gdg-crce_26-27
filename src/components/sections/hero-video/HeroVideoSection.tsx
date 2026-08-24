@@ -5,6 +5,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HERO_VIDEO_SRC } from '@/lib/media';
 import { clamp01, currentIntroPhases } from '@/lib/introTimeline';
+import { smoothScrollTo } from '@/lib/scrollLock';
 
 interface HeroVideoSectionProps {
   startPlaying?: boolean;
@@ -29,6 +30,42 @@ const IRIS_OPEN = 72;
 /** Hard ceiling on the scroll lock, so an unexpectedly long intro can never
  *  trap the page. */
 const MAX_LOCK_MS = 20000;
+
+/**
+ * The auto-reveal — see `beginAutoReveal` below.
+ *
+ * A beat on the frozen last frame first, so the film is allowed to finish
+ * rather than being cut off by the page moving under it; then a drive into the
+ * title.
+ *
+ * Both numbers came down (450ms / 3.4s) because the first cut put the title
+ * fully up 3.2s after the last frame, and almost all of that was dead air on a
+ * black screen — the film has faded out, so the beat has nothing to sit on.
+ * What is left is the shortest hold that still reads as the film ENDING rather
+ * than as being cut off, and a travel long enough for the iris to close as a
+ * shutter instead of a blink. Do not trim these to zero: the two
+ * ScrollTriggers this feeds run `scrub: 1.2`, so the picture trails the scroll
+ * either way, and a scroll that finishes before the scrub does buys nothing.
+ */
+const AUTO_REVEAL_DELAY_MS = 150;
+const AUTO_REVEAL_DURATION_S = 2.0;
+
+/**
+ * The curve the auto-reveal is driven on, and the one thing about it that is
+ * not a taste call.
+ *
+ * Lenis's default easing is an expo-out — the right curve for "jump to an
+ * anchor", because it covers most of the distance immediately and then settles.
+ * Measured on this reveal it put 40% of the 1,692px into the first 250ms, which
+ * slammed the iris from 72% to 5% in four frames. The shutter has to *close*,
+ * not blink.
+ *
+ * Smootherstep instead: zero velocity at both ends, peak in the middle. The
+ * film gets a moment of stillness before the page moves, the iris closes at an
+ * even rate, and the title arrives on a decelerating scroll rather than a
+ * skid.
+ */
+const AUTO_REVEAL_EASE = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
 
 /**
  * Act 2 — the hero film, and the iris that closes it.
@@ -101,28 +138,114 @@ export default function HeroVideoSection({ startPlaying = false, primed = false 
 
   // The intro does NOT loop: it freezes on its last frame, which is the frame
   // the iris then closes over.
+  //
+  // ── and then the page moves itself ────────────────────────────────────────
+  // The film fades out to black, and the title card underneath it is also
+  // black. So a viewer who watches the whole thing is left looking at a screen
+  // that is *correct* and *identical* to the one before it, with no cue that
+  // anything is waiting on them. Nothing is broken and nothing looks like it is
+  // about to happen — which is the worst possible place to require an input.
+  //
+  // Skipping already works: scroll during the film and the iris closes early
+  // onto the title, which is the intended shortcut. This does the same thing on
+  // the viewer's behalf when they *didn't* skip, so both paths end on "GDG
+  // CRCE" and neither one asks the viewer to guess.
   useEffect(() => {
     if (!startPlaying) return;
     const video = videoRef.current;
     if (!video) return;
 
     let released = false;
+    let revealTimer = 0;
+    let cancelReveal: (() => void) | null = null;
+
+    const detach = () => {
+      window.removeEventListener('wheel', onUserInput, true);
+      window.removeEventListener('touchstart', onUserInput, true);
+      window.removeEventListener('keydown', onUserInput, true);
+    };
+
+    /* The viewer wins, always — and `keydown` is the one that actually needs
+       this. Lenis intercepts the wheel itself, but the keyboard and (with
+       `syncTouch` off) a native touch scroll go straight to the browser, where
+       the reveal's still-running animation overwrites the scroll position on
+       the very next frame. Cancelling stops it; see `smoothScrollTo`.
+
+       Capture phase so this lands before Lenis's own handler, so the delta from
+       this very event is applied on top of a scroller that has already stood
+       down. */
+    function onUserInput() {
+      detach();
+      const cancel = cancelReveal;
+      cancelReveal = null;
+      cancel?.();
+    }
+
+    const beginAutoReveal = () => {
+      const ph = currentIntroPhases();
+      // Park in the middle of the hold. The iris is shut, the title has fully
+      // faded up, and the push-in — which begins at `hold.end` — has not been
+      // touched, so the viewer still gets to trigger the reveal into About
+      // themselves. Landing exactly on `title.end` would leave no slack for the
+      // scrub's overshoot; the hold exists precisely because nothing moves
+      // across it.
+      const target = ph.hold.start + (ph.hold.end - ph.hold.start) * 0.5;
+
+      // Already there, or past it — the viewer scrolled during the film and has
+      // seen the title. Dragging the page backwards would be worse than doing
+      // nothing.
+      if (window.scrollY >= target - 4) return;
+
+      cancelReveal = smoothScrollTo(target, {
+        duration: AUTO_REVEAL_DURATION_S,
+        easing: AUTO_REVEAL_EASE,
+        onComplete: () => {
+          cancelReveal = null;
+          detach();
+        },
+      });
+
+      window.addEventListener('wheel', onUserInput, { capture: true, passive: true });
+      window.addEventListener('touchstart', onUserInput, { capture: true, passive: true });
+      window.addEventListener('keydown', onUserInput, true);
+    };
+
     const unlock = () => {
       if (released) return;
       released = true;
       document.body.style.overflow = '';
+      revealTimer = window.setTimeout(beginAutoReveal, AUTO_REVEAL_DELAY_MS);
     };
 
     // Rely on the native 'ended' event so the handover is EXACTLY the last frame
     video.addEventListener('ended', unlock);
 
-    // Fallback if 'ended' doesn't fire for some reason
-    const fallback = Math.min(((video.duration || 12) + 0.5) * 1000, MAX_LOCK_MS);
-    const timer = setTimeout(unlock, fallback);
+    // Fallback, if 'ended' never fires. Armed off whatever is actually left to
+    // play rather than off a duration captured at mount: `preload="auto"` does
+    // not guarantee metadata is in by the time `startPlaying` flips, and the
+    // old `video.duration || 12` meant an unmeasured film had its ending
+    // guessed at 12s — which for this 18s cut would have fired the reveal
+    // mid-shot and scrolled the page out from under the film.
+    let fallbackTimer = 0;
+    const armFallback = () => {
+      if (released) return;
+      window.clearTimeout(fallbackTimer);
+      const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 12;
+      const remaining = Math.max(0, duration - (video.currentTime || 0));
+      fallbackTimer = window.setTimeout(unlock, Math.min((remaining + 0.75) * 1000, MAX_LOCK_MS));
+    };
+    video.addEventListener('loadedmetadata', armFallback);
+    video.addEventListener('durationchange', armFallback);
+    armFallback();
 
     return () => {
       video.removeEventListener('ended', unlock);
-      clearTimeout(timer);
+      video.removeEventListener('loadedmetadata', armFallback);
+      video.removeEventListener('durationchange', armFallback);
+      window.clearTimeout(fallbackTimer);
+      window.clearTimeout(revealTimer);
+      detach();
+      cancelReveal?.();
       document.body.style.overflow = '';
     };
   }, [startPlaying]);

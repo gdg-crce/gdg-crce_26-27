@@ -201,9 +201,17 @@
   will-change: transform;
 }
 
+/* The last leaf of the album — the board the final photo is printed on, and
+   the last thing on screen before the events act takes over.
+
+   Its paper is its OWN asset, separate from the photo pasted on it (that is
+   `FINAL_PHOTO` in PolaroidAlbumScene.tsx). The two get confused because both
+   are "the last page": this is the spiral-bound sheet, that is the picture
+   printed on the sheet. Replace the wrong one and the album's final beat goes
+   blank — the photo disappears and you are looking at bare paper. */
 .album-back-cover {
   background-color: #111;
-  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/Screenshot%202026-07-31%20035933.png?tr=f-auto,q-auto');
+  background-image: url('https://ik.imagekit.io/9yzb99hnu/gdg-crce/whatwedo/whatwedo1/1.png?tr=f-auto,q-auto');
   background-size: 100% 100%;
   background-position: center top;
   /* Deep, physically grounded contact shadow on the table */

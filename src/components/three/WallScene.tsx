@@ -1098,15 +1098,36 @@ function Scene({ progressRef, snapToTarget }: { progressRef: React.RefObject<num
       ))}
 
       {/* Authentic Spray Paint Graffiti with Archival Stencil Typography — positioned cleanly between posters */}
-      <GraffitiTag text="EVENTS" subtext="UNDERGROUND TECH ARCHIVE // EST. 1994" color="#4E9AA4" accentColor="#37727E" position={[-26.0, 2.4, 0.010]} rotation={[0, 0, -0.02]} tagScale={0.86} />
-      <GraffitiTag text="GDG" subtext="CRCE // SYNÉCHEIA // ALL ERAS" color="#B04A6B" accentColor="#6E2A42" position={[-14.5, 2.45, 0.010]} rotation={[0, 0, 0.03]} tagScale={0.86} />
-      <GraffitiTag text="MTV" subtext="UNPLUGGED // ARCHIVE SER. 04" color="#4E9AA4" accentColor="#2F5A68" position={[-3.8, 2.4, 0.010]} rotation={[0, 0, -0.03]} tagScale={0.86} />
-      {/* The "90s" tag that used to sit at x = 7.35 is gone. The UNPLUG poster
-          is pasted at x = 7.1 and is 3.4m wide, so the tag was landing directly
-          across the artwork — graffiti UNDER a poster is history, graffiti ON
-          TOP of one is just something covering the thing you came to read.
-          x = 7.1 ± 1.7 is now kept clear. */}
-      <GraffitiTag text="BIT N BUILD" subtext="INTERNATIONAL HACKATHON" color="#7F519B" accentColor="#43265C" position={[18.65, 2.4, 0.010]} rotation={[0, 0, -0.03]} tagScale={0.62} />
+      {/* -26.25, not -26.0. GENESIS's left edge is at -24.29 and this tag's plane
+          is 3.61m wide, so -26.0 put its right edge at -24.19 — a 10cm overlap.
+          Invisible in practice (the ink does not reach the plane's edge) but it
+          is the same class of mistake as the GDG one below, and the whole point
+          of the table under it is that these are computed, not eyeballed. */}
+      <GraffitiTag text="EVENTS" subtext="UNDERGROUND TECH ARCHIVE // EST. 1994" color="#4E9AA4" accentColor="#37727E" position={[-26.25, 2.4, 0.010]} rotation={[0, 0, -0.02]} tagScale={0.86} />
+      <GraffitiTag text="GDG" subtext="CRCE // SYNÉCHEIA // ALL ERAS" color="#B04A6B" accentColor="#6E2A42" position={[-11.55, 2.45, 0.010]} rotation={[0, 0, 0.03]} tagScale={0.86} />
+      {/* The "MTV" tag that sat at x = -3.8 is gone, and so is the "90s" tag
+          that sat at x = 7.35 before it. Both were removed for the same reason
+          the placements below are arithmetic rather than eyeballed: graffiti
+          UNDER a poster is history, graffiti ON TOP of one is just something
+          covering the thing you came to read.
+
+          ── Where a tag may go ──────────────────────────────────────────────
+          A tag's plane is `4.2 * tagScale` wide, and a sheet is `3.4 * scale`
+          wide centred on its own x (see eventData.ts). So the only legal x for
+          a tag is one where its half-width clears both neighbouring sheets'
+          half-widths. With the seven current placements the clear gaps are:
+
+            posters 1|2  -20.72 … -17.07   centre -18.89
+            posters 2|3  -13.73 … -9.40    centre -11.57   <- GDG
+            posters 3|4   -5.80 … -2.12    centre  -3.96   (was MTV, now bare)
+            posters 4|5    1.12 …  5.37    centre   3.24
+            posters 5|6    8.83 … 12.30    centre  10.57   <- BIT N BUILD
+            posters 6|7   15.70 … 19.73    centre  17.72
+
+          Recompute these if any poster moves, scales, or is added. Do not
+          nudge a tag by eye — the overlap this replaces was invisible from
+          most of the walk and obvious from exactly one camera position. */}
+      <GraffitiTag text="BIT N BUILD" subtext="INTERNATIONAL HACKATHON" color="#7F519B" accentColor="#43265C" position={[10.55, 2.4, 0.010]} rotation={[0, 0, -0.03]} tagScale={0.62} />
 
       {/* Airborne dust. Was 75 motes at size 1.8 / opacity 0.25 in near-white —
           which reads as fairy sparkles, an asset-store tell. Real dust is only

@@ -83,6 +83,7 @@ export default function HomeSection() {
   const maskGroupRef = useRef<SVGGElement | null>(null);
   const solidGroupRef = useRef<SVGGElement | null>(null);
   const maxTitleInRef = useRef(0);
+  const cueRef = useRef<HTMLDivElement | null>(null);
 
   /** Push-in origin, in SVG user units (= CSS px, the viewBox is 1:1). */
   const focusRef = useRef({ x: 0, y: 0 });
@@ -229,6 +230,17 @@ export default function HomeSection() {
         iris.setAttribute('r', r.toFixed(2));
       }
 
+      /* The scroll cue. Rides in behind the type — `titleIn` is already
+         monotonic, so it cannot flicker — and is gone before the knockout
+         begins. The `1 - ramp(0, 0.06, zoomP)` is what guarantees the second
+         half of that: the moment the letters start becoming windows, this is
+         already at zero, so it is never a chip painted over the push-in. */
+      const cue = cueRef.current;
+      if (cue) {
+        const cueIn = ramp(0.55, 1, titleIn) * (1 - ramp(0, 0.06, zoomP));
+        cue.style.opacity = cueIn.toFixed(4);
+      }
+
       // Pure insurance, over the last 3%: by then the iris alone already covers
       // the frame. If this is ever doing visible work, the iris is mistuned.
       const clear = ramp(0.97, 1, zoomP);
@@ -298,6 +310,10 @@ export default function HomeSection() {
           </text>
         </g>
       </svg>
+      {/* Outside the SVG on purpose: it is not part of the knockout, and being
+          a plain element keeps its one animation on the compositor instead of
+          in the mask the push-in is already re-rasterising every frame. */}
+      <div ref={cueRef} className="home-scroll-cue" aria-hidden="true" />
     </section>
   );
 }

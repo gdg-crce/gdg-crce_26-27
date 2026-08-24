@@ -44,7 +44,14 @@ interface Scroller {
   stop(): void;
   scrollTo(
     target: number | string | HTMLElement,
-    options?: { immediate?: boolean; force?: boolean; lock?: boolean },
+    options?: {
+      immediate?: boolean;
+      force?: boolean;
+      lock?: boolean;
+      duration?: number;
+      easing?: (t: number) => number;
+      onComplete?: () => void;
+    },
   ): void;
 }
 
@@ -103,4 +110,67 @@ export function unlockScroll(owner: string, resetToTop = false) {
     scroller?.scrollTo(0, { immediate: true, force: true });
   }
   apply();
+}
+
+/**
+ * Animate the page to `y` — the programmatic counterpart of a user scroll.
+ *
+ * Goes through the registered scroller rather than `window.scrollTo`, for the
+ * same reason the lock does: Lenis owns a *virtual* scroll position and
+ * rewrites the real one from its rAF loop every frame, so a native smooth
+ * scroll would be overwritten before it was visible.
+ *
+ * `force: true` is set because callers here are transitions, not navigation:
+ * the intro can be mid-lock when the film ends, and a reveal that silently
+ * does nothing because someone else holds the lock is worse than one that
+ * runs.
+ *
+ * Returns a **cancel** function. Call it the moment the user takes over.
+ *
+ * Cancelling is not cosmetic, and the reason is narrower than it looks. A wheel
+ * takes care of itself: Lenis's own wheel handler starts a fresh `scrollTo`,
+ * which replaces the running animation. But Lenis does not own the **keyboard**
+ * or a **native touch scroll** (`syncTouch` is off here) — and a running Lenis
+ * animation rewrites the document's scroll position every single frame, so
+ * those inputs get overwritten as fast as the browser applies them and the page
+ * simply refuses to move.
+ *
+ * ── and cancelling has exactly one working spelling ─────────────────────────
+ * The obvious `scrollTo(animatedScroll, { immediate: true })` is a **no-op**,
+ * measured: for a *programmatic* scroll Lenis does not park `targetScroll` at
+ * the destination, it rewrites `targetScroll = animatedScroll = value` on every
+ * frame of the animation. So asking it to jump to `animatedScroll` trips its
+ * own `if (target === this.targetScroll) return` guard, which sits **above** the
+ * `immediate` branch — it returns having stopped nothing, and the reveal drives
+ * serenely on over the top of the user.
+ *
+ * `stop()` is the one that lands: it goes through `reset()`, which calls
+ * `animate.stop()` and snaps Lenis's bookkeeping onto `actualScroll` — the
+ * pixel the document is genuinely at, so nothing moves. `apply()` then puts the
+ * scroller back into whatever state the *lock* says it should be in, rather
+ * than assuming it should be running.
+ */
+export function smoothScrollTo(
+  y: number,
+  {
+    duration = 2,
+    easing,
+    onComplete,
+  }: { duration?: number; easing?: (t: number) => number; onComplete?: () => void } = {},
+): () => void {
+  if (typeof window === 'undefined') return () => {};
+
+  const instance = scroller;
+  if (instance) {
+    instance.scrollTo(y, { duration, easing, force: true, onComplete });
+    return () => {
+      instance.stop();
+      apply();
+    };
+  }
+
+  // No scroller registered yet (the provider mounts after its children). Native
+  // smooth scroll is the honest fallback; an instant scrollTo cancels it.
+  window.scrollTo({ top: y, behavior: 'smooth' });
+  return () => window.scrollTo(window.scrollX, window.scrollY);
 }

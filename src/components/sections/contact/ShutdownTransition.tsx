@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ContactSection from './ContactSection';
+import { smoothScrollTo } from '@/lib/scrollLock';
 import './shutdown.css';
 
 /* -----------------------------------------------------------------------------
@@ -55,6 +56,33 @@ const seg = (a: number, b: number, x: number) => {
  * Desktop does not use this — its length is `SHUTDOWN_LEN` inside Act 3's pin.
  */
 const MOBILE_SCROLL_LEN = 1800;
+
+/* ── Idle auto-finish ─────────────────────────────────────────────────────────
+   The shutdown is scroll-driven, and it is the one beat on the page where that
+   is a trap. Everything else here reads as scenery you are travelling past; a
+   shutdown DIALOG reads as a machine that is already doing something. So the
+   viewer stops scrolling and waits — politely, indefinitely — for a progress
+   bar that only ever moves when they push it.
+
+   If the power-off is part-way through and nothing has advanced it for
+   IDLE_FINISH_MS, it finishes itself.
+
+   This does NOT introduce the second progress source the header forbids. It
+   moves the SCROLL, and every value on screen is still derived from the one
+   scalar whichever driver is in charge hands to `render`. That distinction is
+   the entire reason this is a `scrollTo` and not a tween of `p`: tween `p` and
+   the next real scroll tick snaps the picture back to wherever the scrollbar
+   actually is. Both drivers reach p = 1 at the bottom of the document — the
+   desktop pin because it is the last thing in the document, the mobile spacer
+   because it is the last thing in flow — so "finish" is one destination. */
+const IDLE_FINISH_MS = 5500;
+const IDLE_FINISH_DURATION_S = 2.4;
+/** Below this the power-off has not visibly begun, so there is nothing to
+ *  finish and an idle viewer is just reading the gallery. */
+const IDLE_FINISH_MIN_P = 0.02;
+/** Smootherstep. Lenis's default expo-out dumps most of the travel into the
+ *  first few frames, which on a 1600px shutdown is a lurch, not a power-off. */
+const IDLE_FINISH_EASE = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
 
 export interface ShutdownFrame {
   /** The text-mode contact screen on the black. */
@@ -360,9 +388,69 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       }
     };
 
-    const render = mobile
+    const baseRender = mobile
       ? (reduced ? drawMobileReduced : drawMobile)
       : (reduced ? drawReduced : draw);
+
+    /* See IDLE_FINISH_MS. Armed off `render` itself rather than off a scroll
+       listener, because "the shutdown stopped advancing" is the actual
+       condition — and on desktop that is a scrub settling, which produces no
+       further scroll events of its own. */
+    let idleTimer = 0;
+    let cancelFinish: (() => void) | null = null;
+
+    const detachFinish = () => {
+      window.removeEventListener('wheel', onFinishInput, true);
+      window.removeEventListener('touchstart', onFinishInput, true);
+      window.removeEventListener('keydown', onFinishInput, true);
+    };
+
+    /* Capture phase, and the viewer always wins — same handover the hero's
+       auto-reveal uses. See `smoothScrollTo` for why cancelling has exactly one
+       working spelling. */
+    function onFinishInput() {
+      detachFinish();
+      const cancel = cancelFinish;
+      cancelFinish = null;
+      cancel?.();
+    }
+
+    const finishNow = () => {
+      const bottom = document.documentElement.scrollHeight - window.innerHeight;
+      if (window.scrollY >= bottom - 4) return;
+
+      cancelFinish = smoothScrollTo(bottom, {
+        duration: IDLE_FINISH_DURATION_S,
+        easing: IDLE_FINISH_EASE,
+        onComplete: () => {
+          cancelFinish = null;
+          detachFinish();
+        },
+      });
+
+      window.addEventListener('wheel', onFinishInput, { capture: true, passive: true });
+      window.addEventListener('touchstart', onFinishInput, { capture: true, passive: true });
+      window.addEventListener('keydown', onFinishInput, true);
+    };
+
+    const render = (p: number) => {
+      baseRender(p);
+
+      window.clearTimeout(idleTimer);
+      // An auto-finish in flight is itself producing these calls. Re-arming off
+      // its own progress would reset the timer every frame and it could never
+      // fire again — and it has nothing left to wait for anyway.
+      if (cancelFinish) return;
+      if (p >= IDLE_FINISH_MIN_P && p < 0.999) {
+        idleTimer = window.setTimeout(finishNow, IDLE_FINISH_MS);
+      }
+    };
+
+    const teardownFinish = () => {
+      window.clearTimeout(idleTimer);
+      detachFinish();
+      cancelFinish?.();
+    };
 
     // Land on a correct first frame rather than the CSS defaults.
     render(0);
@@ -372,6 +460,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       drawRef.current = render;
       return () => {
         drawRef.current = null;
+        teardownFinish();
       };
     }
 
@@ -432,6 +521,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener('scroll', updateMobile);
       window.removeEventListener('resize', updateMobile);
+      teardownFinish();
     };
   }, [mobile, drawRef]);
 

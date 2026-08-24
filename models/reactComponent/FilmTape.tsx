@@ -158,9 +158,22 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
                     // zoom-through hands over between two elements showing the
                     // same footage instead of cutting between two clips.
                     src={HERO_VIDEO_SRC}
-                    autoPlay
+                    /* Deliberately NOT `autoPlay loop`. A strip of film being
+                       rewound through a tape is not a screen — a cell that is
+                       playing (and looping, so it is at an arbitrary offset)
+                       gives the whole prop away, and it means the film has
+                       already been showing for the length of the loader by the
+                       time the hero is supposed to start it from frame 0.
+                       It holds a still until Preloader's zoom-through starts
+                       every copy of the film on one tick; see `zoomStarted`.
+
+                       `preload="auto"` is what keeps that a STILL rather than a
+                       black hole: with no poster and no autoplay, the element
+                       paints nothing until it has a frame, and the cell's own
+                       `background: #000` would show through as an empty box in
+                       the middle of the strip. */
+                    preload="auto"
                     muted
-                    loop
                     playsInline
                     style={{
                       position: 'absolute',
@@ -287,4 +300,4 @@ const FilmTape = React.memo(function FilmTape({ activeFrame }: FilmTapeProps) {
 export default FilmTape;
 
 
-
+
