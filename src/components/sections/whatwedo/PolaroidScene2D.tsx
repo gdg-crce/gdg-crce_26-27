@@ -165,87 +165,102 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
     let raf = 0;
     let running = false;
 
+    let containerWidth = 0;
+    let containerHeight = 0;
+    let cachedScale = 1;
+    let cachedTitleTop = 0;
+    let cachedCameraTop = 0;
+    let cachedCameraWidth = 0;
+    let cachedCameraHeight = 0;
+    let cachedPhotoWidth = 0;
+    let cachedPhotoHeight = 0;
+    let cachedStartCenterY = 0;
+    let cachedRestingCenterY = 0;
+    let isMobile = false;
+
+    const measureLayout = () => {
+      isMobile = window.innerWidth < 768;
+      if (!isMobile) return;
+
+      const container = rootRef.current;
+      if (container) {
+        containerHeight = container.offsetHeight || window.innerHeight;
+        containerWidth = container.offsetWidth || window.innerWidth;
+
+        const topOffset = 62;
+        const availableHeight = containerHeight - topOffset - 12;
+        const baseGroupHeight = 560;
+        const heightScale = availableHeight / baseGroupHeight;
+        const widthScale = (containerWidth * 0.90) / 340;
+        cachedScale = Math.max(0.3, Math.min(1.0, Math.min(heightScale, widthScale)));
+
+        const titleHeight = 28 * cachedScale;
+        const gap = 8 * cachedScale;
+
+        cachedCameraWidth = 235 * cachedScale;
+        cachedCameraHeight = cachedCameraWidth * 1.5015;
+
+        cachedPhotoWidth = Math.min(containerWidth * 0.88, 340 * cachedScale);
+        cachedPhotoHeight = cachedPhotoWidth * 1.25;
+
+        cachedTitleTop = topOffset;
+        cachedCameraTop = cachedTitleTop + titleHeight + gap;
+
+        const slotY = cachedCameraTop + cachedCameraHeight * 0.791;
+        cachedStartCenterY = slotY - (0.4 * cachedPhotoHeight) / 2;
+        cachedRestingCenterY = cachedCameraTop + (containerHeight - 12 - cachedCameraTop) / 2;
+      }
+    };
+
+    measureLayout();
+    window.addEventListener('resize', measureLayout, { passive: true });
+
     const draw = () => {
       const p = progressRef.current ?? 0;
       if (p === prevPRef.current) return;
       prevPRef.current = p;
 
-      const isMobile = window.innerWidth < 768;
-
       if (isMobile) {
         // camera: no transform animation — must stay identical size to cameratop overlay
+        const scale = cachedScale;
+        const cameraWidth = cachedCameraWidth;
+        const cameraTop = cachedCameraTop;
+        const titleTop = cachedTitleTop;
+        const photoWidth = cachedPhotoWidth;
+        const startCenterY = cachedStartCenterY;
+        const restingCenterY = cachedRestingCenterY;
 
-        const container = rootRef.current;
-        if (container) {
-          const containerRect = container.getBoundingClientRect();
-          const containerHeight = containerRect.height;
-          const containerWidth = containerRect.width;
+        // Exit transition into events: from p=0.86 to 1.0, gently lift and soften
+        let exitY = 0;
+        let exitScale = 1;
+        if (p > 0.86) {
+          const exitT = clamp01((p - 0.86) / 0.12);
+          exitY = -exitT * 28;
+          exitScale = 1 - exitT * 0.04;
+        }
 
-          // Safe space for header navbar (TopNav is at top: 20px, height 58px -> 78px bottom)
-          const topOffset = 82;
-          const availableHeight = containerHeight - topOffset - 16;
+        if (mobileTitleRef.current) {
+          mobileTitleRef.current.style.top = `${titleTop}px`;
+          mobileTitleRef.current.style.fontSize = `calc(1.8rem * ${scale})`;
+          mobileTitleRef.current.style.transform = `translateY(${exitY}px) scale(${exitScale})`;
+        }
 
-          // Scale factor calculated to fit title, camera, and full polaroids inside available height & width
-          const baseGroupHeight = 560;
-          const heightScale = availableHeight / baseGroupHeight;
-          const widthScale = (containerWidth * 0.90) / 340;
-          
-          const scale = Math.max(0.3, Math.min(1.0, Math.min(heightScale, widthScale)));
+        if (mobileCameraWrapperRef.current) {
+          mobileCameraWrapperRef.current.style.top = `${cameraTop}px`;
+          mobileCameraWrapperRef.current.style.width = `${cameraWidth}px`;
+          mobileCameraWrapperRef.current.style.transform = `translateX(-50%) translateY(${exitY}px) scale(${exitScale})`;
+        }
+        if (mobileCameratopRef.current) {
+          mobileCameratopRef.current.style.top = `${cameraTop}px`;
+          mobileCameratopRef.current.style.width = `${cameraWidth}px`;
+          mobileCameratopRef.current.style.transform = `translateX(-50%) translateY(${exitY}px) scale(${exitScale})`;
+        }
 
-          const titleHeight = 28 * scale;
-          const gap = 8 * scale;
-
-          // Scaled camera dimensions (slightly bigger camera)
-          const cameraWidth = 235 * scale;
-          const cameraHeight = cameraWidth * 1.5015;
-
-          // Scaled photo dimensions (slightly bigger polaroids)
-          const photoWidth = Math.min(containerWidth * 0.88, 340 * scale);
-          const photoHeight = photoWidth * 1.25;
-
-          const titleTop = topOffset;
-          const cameraTop = titleTop + titleHeight + gap;
-
-          // Exit transition into events: from p=0.86 to 1.0, gently lift and soften
-          let exitY = 0;
-          let exitScale = 1;
-          if (p > 0.86) {
-            const exitT = clamp01((p - 0.86) / 0.12);
-            exitY = -exitT * 28;
-            exitScale = 1 - exitT * 0.04;
-          }
-
-          if (mobileTitleRef.current) {
-            mobileTitleRef.current.style.top = `${titleTop}px`;
-            mobileTitleRef.current.style.fontSize = `calc(1.8rem * ${scale})`;
-            mobileTitleRef.current.style.transform = `translateY(${exitY}px) scale(${exitScale})`;
-          }
-
-          if (mobileCameraWrapperRef.current) {
-            mobileCameraWrapperRef.current.style.top = `${cameraTop}px`;
-            mobileCameraWrapperRef.current.style.width = `${cameraWidth}px`;
-            mobileCameraWrapperRef.current.style.transform = `translateX(-50%) translateY(${exitY}px) scale(${exitScale})`;
-          }
-          if (mobileCameratopRef.current) {
-            mobileCameratopRef.current.style.top = `${cameraTop}px`;
-            mobileCameratopRef.current.style.width = `${cameraWidth}px`;
-            mobileCameratopRef.current.style.transform = `translateX(-50%) translateY(${exitY}px) scale(${exitScale})`;
-          }
-
-          // Slot Y relative to container top (79.1% from the top of the camera)
-          const slotY = cameraTop + cameraHeight * 0.791;
-
-          // At t = 0, photo starts inside camera slot
-          const startCenterY = slotY - (0.4 * photoHeight) / 2;
-
-          // Resting center of fully ejected polaroid (centered in the available space below the header to guarantee it fits on screen)
-          const restingCenterY = cameraTop + (containerHeight - 12 - cameraTop) / 2;
-
-          // photos: stack on top of each other fanned out
-          for (let i = 0; i < MOBILE_PHOTOS.length; i++) {
-            const el = mobilePhotoRefs.current[i];
-            if (!el) continue;
-            const ph = MOBILE_PHOTOS[i];
+        // photos: stack on top of each other fanned out
+        for (let i = 0; i < MOBILE_PHOTOS.length; i++) {
+          const el = mobilePhotoRefs.current[i];
+          if (!el) continue;
+          const ph = MOBILE_PHOTOS[i];
 
             const t = easeOut(smooth(ph.start, ph.start + REVEAL_DUR_MOBILE, p));
             const opacity = smooth(ph.start, ph.start + 0.05, p);
@@ -276,9 +291,9 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             }
           }
           if (mobileFlashRef.current) {
-            const cameraLeft = containerWidth * 0.5 - cameraWidth * 0.5;
-            const flashCenterX = cameraLeft + cameraWidth * 0.73;
-            const flashCenterY = cameraTop + cameraHeight * 0.215;
+            const cameraLeft = containerWidth * 0.5 - cachedCameraWidth * 0.5;
+            const flashCenterX = cameraLeft + cachedCameraWidth * 0.73;
+            const flashCenterY = cameraTop + cachedCameraHeight * 0.215;
 
             const bgGradient = `radial-gradient(circle ${80 * scale}px at ${flashCenterX.toFixed(1)}px ${flashCenterY.toFixed(1)}px, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 30%, rgba(255, 255, 255, 0) 100%), radial-gradient(circle 1000px at ${flashCenterX.toFixed(1)}px ${flashCenterY.toFixed(1)}px, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%)`;
 
@@ -289,7 +304,6 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
             mobileFlashRef.current.style.background = bgGradient;
             mobileFlashRef.current.style.opacity = flashOpacity.toFixed(3);
           }
-        }
       } else {
         // camera: revealed in place by the flash, with a gentle settle
         if (cameraRef.current) {
@@ -331,6 +345,7 @@ export default function PolaroidScene2D({ progressRef }: { progressRef: React.Re
 
     start();
     return () => {
+      window.removeEventListener('resize', measureLayout);
       stop();
     };
   }, [progressRef]);

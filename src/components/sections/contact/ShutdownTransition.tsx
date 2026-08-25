@@ -55,7 +55,8 @@ const seg = (a: number, b: number, x: number) => {
  *
  * Desktop does not use this — its length is `SHUTDOWN_LEN` inside Act 3's pin.
  */
-const MOBILE_SCROLL_LEN = 1800;
+const MOBILE_PAUSE_PX = 80;
+const MOBILE_SCROLL_LEN = 450;
 
 /* ── Idle auto-finish ─────────────────────────────────────────────────────────
    The shutdown is scroll-driven, and it is the one beat on the page where that
@@ -75,11 +76,11 @@ const MOBILE_SCROLL_LEN = 1800;
    actually is. Both drivers reach p = 1 at the bottom of the document — the
    desktop pin because it is the last thing in the document, the mobile spacer
    because it is the last thing in flow — so "finish" is one destination. */
-const IDLE_FINISH_MS = 5500;
-const IDLE_FINISH_DURATION_S = 2.4;
+const IDLE_FINISH_MS = 2500;
+const IDLE_FINISH_DURATION_S = 2.0;
 /** Below this the power-off has not visibly begun, so there is nothing to
  *  finish and an idle viewer is just reading the gallery. */
-const IDLE_FINISH_MIN_P = 0.02;
+const IDLE_FINISH_MIN_P = 0.01;
 /** Smootherstep. Lenis's default expo-out dumps most of the travel into the
  *  first few frames, which on a 1600px shutdown is a lurch, not a power-off. */
 const IDLE_FINISH_EASE = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
@@ -281,6 +282,9 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       }
     };
 
+    let progressBarEl: HTMLElement | null = null;
+    let statusTextEl: HTMLElement | null = null;
+
     const drawMobile = (p: number) => {
       const tube = tubeRef.current;
       const scrim = scrimRef.current;
@@ -324,18 +328,18 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       dialog.style.transform = `scale(${f.dialogScale.toFixed(3)})`;
 
       // Animate progress bar blocks
-      const progressBar = document.querySelector('.sd-phone-progress-bar');
-      if (progressBar) {
+      if (!progressBarEl) progressBarEl = document.querySelector('.sd-phone-progress-bar');
+      if (progressBarEl) {
         const totalBlocks = 12;
         const filled = Math.min(totalBlocks, Math.floor(seg(0.08, 0.44, p) * totalBlocks));
-        progressBar.textContent = '▰'.repeat(filled) + '▱'.repeat(totalBlocks - filled);
+        progressBarEl.textContent = '▰'.repeat(filled) + '▱'.repeat(totalBlocks - filled);
       }
 
       // Animate status dots cycle
-      const statusText = document.querySelector('.sd-phone-status');
-      if (statusText) {
+      if (!statusTextEl) statusTextEl = document.querySelector('.sd-phone-status');
+      if (statusTextEl) {
         const dotsCount = Math.floor(seg(0.08, 0.44, p) * 12) % 4;
-        statusText.textContent = 'Switching Off' + '.'.repeat(dotsCount);
+        statusTextEl.textContent = 'Switching Off' + '.'.repeat(dotsCount);
       }
 
       // Phone goodbye screen fades in and out cleanly before power off
@@ -396,6 +400,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
        listener, because "the shutdown stopped advancing" is the actual
        condition — and on desktop that is a scrub settling, which produces no
        further scroll events of its own. */
+    let currentP = 0;
     let idleTimer = 0;
     let cancelFinish: (() => void) | null = null;
 
@@ -433,7 +438,27 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       window.addEventListener('keydown', onFinishInput, true);
     };
 
+    const resetIdleTimer = () => {
+      if (cancelFinish) return;
+      window.clearTimeout(idleTimer);
+      if (currentP >= IDLE_FINISH_MIN_P && currentP < 0.999) {
+        idleTimer = window.setTimeout(finishNow, IDLE_FINISH_MS);
+      }
+    };
+
+    const onUserActivity = () => {
+      resetIdleTimer();
+    };
+
+    window.addEventListener('pointermove', onUserActivity, { passive: true });
+    window.addEventListener('mousemove', onUserActivity, { passive: true });
+    window.addEventListener('click', onUserActivity, { passive: true });
+    window.addEventListener('keydown', onUserActivity, { passive: true });
+    window.addEventListener('touchstart', onUserActivity, { passive: true });
+    window.addEventListener('wheel', onUserActivity, { passive: true });
+
     const render = (p: number) => {
+      currentP = p;
       baseRender(p);
 
       window.clearTimeout(idleTimer);
@@ -448,6 +473,12 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
 
     const teardownFinish = () => {
       window.clearTimeout(idleTimer);
+      window.removeEventListener('pointermove', onUserActivity);
+      window.removeEventListener('mousemove', onUserActivity);
+      window.removeEventListener('click', onUserActivity);
+      window.removeEventListener('keydown', onUserActivity);
+      window.removeEventListener('touchstart', onUserActivity);
+      window.removeEventListener('wheel', onUserActivity);
       detachFinish();
       cancelFinish?.();
     };
@@ -486,15 +517,26 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
         }
 
         const council = document.getElementById('mobile-council');
+        const anchor = document.getElementById('mobile-shutdown-anchor');
+        const endCard = council?.querySelector('.fb-feed-container .fb-feed-end-card');
         const spacer = spacerRef.current;
         if (!spacer) return;
 
-        const spacerRect = spacer.getBoundingClientRect();
-        const councilRect = council ? council.getBoundingClientRect() : null;
+        // Find the bottom boundary of the "You're All Caught Up" card or anchor
+        let triggerBottom: number;
+        if (endCard) {
+          triggerBottom = endCard.getBoundingClientRect().bottom;
+        } else if (anchor) {
+          triggerBottom = anchor.getBoundingClientRect().top;
+        } else {
+          triggerBottom = spacer.getBoundingClientRect().top;
+        }
 
-        // If council section is visible (its bottom is >= 0), or spacer hasn't reached viewport top,
-        // the user is still viewing council content or navigating tabs — shutdown must be 0
-        if (spacerRect.top >= 0 || (councilRect && councilRect.bottom >= 0)) {
+        const vh = window.innerHeight;
+
+        // If "You're All Caught Up" has not reached the bottom of the viewport yet,
+        // the user is still viewing or reading the council content — shutdown stays at 0
+        if (triggerBottom >= vh) {
           if (lastRenderedP !== 0) {
             lastRenderedP = 0;
             render(0);
@@ -502,10 +544,19 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
           return;
         }
 
-        // As user scrolls through the spacer below council:
-        // spacerRect.top travels from 0 down to -(spacer.offsetHeight - window.innerHeight)
-        const maxTravel = Math.max(100, spacer.offsetHeight - window.innerHeight);
-        const p = clamp01(-spacerRect.top / maxTravel);
+        // Slight pause/buffer right after "You're All Caught Up" before shutdown begins
+        const travel = vh - triggerBottom;
+        if (travel <= MOBILE_PAUSE_PX) {
+          if (lastRenderedP !== 0) {
+            lastRenderedP = 0;
+            render(0);
+          }
+          return;
+        }
+
+        // As the user scrolls past the pause, smoothly progress shutdown 0 -> 1 over MOBILE_SCROLL_LEN px
+        const p = clamp01((travel - MOBILE_PAUSE_PX) / MOBILE_SCROLL_LEN);
+
         if (Math.abs(p - lastRenderedP) > 0.001) {
           lastRenderedP = p;
           render(p);
@@ -611,7 +662,7 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
         <div
           ref={spacerRef}
           className="sd-spacer"
-          style={{ height: `${MOBILE_SCROLL_LEN}px` }}
+          style={{ height: `${MOBILE_PAUSE_PX + MOBILE_SCROLL_LEN}px` }}
         />
       )}
     </>

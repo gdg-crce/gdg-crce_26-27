@@ -89,7 +89,7 @@ export default function WhatWeDoSection() {
     let activeNow: boolean | null = null;
 
     /* Smooth pure function of progress.
-       From p=0.86 to p=0.98, WhatWeDo seamlessly crossfades out into Events,
+       From p=0.88 to p=1.0, WhatWeDo seamlessly fades out into Events,
        preventing any abrupt cuts or popping. */
     const applyAlbumState = (progress: number) => {
       progressRef.current = progress;
@@ -109,10 +109,10 @@ export default function WhatWeDoSection() {
       activeNow = true;
       el.classList.add('is-active');
 
-      // Keep 100% solid opacity during the zoom sequence to completely cover the screen.
-      // Hand off to Events at progress >= 1.0 when Events is pinned at top:top.
-      el.style.opacity = '1';
-      el.style.pointerEvents = 'auto';
+      // Smooth fade-out into Events towards the end of Polaroid (p > 0.88)
+      const fadeOut = progress > 0.88 ? (1 - progress) / 0.12 : 1;
+      el.style.opacity = Math.max(0, Math.min(1, fadeOut)).toFixed(3);
+      el.style.pointerEvents = progress > 0.94 ? 'none' : 'auto';
     };
 
     const trigger = ScrollTrigger.create({

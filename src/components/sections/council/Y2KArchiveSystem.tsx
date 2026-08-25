@@ -785,7 +785,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             <div><span className={styles.acctKey}>Name:</span> GDG on Campus · CRCE</div>
             <div><span className={styles.acctKey}>Networks:</span> CRCE, Mumbai</div>
             <div><span className={styles.acctKey}>Member since:</span> January 2026</div>
-            <div><span className={styles.acctKey}>Contact:</span> council@gdgfrcrce.com</div>
+            <div><span className={styles.acctKey}>Contact:</span> gdgcrce@gmail.com</div>
             <div><span className={styles.acctKey}>Registered:</span> {TOTAL_MEMBERS} members</div>
             <div><span className={styles.acctKey}>Screen name:</span> gdg_crce_2026</div>
           </div>
@@ -900,7 +900,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
           {/* thefacebook top bar */}
           <div className={styles.fbNav}>
             <button type="button" className={styles.fbWordmark} onClick={() => go({ view: 'profile' })}>
-              <span className={styles.fbWordmarkThe}>the</span>facebook
+              <span className={styles.fbWordmarkThe}>the</span>gdgbook
             </button>
             <div className={styles.fbNavRight}>
               <span className={styles.fbOnline}>

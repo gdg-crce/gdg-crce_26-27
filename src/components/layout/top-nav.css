@@ -252,14 +252,23 @@
 
 @media (max-width: 767px) {
   .tnav-shell {
-    top: 14px;
+    position: fixed !important;
+    top: 14px !important;
     left: 50% !important;
-    transform: translateX(-50%) !important;
+    transform: translateX(-50%) translateY(0) scale(1) !important;
+    opacity: 1 !important;
     width: auto !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     margin: 0 auto !important;
+    z-index: 100000 !important;
+  }
+
+  .tnav-shell[data-enter='true'],
+  .tnav-shell[data-enter='false'] {
+    transform: translateX(-50%) translateY(0) scale(1) !important;
+    opacity: 1 !important;
   }
 
   .tnav-shell[data-collapsed='true'] .tnav {

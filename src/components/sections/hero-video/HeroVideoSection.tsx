@@ -129,9 +129,26 @@ export default function HeroVideoSection({ startPlaying = false, primed = false 
       try {
         video.currentTime = 0;
       } catch {}
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {});
+        playPromise
+          .then(() => {
+            setIsLoaded(true);
+          })
+          .catch(() => {
+            // Autoplay safety: retry on user interaction if browser policy restricted initial attempt
+            const tryPlay = () => {
+              video.muted = true;
+              video.play().then(() => setIsLoaded(true)).catch(() => {});
+              window.removeEventListener('touchstart', tryPlay);
+              window.removeEventListener('click', tryPlay);
+            };
+            window.addEventListener('touchstart', tryPlay, { passive: true, once: true });
+            window.addEventListener('click', tryPlay, { passive: true, once: true });
+          });
       }
     }
   }, [startPlaying]);
@@ -325,6 +342,8 @@ export default function HeroVideoSection({ startPlaying = false, primed = false 
         disableRemotePlayback
         onLoadedData={() => setIsLoaded(true)}
         onCanPlay={() => setIsLoaded(true)}
+        onPlay={() => setIsLoaded(true)}
+        onPlaying={() => setIsLoaded(true)}
         className={`absolute inset-0 w-full h-full object-cover z-10 transform-gpu transition-opacity duration-300 ease-in-out ${
           isLoaded && (fadeInDone || startPlaying) ? 'opacity-100' : 'opacity-0'
         }`}

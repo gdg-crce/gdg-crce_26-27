@@ -284,19 +284,17 @@ export default function EventsAndCouncilSection({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let scrollTriggerInstance: any;
 
-      let rafId = 0;
+      let lastActiveIdx = -1;
       const updateCardPositions = (p: number) => {
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => {
-          rafId = 0; // Crucial fix: reset rAF handle so scroll ticks are never blocked!
-          const normP = Math.min(1, Math.max(0, p));
-          const floatIndex = normP * (totalCards - 1);
-          const activeIdx = Math.min(totalCards - 1, Math.round(floatIndex));
-          // Only on a real change: this ran on every scroll tick and re-rendered
-          // the whole act each frame. The buttons are the only reader.
+        const normP = Math.min(1, Math.max(0, p));
+        const floatIndex = normP * (totalCards - 1);
+        const activeIdx = Math.min(totalCards - 1, Math.round(floatIndex));
+
+        // Only update UI elements when the active card index actually changes
+        if (activeIdx !== lastActiveIdx) {
+          lastActiveIdx = activeIdx;
           setMobileActiveIdx((prev) => (prev === activeIdx ? prev : activeIdx));
 
-          // Update HUD text without triggering React state re-renders
           if (mobileBadgeRef.current) {
             mobileBadgeRef.current.textContent = `0${activeIdx + 1} / 0${totalCards} · EVENT SECTION`;
           }
@@ -307,89 +305,52 @@ export default function EventsAndCouncilSection({
             mobileSubtitleRef.current.textContent = mobileEvents[activeIdx].subtitle;
           }
 
-          // Update dot indicator pills
           if (mobileDotsRef.current) {
             const dots = mobileDotsRef.current.querySelectorAll('.mobile-event-dot');
             dots.forEach((d, i) => {
               d.classList.toggle('active', i === activeIdx);
             });
           }
+        }
 
-          // Redesigned 3D Card Stack Swipe Deck — Continuous, responsive & symmetrical in forward & reverse scroll
-          cardItems.forEach((card, idx) => {
-            const diff = idx - floatIndex;
+        // Direct GPU-accelerated 3D transforms without GSAP object allocation overhead
+        for (let idx = 0; idx < totalCards; idx++) {
+          const card = cardItems[idx];
+          if (!card) continue;
+          const diff = idx - floatIndex;
 
-            if (diff < 0) {
-              // Passed poster: smooth vertical 3D swipe off top of stack
-              const passed = Math.min(1, Math.max(0, -diff));
-              const yPercent = -passed * 125;
-              const rotateZ = -passed * 10;
-              const rotateX = passed * 12;
-              const scale = 1.0 - passed * 0.04;
-              const opacity = Math.max(0, 1 - passed * 1.25);
+          if (diff < 0) {
+            // Passed poster: smooth vertical 3D swipe off top of stack
+            const passed = Math.min(1, Math.max(0, -diff));
+            const yPercent = -passed * 125;
+            const rotateZ = -passed * 10;
+            const rotateX = passed * 12;
+            const scale = 1.0 - passed * 0.04;
+            const opacity = Math.max(0, 1 - passed * 1.25);
+            const z = passed * 60;
 
-              gsap.set(card, {
-                xPercent: 0,
-                yPercent: yPercent,
-                z: passed * 60,
-                rotateY: 0,
-                rotateX: rotateX,
-                rotateZ: rotateZ,
-                scale: scale,
-                opacity: opacity,
-                filter: 'none',
-                zIndex: 50 - Math.round(passed * 10),
-                pointerEvents: 'none',
-                force3D: true,
-                transformPerspective: 1000,
-              });
-            } else {
-              // Active & upcoming posters: 3D Stack underneath
-              const depth = Math.min(3, diff);
-              const scale = 1.0 - depth * 0.07;
-              const yPercent = depth * 14;
-              const rotateZ = (idx % 2 === 0 ? 1 : -1) * depth * 2.5;
-              const opacity = depth > 2.2 ? Math.max(0, 1 - (depth - 2.2) * 1.2) : 1;
+            card.style.transform = `perspective(1000px) translate3d(0, ${yPercent.toFixed(2)}%, ${z.toFixed(1)}px) rotateX(${rotateX.toFixed(2)}deg) rotateZ(${rotateZ.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+            card.style.opacity = opacity.toFixed(3);
+            card.style.zIndex = String(50 - Math.round(passed * 10));
+            card.style.pointerEvents = 'none';
+          } else {
+            // Active & upcoming posters: 3D Stack underneath
+            const depth = Math.min(3, diff);
+            const scale = 1.0 - depth * 0.07;
+            const yPercent = depth * 14;
+            const rotateZ = (idx % 2 === 0 ? 1 : -1) * depth * 2.5;
+            const opacity = depth > 2.2 ? Math.max(0, 1 - (depth - 2.2) * 1.2) : 1;
+            const z = -depth * 60;
 
-              gsap.set(card, {
-                xPercent: 0,
-                yPercent: yPercent,
-                z: -depth * 60,
-                rotateY: 0,
-                rotateX: 0,
-                rotateZ: rotateZ,
-                scale: scale,
-                opacity: opacity,
-                filter: 'none',
-                zIndex: 30 - Math.round(depth * 5),
-                pointerEvents: diff < 0.4 ? 'auto' : 'none',
-                force3D: true,
-                transformPerspective: 1000,
-              });
-            }
-          });
-        });
+            card.style.transform = `perspective(1000px) translate3d(0, ${yPercent.toFixed(2)}%, ${z.toFixed(1)}px) rotateX(0deg) rotateZ(${rotateZ.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+            card.style.opacity = opacity.toFixed(3);
+            card.style.zIndex = String(30 - Math.round(depth * 5));
+            card.style.pointerEvents = diff < 0.4 ? 'auto' : 'none';
+          }
+        }
       };
 
-      /* Lead-in hold. The viewer arrives here mid-flick from What We Do, and
-         the pin used to start advancing on the very first pixel — so the
-         momentum left over from that flick carried card 1 away before it had
-         been seen. This buys the deck a stationary beat: the section pins,
-         card 1 sits still for HOLD_VH of scroll while the fling bleeds off,
-         and only then does the deck start turning. */
-      const HOLD_VH = 0.7;
-      const holdPx = () => window.innerHeight * HOLD_VH;
-      const cardsPx = () => (totalCards - 1) * window.innerHeight;
-      /** Pin progress -> deck progress, with the hold mapped out of the front. */
-      const deckProgress = (raw: number) => {
-        const hold = holdPx();
-        const total = hold + cardsPx();
-        if (total <= 0) return 0;
-        const holdFrac = hold / total;
-        if (holdFrac >= 1) return 0;
-        // updateCardPositions clamps, so a negative here simply reads as 0.
-        return (raw - holdFrac) / (1 - holdFrac);
-      };
+      const cardsPx = () => (totalCards - 1) * window.innerHeight * 0.85;
 
       const initScrollTrigger = () => {
         const anim = gsap.to(
@@ -402,18 +363,18 @@ export default function EventsAndCouncilSection({
               pin: containerRef.current,
               anticipatePin: 1,
               start: 'top top',
-              end: () => `+=${holdPx() + cardsPx()}`,
-              scrub: 0.35,
+              end: () => `+=${cardsPx()}`,
+              scrub: true,
               invalidateOnRefresh: true,
               onUpdate: (self) => {
-                updateCardPositions(deckProgress(self.progress));
+                updateCardPositions(self.progress);
               },
               /* Same reason the desktop branch has one: a refresh, a restored
                  scroll position or a fast scroll across the whole range can
                  leave the pin active with no update ever firing, and the cards
                  keep whatever the last tick wrote. */
               onRefresh: (self) => {
-                updateCardPositions(deckProgress(self.progress));
+                updateCardPositions(self.progress);
               },
             },
           }
@@ -425,13 +386,10 @@ export default function EventsAndCouncilSection({
         updateCardPositions(0);
       };
 
-      const timeoutId = setTimeout(() => {
-        initScrollTrigger();
-        ScrollTrigger.refresh();
-      }, 100);
+      initScrollTrigger();
+      ScrollTrigger.refresh();
 
       return () => {
-        clearTimeout(timeoutId);
         if (scrollTriggerInstance?.scrollTrigger) {
           scrollTriggerInstance.scrollTrigger.kill();
           scrollTriggerInstance.kill();
@@ -814,6 +772,7 @@ export default function EventsAndCouncilSection({
           >
             {/* Dynamic HUD Header */}
             <div className="mobile-events-header">
+              <h1 className="mobile-events-section-title">EVENTS</h1>
               <div ref={mobileBadgeRef} className="mobile-events-badge">
                 01 / 0{mobileEvents.length} · EVENT SECTION
               </div>
@@ -838,7 +797,6 @@ export default function EventsAndCouncilSection({
                   onClick={() => handleCardTap(idx)}
                 >
                   <div className="mobile-event-card-frame">
-                    <div className="mobile-event-tag-badge">GDG EVENT</div>
                     <Image
                       src={ik(evt.posterImage)}
                       alt={evt.title}
@@ -855,17 +813,9 @@ export default function EventsAndCouncilSection({
               ))}
             </div>
 
-            {/* Bottom Controls / Pill Indicator & Prev/Next Taps */}
+            {/* Bottom Controls / Pill Indicator */}
             <div className="mobile-events-footer">
               <div className="mobile-events-nav-row">
-                <button
-                  type="button"
-                  className="mobile-events-nav-btn"
-                  onClick={() => handleDotClick(Math.max(0, mobileActiveIdx - 1))}
-                  aria-label="Previous Event"
-                >
-                  ‹ PREV
-                </button>
                 <div ref={mobileDotsRef} className="mobile-events-pills">
                   {mobileEvents.map((evt, idx) => (
                     <button
@@ -877,14 +827,6 @@ export default function EventsAndCouncilSection({
                     />
                   ))}
                 </div>
-                <button
-                  type="button"
-                  className="mobile-events-nav-btn"
-                  onClick={() => handleDotClick(Math.min(mobileEvents.length - 1, mobileActiveIdx + 1))}
-                  aria-label="Next Event"
-                >
-                  NEXT ›
-                </button>
               </div>
               <div className="mobile-events-hint">SCROLL OR TAP TO FLIP ARCHIVE</div>
             </div>
@@ -919,7 +861,7 @@ export default function EventsAndCouncilSection({
                 }}
               >
                 <div className="fb-cover-content">
-                  <span className="fb-cover-text">GDG CRCE 26-27</span>
+                  <span className="fb-cover-text">GDG CRCE</span>
                   <span className="fb-cover-subtext">Google Developers Group</span>
                 </div>
               </div>
@@ -933,7 +875,7 @@ export default function EventsAndCouncilSection({
                 </div>
                 <div className="fb-profile-header-meta">
                   <h1 className="fb-profile-name">
-                    GDG FRCRCE
+                    GDG CRCE 26-27
                     <span className="fb-verified-badge" title="Verified Group">✓</span>
                   </h1>
                 </div>
@@ -1085,30 +1027,138 @@ export default function EventsAndCouncilSection({
 
           {activeMobileTab === 'about' && (
             <div className="fb-feed-container">
-              <div className="fb-post-card">
-                <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: '#1877f2' }}>About GDG on Campus CRCE</h3>
-                <p style={{ fontSize: '13px', lineHeight: '1.6', color: '#4b4f56', marginBottom: '12px' }}>
-                  Google Developer Group on Campus at Fr. Conceicao Rodrigues College of Engineering is a vibrant community of tech enthusiasts, designers, and managers aiming to learn, collaborate, and build solutions together.
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #e5e6e9', paddingTop: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span style={{ fontWeight: 'bold', color: '#65676b' }}>Networks:</span>
-                    <span style={{ color: '#1c1e21' }}>CRCE, Mumbai · GDG on Campus</span>
+              {/* Quick Actions Row */}
+              <div className="fb-retro-actions-bar">
+                <button type="button" className="fb-retro-action-btn" onClick={() => handleTabChange('posts')}>
+                  📝 Write on Wall
+                </button>
+                <span className="fb-retro-action-dot">•</span>
+                <button type="button" className="fb-retro-action-btn" onClick={() => handleTabChange('photos')}>
+                  📸 Photos ({councilMembers.length})
+                </button>
+                <span className="fb-retro-action-dot">•</span>
+                <button type="button" className="fb-retro-action-btn" onClick={() => handleTabChange('videos')}>
+                  🎬 Videos (2)
+                </button>
+              </div>
+
+              {/* 1. Basic Information Panel */}
+              <div className="fb-retro-panel">
+                <div className="fb-retro-panel-header">
+                  <span>Basic Information</span>
+                </div>
+                <div className="fb-retro-panel-body">
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Networks:</span>
+                    <span className="fb-retro-val">CRCE, Mumbai · Google Developer Groups</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span style={{ fontWeight: 'bold', color: '#65676b' }}>Total Members:</span>
-                    <span style={{ color: '#1c1e21' }}>{councilMembers.length} Members</span>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Entity:</span>
+                    <span className="fb-retro-val">Student Technical Chapter</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span style={{ fontWeight: 'bold', color: '#65676b' }}>Structure:</span>
-                    <span style={{ color: '#1c1e21' }}>8 Tracks · Senior & Junior Council</span>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Active Term:</span>
+                    <span className="fb-retro-val">2026 – 2027</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span style={{ fontWeight: 'bold', color: '#65676b' }}>Status:</span>
-                    <span style={{ color: '#00a400', fontWeight: 'bold' }}>Online & Active</span>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Total Roster:</span>
+                    <span className="fb-retro-val">{councilMembers.length} Active Council Members</span>
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Current Status:</span>
+                    <span className="fb-retro-val"><span className="fb-retro-status-dot" /> Online & Building 🚀</span>
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Hometown:</span>
+                    <span className="fb-retro-val">Bandra West, Mumbai 400050</span>
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Relationship:</span>
+                    <span className="fb-retro-val">In an open relationship with Open Source 💙</span>
                   </div>
                 </div>
               </div>
+
+              {/* 2. Contact & Web Information */}
+              <div className="fb-retro-panel">
+                <div className="fb-retro-panel-header">
+                  <span>Contact Information</span>
+                </div>
+                <div className="fb-retro-panel-body">
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Email:</span>
+                    <span className="fb-retro-val"><a href="mailto:gdgcrce@gmail.com" className="fb-retro-link">gdgcrce@gmail.com</a></span>
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Campus:</span>
+                    <span className="fb-retro-val">Fr. Conceicao Rodrigues College of Engineering</span>
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Community:</span>
+                    <span className="fb-retro-val">https://gdg.community.dev/gdg-on-campus-fr-conceicao-rodrigues-college-of-engineering-mumbai-india/</span>
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Insta Handle:</span>
+                    <span className="fb-retro-val">@gdg_crce</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. About & Mission */}
+              <div className="fb-retro-panel">
+                <div className="fb-retro-panel-header">
+                  <span>About GDG on Campus CRCE</span>
+                </div>
+                <div className="fb-retro-panel-body">
+                  <p className="fb-retro-bio-text">
+                    Google Developer Group on Campus at Fr. Conceicao Rodrigues College of Engineering is a university-based community for students passionate about Google developer technologies and software engineering.
+                  </p>
+                  <p className="fb-retro-bio-text" style={{ marginTop: '8px' }}>
+                    By joining GDG CRCE, students build solutions for local businesses and communities through workshops, hackathons, open source sprints, and real-world projects.
+                  </p>
+                </div>
+              </div>
+
+              {/* 4. Council Organization & Tracks */}
+              <div className="fb-retro-panel">
+                <div className="fb-retro-panel-header">
+                  <span>Council Structure (8 Tracks)</span>
+                </div>
+                <div className="fb-retro-panel-body">
+                  <div className="fb-retro-row">
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Tech Tracks:</span>
+                    <span className="fb-retro-val">Web Dev • AI/ML • Cloud • Mobile App Dev</span>
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Creative & Ops:</span>
+                    <span className="fb-retro-val">UI/UX Design • Events & PR • Media & Marketing</span>
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Tiers:</span>
+                    <span className="fb-retro-val">Senior Council • Junior Council</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Interests & Activities */}
+              <div className="fb-retro-panel">
+                <div className="fb-retro-panel-header">
+                  <span>Interests & Activities</span>
+                </div>
+                <div className="fb-retro-panel-body">
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Activities:</span>
+                    <span className="fb-retro-val">Hackathons,Startup Launchpads, Google Cloud Study Jams, Solution Challenge, Code Sprints, Tech Speaker Sessions</span>
+                  </div>
+                  <div className="fb-retro-row">
+                    <span className="fb-retro-key">Favorite Tech:</span>
+                    <span className="fb-retro-val">Next.js, TypeScript, Python, TensorFlow, Google Cloud, Flutter, Android, Docker, Three.js</span>
+                  </div>
+                </div>
+              </div>
+
               {/* End of About feed dwell card */}
               <div className="fb-feed-end-card">
                 <div className="fb-feed-end-icon">✓</div>

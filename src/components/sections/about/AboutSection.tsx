@@ -525,19 +525,20 @@ export default function AboutSection() {
     // 33⅓ and keeps it going. Only ever runs while the section is on screen —
     // an off-screen rAF is a background tax on every other section's frame.
     const stage = stageRef.current;
+    const disc = stage?.querySelector('.tt-disc') as HTMLElement | null;
+    const labs = stage?.querySelectorAll('.tt-lab') as NodeListOf<HTMLElement> | undefined;
+    const labelPrintSpin = stage?.querySelector('.tt-label-print-spin') as HTMLElement | null;
+
     const setSpinAngle = (angleVal: number) => {
       const angleStr = `${angleVal.toFixed(1)}deg`;
       stage?.style.setProperty('--spin', angleStr);
 
-      const disc = stage?.querySelector('.tt-disc') as HTMLElement | null;
       if (disc) disc.style.transform = `rotate(${angleStr})`;
-
-      const labs = stage?.querySelectorAll('.tt-lab') as NodeListOf<HTMLElement>;
-      labs.forEach((lab) => {
-        lab.style.transform = `rotate(${angleStr})`;
-      });
-
-      const labelPrintSpin = stage?.querySelector('.tt-label-print-spin') as HTMLElement | null;
+      if (labs) {
+        labs.forEach((lab) => {
+          lab.style.transform = `rotate(${angleStr})`;
+        });
+      }
       if (labelPrintSpin) labelPrintSpin.style.transform = `rotate(${angleStr})`;
     };
 
