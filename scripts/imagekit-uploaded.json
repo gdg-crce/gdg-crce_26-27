@@ -56,6 +56,41 @@
       "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/elements/poster-6.png"
     },
     {
+      "local": "posters/1.png",
+      "filePath": "/gdg-crce/posters/1.png",
+      "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/posters/1.png"
+    },
+    {
+      "local": "posters/2.png",
+      "filePath": "/gdg-crce/posters/2.png",
+      "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/posters/2.png"
+    },
+    {
+      "local": "posters/3.png",
+      "filePath": "/gdg-crce/posters/3.png",
+      "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/posters/3.png"
+    },
+    {
+      "local": "posters/4.png",
+      "filePath": "/gdg-crce/posters/4.png",
+      "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/posters/4.png"
+    },
+    {
+      "local": "posters/5.png",
+      "filePath": "/gdg-crce/posters/5.png",
+      "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/posters/5.png"
+    },
+    {
+      "local": "posters/6.png",
+      "filePath": "/gdg-crce/posters/6.png",
+      "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/posters/6.png"
+    },
+    {
+      "local": "posters/7.png",
+      "filePath": "/gdg-crce/posters/7.png",
+      "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/posters/7.png"
+    },
+    {
       "local": "events/1.png",
       "filePath": "/gdg-crce/events/1.png",
       "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/events/1.png"
@@ -149,6 +184,11 @@
       "local": "record player/Yellow record.png",
       "filePath": "/gdg-crce/record-player/Yellow_record.png",
       "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/record-player/Yellow_record.png"
+    },
+    {
+      "local": "transition/image.png",
+      "filePath": "/gdg-crce/transition/image.png",
+      "url": "https://ik.imagekit.io/9yzb99hnu/gdg-crce/transition/image.png"
     },
     {
       "local": "transition/event.png",

@@ -59,8 +59,8 @@ const PAGE_PHOTOS = [
    full-size file. */
 const FINAL_PHOTO = {
   src: '/transition/image.png',
-  width: 1915,
-  height: 872,
+  width: 1024,
+  height: 466,
 };
 
 /* Flip cascade, in units of `p` (the 0 → 0.80 morph/flip phase remapped to

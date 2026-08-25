@@ -4,8 +4,17 @@
   "files": [
     "videos/intro.mp4",
 
+    "transition/image.png",
     "transition/event.png",
     "transition/whatwedo.png",
+
+    "posters/1.png",
+    "posters/2.png",
+    "posters/3.png",
+    "posters/4.png",
+    "posters/5.png",
+    "posters/6.png",
+    "posters/7.png",
 
     "events/1.png",
     "events/2.png",

@@ -16,7 +16,7 @@
  * built here stay valid across re-bakes of the source images.
  */
 
-const BASE = (process.env.NEXT_PUBLIC_IMAGEKIT_URL ?? '').replace(/\/+$/, '');
+const BASE = (process.env.NEXT_PUBLIC_IMAGEKIT_URL || 'https://ik.imagekit.io/9yzb99hnu/gdg-crce').replace(/\/+$/, '');
 
 /**
  * Local path -> remote path, for the files where ImageKit's own name handling

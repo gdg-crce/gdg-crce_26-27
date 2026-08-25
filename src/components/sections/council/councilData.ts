@@ -203,7 +203,7 @@ const ROSTER: RosterEntry[] = [
     team: 'Technical',
     tier: 'Senior Council',
     photoPath: 'Screenshot%202026-08-16%20125215.png',
-    bio: 'The more you care, the less you live',
+    bio: 'The less you care, the more you live',
     title: 'The Polymath',
   },
   {
