@@ -350,7 +350,19 @@ export default function EventsAndCouncilSection({
         }
       };
 
+      const HOLD_VH = 0.45;
+      const holdPx = () => window.innerHeight * HOLD_VH;
       const cardsPx = () => (totalCards - 1) * window.innerHeight * 0.85;
+
+      /** Pin progress -> deck progress, with the lead-in pause mapped out of the front. */
+      const deckProgress = (raw: number) => {
+        const hold = holdPx();
+        const total = hold + cardsPx();
+        if (total <= 0) return 0;
+        const holdFrac = hold / total;
+        if (raw <= holdFrac) return 0;
+        return (raw - holdFrac) / (1 - holdFrac);
+      };
 
       const initScrollTrigger = () => {
         const anim = gsap.to(
@@ -363,18 +375,18 @@ export default function EventsAndCouncilSection({
               pin: containerRef.current,
               anticipatePin: 1,
               start: 'top top',
-              end: () => `+=${cardsPx()}`,
+              end: () => `+=${holdPx() + cardsPx()}`,
               scrub: true,
               invalidateOnRefresh: true,
               onUpdate: (self) => {
-                updateCardPositions(self.progress);
+                updateCardPositions(deckProgress(self.progress));
               },
               /* Same reason the desktop branch has one: a refresh, a restored
                  scroll position or a fast scroll across the whole range can
                  leave the pin active with no update ever firing, and the cards
                  keep whatever the last tick wrote. */
               onRefresh: (self) => {
-                updateCardPositions(self.progress);
+                updateCardPositions(deckProgress(self.progress));
               },
             },
           }
@@ -680,56 +692,62 @@ export default function EventsAndCouncilSection({
 
   const handleTabChange = useCallback((tab: 'posts' | 'about' | 'photos' | 'videos') => {
     if (typeof window !== 'undefined') {
-      const win = window as unknown as { __isSwitchingCouncilTab?: boolean };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const win = window as unknown as { __isSwitchingCouncilTab?: boolean; __lenis?: any };
       win.__isSwitchingCouncilTab = true;
 
       const councilSection = document.getElementById('mobile-council');
+      const currentScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
       const targetY = councilSection
-        ? Math.round(councilSection.getBoundingClientRect().top + window.scrollY)
+        ? Math.round(councilSection.getBoundingClientRect().top + currentScroll)
         : null;
 
       if (councilSection && targetY !== null) {
-        // Prevent DOM collapse/clamping: lock minHeight temporarily to current height
-        const currentH = councilSection.offsetHeight;
-        councilSection.style.minHeight = `${Math.max(currentH, window.innerHeight * 1.5)}px`;
+        // Prevent layout clamp during tab swap by locking minHeight to at least 3 viewports
+        const currentH = Math.max(councilSection.offsetHeight, window.innerHeight * 3);
+        councilSection.style.minHeight = `${currentH}px`;
 
-        window.scrollTo({
-          top: targetY,
-          behavior: 'instant' as ScrollBehavior,
-        });
+        window.scrollTo({ top: targetY, behavior: 'instant' });
         document.documentElement.scrollTop = targetY;
         document.body.scrollTop = targetY;
+        if (win.__lenis) {
+          win.__lenis.scrollTo(targetY, { immediate: true });
+        }
       }
 
       setActiveMobileTab(tab);
 
       if (councilSection && targetY !== null) {
         requestAnimationFrame(() => {
-          window.scrollTo({
-            top: targetY,
-            behavior: 'instant' as ScrollBehavior,
-          });
+          window.scrollTo({ top: targetY, behavior: 'instant' });
           document.documentElement.scrollTop = targetY;
           document.body.scrollTop = targetY;
+          if (win.__lenis) {
+            win.__lenis.scrollTo(targetY, { immediate: true });
+          }
 
           requestAnimationFrame(() => {
-            window.scrollTo({
-              top: targetY,
-              behavior: 'instant' as ScrollBehavior,
-            });
-            // Release the minHeight lock once new tab content is rendered
-            councilSection.style.minHeight = '';
-            ScrollTrigger.refresh();
+            window.scrollTo({ top: targetY, behavior: 'instant' });
+            document.documentElement.scrollTop = targetY;
+            document.body.scrollTop = targetY;
+            if (win.__lenis) {
+              win.__lenis.scrollTo(targetY, { immediate: true });
+            }
+
+            setTimeout(() => {
+              councilSection.style.minHeight = '';
+              ScrollTrigger.refresh();
+              window.scrollTo({ top: targetY, behavior: 'instant' });
+              if (win.__lenis) {
+                win.__lenis.scrollTo(targetY, { immediate: true });
+              }
+            }, 100);
           });
         });
 
         setTimeout(() => {
-          window.scrollTo({
-            top: targetY,
-            behavior: 'instant' as ScrollBehavior,
-          });
           win.__isSwitchingCouncilTab = false;
-        }, 120);
+        }, 800);
       }
     } else {
       setActiveMobileTab(tab);
@@ -740,7 +758,8 @@ export default function EventsAndCouncilSection({
     if (mobileStRef.current?.scrollTrigger) {
       const st = mobileStRef.current.scrollTrigger;
       const nextIdx = (index + 1) % mobileEvents.length;
-      const targetY = st.start + (nextIdx / (mobileEvents.length - 1)) * (st.end - st.start);
+      const hold = window.innerHeight * 0.45;
+      const targetY = st.start + hold + (nextIdx / (mobileEvents.length - 1)) * (st.end - st.start - hold);
       window.scrollTo({ top: targetY, behavior: 'smooth' });
     }
   }, []);
@@ -748,7 +767,8 @@ export default function EventsAndCouncilSection({
   const handleDotClick = useCallback((index: number) => {
     if (mobileStRef.current?.scrollTrigger) {
       const st = mobileStRef.current.scrollTrigger;
-      const targetY = st.start + (index / (mobileEvents.length - 1)) * (st.end - st.start);
+      const hold = window.innerHeight * 0.45;
+      const targetY = st.start + hold + (index / (mobileEvents.length - 1)) * (st.end - st.start - hold);
       window.scrollTo({ top: targetY, behavior: 'smooth' });
     }
   }, []);
@@ -1016,11 +1036,11 @@ export default function EventsAndCouncilSection({
                   </div>
                 </div>
               ))}
-              {/* End of Posts feed dwell card */}
               <div className="fb-feed-end-card">
                 <div className="fb-feed-end-icon">✓</div>
                 <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
                 <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+
               </div>
             </div>
           )}
@@ -1164,6 +1184,7 @@ export default function EventsAndCouncilSection({
                 <div className="fb-feed-end-icon">✓</div>
                 <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
                 <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+
               </div>
             </div>
           )}
@@ -1214,6 +1235,7 @@ export default function EventsAndCouncilSection({
                       style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
                     />
                   </div>
+
                 </div>
               ))}
               {/* End of Photos feed dwell card */}
@@ -1221,6 +1243,7 @@ export default function EventsAndCouncilSection({
                 <div className="fb-feed-end-icon">✓</div>
                 <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
                 <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+
               </div>
             </div>
           )}
@@ -1266,6 +1289,7 @@ export default function EventsAndCouncilSection({
                 <div className="fb-feed-end-icon">✓</div>
                 <div className="fb-feed-end-title">You&apos;re All Caught Up</div>
                 <div className="fb-feed-end-subtitle">GDG CRCE Student Council 2026-27</div>
+
               </div>
             </div>
           )}

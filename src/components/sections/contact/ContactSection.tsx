@@ -156,14 +156,14 @@ export default function ContactSection({ isMobile = false }: ContactSectionProps
           <div className="bios-help">
             <div className="bios-help-title">Location Map</div>
             <div className="bios-help-map">
-              <iframe 
-                src="https://maps.google.com/maps?q=Fr.%20Conceicao%20Rodrigues%20College%20of%20Engineering,%20Bandra%20West,%20Mumbai&t=m&z=16&output=embed" 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0 }} 
-                allowFullScreen 
-                loading="lazy" 
-                referrerPolicy="no-referrer-when-downgrade" 
+              <iframe
+                src="https://maps.google.com/maps?q=Fr.%20Conceicao%20Rodrigues%20College%20of%20Engineering,%20Bandra%20West,%20Mumbai&t=m&z=16&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
           </div>
@@ -174,7 +174,10 @@ export default function ContactSection({ isMobile = false }: ContactSectionProps
             bottom, so it reads as BIOS chrome rather than as a footnote. It is
             a licence term — moving it is fine, deleting it is not. */}
         <div className="bios-copyright">
-          Web437 IBM BIOS font &copy; VileR &middot; CC BY-SA 4.0 &middot; int10h.org
+          <div className="bios-font-credit">Web437 IBM BIOS font &copy; VileR &middot; CC BY-SA 4.0 &middot; int10h.org</div>
+          <div className="bios-credits">
+            Designed by Niya and made by Movin & Abhishek.
+          </div>
         </div>
       </div>
     </section>

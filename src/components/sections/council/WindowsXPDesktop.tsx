@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { departmentsList } from './councilData';
 
@@ -21,19 +21,7 @@ export default function WindowsXPDesktop({
   showDesktopChrome = true,
   children,
 }: WindowsXPDesktopProps) {
-  const [timeStr, setTimeStr] = useState('12:27 AM');
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setTimeStr(
-        now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      );
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  const timeStr = '31:01';
 
   /* Shortcut labels are short for the 74px icon caption; the `team` beside each
      is the real Department string.

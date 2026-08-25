@@ -110,7 +110,7 @@
    a matched pair of section headers and everything below them starts on the
    same line. Measured before/after. */
 .bios-group {
-  margin: 0 0 0.5em;
+  margin: 0.85em 0 0.5em;
   padding-bottom: 0.25em;
   border-bottom: 1px solid var(--bios-line);
   font-size: 1em;
@@ -120,7 +120,7 @@
 }
 
 .bios-group:not(:first-child) {
-  margin-top: 0.6em;
+  margin-top: 0.9em;
 }
 
 /* ONE grid for the whole field list, with every row borrowing its tracks.
@@ -146,7 +146,7 @@
   grid-template-columns: minmax(0, max-content) minmax(1.5em, 1fr) minmax(0, max-content);
 }
 
-.bios-fields > li {
+.bios-fields>li {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
@@ -255,6 +255,7 @@ a.bios-row {
 }
 
 @media (min-width: 901px) {
+
   /* Vertically prominent desktop location map */
   .bios-help-map {
     height: clamp(260px, 46vh, 500px) !important;
@@ -273,12 +274,30 @@ a.bios-row {
 .bios-copyright {
   flex-shrink: 0;
   text-align: center;
-  font-size: 0.62em;
+  font-size: 0.68em;
   line-height: 1.4;
-  padding-top: 0.5em;
+  padding-top: 0.4em;
   color: var(--bios-text);
-  opacity: 0.42;
+  opacity: 0.7;
   letter-spacing: 0.02em;
+}
+
+.bios-font-credit {
+  font-size: 0.9em;
+  opacity: 0.65;
+  transform: translateY(-6px);
+  margin-bottom: -2px;
+}
+
+.bios-credits {
+  margin-top: 14px;
+  font-family: var(--font-88s-body), 'Space Grotesk', -apple-system, sans-serif !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  letter-spacing: 0.06em !important;
+  font-size: 1.2em !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 12px rgba(255, 255, 255, 0.5);
 }
 
 
@@ -324,6 +343,7 @@ a.bios-row {
 
 
 @media (max-width: 767px) {
+
   .ct-term,
   .bios,
   .bios-title,
@@ -336,7 +356,7 @@ a.bios-row {
   }
 
   .ct-term {
-    padding: 68px 8px 10px 8px !important;
+    padding: 56px 8px 8px 8px !important;
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
@@ -344,19 +364,19 @@ a.bios-row {
     display: flex !important;
     align-items: stretch !important;
     justify-content: stretch !important;
-    font-size: clamp(11px, 1.9vh, 14px) !important;
+    font-size: clamp(11px, 1.8vh, 13.5px) !important;
     line-height: 1.35 !important;
   }
 
   .bios {
     display: flex !important;
     flex-direction: column !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
     width: 100% !important;
     max-width: 100% !important;
     height: 100% !important;
     max-height: 100% !important;
-    padding: 8px 10px !important;
+    padding: 6px 10px 6px 10px !important;
     border: 2px double var(--bios-line) !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
@@ -380,24 +400,35 @@ a.bios-row {
   }
 
   .bios-body {
-    flex: 1 !important;
+    flex: none !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: space-between !important;
-    gap: 2px !important;
-    padding: 2px 0 !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    padding: 0 !important;
     min-height: 0 !important;
   }
 
+  .bios-main {
+    order: 1 !important;
+    flex: none !important;
+  }
+
   .bios-group {
-    font-size: 0.98em !important;
+    font-size: 0.84rem !important;
     font-weight: 400 !important;
-    margin-bottom: 0.08em !important;
-    padding-bottom: 0.1em !important;
+    margin-top: 26px !important;
+    margin-bottom: 4px !important;
+    padding-bottom: 3px !important;
+    letter-spacing: 0.12em !important;
   }
 
   .bios-group:not(:first-child) {
-    margin-top: 0.2em !important;
+    margin-top: 22px !important;
+  }
+
+  .bios-fields {
+    gap: 4px !important;
   }
 
   .bios-row {
@@ -408,60 +439,71 @@ a.bios-row {
     font-size: 0.95em !important;
   }
 
-  .bios-main {
-    order: 1 !important;
-  }
-
-  .bios-group {
-    font-size: 0.86rem !important;
-    font-weight: 400 !important;
-    margin-bottom: 8px !important;
-    padding-bottom: 6px !important;
-    letter-spacing: 0.12em !important;
-  }
-
-  .bios-fields {
-    gap: 8px !important;
-  }
-
   .bios-label {
-    font-size: 0.73rem !important;
+    font-size: 0.72rem !important;
     font-weight: 400 !important;
     letter-spacing: 0.08em !important;
   }
 
   .bios-value {
     padding-left: 6px !important;
-    font-size: 0.76rem !important;
+    font-size: 0.75rem !important;
     font-weight: 400 !important;
   }
 
   .bios-help {
-    padding-top: 0.2em !important;
+    padding-top: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     flex: none !important;
     order: 2 !important;
-    margin-top: 18px !important;
+    margin-top: 24px !important;
     margin-bottom: 0 !important;
+    border-top: 1px solid var(--bios-line) !important;
   }
 
   .bios-help-title {
-    font-size: 0.79rem !important;
+    font-size: 0.82rem !important;
     font-weight: 400 !important;
-    margin-bottom: 6px !important;
-    padding-bottom: 4px !important;
+    margin-bottom: 4px !important;
+    padding-top: 4px !important;
+    padding-bottom: 2px !important;
     letter-spacing: 0.12em !important;
   }
 
   .bios-help-map {
-    height: 155px !important;
-    min-height: 155px !important;
+    height: clamp(175px, 28vh, 215px) !important;
+    min-height: 175px !important;
     width: 100% !important;
     flex: none !important;
     border-radius: 4px !important;
     overflow: hidden !important;
   }
 
-  
+  .bios-copyright {
+    padding-top: 6px !important;
+    margin-top: 10px !important;
+    padding-bottom: 2px !important;
+    font-size: 0.65rem !important;
+    opacity: 0.85 !important;
+  }
+
+  .bios-font-credit {
+    font-size: 0.58rem !important;
+    opacity: 0.65 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .bios-credits {
+    font-family: var(--font-88s-body), 'Space Grotesk', -apple-system, sans-serif !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    margin-top: 12px !important;
+    letter-spacing: 0.05em !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 10px rgba(255, 255, 255, 0.5) !important;
+  }
+
+
 }

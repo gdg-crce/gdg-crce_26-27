@@ -982,7 +982,9 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
 
             {/* thefacebook footer */}
             <div className={styles.fbFooter}>
-              <div className={styles.fbFooterProd}>a GDG CRCE production</div>
+              <div className={styles.fbFooterProd}>
+                a GDG CRCE production · designed by Niya and made by Movin and Abhishek
+              </div>
               <div className={styles.fbFooterLinks}>
                 {['About', 'Contact', 'FAQ', 'Terms', 'Privacy'].map((l) => (
                   <span key={l}>{l}</span>

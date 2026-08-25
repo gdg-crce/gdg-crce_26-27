@@ -421,6 +421,12 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
     }
 
     const finishNow = () => {
+      if (
+        typeof window !== 'undefined' &&
+        (window as unknown as { __isSwitchingCouncilTab?: boolean }).__isSwitchingCouncilTab
+      ) {
+        return;
+      }
       const bottom = document.documentElement.scrollHeight - window.innerHeight;
       if (window.scrollY >= bottom - 4) return;
 
@@ -441,6 +447,12 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
     const resetIdleTimer = () => {
       if (cancelFinish) return;
       window.clearTimeout(idleTimer);
+      if (
+        typeof window !== 'undefined' &&
+        (window as unknown as { __isSwitchingCouncilTab?: boolean }).__isSwitchingCouncilTab
+      ) {
+        return;
+      }
       if (currentP >= IDLE_FINISH_MIN_P && currentP < 0.999) {
         idleTimer = window.setTimeout(finishNow, IDLE_FINISH_MS);
       }
@@ -466,6 +478,12 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       // its own progress would reset the timer every frame and it could never
       // fire again — and it has nothing left to wait for anyway.
       if (cancelFinish) return;
+      if (
+        typeof window !== 'undefined' &&
+        (window as unknown as { __isSwitchingCouncilTab?: boolean }).__isSwitchingCouncilTab
+      ) {
+        return;
+      }
       if (p >= IDLE_FINISH_MIN_P && p < 0.999) {
         idleTimer = window.setTimeout(finishNow, IDLE_FINISH_MS);
       }
@@ -504,11 +522,17 @@ export default function ShutdownTransition({ drawRef }: ShutdownTransitionProps)
       rafId = requestAnimationFrame(() => {
         rafId = null;
 
-        // If a tab switch is in progress, force shutdown to 0
+        // If a tab switch is in progress, force shutdown to 0 and cancel any finish timer/animation
         if (
           typeof window !== 'undefined' &&
           (window as unknown as { __isSwitchingCouncilTab?: boolean }).__isSwitchingCouncilTab
         ) {
+          if (cancelFinish) {
+            cancelFinish();
+            cancelFinish = null;
+            detachFinish();
+          }
+          window.clearTimeout(idleTimer);
           if (lastRenderedP !== 0) {
             lastRenderedP = 0;
             render(0);
