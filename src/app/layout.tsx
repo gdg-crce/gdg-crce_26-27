@@ -18,9 +18,38 @@ import {
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://gdgcrce.com'),
   title: 'GDG CRCE — Google Developer Group',
   description: 'Embark on a scrolling journey through college developer history with GDG CRCE: travel from the analog 1970s to the Y2K glossy cyber 2000s.',
-  keywords: ['GDG', 'GDG CRCE', 'Google Developer Group', 'college tech council', 'developers club', 'programming'],
+  keywords: ['GDG', 'GDG CRCE', 'Google Developer Group', 'college tech council', 'developers club', 'programming', 'Fr. Conceicao Rodrigues College of Engineering'],
+  authors: [{ name: 'GDG CRCE Student Council' }],
+  creator: 'GDG CRCE',
+  publisher: 'GDG CRCE',
+  alternates: {
+    canonical: 'https://gdgcrce.com',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://gdgcrce.com',
+    siteName: 'GDG CRCE',
+    title: 'GDG CRCE — Google Developer Group',
+    description: 'Embark on a scrolling journey through college developer history with GDG CRCE: travel from the analog 1970s to the Y2K glossy cyber 2000s.',
+    images: [
+      {
+        url: '/logo.png',
+        width: 1200,
+        height: 630,
+        alt: 'GDG CRCE — Google Developer Group',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'GDG CRCE — Google Developer Group',
+    description: 'Embark on a scrolling journey through college developer history with GDG CRCE: travel from the analog 1970s to the Y2K glossy cyber 2000s.',
+    images: ['/logo.png'],
+  },
   icons: {
     icon: '/logo.png',
     shortcut: '/logo.png',
