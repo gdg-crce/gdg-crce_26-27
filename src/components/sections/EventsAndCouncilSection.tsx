@@ -958,7 +958,7 @@ export default function EventsAndCouncilSection({
                 {/* Post content */}
                 <div className="fb-post-content">
                   <p className="fb-post-text">
-                    The team behind it all. GDG on Campus · CRCE Student Council 2026-27, together before the year begins. 🚀
+                    The team behind it all. GDG on Campus · GDG CRCE 25-26 & 26-27, together before the year begins. 🚀
                   </p>
                 </div>
 
