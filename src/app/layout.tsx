@@ -19,41 +19,65 @@ import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://gdgcrce.com'),
-  title: 'GDG CRCE — Google Developer Group',
-  description: 'Embark on a scrolling journey through college developer history with GDG CRCE: travel from the analog 1970s to the Y2K glossy cyber 2000s.',
-  keywords: ['GDG', 'GDG CRCE', 'Google Developer Group', 'college tech council', 'developers club', 'programming', 'Fr. Conceicao Rodrigues College of Engineering'],
+  title: 'GDG CRCE — Google Developer Group | Fr. CRCE Mumbai',
+  description: 'Official Google Developer Group and student technical council of Fr. Conceicao Rodrigues College of Engineering (CRCE), Mumbai. Fostering developer culture through workshops, hackathons, open-source initiatives, and technical excellence.',
+  keywords: [
+    'GDG',
+    'GDG CRCE',
+    'Google Developer Group',
+    'Google Developer Groups',
+    'GDG On Campus',
+    'GDG CRCE Council',
+    'Student Council',
+    'Tech Council',
+    'Developers Club',
+    'Fr. Conceicao Rodrigues College of Engineering',
+    'CRCE Mumbai',
+    'Hackathons',
+    'Workshops',
+    'Open Source',
+  ],
   authors: [{ name: 'GDG CRCE Student Council' }],
-  creator: 'GDG CRCE',
+  creator: 'GDG CRCE Student Council',
   publisher: 'GDG CRCE',
   alternates: {
     canonical: 'https://gdgcrce.com',
   },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/site.webmanifest',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://gdgcrce.com',
-    siteName: 'GDG CRCE',
-    title: 'GDG CRCE — Google Developer Group',
-    description: 'Embark on a scrolling journey through college developer history with GDG CRCE: travel from the analog 1970s to the Y2K glossy cyber 2000s.',
+    siteName: 'GDG CRCE Student Council',
+    title: 'GDG CRCE — Google Developer Group | Fr. CRCE Mumbai',
+    description: 'Official Google Developer Group and student technical council of Fr. Conceicao Rodrigues College of Engineering (CRCE), Mumbai. Fostering developer culture through workshops, hackathons, open-source initiatives, and technical excellence.',
     images: [
       {
-        url: '/logo.png',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'GDG CRCE — Google Developer Group',
+        alt: 'GDG CRCE — Google Developer Group Student Council',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'GDG CRCE — Google Developer Group',
-    description: 'Embark on a scrolling journey through college developer history with GDG CRCE: travel from the analog 1970s to the Y2K glossy cyber 2000s.',
-    images: ['/logo.png'],
-  },
-  icons: {
-    icon: '/logo.png',
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    title: 'GDG CRCE — Google Developer Group | Fr. CRCE Mumbai',
+    description: 'Official Google Developer Group and student technical council of Fr. Conceicao Rodrigues College of Engineering (CRCE), Mumbai. Fostering developer culture through workshops, hackathons, open-source initiatives, and technical excellence.',
+    images: ['/og-image.png'],
   },
 };
 
@@ -76,6 +100,26 @@ const IMAGEKIT_ORIGIN = (() => {
   }
 })();
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'EducationalOrganization',
+  name: 'GDG CRCE',
+  alternateName: 'Google Developer Group CRCE',
+  url: 'https://gdgcrce.com',
+  logo: 'https://gdgcrce.com/icon.png',
+  image: 'https://gdgcrce.com/og-image.png',
+  description: 'Official Google Developer Group and student technical council of Fr. Conceicao Rodrigues College of Engineering (CRCE), Mumbai. Fostering developer culture through workshops, hackathons, open-source initiatives, and technical excellence.',
+  parentOrganization: {
+    '@type': 'CollegeOrUniversity',
+    name: 'Fr. Conceicao Rodrigues College of Engineering',
+    alternateName: 'Fr. CRCE',
+  },
+  sameAs: [
+    'https://www.linkedin.com/company/gdgcrce',
+    'https://www.instagram.com/gdgcrce',
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -86,16 +130,23 @@ export default function RootLayout({
       lang="en"
       className={`${shrikhand.variable} ${spaceGrotesk.variable} ${specialElite.variable} ${shareTechMono.variable} ${orbitron.variable} ${outfit.variable} ${ibmPlexMono.variable} ${cormorantGaramond.variable} ${kaushanScript.variable} ${pacifico.variable} ${vt323.variable} ${pressStart2P.variable} h-full antialiased`}
     >
-      {IMAGEKIT_ORIGIN && (
-        <head>
-          {/* Warm the ImageKit connection early. One preconnect, for images —
-              the second (crossOrigin) one existed for hls.js segment fetches
-              and opened a whole extra connection nothing uses now that video
-              is local. */}
-          <link rel="preconnect" href={IMAGEKIT_ORIGIN} />
-          <link rel="dns-prefetch" href={IMAGEKIT_ORIGIN} />
-        </head>
-      )}
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        {IMAGEKIT_ORIGIN && (
+          <>
+            <link rel="preconnect" href={IMAGEKIT_ORIGIN} />
+            <link rel="dns-prefetch" href={IMAGEKIT_ORIGIN} />
+          </>
+        )}
+      </head>
       <body className="min-h-full flex flex-col bg-[#23252C] selection:bg-red-800 selection:text-white">
         <SmoothScrollProvider>
           {children}
@@ -105,3 +156,4 @@ export default function RootLayout({
     </html>
   );
 }
+

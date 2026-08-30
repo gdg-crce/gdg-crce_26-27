@@ -70,6 +70,13 @@ const FIELDS: Field[] = [
     href: 'https://www.linkedin.com/company/gdsc-crce/posts/?feedView=all',
     help: 'Official LinkedIn page. Council announcements and event write-ups.',
   },
+  {
+    id: 'previous-council',
+    label: 'Previous Council',
+    value: 'gdsc-crce-25-26.vercel.app',
+    href: 'https://gdsc-crce-25-26.vercel.app',
+    help: 'Archive of previous year council website (2025 - 2026).',
+  },
 ];
 
 /** Read-only firmware-detected values. A BIOS screen always has a block. */
@@ -176,7 +183,7 @@ export default function ContactSection({ isMobile = false }: ContactSectionProps
         <div className="bios-copyright">
           <div className="bios-font-credit">Web437 IBM BIOS font &copy; VileR &middot; CC BY-SA 4.0 &middot; int10h.org</div>
           <div className="bios-credits">
-            Designed by Niya and made by Movin & Abhishek.
+            &copy; All rights reserved by the GDG CRCE
           </div>
         </div>
       </div>

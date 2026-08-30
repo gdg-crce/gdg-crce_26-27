@@ -983,7 +983,7 @@ export default function Y2KArchiveSystem({ onClose, onMinimize, embedded, scroll
             {/* thefacebook footer */}
             <div className={styles.fbFooter}>
               <div className={styles.fbFooterProd}>
-                a GDG CRCE production · designed by Niya and made by Movin and Abhishek
+                a GDG CRCE production · © All rights reserved by the GDG CRCE
               </div>
               <div className={styles.fbFooterLinks}>
                 {['About', 'Contact', 'FAQ', 'Terms', 'Privacy'].map((l) => (
